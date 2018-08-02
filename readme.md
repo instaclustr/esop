@@ -11,3 +11,8 @@ Cassandra backup util also supports Cassandra running on Windows environments.
 
 ## Use as a library
 The Cassandra backup util can also be imported as a library for any JVM based project. It is currently used by the Instaclustr [cassandra operator](https://github.com/instaclustr/cassandra-operator) and within Instaclustrs [managed services](https://www.instaclustr.com). Commercial support for the backup util is available from [Instaclustr](https://www.instaclustr.com/services/cassandra-support/)
+
+## TODO
+* Documentation
+* Testing for blob stores
+* Commitlog archiving
