@@ -2,11 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>operator-parent</artifactId>
-        <groupId>com.instaclustr.cassandra-operator</groupId>
-        <version>1.0-SNAPSHOT</version>
-    </parent>
+
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -19,6 +15,9 @@
     </properties>
 
     <artifactId>backup</artifactId>
+    <groupId>com.instaclustr.cassandra.backup</groupId>
+    <version>0.1</version>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.commons</groupId>
