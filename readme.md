@@ -16,3 +16,6 @@ The Cassandra backup util can also be imported as a library for any JVM based pr
 * Documentation
 * Testing for blob stores
 * Commitlog archiving
+
+
+Please see https://www.instaclustr.com/support/documentation/announcements/instaclustr-open-source-project-status/ for Instaclustr support status of this project
