@@ -61,7 +61,8 @@
   </organization>
 
   <scm>
-    <connection>scm:git:git://git@github.com:instaclustr/instaclustr-backup-restore.git</connection>
+    <connection>scm:git:git://git@github.com:instaclustr/instaclustr-backup-restore.git
+    </connection>
     <developerConnection>scm:git:ssh://github.com/instaclustr/instaclustr-backup-restore.git
     </developerConnection>
     <url>git://github.com/instaclustr/instaclustr-backup-restore.git</url>
@@ -226,7 +227,8 @@
           <transformers>
             <transformer
               implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-              <mainClass>com.instaclustr.cassandra.backup.cli.BackupRestoreCLI</mainClass>
+              <mainClass>com.instaclustr.cassandra.backup.cli.BackupRestoreCLI
+              </mainClass>
             </transformer>
 
             <transformer
@@ -292,8 +294,9 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <version>${maven.surefire.plugin.version}</version>
             <configuration>
-              <excludedGroups>cassandra-backup-restore</excludedGroups>
-              <excludedGroups>cassandra-restore-verification</excludedGroups>
+              <excludedGroups>
+                cassandra-backup-restore,cassandra-restore-verification
+              </excludedGroups>
             </configuration>
           </plugin>
         </plugins>
@@ -334,8 +337,11 @@
             <configuration>
               <startNativeTransport>true</startNativeTransport>
               <systemPropertyVariables>
-                <logback.configurationFile>${project.basedir}/src/test/resources/logback.xml</logback.configurationFile>
-                <cassandra.logdir>${project.build.directory}/cassandra/logs</cassandra.logdir>
+                <logback.configurationFile>
+                  ${project.basedir}/src/test/resources/logback.xml
+                </logback.configurationFile>
+                <cassandra.logdir>${project.build.directory}/cassandra/logs
+                </cassandra.logdir>
               </systemPropertyVariables>
             </configuration>
           </plugin>
@@ -376,10 +382,15 @@
             </executions>
             <configuration>
               <startNativeTransport>true</startNativeTransport>
-              <cassandraDir>${project.build.directory}/cassandra-restored</cassandraDir>
+              <cassandraDir>${project.build.directory}/cassandra-restored
+              </cassandraDir>
               <systemPropertyVariables>
-                <logback.configurationFile>${project.basedir}/src/test/resources/logback.xml</logback.configurationFile>
-                <cassandra.logdir>${project.build.directory}/cassandra-restored/logs</cassandra.logdir>
+                <logback.configurationFile>
+                  ${project.basedir}/src/test/resources/logback.xml
+                </logback.configurationFile>
+                <cassandra.logdir>
+                  ${project.build.directory}/cassandra-restored/logs
+                </cassandra.logdir>
               </systemPropertyVariables>
             </configuration>
           </plugin>

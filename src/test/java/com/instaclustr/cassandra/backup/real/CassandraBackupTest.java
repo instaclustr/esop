@@ -8,14 +8,11 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
 import static org.testng.Assert.assertEquals;
 
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
-import java.util.regex.Matcher;
 
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Session;
@@ -25,9 +22,8 @@ import com.datastax.driver.core.schemabuilder.KeyspaceOptions;
 import com.datastax.driver.core.schemabuilder.SchemaBuilder;
 import com.datastax.driver.mapping.MappingManager;
 import com.instaclustr.cassandra.backup.cli.BackupRestoreCLI;
-import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -39,7 +35,7 @@ import org.testng.annotations.Test;
  * connect to Cassandra we already restored by this test.
  */
 @Test(groups = {"cassandra-backup-restore"})
-public class CassandraBackupRestTest extends AbstractBackupRestoreTest {
+public class CassandraBackupTest extends AbstractBackupRestoreTest {
 
     final String[] backupArgs = new String[]{
         "backup",
@@ -89,7 +85,7 @@ public class CassandraBackupRestTest extends AbstractBackupRestoreTest {
         "--commitlog-download-dir=" + target("commitlog_download_dir"),
     };
 
-    @BeforeTest
+    @BeforeClass
     public void setup() {
         injectMembers();
 
@@ -106,7 +102,7 @@ public class CassandraBackupRestTest extends AbstractBackupRestoreTest {
         testEntityMapper = mappingManager.mapper(TestEntity.class);
     }
 
-    @AfterTest
+    @AfterClass
     public void teardown() {
         deleteSchema(session);
 
@@ -187,17 +183,6 @@ public class CassandraBackupRestTest extends AbstractBackupRestoreTest {
         // restore of commit logs on top of done restore
 
         final List<String> commitlogRestoreArgsAsList = new ArrayList<>(asList(commitlogRestoreArgs));
-
-        final List<Long> commitlogsTimes = Files.walk(targetPath("backup1/test-dc/1/commitlog")).map(commitlog -> {
-
-            Matcher matcher = commitlogPattern.matcher(commitlog.getFileName().toString());
-
-            if (matcher.matches()) {
-                return Long.parseLong(matcher.group(2));
-            } else {
-                return null;
-            }
-        }).filter(Objects::nonNull).sorted().collect(toList());
 
         // here we want to point-in-time restoration, so out of 8 records in total, (2x2 + 2 + 2) where last two
         // were not backed up, we take into account all first and second set of records (6 in total)
