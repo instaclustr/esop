@@ -42,9 +42,8 @@ public class BaseRestoreOperationRequest extends OperationRequest {
     public boolean waitForLock = true;
 
     @Option(names = {"--lock-file"},
-        description = "Directory which will be used for locking purposes for backups",
-        defaultValue = "/var/lock/backup-restore")
-    public Path lockFile = Paths.get("/var/lock/backup-restore");
+        description = "Directory which will be used for locking purposes for backups")
+    public Path lockFile;
 
     public BaseRestoreOperationRequest() {
         // for picocli

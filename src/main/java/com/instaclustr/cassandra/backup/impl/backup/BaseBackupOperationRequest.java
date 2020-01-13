@@ -69,9 +69,8 @@ public class BaseBackupOperationRequest extends OperationRequest {
     public Integer concurrentConnections;
 
     @Option(names = {"--lock-file"},
-            description = "Directory which will be used for locking purposes for backups",
-            defaultValue = "/var/lock/backup-restore")
-    public Path lockFile = Paths.get("/var/lock/backup-restore");
+            description = "Directory which will be used for locking purposes for backups")
+    public Path lockFile;
 
     @Option(names = {"-w", "--waitForLock"},
             description = "Wait to acquire the global transfer lock (which prevents more than one backup or restore from running).")

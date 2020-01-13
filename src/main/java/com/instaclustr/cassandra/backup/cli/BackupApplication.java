@@ -19,7 +19,7 @@ import picocli.CommandLine.Spec;
 
 @Command(name = "backup",
          mixinStandardHelpOptions = true,
-         description = "Take a snapshot of this nodes Cassandra data and upload it to remote storage. " +
+         description = "Take a snapshot of a Cassandra node and upload it to remote storage. " +
                  "Defaults to a snapshot of all keyspaces and their column families, " +
                  "but may be restricted to specific keyspaces or a single column-family.",
          sortOptions = false,

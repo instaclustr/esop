@@ -1,0 +1,168 @@
+# Instaclustr backup-restore
+
+This repository is home of backup and restoration tool from Instaclustr.
+
+The tool is able to perform these operations:
+
+* backup of SSTables
+* restore of SSTables
+* backup of commit logs
+* restore of commit logs
+
+# Usage
+
+After this project is built, the binary is in `target` and it is
+called `instaclustr-backup-restore-(version).jar`. This binary is all you need to backup / restore.
+It is command line application, invoke it without any arguments to see help. You can invoke
+`help backup` for `backup` command, for example.
+
+[source]
+----
+java -jar target/instaclustr-backup-restore-1.0.0.jar
+Missing required subcommand.
+Usage: <main class> [-V] COMMAND
+  -V, --version   print version information and exit
+Commands:
+  backup             Take a snapshot of this nodes Cassandra data and upload it
+                       to remote storage. Defaults to a snapshot of all
+                       keyspaces and their column families, but may be
+                       restricted to specific keyspaces or a single
+                       column-family.
+  restore            Restore the Cassandra data on this node to a specified
+                       point-in-time.
+  commitlog-backup   Upload archived commit logs to remote storage.
+  commitlog-restore  Restores archived commit logs to node.
+
+----
+
+# Examples
+
+All commands should be preceded with `java -jar /path/to/backup/tool.jar`
+
+## Example of `backup`
+
+This command with copy over all SSTables to remote location. It is possible to choose also location
+in cloud. For backup, a node has to be up to back it up. There is possibility to backup also offline node,
+please consult `help` of `backup` command to know details.
+
+source[bash]
+----
+$ backup --jmx-service 127.0.0.1:7199 \
+  --storage-location=file:///destination/to/backup/test-dc/1 \
+  --data-directory=/my/installation/of/cassandra
+----
+
+If you want to upload SSTables into AWS / GCP or Azure, just change `file://` protocol to either `s3`,
+`gcp` or `azure`. The first part of the path is the bucket you want to upload files to, for `s3`,
+it would be like `s3://bucket-for-my-cluster/name-of-dc/name-of-host`. If you want to use different
+cloud, just change the protocol respectively.
+
+As of now, for cloud storage locations, a bucket to backup up to has to already exist prior to
+`backup` invocation.
+
+## Example of `commitlog-backup`
+
+You can backup commit logs as well. Example of commit log backup is like the following:
+
+source[bash]
+----
+$ commitlog-backup \
+  --storage-location=file:///destination/to/backup/test-dc/1, \
+  --data-directory=/my/installation/of/cassandra
+----
+
+Note that there is not any need to specify jmx-service because it is not needed. JMX is needed
+for taking snapshots, but here we do not take any.
+
+## Example of `restore`
+
+The restoration of a node is achieved by following parameters
+
+source[bash]
+----
+$ restore --data-directory=/my/installation/of/restored-cassandra \
+          --config-directory=/my/installation/of/restored-cassandra/conf \
+          --snapshot-tag=stefansnapshot" \
+          --storage-location=file:///destination/to/backup/test-dc/1 \
+          --update-cassandra-yaml=true"
+----
+
+Notice few things here:
+
+* `--snapshot-tag` is specified. Normally, when snapshot name is not used upon backup, there
+is a snapshot taken of some generated name. You would have to check the name of a snapshot in
+backup location to specify it yourself, so it is better to specify that beforehand and you just
+reference it.
+* `--update-cassandra-yaml` is set to true, this will automatically set `initial_tokens` in `cassandra.yaml` for
+restored node. If it is false, you would have to set it up yourself, copying the content of tokens file
+in backup directory, under `tokens` directory.
+
+## Example of `commitlog-restore`
+
+The restoration of commit logs is done e.g. like this:
+
+source[bash]
+----
+$ commitlog-restore --data-directory=/my/installation/of/restored-cassandra
+                    --config-directory=/my/installation/of/restored-cassandra/conf
+                    --storage-location=file:///destination/to/backup/test-dc/1
+                    --commitlog-download-dir=/dir/where/commitlogs/are/downloaded
+                    --timestamp-end=unix_timestamp_of_last_transaction_to_replay
+----
+
+The commitlog restorations is driven by Cassandra's `commitlog_archiving.properties` file. This
+tool will generate such file into node's `conf` directory so it will be read upon nodes start.
+
+After a node is restored in this manner, one has to *delete* `commitlog_archiving.properties` file
+in order to prevent commitlog replay by accident again if a node is restarted.
+
+source[bash]
+----
+restore_directories=/home/smiklosovic/dev/instaclustr-backup-restore/target/commitlog_download_dir
+restore_point_in_time=2020\:01\:13 11\:32\:51
+restore_command=cp -f %from %to
+----
+
+# Credentials for backup and restore from a cloud
+
+If you deal with a cloud, you have to setup credentials to do so. The setup varies from cloud to cloud.
+
+### S3
+
+For S3, you have to set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` as environment variables
+or `aws.accessKeyId` and `aws.secretKey` as system properties or you put them into ~/.aws/credentials.
+S3 backup module is receptive to `AWS_REGION` as well as `AWS_ENDPOINT` environment variables.
+
+### Azure
+
+For Azure, you need to set `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` environment variables.
+
+### GCP
+
+For GCP you have to use `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
+
+# Build
+
+You build this tool by invoking:
+
+source[bash]
+----
+$ ./mvnw clean install
+----
+
+There are three sets of tests as of now.
+
+* normal unit tests (part of normal `test` goal)
+* tests which are part of `cassandra-backup-restore` Maven profile
+* tests which are part of `cassandra-restore-verification` Maven profile
+
+If you want to run tests in profiles, do it like this:
+
+source[bash]
+----
+ $ mvn clean install -Pcassandra-backup-restore && mvn install -Pcassandra-restore-verification
+----
+
+The first profile backups data of Cassandra instance which was run by cassandra-maven-plugin. We
+inserted data into this Cassandra node and we performed a backup into directory in `target`. The
+second profile starts completely new Cassandra and we restore it from the previous run.

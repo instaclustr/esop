@@ -41,9 +41,7 @@ public class CassandraBackupTest extends AbstractBackupRestoreTest {
         "backup",
         "--jmx-service", "127.0.0.1:7199",
         "--storage-location=file://" + target("backup1") + "/test-dc/1",
-        "--data-directory=" + cassandraDir,
-        "--lock-file=" + lockFile,
-        "-w"
+        "--data-directory=" + cassandraDir
     };
 
     final String[] backupArgsWithSnapshotName = new String[]{
@@ -51,9 +49,7 @@ public class CassandraBackupTest extends AbstractBackupRestoreTest {
         "--jmx-service", "127.0.0.1:7199",
         "--storage-location=file://" + target("backup1") + "/test-dc/1",
         "--snapshot-tag=stefansnapshot",
-        "--data-directory=" + cassandraDir,
-        "--lock-file=" + lockFile,
-        "-w"
+        "--data-directory=" + cassandraDir
     };
 
     final String[] restoreArgs = new String[]{
@@ -62,17 +58,13 @@ public class CassandraBackupTest extends AbstractBackupRestoreTest {
         "--config-directory=" + cassandraRestoredConfigDir,
         "--snapshot-tag=stefansnapshot",
         "--storage-location=file://" + target("backup1") + "/test-dc/1",
-        "--lock-file=" + lockFile,
-        "-w",
         "--update-cassandra-yaml=true",
     };
 
     final String[] commitlogBackupArgs = new String[]{
         "commitlog-backup",
         "--storage-location=file://" + target("backup1") + "/test-dc/1",
-        "--data-directory=" + cassandraDir,
-        "--lock-file=" + lockFile,
-        "-w"
+        "--data-directory=" + cassandraDir
     };
 
     final String[] commitlogRestoreArgs = new String[]{
@@ -80,8 +72,6 @@ public class CassandraBackupTest extends AbstractBackupRestoreTest {
         "--data-directory=" + cassandraRestoredDir,
         "--config-directory=" + cassandraRestoredConfigDir,
         "--storage-location=file://" + target("backup1") + "/test-dc/1",
-        "--lock-file=" + lockFile,
-        "-w",
         "--commitlog-download-dir=" + target("commitlog_download_dir"),
     };
 
