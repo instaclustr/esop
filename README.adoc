@@ -16,7 +16,6 @@ called `instaclustr-backup-restore-(version).jar`. This binary is all you need t
 It is command line application, invoke it without any arguments to see help. You can invoke
 `help backup` for `backup` command, for example.
 
-[source]
 ----
 java -jar target/instaclustr-backup-restore-1.0.0.jar
 Missing required subcommand.
@@ -45,7 +44,6 @@ This command with copy over all SSTables to remote location. It is possible to c
 in cloud. For backup, a node has to be up to back it up. There is possibility to backup also offline node,
 please consult `help` of `backup` command to know details.
 
-source[bash]
 ----
 $ backup --jmx-service 127.0.0.1:7199 \
   --storage-location=file:///destination/to/backup/test-dc/1 \
@@ -64,7 +62,6 @@ As of now, for cloud storage locations, a bucket to backup up to has to already 
 
 You can backup commit logs as well. Example of commit log backup is like the following:
 
-source[bash]
 ----
 $ commitlog-backup \
   --storage-location=file:///destination/to/backup/test-dc/1, \
@@ -78,7 +75,6 @@ for taking snapshots, but here we do not take any.
 
 The restoration of a node is achieved by following parameters
 
-source[bash]
 ----
 $ restore --data-directory=/my/installation/of/restored-cassandra \
           --config-directory=/my/installation/of/restored-cassandra/conf \
@@ -101,7 +97,6 @@ in backup directory, under `tokens` directory.
 
 The restoration of commit logs is done e.g. like this:
 
-source[bash]
 ----
 $ commitlog-restore --data-directory=/my/installation/of/restored-cassandra
                     --config-directory=/my/installation/of/restored-cassandra/conf
@@ -116,7 +111,6 @@ tool will generate such file into node's `conf` directory so it will be read upo
 After a node is restored in this manner, one has to *delete* `commitlog_archiving.properties` file
 in order to prevent commitlog replay by accident again if a node is restarted.
 
-source[bash]
 ----
 restore_directories=/home/smiklosovic/dev/instaclustr-backup-restore/target/commitlog_download_dir
 restore_point_in_time=2020\:01\:13 11\:32\:51
@@ -145,7 +139,6 @@ For GCP you have to use `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
 
 You build this tool by invoking:
 
-source[bash]
 ----
 $ ./mvnw clean install
 ----
@@ -158,7 +151,6 @@ There are three sets of tests as of now.
 
 If you want to run tests in profiles, do it like this:
 
-source[bash]
 ----
  $ mvn clean install -Pcassandra-backup-restore && mvn install -Pcassandra-restore-verification
 ----
