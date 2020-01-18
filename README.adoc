@@ -1,5 +1,7 @@
 # Instaclustr backup-restore
 
+image:https://img.shields.io/maven-central/v/com.instaclustr/instaclustr-backup-restore.svg?label=Maven%20Central[link=https://search.maven.org/search?q=g:%22com.instaclustr%22%20AND%20a:%22instaclustr-backup-restore%22]
+
 This repository is home of backup and restoration tool from Instaclustr.
 
 The tool is able to perform these operations:
