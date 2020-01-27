@@ -63,7 +63,7 @@ public abstract class Restorer extends StorageInteractor {
                 return executorService.submit(() -> {
                     RemoteObjectReference remoteObjectReference = objectKeyToRemoteReference(entry.objectKey);
                     try {
-                        logger.debug("Downloading file \"{}\" to \"{}\". {} files to go.", remoteObjectReference.getObjectKey(), entry.localFile, completionLatch.getCount());
+                        logger.info("Downloading file \"{}\" to \"{}\". {} files to go.", remoteObjectReference.getObjectKey(), entry.localFile, completionLatch.getCount());
 
                         this.downloadFile(entry.localFile, remoteObjectReference);
 

@@ -20,7 +20,7 @@ import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.internal.S3ProgressListener;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
-import com.instaclustr.cassandra.backup.aws.S3Module.TransferManagerProvider;
+import com.instaclustr.cassandra.backup.aws.S3Module.TransferManagerFactory;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
@@ -36,20 +36,20 @@ public class S3Restorer extends Restorer {
     private final TransferManager transferManager;
 
     @AssistedInject
-    public S3Restorer(final TransferManagerProvider transferManagerProvider,
+    public S3Restorer(final TransferManagerFactory transferManagerFactory,
                       final ExecutorServiceSupplier executorServiceSupplier,
                       @Assisted final RestoreOperationRequest request) {
         super(request, executorServiceSupplier);
-        this.transferManager = transferManagerProvider.get();
+        this.transferManager = transferManagerFactory.build(request);
         this.amazonS3 = this.transferManager.getAmazonS3Client();
     }
 
     @AssistedInject
-    public S3Restorer(final TransferManagerProvider transferManagerProvider,
+    public S3Restorer(final TransferManagerFactory transferManagerFactory,
                       final ExecutorServiceSupplier executorServiceSupplier,
                       @Assisted final RestoreCommitLogsOperationRequest request) {
         super(request, executorServiceSupplier);
-        this.transferManager = transferManagerProvider.get();
+        this.transferManager = transferManagerFactory.build(request);
         this.amazonS3 = this.transferManager.getAmazonS3Client();
     }
 

@@ -28,7 +28,7 @@ import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.internal.S3ProgressListener;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
-import com.instaclustr.cassandra.backup.aws.S3Module.TransferManagerProvider;
+import com.instaclustr.cassandra.backup.aws.S3Module.TransferManagerFactory;
 import com.instaclustr.cassandra.backup.impl.OperationProgressTracker;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.backup.BackupCommitLogsOperationRequest;
@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class S3Backuper extends Backuper {
+
     private static final Logger logger = LoggerFactory.getLogger(S3Backuper.class);
 
     private final TransferManager transferManager;
@@ -46,23 +47,21 @@ public class S3Backuper extends Backuper {
     private final Optional<String> kmsId;
 
     @AssistedInject
-    public S3Backuper(
-            final TransferManagerProvider transferManagerProvider,
-            final ExecutorServiceSupplier executorSupplier,
-            @Assisted final BackupOperationRequest request) {
+    public S3Backuper(final TransferManagerFactory transferManagerFactory,
+                      final ExecutorServiceSupplier executorSupplier,
+                      @Assisted final BackupOperationRequest request) {
         super(request, executorSupplier);
-        this.transferManager = transferManagerProvider.get();
         this.kmsId = Optional.empty();
+        this.transferManager = transferManagerFactory.build(request);
     }
 
     @AssistedInject
-    public S3Backuper(
-            final TransferManagerProvider transferManagerProvider,
-            final ExecutorServiceSupplier executorServiceSupplier,
-            @Assisted final BackupCommitLogsOperationRequest request) {
+    public S3Backuper(final TransferManagerFactory transferManagerFactory,
+                      final ExecutorServiceSupplier executorServiceSupplier,
+                      @Assisted final BackupCommitLogsOperationRequest request) {
         super(request, executorServiceSupplier);
-        this.transferManager = transferManagerProvider.get();
         this.kmsId = Optional.empty();
+        this.transferManager = transferManagerFactory.build(request);
     }
 
     @Override
@@ -103,10 +102,10 @@ public class S3Backuper extends Backuper {
 
     @Override
     public void uploadFile(
-            final long size,
-            final InputStream localFileStream,
-            final RemoteObjectReference object,
-            final OperationProgressTracker operationProgressTracker) throws Exception {
+        final long size,
+        final InputStream localFileStream,
+        final RemoteObjectReference object,
+        final OperationProgressTracker operationProgressTracker) throws Exception {
         final S3RemoteObjectReference s3RemoteObjectReference = (S3RemoteObjectReference) object;
 
         final PutObjectRequest putObjectRequest = new PutObjectRequest(request.storageLocation.bucket,
@@ -134,6 +133,7 @@ public class S3Backuper extends Backuper {
     }
 
     private static class UploadProgressListener implements S3ProgressListener {
+
         private final S3RemoteObjectReference s3RemoteObjectReference;
 
         UploadProgressListener(final S3RemoteObjectReference s3RemoteObjectReference) {
@@ -191,30 +191,31 @@ public class S3Backuper extends Backuper {
         logger.info("Cleaning up multipart uploads older than {}.", yesterdayInstant);
 
         final ListMultipartUploadsRequest listMultipartUploadsRequest = new ListMultipartUploadsRequest(request.storageLocation.bucket)
-                .withPrefix(request.storageLocation.clusterId);
+            .withPrefix(request.storageLocation.clusterId);
 
         while (true) {
             final MultipartUploadListing multipartUploadListing = s3Client.listMultipartUploads(listMultipartUploadsRequest);
 
             multipartUploadListing.getMultipartUploads().stream()
-                                  .filter(u -> u.getInitiated().toInstant().isBefore(yesterdayInstant))
-                                  .forEach(u -> {
-                                      logger.info("Aborting multi-part upload for key \"{}\" initiated on {}", u.getKey(), u.getInitiated().toInstant());
+                .filter(u -> u.getInitiated().toInstant().isBefore(yesterdayInstant))
+                .forEach(u -> {
+                    logger.info("Aborting multi-part upload for key \"{}\" initiated on {}", u.getKey(), u.getInitiated().toInstant());
 
-                                      try {
-                                          s3Client.abortMultipartUpload(new AbortMultipartUploadRequest(request.storageLocation.bucket, u.getKey(), u.getUploadId()));
+                    try {
+                        s3Client.abortMultipartUpload(new AbortMultipartUploadRequest(request.storageLocation.bucket, u.getKey(), u.getUploadId()));
 
-                                      } catch (final AmazonClientException e) {
-                                          logger.error("Failed to abort multipart upload for key \"{}\".", u.getKey(), e);
-                                      }
-                                  });
+                    } catch (final AmazonClientException e) {
+                        logger.error("Failed to abort multipart upload for key \"{}\".", u.getKey(), e);
+                    }
+                });
 
-            if (!multipartUploadListing.isTruncated())
+            if (!multipartUploadListing.isTruncated()) {
                 break;
+            }
 
             listMultipartUploadsRequest
-                    .withKeyMarker(multipartUploadListing.getKeyMarker())
-                    .withUploadIdMarker(multipartUploadListing.getUploadIdMarker());
+                .withKeyMarker(multipartUploadListing.getKeyMarker())
+                .withUploadIdMarker(multipartUploadListing.getUploadIdMarker());
         }
     }
 }

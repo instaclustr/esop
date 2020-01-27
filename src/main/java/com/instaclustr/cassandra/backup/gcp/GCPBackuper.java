@@ -1,5 +1,7 @@
 package com.instaclustr.cassandra.backup.gcp;
 
+import static com.google.cloud.storage.Storage.PredefinedAcl.BUCKET_OWNER_FULL_CONTROL;
+
 import java.io.InputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
@@ -13,7 +15,7 @@ import com.google.cloud.storage.StorageException;
 import com.google.common.io.ByteStreams;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
-import com.instaclustr.cassandra.backup.gcp.GCPModule.StorageProvider;
+import com.instaclustr.cassandra.backup.gcp.GCPModule.GoogleStorageFactory;
 import com.instaclustr.cassandra.backup.impl.OperationProgressTracker;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.backup.BackupCommitLogsOperationRequest;
@@ -26,42 +28,41 @@ public class GCPBackuper extends Backuper {
     private final Storage storage;
 
     @AssistedInject
-    public GCPBackuper(final StorageProvider storage,
+    public GCPBackuper(final GoogleStorageFactory storageFactory,
                        final ExecutorServiceSupplier executorServiceSupplier,
                        @Assisted final BackupOperationRequest backupOperationRequest) {
         super(backupOperationRequest, executorServiceSupplier);
-        this.storage = storage.get();
+        this.storage = storageFactory.build(backupOperationRequest);
     }
 
     @AssistedInject
-    public GCPBackuper(final StorageProvider storage,
+    public GCPBackuper(final GoogleStorageFactory storageFactory,
                        final ExecutorServiceSupplier executorServiceSupplier,
                        @Assisted final BackupCommitLogsOperationRequest backupOperationRequest) {
         super(backupOperationRequest, executorServiceSupplier);
-        this.storage = storage.get();
+        this.storage = storageFactory.build(backupOperationRequest);
     }
 
     @Override
-    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception {
+    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) {
         return new GCPRemoteObjectReference(objectKey, resolveRemotePath(objectKey), request.storageLocation.bucket);
     }
 
     @Override
-    public FreshenResult freshenRemoteObject(final RemoteObjectReference object) throws Exception {
+    public FreshenResult freshenRemoteObject(final RemoteObjectReference object) {
         final BlobId blobId = ((GCPRemoteObjectReference) object).blobId;
 
         try {
             storage.copy(new Storage.CopyRequest.Builder()
-                                 .setSource(blobId)
-                                 .setTarget(BlobInfo.newBuilder(blobId).build(),
-                                            Storage.BlobTargetOption.predefinedAcl(Storage.PredefinedAcl.BUCKET_OWNER_FULL_CONTROL)
-                                 )
-                                 .build());
+                             .setSource(blobId)
+                             .setTarget(BlobInfo.newBuilder(blobId).build(), Storage.BlobTargetOption.predefinedAcl(BUCKET_OWNER_FULL_CONTROL))
+                             .build());
 
             return FreshenResult.FRESHENED;
         } catch (final StorageException e) {
-            if (e.getCode() != 404)
+            if (e.getCode() != 404) {
                 throw e;
+            }
 
             return FreshenResult.UPLOAD_REQUIRED;
         }
@@ -74,9 +75,8 @@ public class GCPBackuper extends Backuper {
                            final OperationProgressTracker operationProgressTracker) throws Exception {
         final BlobId blobId = ((GCPRemoteObjectReference) object).blobId;
 
-        try (final WriteChannel outputChannel = storage.writer(BlobInfo.newBuilder(blobId).build(),
-                                                               Storage.BlobWriteOption.predefinedAcl(Storage.PredefinedAcl.BUCKET_OWNER_FULL_CONTROL));
-             final ReadableByteChannel inputChannel = Channels.newChannel(localFileStream)) {
+        try (final WriteChannel outputChannel = storage.writer(BlobInfo.newBuilder(blobId).build(), Storage.BlobWriteOption.predefinedAcl(BUCKET_OWNER_FULL_CONTROL));
+            final ReadableByteChannel inputChannel = Channels.newChannel(localFileStream)) {
             ByteStreams.copy(inputChannel, outputChannel);
         } finally {
             operationProgressTracker.update();

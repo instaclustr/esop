@@ -3,10 +3,12 @@ package com.instaclustr.cassandra.backup.cli;
 import static com.instaclustr.cassandra.backup.cli.BackupRestoreCLI.init;
 import static com.instaclustr.picocli.CLIApplication.execute;
 import static com.instaclustr.picocli.JarManifestVersionProvider.logCommandVersionInformation;
+import static java.util.Collections.singletonList;
 import static org.awaitility.Awaitility.await;
 
 import com.google.inject.Inject;
 import com.instaclustr.cassandra.backup.impl.backup.BackupCommitLogsOperationRequest;
+import com.instaclustr.cassandra.backup.impl.backup.BackupModules.CommitlogBackupModule;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
 import org.slf4j.Logger;
@@ -17,10 +19,10 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
 @Command(name = "commitlog-backup",
-         mixinStandardHelpOptions = true,
-         description = "Upload archived commit logs to remote storage.",
-         sortOptions = false,
-         versionProvider = BackupRestoreCLI.class
+    mixinStandardHelpOptions = true,
+    description = "Upload archived commit logs to remote storage.",
+    sortOptions = false,
+    versionProvider = BackupRestoreCLI.class
 )
 public class CommitLogBackupApplication implements Runnable {
 
@@ -43,7 +45,7 @@ public class CommitLogBackupApplication implements Runnable {
     public void run() {
         logCommandVersionInformation(spec);
 
-        init(this, null, request, logger);
+        init(this, null, request, logger, singletonList(new CommitlogBackupModule()));
 
         final Operation operation = operationsService.submitOperationRequest(request);
 

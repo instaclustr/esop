@@ -13,7 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -30,8 +29,10 @@ import com.instaclustr.cassandra.backup.impl.ManifestEntry;
 import com.instaclustr.cassandra.backup.impl.OperationProgressTracker;
 import com.instaclustr.cassandra.backup.impl.SSTableUtils;
 import com.instaclustr.io.GlobalLock;
+import com.instaclustr.operations.FunctionWithEx;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationRequest;
+import jmx.org.apache.cassandra.service.CassandraJMXService;
 import jmx.org.apache.cassandra.service.StorageServiceMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,15 +41,15 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
 
     private static final Logger logger = LoggerFactory.getLogger(BackupOperation.class);
 
-    private final Provider<StorageServiceMBean> storageServiceMBeanProvider;
+    private final Provider<CassandraJMXService> cassandraJMXService;
     private final Map<String, BackuperFactory> backuperFactoryMap;
 
     @Inject
-    public BackupOperation(final Provider<StorageServiceMBean> storageServiceMBeanProvider,
+    public BackupOperation(final Provider<CassandraJMXService> cassandraJMXService,
                            final Map<String, BackuperFactory> backuperFactoryMap,
                            @Assisted final BackupOperationRequest request) {
         super(request);
-        this.storageServiceMBeanProvider = storageServiceMBeanProvider;
+        this.cassandraJMXService = cassandraJMXService;
         this.backuperFactoryMap = backuperFactoryMap;
     }
 
@@ -64,16 +65,22 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
             return;
         }
 
-        final StorageServiceMBean storageServiceMBean = this.storageServiceMBeanProvider.get();
-
         try {
-            new TakeSnapshotOperation(storageServiceMBean,
+            new TakeSnapshotOperation(cassandraJMXService.get(),
                                       new TakeSnapshotOperation.TakeSnapshotOperationRequest(request.keyspaces,
                                                                                              request.snapshotTag,
                                                                                              request.table)).run0();
-            executeUpload(storageServiceMBean.getTokens());
+
+            final List<String> tokens = cassandraJMXService.get().doWithStorageServiceMBean(new FunctionWithEx<StorageServiceMBean, List<String>>() {
+                @Override
+                public List<String> apply(StorageServiceMBean ssMBean) {
+                    return ssMBean.getTokens();
+                }
+            });
+
+            executeUpload(tokens);
         } finally {
-            new ClearSnapshotOperation(storageServiceMBean,
+            new ClearSnapshotOperation(cassandraJMXService.get(),
                                        new ClearSnapshotOperation.ClearSnapshotOperationRequest(request.snapshotTag)).run0();
         }
     }
@@ -217,14 +224,13 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
 
         private static final Logger logger = LoggerFactory.getLogger(ClearSnapshotOperation.class);
 
-        private final StorageServiceMBean storageServiceMBean;
+        private final CassandraJMXService cassandraJMXService;
         private boolean hasRun = false;
 
-        ClearSnapshotOperation(
-            final StorageServiceMBean storageServiceMBean,
-            final ClearSnapshotOperationRequest request) {
+        ClearSnapshotOperation(final CassandraJMXService cassandraJMXService,
+                               final ClearSnapshotOperationRequest request) {
             super(request);
-            this.storageServiceMBean = storageServiceMBean;
+            this.cassandraJMXService = cassandraJMXService;
         }
 
         @Override
@@ -236,10 +242,16 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
             hasRun = true;
 
             try {
-                storageServiceMBean.clearSnapshot(request.snapshotTag);
-                logger.info("Cleared snapshot {}.", request.snapshotTag);
+                cassandraJMXService.doWithStorageServiceMBean(new FunctionWithEx<StorageServiceMBean, Void>() {
+                    @Override
+                    public Void apply(StorageServiceMBean ssMBean) throws Exception {
+                        ssMBean.clearSnapshot(request.snapshotTag);
+                        return null;
+                    }
+                });
 
-            } catch (final IOException ex) {
+                logger.info("Cleared snapshot {}.", request.snapshotTag);
+            } catch (final Exception ex) {
                 logger.error("Failed to cleanup snapshot {}.", request.snapshotTag, ex);
             }
         }
@@ -260,13 +272,13 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
         private static final Logger logger = LoggerFactory.getLogger(TakeSnapshotOperation.class);
 
         private final TakeSnapshotOperationRequest request;
-        private final StorageServiceMBean storageServiceMBean;
+        private final CassandraJMXService cassandraJMXService;
 
-        public TakeSnapshotOperation(final StorageServiceMBean storageServiceMBean,
+        public TakeSnapshotOperation(final CassandraJMXService cassandraJMXService,
                                      final TakeSnapshotOperationRequest request) {
             super(request);
             this.request = request;
-            this.storageServiceMBean = storageServiceMBean;
+            this.cassandraJMXService = cassandraJMXService;
         }
 
         @Override
@@ -277,11 +289,24 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
                 logger.info("Taking snapshot {} on {}.{}.", request.tag, keyspace, request.table);
                 // Currently only supported option by Cassandra during snapshot is to skipFlush
                 // An empty map is used as skipping flush is currently not implemented.
-                storageServiceMBean.takeTableSnapshot(keyspace, request.table, request.tag);
 
+                cassandraJMXService.doWithStorageServiceMBean(new FunctionWithEx<StorageServiceMBean, Void>() {
+                    @Override
+                    public Void apply(StorageServiceMBean ssMBean) throws Exception {
+                        ssMBean.takeSnapshot(keyspace, request.table, request.tag);
+                        return null;
+                    }
+                });
             } else {
                 logger.info("Taking snapshot \"{}\" on {}.", request.tag, (request.keyspaces.isEmpty() ? "\"all\"" : request.keyspaces));
-                storageServiceMBean.takeSnapshot(request.tag, request.keyspaces.toArray(new String[0]));
+
+                cassandraJMXService.doWithStorageServiceMBean(new FunctionWithEx<StorageServiceMBean, Void>() {
+                    @Override
+                    public Void apply(StorageServiceMBean ssMBean) throws Exception {
+                        ssMBean.takeSnapshot(request.tag, request.keyspaces.toArray(new String[0]));
+                        return null;
+                    }
+                });
             }
         }
 

@@ -6,6 +6,7 @@ import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
 
 public class AzureRemoteObjectReference extends RemoteObjectReference {
+
     public final CloudBlockBlob blob;
 
     public AzureRemoteObjectReference(final Path objectKey,

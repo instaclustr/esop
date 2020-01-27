@@ -3,13 +3,18 @@ package com.instaclustr.cassandra.backup.cli;
 import static com.instaclustr.cassandra.backup.cli.BackupRestoreCLI.init;
 import static com.instaclustr.picocli.CLIApplication.execute;
 import static com.instaclustr.picocli.JarManifestVersionProvider.logCommandVersionInformation;
+import static java.util.Collections.singletonList;
 import static org.awaitility.Awaitility.await;
 
+import java.util.List;
+
 import com.google.inject.Inject;
+import com.google.inject.Module;
+import com.instaclustr.cassandra.backup.impl.backup.BackupModules.BackupModule;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
-import com.instaclustr.picocli.CassandraJMXSpec;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
+import com.instaclustr.picocli.CassandraJMXSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -18,12 +23,12 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
 @Command(name = "backup",
-         mixinStandardHelpOptions = true,
-         description = "Take a snapshot of a Cassandra node and upload it to remote storage. " +
-                 "Defaults to a snapshot of all keyspaces and their column families, " +
-                 "but may be restricted to specific keyspaces or a single column-family.",
-         sortOptions = false,
-         versionProvider = BackupRestoreCLI.class
+    mixinStandardHelpOptions = true,
+    description = "Take a snapshot of a Cassandra node and upload it to remote storage. " +
+        "Defaults to a snapshot of all keyspaces and their column families, " +
+        "but may be restricted to specific keyspaces or a single column-family.",
+    sortOptions = false,
+    versionProvider = BackupRestoreCLI.class
 )
 public class BackupApplication implements Runnable {
 
@@ -49,10 +54,12 @@ public class BackupApplication implements Runnable {
     public void run() {
         logCommandVersionInformation(spec);
 
+        final List<Module> appSpecificModules = singletonList(new BackupModule());
+
         if (request.offlineSnapshot) {
-            init(this, null, request, logger);
+            init(this, null, request, logger, appSpecificModules);
         } else {
-            init(this, jmxSpec, request, logger);
+            init(this, jmxSpec, request, logger, appSpecificModules);
         }
 
         final Operation operation = operationsService.submitOperationRequest(request);

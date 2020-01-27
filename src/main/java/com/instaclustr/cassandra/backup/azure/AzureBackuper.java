@@ -9,17 +9,19 @@ import java.util.EnumSet;
 
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
-import com.instaclustr.cassandra.backup.azure.AzureModule.CloudBlobClientProvider;
+import com.instaclustr.cassandra.backup.azure.AzureModule.CloudStorageAccountFactory;
 import com.instaclustr.cassandra.backup.impl.OperationProgressTracker;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.Backuper;
 import com.instaclustr.threading.Executors.ExecutorServiceSupplier;
+import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.BlobListingDetails;
 import com.microsoft.azure.storage.blob.BlobProperties;
 import com.microsoft.azure.storage.blob.CloudBlob;
+import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoft.azure.storage.blob.CloudBlobDirectory;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
@@ -31,25 +33,37 @@ public class AzureBackuper extends Backuper {
 
     private final CloudBlobContainer blobContainer;
 
+    private final CloudBlobClient cloudBlobClient;
+
+    private final CloudStorageAccount cloudStorageAccount;
+
     @AssistedInject
-    public AzureBackuper(final CloudBlobClientProvider cloudBlobClientProvider,
+    public AzureBackuper(final CloudStorageAccountFactory cloudStorageAccountFactory,
                          final ExecutorServiceSupplier executorServiceSupplier,
                          @Assisted final BackupOperationRequest request) throws Exception {
         super(request, executorServiceSupplier);
-        this.blobContainer = cloudBlobClientProvider.get().getContainerReference(request.storageLocation.bucket);
+
+        cloudStorageAccount = cloudStorageAccountFactory.build(request);
+        cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+
+        this.blobContainer = cloudBlobClient.getContainerReference(request.storageLocation.bucket);
     }
 
     @AssistedInject
-    public AzureBackuper(final CloudBlobClientProvider cloudBlobClientProvider,
+    public AzureBackuper(final CloudStorageAccountFactory cloudStorageAccountFactory,
                          final ExecutorServiceSupplier executorServiceSupplier,
                          @Assisted final BackupCommitLogsOperationRequest request) throws Exception {
         super(request, executorServiceSupplier);
-        this.blobContainer = cloudBlobClientProvider.get().getContainerReference(request.storageLocation.bucket);
+
+        cloudStorageAccount = cloudStorageAccountFactory.build(request);
+        cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+
+        this.blobContainer = cloudBlobClient.getContainerReference(request.storageLocation.bucket);
     }
 
     @Override
     public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception {
-        String canonicalPath = resolveRemotePath(objectKey);
+        final String canonicalPath = resolveRemotePath(objectKey);
         return new AzureRemoteObjectReference(objectKey, canonicalPath, this.blobContainer.getBlockBlobReference(canonicalPath));
     }
 
@@ -66,8 +80,9 @@ public class AzureBackuper extends Backuper {
             return FreshenResult.FRESHENED;
 
         } catch (final StorageException e) {
-            if (e.getHttpStatusCode() != 404)
+            if (e.getHttpStatusCode() != 404) {
                 throw e;
+            }
 
             return FreshenResult.UPLOAD_REQUIRED;
         }
@@ -98,15 +113,18 @@ public class AzureBackuper extends Backuper {
         final CloudBlobDirectory directoryReference = blobContainer.getDirectoryReference(request.storageLocation.clusterId);
 
         for (final ListBlobItem blob : directoryReference.listBlobs(null, true, EnumSet.noneOf(BlobListingDetails.class), null, null)) {
-            if (!(blob instanceof CloudBlob))
+            if (!(blob instanceof CloudBlob)) {
                 continue;
+            }
 
             final BlobProperties properties = ((CloudBlob) blob).getProperties();
-            if (properties == null || properties.getLastModified() == null)
+            if (properties == null || properties.getLastModified() == null) {
                 continue;
+            }
 
-            if (properties.getLastModified().before(expiryDate))
+            if (properties.getLastModified().before(expiryDate)) {
                 ((CloudBlob) blob).delete();
+            }
         }
     }
 }

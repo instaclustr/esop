@@ -30,8 +30,10 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
                                             @JsonProperty("lockFile") final Path lockFile,
                                             @JsonProperty("sharedContainerPath") final Path sharedContainerPath,
                                             @JsonProperty("cassandraDirectory") final Path cassandraDirectory,
-                                            @JsonProperty("commitLogRestoreDirectory") final Path commitLogArchiveOverride) {
-        super(storageLocation, duration, bandwidth, concurrentConnections, waitForLock, sharedContainerPath, cassandraDirectory, lockFile);
+                                            @JsonProperty("commitLogRestoreDirectory") final Path commitLogArchiveOverride,
+                                            @JsonProperty("k8sNamespace") final String k8sNamespace,
+                                            @JsonProperty("k8sSecretName") final String k8sSecretName) {
+        super(storageLocation, duration, bandwidth, concurrentConnections, waitForLock, sharedContainerPath, cassandraDirectory, lockFile, k8sNamespace, k8sSecretName);
         this.commitLogArchiveOverride = commitLogArchiveOverride;
     }
 
@@ -47,6 +49,8 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
                 .add("sharedContainerPath", sharedContainerPath)
                 .add("cassandraDirectory", cassandraDirectory)
                 .add("commitLogRestoreDirectory", commitLogArchiveOverride)
+                .add("k8sNamespace", k8sNamespace)
+                .add("k8sSecretName", k8sBackupSecretName)
                 .toString();
     }
 }

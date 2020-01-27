@@ -81,8 +81,10 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
                                              @JsonProperty("commitlogDownloadDir") final Path commitlogDownloadDir,
                                              @JsonProperty("timestampStart") final long timestampStart,
                                              @JsonProperty("timestampEnd") final long timestampEnd,
-                                             @JsonProperty("keyspaceTables") final Multimap<String, String> keyspaceTables) {
-        super(storageLocation, concurrentConnections, waitForLock, lockFile);
+                                             @JsonProperty("keyspaceTables") final Multimap<String, String> keyspaceTables,
+                                             @JsonProperty("k8sNamespace") final String k8sNamespace,
+                                             @JsonProperty("k8sSecretName") final String k8sSecretName) {
+        super(storageLocation, concurrentConnections, waitForLock, lockFile, k8sNamespace, k8sSecretName);
         this.cassandraDirectory = cassandraDirectory == null ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.sharedContainerPath = sharedContainerPath == null ? Paths.get("/") : sharedContainerPath;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
@@ -106,6 +108,8 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
                           .add("timestampEnd", timestampEnd)
                           .add("keyspaceTables", keyspaceTables)
                           .add("commitlogDownloadDir", commitlogDownloadDir)
+                          .add("k8sNamespace", k8sNamespace)
+                          .add("k8sSecretName", k8sBackupSecretName)
                           .toString();
     }
 }

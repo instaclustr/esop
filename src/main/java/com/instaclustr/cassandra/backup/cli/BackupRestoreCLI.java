@@ -13,16 +13,16 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Stage;
-import com.instaclustr.cassandra.backup.guice.BackupRestoreModule;
+import com.instaclustr.cassandra.CassandraModule;
+import com.instaclustr.cassandra.backup.guice.StorageModules;
 import com.instaclustr.guice.GuiceInjectorHolder;
-import com.instaclustr.picocli.CLIApplication;
-import com.instaclustr.picocli.CassandraJMXSpec;
 import com.instaclustr.operations.OperationRequest;
 import com.instaclustr.operations.OperationsModule;
+import com.instaclustr.picocli.CLIApplication;
+import com.instaclustr.picocli.CassandraJMXSpec;
 import com.instaclustr.threading.ExecutorsModule;
 import com.instaclustr.validation.GuiceInjectingConstraintValidatorFactory;
-import jmx.org.apache.cassandra.JMXConnectionInfo;
-import jmx.org.apache.cassandra.guice.CassandraModule;
+import jmx.org.apache.cassandra.CassandraJMXConnectionInfo;
 import jmx.org.apache.cassandra.service.StorageServiceMBean;
 import org.slf4j.Logger;
 import picocli.CommandLine;
@@ -32,14 +32,14 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @Command(subcommands = {BackupApplication.class, RestoreApplication.class, CommitLogBackupApplication.class, CommitLogRestoreApplication.class},
-         synopsisSubcommandLabel = "COMMAND",
-         versionProvider = BackupRestoreCLI.class
+    synopsisSubcommandLabel = "COMMAND",
+    versionProvider = BackupRestoreCLI.class
 )
 public class BackupRestoreCLI extends CLIApplication implements Runnable {
 
     @Option(names = {"-V", "--version"},
-            versionHelp = true,
-            description = "print version information and exit")
+        versionHelp = true,
+        description = "print version information and exit")
     private boolean version;
 
     @Spec
@@ -69,16 +69,17 @@ public class BackupRestoreCLI extends CLIApplication implements Runnable {
     static void init(final Runnable command,
                      final CassandraJMXSpec jmxSpec,
                      final OperationRequest operationRequest,
-                     final Logger logger) {
+                     final Logger logger,
+                     final List<Module> appSpecificModules) {
 
         final List<Module> modules = new ArrayList<>();
 
         if (jmxSpec != null) {
-            modules.add(new CassandraModule(new JMXConnectionInfo(jmxSpec.jmxPassword,
-                                                                  jmxSpec.jmxUser,
-                                                                  jmxSpec.jmxServiceURL,
-                                                                  jmxSpec.trustStore,
-                                                                  jmxSpec.trustStorePassword)));
+            modules.add(new CassandraModule(new CassandraJMXConnectionInfo(jmxSpec.jmxPassword,
+                                                                           jmxSpec.jmxUser,
+                                                                           jmxSpec.jmxServiceURL,
+                                                                           jmxSpec.trustStore,
+                                                                           jmxSpec.trustStorePassword)));
         } else {
             modules.add(new AbstractModule() {
                 @Override
@@ -89,12 +90,13 @@ public class BackupRestoreCLI extends CLIApplication implements Runnable {
         }
 
         modules.add(new OperationsModule());
-        modules.add(new BackupRestoreModule());
+        modules.add(new StorageModules());
         modules.add(new ExecutorsModule());
+        modules.addAll(appSpecificModules);
 
         final Injector injector = Guice.createInjector(
-                Stage.PRODUCTION, // production binds singletons as eager by default
-                modules
+            Stage.PRODUCTION, // production binds singletons as eager by default
+            modules
         );
 
         GuiceInjectorHolder.INSTANCE.setInjector(injector);
@@ -102,9 +104,9 @@ public class BackupRestoreCLI extends CLIApplication implements Runnable {
         injector.injectMembers(command);
 
         final Validator validator = Validation.byDefaultProvider()
-                                              .configure()
-                                              .constraintValidatorFactory(new GuiceInjectingConstraintValidatorFactory()).buildValidatorFactory()
-                                              .getValidator();
+            .configure()
+            .constraintValidatorFactory(new GuiceInjectingConstraintValidatorFactory()).buildValidatorFactory()
+            .getValidator();
 
         final Set<ConstraintViolation<OperationRequest>> violations = validator.validate(operationRequest);
 

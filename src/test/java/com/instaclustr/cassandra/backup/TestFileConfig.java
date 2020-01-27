@@ -1,6 +1,6 @@
 package com.instaclustr.cassandra.backup;
 
-import jmx.org.apache.cassandra.CassandraVersion;
+import com.instaclustr.cassandra.CassandraVersion;
 
 public class TestFileConfig {
     public String sha1Hash;

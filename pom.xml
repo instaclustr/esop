@@ -5,20 +5,22 @@
 
   <groupId>com.instaclustr</groupId>
   <artifactId>instaclustr-backup-restore</artifactId>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
 
   <name>instaclustr-backup-restore</name>
   <description>Backup and restoration tooling for Cassandra</description>
   <url>https://github.com/instaclustr/instaclustr-backup-restore</url>
 
   <properties>
-    <instaclustr.commons.version>1.0.0</instaclustr.commons.version>
-    <azure-storage.version>8.3.0</azure-storage.version>
+    <instaclustr.commons.version>1.1.0</instaclustr.commons.version>
+    <azure-storage.version>8.6.0</azure-storage.version>
     <google-cloud-storage.version>1.84.0</google-cloud-storage.version>
     <aws-java-sdk.version>1.11.614</aws-java-sdk.version>
 
     <cassandra.version>3.11.5</cassandra.version>
-    <cassandra.core.version>3.7.2</cassandra.core.version>
+    <cassandra.driver.version>4.4.0</cassandra.driver.version>
+
+    <version.embedded.cassandra>3.0.2</version.embedded.cassandra>
     <testng.version>6.14.3</testng.version>
     <mockito.version>2.23.4</mockito.version>
     <awaitility.version>3.1.6</awaitility.version>
@@ -122,28 +124,23 @@
     <!-- test dependencies -->
 
     <dependency>
-      <groupId>com.datastax.cassandra</groupId>
-      <artifactId>cassandra-driver-core</artifactId>
-      <version>${cassandra.core.version}</version>
+      <groupId>com.github.nosan</groupId>
+      <artifactId>embedded-cassandra</artifactId>
+      <version>${version.embedded.cassandra}</version>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
-      <groupId>com.datastax.cassandra</groupId>
-      <artifactId>cassandra-driver-mapping</artifactId>
-      <version>${cassandra.core.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-      </exclusions>
+      <groupId>com.datastax.oss</groupId>
+      <artifactId>java-driver-query-builder</artifactId>
+      <version>${cassandra.driver.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.datastax.oss</groupId>
+      <artifactId>java-driver-mapper-runtime</artifactId>
+      <version>${cassandra.driver.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -296,8 +293,9 @@
         </plugins>
       </build>
     </profile>
+
     <profile>
-      <id>skippedCassandraTests</id>
+      <id>noCloudTests</id>
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>
@@ -308,16 +306,18 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <version>${maven.surefire.plugin.version}</version>
             <configuration>
-              <excludedGroups>
-                cassandra-backup-restore,cassandra-restore-verification
-              </excludedGroups>
+              <excludedGroups>cloudTest,k8sTest,azureTest,googleTest,s3Test</excludedGroups>
             </configuration>
           </plugin>
         </plugins>
       </build>
     </profile>
+
     <profile>
-      <id>cassandra-backup-restore</id>
+      <id>cloudTests</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
       <build>
         <plugins>
           <plugin>
@@ -325,45 +325,18 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <version>${maven.surefire.plugin.version}</version>
             <configuration>
-              <groups>cassandra-backup-restore</groups>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>cassandra-maven-plugin</artifactId>
-            <version>${cassandra.maven.plugin.version}</version>
-            <dependencies>
-              <dependency>
-                <groupId>org.apache.cassandra</groupId>
-                <artifactId>cassandra-all</artifactId>
-                <version>${cassandra.version}</version>
-              </dependency>
-            </dependencies>
-            <executions>
-              <execution>
-                <id>start</id>
-                <goals>
-                  <goal>start</goal>
-                </goals>
-                <phase>generate-test-resources</phase>
-              </execution>
-            </executions>
-            <configuration>
-              <startNativeTransport>true</startNativeTransport>
-              <systemPropertyVariables>
-                <logback.configurationFile>
-                  ${project.basedir}/src/test/resources/logback.xml
-                </logback.configurationFile>
-                <cassandra.logdir>${project.build.directory}/cassandra/logs
-                </cassandra.logdir>
-              </systemPropertyVariables>
+              <groups>cloudTest</groups>
             </configuration>
           </plugin>
         </plugins>
       </build>
     </profile>
+
     <profile>
-      <id>cassandra-restore-verification</id>
+      <id>k8sTests</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
       <build>
         <plugins>
           <plugin>
@@ -371,41 +344,64 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <version>${maven.surefire.plugin.version}</version>
             <configuration>
-              <groups>cassandra-restore-verification</groups>
+              <groups>k8sTest</groups>
             </configuration>
           </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>azureTests</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <build>
+        <plugins>
           <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>cassandra-maven-plugin</artifactId>
-            <version>${cassandra.maven.plugin.version}</version>
-            <dependencies>
-              <dependency>
-                <groupId>org.apache.cassandra</groupId>
-                <artifactId>cassandra-all</artifactId>
-                <version>${cassandra.version}</version>
-              </dependency>
-            </dependencies>
-            <executions>
-              <execution>
-                <id>start</id>
-                <goals>
-                  <goal>start</goal>
-                </goals>
-                <phase>generate-test-resources</phase>
-              </execution>
-            </executions>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>${maven.surefire.plugin.version}</version>
             <configuration>
-              <startNativeTransport>true</startNativeTransport>
-              <cassandraDir>${project.build.directory}/cassandra-restored
-              </cassandraDir>
-              <systemPropertyVariables>
-                <logback.configurationFile>
-                  ${project.basedir}/src/test/resources/logback.xml
-                </logback.configurationFile>
-                <cassandra.logdir>
-                  ${project.build.directory}/cassandra-restored/logs
-                </cassandra.logdir>
-              </systemPropertyVariables>
+              <groups>azureTest</groups>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>googleTests</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>${maven.surefire.plugin.version}</version>
+            <configuration>
+              <groups>googleTest</groups>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>s3Tests</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>${maven.surefire.plugin.version}</version>
+            <configuration>
+              <groups>s3Test</groups>
             </configuration>
           </plugin>
         </plugins>

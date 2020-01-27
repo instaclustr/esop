@@ -3,10 +3,12 @@ package com.instaclustr.cassandra.backup.cli;
 import static com.instaclustr.cassandra.backup.cli.BackupRestoreCLI.init;
 import static com.instaclustr.picocli.CLIApplication.execute;
 import static com.instaclustr.picocli.JarManifestVersionProvider.logCommandVersionInformation;
+import static java.util.Collections.singletonList;
 import static org.awaitility.Awaitility.await;
 
 import com.google.inject.Inject;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreCommitLogsOperationRequest;
+import com.instaclustr.cassandra.backup.impl.restore.RestoreModules.RestoreCommitlogModule;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
 import org.slf4j.Logger;
@@ -17,10 +19,10 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
 @Command(name = "commitlog-restore",
-         mixinStandardHelpOptions = true,
-         description = "Restores archived commit logs to node.",
-         sortOptions = false,
-         versionProvider = BackupRestoreCLI.class
+    mixinStandardHelpOptions = true,
+    description = "Restores archived commit logs to node.",
+    sortOptions = false,
+    versionProvider = BackupRestoreCLI.class
 )
 public class CommitLogRestoreApplication implements Runnable {
 
@@ -43,9 +45,9 @@ public class CommitLogRestoreApplication implements Runnable {
     public void run() {
         logCommandVersionInformation(spec);
 
-        init(this, null, request, logger);
+        init(this, null, request, logger, singletonList(new RestoreCommitlogModule()));
 
-        final Operation operation = operationsService.submitOperationRequest(request);
+        final Operation<?> operation = operationsService.submitOperationRequest(request);
 
         await().forever().until(() -> operation.state.isTerminalState());
 

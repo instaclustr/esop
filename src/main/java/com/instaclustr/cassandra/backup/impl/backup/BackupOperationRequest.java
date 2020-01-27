@@ -51,8 +51,10 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonProperty("keyspaces") final List<String> keyspaces,
                                   @JsonProperty("snapshotTag") final String snapshotTag,
                                   @JsonProperty("offlineSnapshot") final boolean offlineSnapshot,
-                                  @JsonProperty("table") final String table) {
-        super(storageLocation, duration, bandwidth, concurrentConnections, waitForLock, sharedContainerPath, cassandraDirectory, lockFile);
+                                  @JsonProperty("table") final String table,
+                                  @JsonProperty("k8sNamespace") final String k8sNamespace,
+                                  @JsonProperty("k8sSecretName") final String k8sSecretName) {
+        super(storageLocation, duration, bandwidth, concurrentConnections, waitForLock, sharedContainerPath, cassandraDirectory, lockFile, k8sNamespace, k8sSecretName);
         this.keyspaces = keyspaces == null ? ImmutableList.of() : keyspaces;
         this.snapshotTag = snapshotTag == null ? format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis())) : snapshotTag;
         this.offlineSnapshot = offlineSnapshot;
@@ -74,6 +76,8 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                 .add("snapshotTag", snapshotTag)
                 .add("offlineSnapshot", offlineSnapshot)
                 .add("table", table)
+                .add("k8sNamespace", k8sNamespace)
+                .add("k8sSecretName", k8sBackupSecretName)
                 .toString();
     }
 }

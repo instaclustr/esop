@@ -11,14 +11,16 @@ import java.util.regex.Pattern;
 
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
-import com.instaclustr.cassandra.backup.azure.AzureModule.CloudBlobClientProvider;
+import com.instaclustr.cassandra.backup.azure.AzureModule.CloudStorageAccountFactory;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.Restorer;
 import com.instaclustr.threading.Executors.ExecutorServiceSupplier;
+import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.BlobListingDetails;
+import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
 import com.microsoft.azure.storage.blob.ListBlobItem;
@@ -26,30 +28,43 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AzureRestorer extends Restorer {
+
     private static final Logger logger = LoggerFactory.getLogger(AzureRestorer.class);
 
     private final CloudBlobContainer blobContainer;
 
+    private final CloudBlobClient cloudBlobClient;
+
+    private final CloudStorageAccount cloudStorageAccount;
+
     @AssistedInject
-    public AzureRestorer(final CloudBlobClientProvider cloudBlobClientProvider,
+    public AzureRestorer(final CloudStorageAccountFactory cloudStorageAccountFactory,
                          final ExecutorServiceSupplier executorServiceSupplier,
                          @Assisted final RestoreOperationRequest request) throws Exception {
         super(request, executorServiceSupplier);
-        this.blobContainer = cloudBlobClientProvider.get().getContainerReference(request.storageLocation.bucket);
+
+        cloudStorageAccount = cloudStorageAccountFactory.build(request);
+        cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+
+        this.blobContainer = cloudBlobClient.getContainerReference(request.storageLocation.bucket);
     }
 
     @AssistedInject
-    public AzureRestorer(final CloudBlobClientProvider cloudBlobClientProvider,
+    public AzureRestorer(final CloudStorageAccountFactory cloudStorageAccountFactory,
                          final ExecutorServiceSupplier executorServiceSupplier,
                          @Assisted final RestoreCommitLogsOperationRequest request) throws Exception {
         super(request, executorServiceSupplier);
-        this.blobContainer = cloudBlobClientProvider.get().getContainerReference(request.storageLocation.bucket);
+
+        cloudStorageAccount = cloudStorageAccountFactory.build(request);
+        cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+
+        this.blobContainer = cloudBlobClient.getContainerReference(request.storageLocation.bucket);
     }
 
     @Override
     public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws StorageException, URISyntaxException {
-        final String path = resolveRemotePath(objectKey);
-        return new AzureRemoteObjectReference(objectKey, path, blobContainer.getBlockBlobReference(path));
+        final String canonicalPath = resolveRemotePath(objectKey);
+        return new AzureRemoteObjectReference(objectKey, canonicalPath, this.blobContainer.getBlockBlobReference(canonicalPath));
     }
 
     @Override
@@ -65,10 +80,10 @@ public class AzureRestorer extends Restorer {
         final AzureRemoteObjectReference azureRemoteObjectReference = (AzureRemoteObjectReference) prefix;
 
         final String blobPrefix = Paths.get(request.storageLocation.clusterId)
-                .resolve(request.storageLocation.nodeId)
-                .resolve(azureRemoteObjectReference.getObjectKey()).toString();
+            .resolve(request.storageLocation.nodeId)
+            .resolve(azureRemoteObjectReference.getObjectKey()).toString();
 
-        final String pattern = String.format("^/%s/%s/%s/", request.storageLocation.clusterId, request.storageLocation.clusterId, request.storageLocation.nodeId);
+        final String pattern = String.format("^/%s/%s/%s/", request.storageLocation.bucket, request.storageLocation.clusterId, request.storageLocation.nodeId);
 
         final Pattern containerPattern = Pattern.compile(pattern);
 

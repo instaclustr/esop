@@ -145,18 +145,57 @@ You build this tool by invoking:
 $ ./mvnw clean install
 ----
 
-There are three sets of tests as of now.
+# Tests
 
-* normal unit tests (part of normal `test` goal)
-* tests which are part of `cassandra-backup-restore` Maven profile
-* tests which are part of `cassandra-restore-verification` Maven profile
+There are end-to-end tests which are testing all GCP, Azure and S3 integration as well
+as integration with Kubernetes when it comes to credential fetching.
 
-If you want to run tests in profiles, do it like this:
+There are these test groups / profiles:
+
+* azureTests
+* googleTest
+* s3Tests
+* cloudTests - runs tests which will be using cloud "buckets" for backup / restore
+* k8sTest - same as `cloudTest` above but credentials will be fetched from Kubernetes
+
+The anatomy of a test is like the following;
+
+* start Cassandra as part of a test (runs locally)
+* insert data into Cassandra and backup them to some cloud
+* stop Cassandra
+* download files we just backed up into a directory
+* start another Cassandra instance (also locally) which will have data directory pointing to directory we downloaded data into
+* verify that the restoration is correct
+* stop second Cassandra
+
+There is not any need to create buckets in a cloud beforehand as they will be created and deleted
+as part of a test itself automatically, per cloud provider.
+
+If this test is "Kubernetes-aware", before every test, credentials are created as a Secret
+which will be used by backup / restore tooling during a test. We are simulating here that
+this tooling can be easily embedded into e.g. a Cassandra Sidecar (part of Cassandra operator).
+We are avoiding the need to specify credentials upfront when Kubernetes pod is starting as a part
+of that spec by dynamically fetching all credentials from a Secret which name is passed to a
+backup request and it is read every time. The side-effect of this is that we can change our credentials
+without restarting a pod to re-read them because they will be read dynamically upon every backup request.
+
+Cloud tests are executed like:
 
 ----
- $ mvn clean install -Pcassandra-backup-restore && mvn install -Pcassandra-restore-verification
+$ mvn clean install -PcloudTests
 ----
 
-The first profile backups data of Cassandra instance which was run by cassandra-maven-plugin. We
-inserted data into this Cassandra node and we performed a backup into directory in `target`. The
-second profile starts completely new Cassandra and we restore it from the previous run.
+Kubernetes tests are executed like:
+----
+$ mvn clean install -Pk8sTests
+----
+
+You have to specify these system properties to run these tests succesfully:
+
+---
+-Dawsaccesskeyid={your aws access key id}
+-Dawssecretaccesskey={your aws secret access key}
+-Dgoogle.application.credentials={path to google application credentials file on local disk} \
+-Dazurestorageaccount={your azure storage account} \
+-Dazurestoragekey={your azure storage key}
+---

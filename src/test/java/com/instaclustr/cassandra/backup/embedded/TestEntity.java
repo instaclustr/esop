@@ -1,13 +1,12 @@
-package com.instaclustr.cassandra.backup.real;
+package com.instaclustr.cassandra.backup.embedded;
 
 import java.util.UUID;
 
-import com.datastax.driver.mapping.annotations.ClusteringColumn;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
+import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 
-@Table(keyspace = TestEntity.KEYSPACE, name = TestEntity.TABLE)
+@Entity
 public class TestEntity {
 
     public static final String KEYSPACE = "test";
@@ -26,7 +25,6 @@ public class TestEntity {
     @ClusteringColumn
     private UUID date;
 
-    @Column
     private String name;
 
     public String getId() {

@@ -15,7 +15,7 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.Storage.BlobListOption;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
-import com.instaclustr.cassandra.backup.gcp.GCPModule.StorageProvider;
+import com.instaclustr.cassandra.backup.gcp.GCPModule.GoogleStorageFactory;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
@@ -27,19 +27,19 @@ public class GCPRestorer extends Restorer {
     private final Storage storage;
 
     @AssistedInject
-    public GCPRestorer(final StorageProvider storage,
+    public GCPRestorer(final GoogleStorageFactory storageFactory,
                        final ExecutorServiceSupplier executorServiceSupplier,
                        @Assisted final RestoreOperationRequest request) {
         super(request, executorServiceSupplier);
-        this.storage = storage.get();
+        this.storage = storageFactory.build(request);
     }
 
     @AssistedInject
-    public GCPRestorer(final StorageProvider storage,
+    public GCPRestorer(final GoogleStorageFactory storageFactory,
                        final ExecutorServiceSupplier executorServiceSupplier,
                        @Assisted final RestoreCommitLogsOperationRequest request) {
         super(request, executorServiceSupplier);
-        this.storage = storage.get();
+        this.storage = storageFactory.build(request);
     }
 
     @Override
@@ -63,14 +63,15 @@ public class GCPRestorer extends Restorer {
         final GCPRemoteObjectReference gcpRemoteObjectReference = (GCPRemoteObjectReference) prefix;
 
         final Page<Blob> storagePage = storage.list(gcpRemoteObjectReference.blobId.getBucket(),
-                                                    BlobListOption.prefix(request.storageLocation.nodeId + "/" + gcpRemoteObjectReference.getObjectKey() + "/"),
+                                                    BlobListOption.prefix(request.storageLocation.clusterId + "/" + request.storageLocation.nodeId + "/" + gcpRemoteObjectReference.getObjectKey() + "/"),
                                                     BlobListOption.currentDirectory());
 
-        final Pattern nodeIdPattern = Pattern.compile(request.storageLocation.nodeId + "/");
+        final Pattern nodeIdPattern = Pattern.compile(request.storageLocation.clusterId + "/" + request.storageLocation.nodeId + "/");
 
         storagePage.iterateAll().iterator().forEachRemaining(blob -> {
-            if (!blob.getName().endsWith("/"))
+            if (!blob.getName().endsWith("/")) {
                 consumer.accept(objectKeyToRemoteReference(Paths.get(nodeIdPattern.matcher(blob.getName()).replaceFirst(""))));
+            }
         });
     }
 

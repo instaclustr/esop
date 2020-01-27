@@ -13,10 +13,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.nio.file.Files;
 
+import com.instaclustr.kubernetes.KubernetesHelper;
+
 @Target({TYPE, PARAMETER})
 @Retention(RUNTIME)
 @Constraint(validatedBy = {
-        ValidBackupOperationRequest.BackupOperationRequestValidator.class,
+    ValidBackupOperationRequest.BackupOperationRequestValidator.class,
 })
 public @interface ValidBackupOperationRequest {
 
@@ -35,8 +37,8 @@ public @interface ValidBackupOperationRequest {
 
             if (value.table != null && (value.keyspaces == null || value.keyspaces.size() != 1)) {
                 context
-                        .buildConstraintViolationWithTemplate("{com.instaclustr.cassandra.backup.impl.backup.ValidBackupOperationRequest.BackupOperationRequestValidator.oneKeyspaceForColumnFamily}")
-                        .addConstraintViolation();
+                    .buildConstraintViolationWithTemplate("{com.instaclustr.cassandra.backup.impl.backup.ValidBackupOperationRequest.BackupOperationRequestValidator.oneKeyspaceForColumnFamily}")
+                    .addConstraintViolation();
                 return false;
             }
 
@@ -47,6 +49,12 @@ public @interface ValidBackupOperationRequest {
 
             if (!Files.exists(value.cassandraDirectory)) {
                 context.buildConstraintViolationWithTemplate(format("cassandraDirectory %s does not exist", value.cassandraDirectory)).addConstraintViolation();
+                return false;
+            }
+
+            if ((KubernetesHelper.isRunningInKubernetes() || KubernetesHelper.isRunningAsClient()) && value.k8sBackupSecretName == null) {
+                context.buildConstraintViolationWithTemplate("This code is running in Kubernetes or as a Kubernetes client "
+                                                                 + "but there is not 'k8sSecretName' field set on backup request!").addConstraintViolation();
                 return false;
             }
 

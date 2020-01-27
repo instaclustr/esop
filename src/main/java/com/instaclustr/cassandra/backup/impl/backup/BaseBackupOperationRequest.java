@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.instaclustr.cassandra.backup.impl.KubernetesAwareRequest;
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import com.instaclustr.cassandra.backup.impl.StorageLocation.StorageLocationDeserializer;
 import com.instaclustr.cassandra.backup.impl.StorageLocation.StorageLocationSerializer;
@@ -15,13 +16,13 @@ import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.jackson.PathSerializer;
 import com.instaclustr.measure.DataRate;
 import com.instaclustr.measure.Time;
+import com.instaclustr.operations.OperationRequest;
 import com.instaclustr.picocli.typeconverter.DataRateMeasureTypeConverter;
 import com.instaclustr.picocli.typeconverter.PathTypeConverter;
 import com.instaclustr.picocli.typeconverter.TimeMeasureTypeConverter;
-import com.instaclustr.operations.OperationRequest;
 import picocli.CommandLine.Option;
 
-public class BaseBackupOperationRequest extends OperationRequest {
+public class BaseBackupOperationRequest extends OperationRequest implements KubernetesAwareRequest {
 
     @Option(names = {"--sl", "--storage-location"},
             converter = StorageLocationTypeConverter.class,
@@ -76,6 +77,15 @@ public class BaseBackupOperationRequest extends OperationRequest {
             description = "Wait to acquire the global transfer lock (which prevents more than one backup or restore from running).")
     public Boolean waitForLock = true;
 
+    @Option(names = {"--k8s-namespace"},
+            description = "Name of Kubernetes namespace backup tool runs in, if any.",
+            defaultValue = "default")
+    public String k8sNamespace = "default";
+
+    @Option(names = {"--k8s-backup-secret-name"},
+        description = "Name of Kubernetes secret used for credential retrieval for backup / restores when talking to cloud storages.")
+    public String k8sBackupSecretName;
+
     public BaseBackupOperationRequest() {
         // for picocli
     }
@@ -87,7 +97,9 @@ public class BaseBackupOperationRequest extends OperationRequest {
                                       final boolean waitForLock,
                                       final Path cassandraDirectory,
                                       final Path sharedContainerPath,
-                                      final Path lockFile) {
+                                      final Path lockFile,
+                                      final String k8sNamespace,
+                                      final String k8sBackupSecretName) {
         this.storageLocation = storageLocation;
         this.duration = duration;
         this.bandwidth = bandwidth;
@@ -96,5 +108,17 @@ public class BaseBackupOperationRequest extends OperationRequest {
         this.concurrentConnections = concurrentConnections == null ? 10 : concurrentConnections;
         this.waitForLock = waitForLock;
         this.lockFile = lockFile;
+        this.k8sNamespace = k8sNamespace;
+        this.k8sBackupSecretName = k8sBackupSecretName;
+    }
+
+    @Override
+    public String getNamespace() {
+        return k8sNamespace;
+    }
+
+    @Override
+    public String getSecretName() {
+        return k8sBackupSecretName;
     }
 }

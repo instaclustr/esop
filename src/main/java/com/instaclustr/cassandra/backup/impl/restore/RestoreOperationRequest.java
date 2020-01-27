@@ -78,8 +78,10 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonProperty("restoreSystemKeyspace") final boolean restoreSystemKeyspace,
                                    @JsonProperty("snapshotTag") final String snapshotTag,
                                    @JsonProperty("keyspaceTables") final Multimap<String, String> keyspaceTables,
-                                   @JsonProperty("updateCassandraYaml") final boolean updateCassandraYaml) {
-        super(storageLocation, concurrentConnections, waitForLock, lockFile);
+                                   @JsonProperty("updateCassandraYaml") final boolean updateCassandraYaml,
+                                   @JsonProperty("k8sNamespace") final String k8sNamespace,
+                                   @JsonProperty("k8sSecretName") final String k8sSecretName) {
+        super(storageLocation, concurrentConnections, waitForLock, lockFile, k8sNamespace, k8sSecretName);
         this.cassandraDirectory = cassandraDirectory == null ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
         this.sharedContainerPath = sharedContainerPath == null ? Paths.get("/") : sharedContainerPath;
@@ -101,6 +103,8 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                           .add("snapshotTag", snapshotTag)
                           .add("keyspaceTables", keyspaceTables)
                           .add("updateCassandraYaml", updateCassandraYaml)
+                          .add("k8sNamespace", k8sNamespace)
+                          .add("k8sSecretName", k8sBackupSecretName)
                           .toString();
     }
 }
