@@ -192,10 +192,10 @@ $ mvn clean install -Pk8sTests
 
 You have to specify these system properties to run these tests succesfully:
 
----
+----
 -Dawsaccesskeyid={your aws access key id}
 -Dawssecretaccesskey={your aws secret access key}
--Dgoogle.application.credentials={path to google application credentials file on local disk} \
--Dazurestorageaccount={your azure storage account} \
+-Dgoogle.application.credentials={path to google application credentials file on local disk}
+-Dazurestorageaccount={your azure storage account}
 -Dazurestoragekey={your azure storage key}
----
+----
