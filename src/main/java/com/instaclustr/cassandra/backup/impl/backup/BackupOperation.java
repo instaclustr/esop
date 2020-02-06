@@ -5,7 +5,6 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -24,7 +23,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
+import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.cassandra.backup.guice.BackuperFactory;
+import com.instaclustr.cassandra.backup.guice.BucketServiceFactory;
+import com.instaclustr.cassandra.backup.impl.BucketService;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
 import com.instaclustr.cassandra.backup.impl.OperationProgressTracker;
 import com.instaclustr.cassandra.backup.impl.SSTableUtils;
@@ -43,14 +45,17 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
 
     private final Provider<CassandraJMXService> cassandraJMXService;
     private final Map<String, BackuperFactory> backuperFactoryMap;
+    final Map<String, BucketServiceFactory> bucketServiceFactoryMap;
 
-    @Inject
+    @AssistedInject
     public BackupOperation(final Provider<CassandraJMXService> cassandraJMXService,
                            final Map<String, BackuperFactory> backuperFactoryMap,
+                           final Map<String, BucketServiceFactory> bucketServiceFactoryMap,
                            @Assisted final BackupOperationRequest request) {
         super(request);
         this.cassandraJMXService = cassandraJMXService;
         this.backuperFactoryMap = backuperFactoryMap;
+        this.bucketServiceFactoryMap = bucketServiceFactoryMap;
     }
 
     @Override
@@ -92,6 +97,10 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
 
         Iterables.addAll(manifest, saveTokenList(tokens));
         Iterables.addAll(manifest, saveManifest(manifest, request.snapshotTag));
+
+        try (final BucketService bucketService = bucketServiceFactoryMap.get(request.storageLocation.storageProvider).createBucketService(request)) {
+            bucketService.createIfMissing(request.storageLocation.bucket);
+        }
 
         try (final Backuper backuper = backuperFactoryMap.get(request.storageLocation.storageProvider).createBackuper(request)) {
             backuper.uploadOrFreshenFiles(manifest, new OperationProgressTracker(this, manifest.size()));

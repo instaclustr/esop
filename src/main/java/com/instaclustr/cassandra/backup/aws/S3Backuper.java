@@ -21,7 +21,6 @@ import com.amazonaws.services.s3.model.ListMultipartUploadsRequest;
 import com.amazonaws.services.s3.model.MultipartUploadListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.SSEAwsKeyManagementParams;
 import com.amazonaws.services.s3.model.StorageClass;
 import com.amazonaws.services.s3.transfer.PersistableTransfer;
 import com.amazonaws.services.s3.transfer.TransferManager;
@@ -44,14 +43,11 @@ public class S3Backuper extends Backuper {
 
     private final TransferManager transferManager;
 
-    private final Optional<String> kmsId;
-
     @AssistedInject
     public S3Backuper(final TransferManagerFactory transferManagerFactory,
                       final ExecutorServiceSupplier executorSupplier,
                       @Assisted final BackupOperationRequest request) {
         super(request, executorSupplier);
-        this.kmsId = Optional.empty();
         this.transferManager = transferManagerFactory.build(request);
     }
 
@@ -60,7 +56,6 @@ public class S3Backuper extends Backuper {
                       final ExecutorServiceSupplier executorServiceSupplier,
                       @Assisted final BackupCommitLogsOperationRequest request) {
         super(request, executorServiceSupplier);
-        this.kmsId = Optional.empty();
         this.transferManager = transferManagerFactory.build(request);
     }
 
@@ -77,11 +72,6 @@ public class S3Backuper extends Backuper {
                                                                     canonicalPath,
                                                                     request.storageLocation.bucket,
                                                                     canonicalPath).withStorageClass(StorageClass.Standard);
-
-        if (kmsId.isPresent()) {
-            final SSEAwsKeyManagementParams params = new SSEAwsKeyManagementParams(kmsId.get());
-            copyRequest.withSSEAwsKeyManagementParams(params);
-        }
 
         try {
             // attempt to refresh existing object in the bucket via an inplace copy
@@ -113,13 +103,7 @@ public class S3Backuper extends Backuper {
                                                                        localFileStream,
                                                                        new ObjectMetadata() {{
                                                                            setContentLength(size);
-                                                                       }}
-        );
-
-        if (kmsId.isPresent()) {
-            final SSEAwsKeyManagementParams params = new SSEAwsKeyManagementParams(kmsId.get());
-            putObjectRequest.withSSEAwsKeyManagementParams(params);
-        }
+                                                                       }});
 
         final UploadProgressListener listener = new UploadProgressListener(s3RemoteObjectReference);
 

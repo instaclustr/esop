@@ -17,6 +17,7 @@ import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.instaclustr.cassandra.backup.impl.KubernetesAwareRequest;
 import com.instaclustr.kubernetes.KubernetesHelper;
 import com.instaclustr.kubernetes.KubernetesSecretsReader;
@@ -32,10 +33,12 @@ public class S3Module extends AbstractModule {
         installBindings(binder(),
                         "s3",
                         S3Restorer.class,
-                        S3Backuper.class);
+                        S3Backuper.class,
+                        S3BucketService.class);
     }
 
     @Provides
+    @Singleton
     TransferManagerFactory provideTransferManagerFactory(final Provider<CoreV1Api> coreV1ApiProvider) {
         return new TransferManagerFactory(coreV1ApiProvider);
     }

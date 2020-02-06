@@ -26,7 +26,8 @@ public class AzureModule extends AbstractModule {
         installBindings(binder(),
                         "azure",
                         AzureRestorer.class,
-                        AzureBackuper.class);
+                        AzureBackuper.class,
+                        AzureBucketService.class);
     }
 
     @Provides

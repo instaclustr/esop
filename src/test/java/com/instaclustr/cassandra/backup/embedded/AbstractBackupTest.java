@@ -40,14 +40,13 @@ import com.github.nosan.embedded.cassandra.api.connection.CqlSessionCassandraCon
 import com.github.nosan.embedded.cassandra.artifact.Artifact;
 import com.github.nosan.embedded.cassandra.artifact.DefaultArtifact;
 import com.instaclustr.cassandra.backup.cli.BackupRestoreCLI;
-import com.instaclustr.cassandra.backup.embedded.s3.S3BackupRestoreTest;
 import io.kubernetes.client.ApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AbstractBackupTest {
 
-    private static final Logger logger = LoggerFactory.getLogger(S3BackupRestoreTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(AbstractBackupTest.class);
 
     // This is number of rows we inserted into Cassandra DB in total
     // we backed up first 6 rows. For the last two rows, they are stored in commit logs.
@@ -200,7 +199,7 @@ public class AbstractBackupTest {
         return System.currentTimeMillis();
     }
 
-    protected  String target(final String path) {
+    protected String target(final String path) {
         return target.resolve(path).toAbsolutePath().toString();
     }
 

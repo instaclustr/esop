@@ -1,6 +1,5 @@
 package com.instaclustr.cassandra.backup.impl.backup;
 
-import javax.inject.Inject;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,7 +10,10 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import com.google.inject.assistedinject.Assisted;
+import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.cassandra.backup.guice.BackuperFactory;
+import com.instaclustr.cassandra.backup.guice.BucketServiceFactory;
+import com.instaclustr.cassandra.backup.impl.BucketService;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
 import com.instaclustr.cassandra.backup.impl.OperationProgressTracker;
 import com.instaclustr.io.GlobalLock;
@@ -25,12 +27,15 @@ public class BackupCommitLogsOperation extends Operation<BackupCommitLogsOperati
     private static final String CASSANDRA_COMMIT_LOGS = "commitlog";
 
     private final Map<String, BackuperFactory> backuperFactoryMap;
+    private final Map<String, BucketServiceFactory> bucketServiceMap;
 
-    @Inject
+    @AssistedInject
     public BackupCommitLogsOperation(final Map<String, BackuperFactory> backuperFactoryMap,
+                                     final Map<String, BucketServiceFactory> bucketServiceMap,
                                      @Assisted final BackupCommitLogsOperationRequest request) {
         super(request);
         this.backuperFactoryMap = backuperFactoryMap;
+        this.bucketServiceMap = bucketServiceMap;
     }
 
     @Override
@@ -48,7 +53,10 @@ public class BackupCommitLogsOperation extends Operation<BackupCommitLogsOperati
         final Path backupCommitLogRootKey = Paths.get(CASSANDRA_COMMIT_LOGS);
 
         try (final DirectoryStream<Path> commitLogs = Files.newDirectoryStream(commitLogArchiveDirectory, filter);
-            final Backuper backuper = backuperFactoryMap.get(request.storageLocation.storageProvider).createCommitLogBackuper(request)) {
+            final Backuper backuper = backuperFactoryMap.get(request.storageLocation.storageProvider).createCommitLogBackuper(request);
+            final BucketService bucketService = bucketServiceMap.get(request.storageLocation.storageProvider).createBucketService(request)) {
+
+            bucketService.createIfMissing(request.storageLocation.bucket);
 
             for (final Path commitLog : commitLogs) {
                 // Append file modified date so we have some idea of the time range this commitlog covers

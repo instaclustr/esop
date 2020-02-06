@@ -5,11 +5,13 @@ import static com.instaclustr.cassandra.backup.guice.BackupRestoreBindings.insta
 import com.google.inject.AbstractModule;
 
 public class LocalFileModule extends AbstractModule {
+
     @Override
     protected void configure() {
         installBindings(binder(),
                         "file",
                         LocalFileRestorer.class,
-                        LocalFileBackuper.class);
+                        LocalFileBackuper.class,
+                        LocalBucketService.class);
     }
 }

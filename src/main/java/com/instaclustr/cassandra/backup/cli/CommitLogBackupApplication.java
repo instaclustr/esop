@@ -47,7 +47,7 @@ public class CommitLogBackupApplication implements Runnable {
 
         init(this, null, request, logger, singletonList(new CommitlogBackupModule()));
 
-        final Operation operation = operationsService.submitOperationRequest(request);
+        final Operation<?> operation = operationsService.submitOperationRequest(request);
 
         await().forever().until(() -> operation.state.isTerminalState());
 

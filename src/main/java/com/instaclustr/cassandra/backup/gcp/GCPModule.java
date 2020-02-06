@@ -31,7 +31,8 @@ public class GCPModule extends AbstractModule {
         installBindings(binder(),
                         "gcp",
                         GCPRestorer.class,
-                        GCPBackuper.class);
+                        GCPBackuper.class,
+                        GCPBucketService.class);
     }
 
     @Provides
