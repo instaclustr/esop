@@ -32,7 +32,7 @@ public class KubernetesAzureBackupRestoreTest extends BaseAzureBackupRestoreTest
     final String[] backupArgs = new String[]{
         "backup",
         "--jmx-service", "127.0.0.1:7199",
-        "--storage-location=azure://" + BUCKET_NAME + "/test-dc/1",
+        "--storage-location=azure://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
         "--k8s-backup-secret-name=" + AZURE_SIDECAR_SECRET_NAME
     };
@@ -40,7 +40,7 @@ public class KubernetesAzureBackupRestoreTest extends BaseAzureBackupRestoreTest
     final String[] backupArgsWithSnapshotName = new String[]{
         "backup",
         "--jmx-service", "127.0.0.1:7199",
-        "--storage-location=azure://" + BUCKET_NAME + "/test-dc/1",
+        "--storage-location=azure://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--snapshot-tag=stefansnapshot",
         "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
         "--k8s-backup-secret-name=" + AZURE_SIDECAR_SECRET_NAME
@@ -51,14 +51,14 @@ public class KubernetesAzureBackupRestoreTest extends BaseAzureBackupRestoreTest
         "--data-directory=" + cassandraRestoredDir.toAbsolutePath().toString() + "/data",
         "--config-directory=" + cassandraRestoredConfigDir.toAbsolutePath().toString(),
         "--snapshot-tag=stefansnapshot",
-        "--storage-location=azure://" + BUCKET_NAME + "/test-dc/1",
+        "--storage-location=azure://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--update-cassandra-yaml=true",
         "--k8s-backup-secret-name=" + AZURE_SIDECAR_SECRET_NAME
     };
 
     final String[] commitlogBackupArgs = new String[]{
         "commitlog-backup",
-        "--storage-location=azure://" + BUCKET_NAME + "/test-dc/1",
+        "--storage-location=azure://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
         "--k8s-backup-secret-name=" + AZURE_SIDECAR_SECRET_NAME
     };
@@ -67,7 +67,7 @@ public class KubernetesAzureBackupRestoreTest extends BaseAzureBackupRestoreTest
         "commitlog-restore",
         "--data-directory=" + cassandraRestoredDir.toAbsolutePath().toString() + "/data",
         "--config-directory=" + cassandraRestoredConfigDir.toAbsolutePath().toString(),
-        "--storage-location=azure://" + BUCKET_NAME + "/test-dc/1",
+        "--storage-location=azure://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--commitlog-download-dir=" + target("commitlog_download_dir"),
         "--k8s-backup-secret-name=" + AZURE_SIDECAR_SECRET_NAME
     };

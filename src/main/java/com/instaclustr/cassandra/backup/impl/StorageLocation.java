@@ -32,13 +32,14 @@ import com.instaclustr.cassandra.backup.guice.StorageProviders;
 import picocli.CommandLine;
 
 public class StorageLocation {
-    private static final Pattern filePattern = Pattern.compile("(.*)://(.*)/(.*)/(.*)/(.*)");
-    private static final Pattern cloudPattern = Pattern.compile("(.*)://(.*)/(.*)/(.*)");
+    private static final Pattern filePattern = Pattern.compile("(.*)://(.*)/(.*)/(.*)/(.*)/(.*)");
+    private static final Pattern cloudPattern = Pattern.compile("(.*)://(.*)/(.*)/(.*)/(.*)");
 
     public String rawLocation;
     public String storageProvider;
     public String bucket;
     public String clusterId;
+    public String datacenterId;
     public String nodeId;
     public Path fileBackupDirectory;
     public boolean cloudLocation;
@@ -66,7 +67,8 @@ public class StorageLocation {
         this.fileBackupDirectory = Paths.get(matcher.group(2));
         this.bucket = matcher.group(3);
         this.clusterId = matcher.group(4);
-        this.nodeId = matcher.group(5);
+        this.datacenterId = matcher.group(5);
+        this.nodeId = matcher.group(6);
     }
 
     private void initializeCloudBackupLocation(final String backupLocation) {
@@ -80,16 +82,17 @@ public class StorageLocation {
         this.storageProvider = matcher.group(1);
         this.bucket = matcher.group(2);
         this.clusterId = matcher.group(3);
-        this.nodeId = matcher.group(4);
+        this.datacenterId = matcher.group(4);
+        this.nodeId = matcher.group(5);
     }
 
     public void validate() throws IllegalStateException {
         if (cloudLocation) {
-            if (rawLocation == null || storageProvider == null || bucket == null || clusterId == null || nodeId == null) {
+            if (rawLocation == null || storageProvider == null || bucket == null || datacenterId == null || nodeId == null) {
                 throw new IllegalStateException(format("Backup location %s is not in form protocol://bucketName/clusterId/nodeId",
                                                        rawLocation));
             }
-        } else if (rawLocation == null || storageProvider == null || bucket == null || clusterId == null || nodeId == null || fileBackupDirectory == null) {
+        } else if (rawLocation == null || storageProvider == null || bucket == null || datacenterId == null || nodeId == null || fileBackupDirectory == null) {
             throw new IllegalStateException(format("Backup location %s is not in form file:///some/backup/path/bucketName/clusterId/nodeId",
                                                    rawLocation));
         }

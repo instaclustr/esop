@@ -175,7 +175,7 @@ public class S3Backuper extends Backuper {
         logger.info("Cleaning up multipart uploads older than {}.", yesterdayInstant);
 
         final ListMultipartUploadsRequest listMultipartUploadsRequest = new ListMultipartUploadsRequest(request.storageLocation.bucket)
-            .withPrefix(request.storageLocation.clusterId);
+            .withPrefix(request.storageLocation.clusterId + "/" + request.storageLocation.datacenterId);
 
         while (true) {
             final MultipartUploadListing multipartUploadListing = s3Client.listMultipartUploads(listMultipartUploadsRequest);

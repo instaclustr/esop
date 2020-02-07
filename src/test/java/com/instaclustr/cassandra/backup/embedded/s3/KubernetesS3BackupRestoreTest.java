@@ -30,7 +30,7 @@ public class KubernetesS3BackupRestoreTest extends BaseS3BackupRestoreTest {
     final String[] backupArgs = new String[]{
         "backup",
         "--jmx-service", "127.0.0.1:7199",
-        "--storage-location=s3://" + BUCKET_NAME + "/test-dc/1",
+        "--storage-location=s3://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
         "--k8s-backup-secret-name=" + AWS_S3_SIDECAR_SECRET_NAME
     };
@@ -38,7 +38,7 @@ public class KubernetesS3BackupRestoreTest extends BaseS3BackupRestoreTest {
     final String[] backupArgsWithSnapshotName = new String[]{
         "backup",
         "--jmx-service", "127.0.0.1:7199",
-        "--storage-location=s3://" + BUCKET_NAME + "/test-dc/1",
+        "--storage-location=s3://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--snapshot-tag=stefansnapshot",
         "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
         "--k8s-backup-secret-name=" + AWS_S3_SIDECAR_SECRET_NAME
@@ -49,14 +49,14 @@ public class KubernetesS3BackupRestoreTest extends BaseS3BackupRestoreTest {
         "--data-directory=" + cassandraRestoredDir.toAbsolutePath().toString() + "/data",
         "--config-directory=" + cassandraRestoredConfigDir.toAbsolutePath().toString(),
         "--snapshot-tag=stefansnapshot",
-        "--storage-location=s3://" + BUCKET_NAME + "/test-dc/1",
+        "--storage-location=s3://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--update-cassandra-yaml=true",
         "--k8s-backup-secret-name=" + AWS_S3_SIDECAR_SECRET_NAME
     };
 
     final String[] commitlogBackupArgs = new String[]{
         "commitlog-backup",
-        "--storage-location=s3://" + BUCKET_NAME + "/test-dc/1",
+        "--storage-location=s3://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
         "--k8s-backup-secret-name=" + AWS_S3_SIDECAR_SECRET_NAME
     };
@@ -65,7 +65,7 @@ public class KubernetesS3BackupRestoreTest extends BaseS3BackupRestoreTest {
         "commitlog-restore",
         "--data-directory=" + cassandraRestoredDir.toAbsolutePath().toString() + "/data",
         "--config-directory=" + cassandraRestoredConfigDir.toAbsolutePath().toString(),
-        "--storage-location=s3://" + BUCKET_NAME + "/test-dc/1",
+        "--storage-location=s3://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--commitlog-download-dir=" + target("commitlog_download_dir"),
         "--k8s-backup-secret-name=" + AWS_S3_SIDECAR_SECRET_NAME
     };

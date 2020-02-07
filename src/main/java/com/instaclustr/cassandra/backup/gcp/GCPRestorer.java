@@ -63,10 +63,13 @@ public class GCPRestorer extends Restorer {
         final GCPRemoteObjectReference gcpRemoteObjectReference = (GCPRemoteObjectReference) prefix;
 
         final Page<Blob> storagePage = storage.list(gcpRemoteObjectReference.blobId.getBucket(),
-                                                    BlobListOption.prefix(request.storageLocation.clusterId + "/" + request.storageLocation.nodeId + "/" + gcpRemoteObjectReference.getObjectKey() + "/"),
+                                                    BlobListOption.prefix(request.storageLocation.clusterId
+                                                                              + "/" + request.storageLocation.datacenterId
+                                                                              + "/" + request.storageLocation.nodeId
+                                                                              + "/" + gcpRemoteObjectReference.getObjectKey() + "/"),
                                                     BlobListOption.currentDirectory());
 
-        final Pattern nodeIdPattern = Pattern.compile(request.storageLocation.clusterId + "/" + request.storageLocation.nodeId + "/");
+        final Pattern nodeIdPattern = Pattern.compile(request.storageLocation.clusterId + "/" + request.storageLocation.datacenterId + "/" + request.storageLocation.nodeId + "/");
 
         storagePage.iterateAll().iterator().forEachRemaining(blob -> {
             if (!blob.getName().endsWith("/")) {

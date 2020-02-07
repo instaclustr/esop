@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class S3Restorer extends Restorer {
+
     private static final Logger logger = LoggerFactory.getLogger(S3Restorer.class);
 
     private final AmazonS3 amazonS3;
@@ -78,6 +79,7 @@ public class S3Restorer extends Restorer {
     }
 
     private static class DownloadProgressListener implements S3ProgressListener {
+
         private final RemoteObjectReference objectReference;
 
         public DownloadProgressListener(final RemoteObjectReference objectReference) {
@@ -101,7 +103,7 @@ public class S3Restorer extends Restorer {
     @Override
     public void consumeFiles(final RemoteObjectReference prefix, final Consumer<RemoteObjectReference> consumer) {
 
-        final Path bucketPath = Paths.get(request.storageLocation.clusterId).resolve(request.storageLocation.nodeId);
+        final Path bucketPath = Paths.get(request.storageLocation.clusterId).resolve(request.storageLocation.datacenterId).resolve(request.storageLocation.nodeId);
 
         ObjectListing objectListing = amazonS3.listObjects(request.storageLocation.bucket, prefix.canonicalPath);
 
@@ -109,8 +111,8 @@ public class S3Restorer extends Restorer {
 
         while (hasMoreContent) {
             objectListing.getObjectSummaries().stream()
-                    .filter(objectSummary -> !objectSummary.getKey().endsWith("/"))
-                    .forEach(objectSummary -> consumer.accept(objectKeyToRemoteReference(bucketPath.relativize(Paths.get(objectSummary.getKey())))));
+                .filter(objectSummary -> !objectSummary.getKey().endsWith("/"))
+                .forEach(objectSummary -> consumer.accept(objectKeyToRemoteReference(bucketPath.relativize(Paths.get(objectSummary.getKey())))));
 
             if (objectListing.isTruncated()) {
                 objectListing = amazonS3.listNextBatchOfObjects(objectListing);

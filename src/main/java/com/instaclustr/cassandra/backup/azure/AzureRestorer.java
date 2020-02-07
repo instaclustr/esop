@@ -1,5 +1,7 @@
 package com.instaclustr.cassandra.backup.azure;
 
+import static java.lang.String.format;
+
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -80,10 +82,15 @@ public class AzureRestorer extends Restorer {
         final AzureRemoteObjectReference azureRemoteObjectReference = (AzureRemoteObjectReference) prefix;
 
         final String blobPrefix = Paths.get(request.storageLocation.clusterId)
+            .resolve(request.storageLocation.datacenterId)
             .resolve(request.storageLocation.nodeId)
             .resolve(azureRemoteObjectReference.getObjectKey()).toString();
 
-        final String pattern = String.format("^/%s/%s/%s/", request.storageLocation.bucket, request.storageLocation.clusterId, request.storageLocation.nodeId);
+        final String pattern = format("^/%s/%s/%s/%s/",
+                                      request.storageLocation.bucket,
+                                      request.storageLocation.clusterId,
+                                      request.storageLocation.datacenterId,
+                                      request.storageLocation.nodeId);
 
         final Pattern containerPattern = Pattern.compile(pattern);
 

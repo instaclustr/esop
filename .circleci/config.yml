@@ -1,0 +1,27 @@
+version:
+jobs:
+  build:
+
+    working_directory: ~/cassandra-backup
+
+    docker:
+      - image: circleci/openjdk:8-jdk-stretch
+
+    steps:
+
+      - checkout
+
+      - restore_cache:
+          key: cassandra-backup-{{ checksum "pom.xml" }}
+
+      - run: mvn dependency:go-offline # gets the project dependencies
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: cassandra-backup-{{ checksum "pom.xml" }}
+
+      - run: (echo "${google_application_credentials}" > /tmp/gcp.json) && mvn clean install -PcloudTests
+
+      - store_test_results:
+          path: target/surefire-reports

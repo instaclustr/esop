@@ -9,7 +9,7 @@
 
   <name>instaclustr-backup-restore</name>
   <description>Backup and restoration tooling for Cassandra</description>
-  <url>https://github.com/instaclustr/instaclustr-backup-restore</url>
+  <url>https://github.com/instaclustr/cassandra-backup</url>
 
   <properties>
     <instaclustr.commons.version>1.1.0</instaclustr.commons.version>

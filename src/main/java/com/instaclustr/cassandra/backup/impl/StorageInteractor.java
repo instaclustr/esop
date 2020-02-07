@@ -15,7 +15,7 @@ public abstract class StorageInteractor implements AutoCloseable {
     }
 
     public String resolveRemotePath(final Path objectKey) {
-        return Paths.get(storageLocation.clusterId).resolve(storageLocation.nodeId).resolve(objectKey).toString();
+        return Paths.get(storageLocation.clusterId).resolve(storageLocation.datacenterId).resolve(storageLocation.nodeId).resolve(objectKey).toString();
     }
 
     protected abstract void cleanup() throws Exception;
@@ -23,8 +23,9 @@ public abstract class StorageInteractor implements AutoCloseable {
     private boolean isClosed = false;
 
     public void close() throws IOException {
-        if (isClosed)
+        if (isClosed) {
             return;
+        }
 
         try {
             cleanup();

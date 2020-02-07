@@ -25,14 +25,14 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
     final String[] backupArgs = new String[]{
         "backup",
         "--jmx-service", "127.0.0.1:7199",
-        "--storage-location=gcp://" + BUCKET_NAME + "/test-dc/1",
+        "--storage-location=gcp://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data"
     };
 
     final String[] backupArgsWithSnapshotName = new String[]{
         "backup",
         "--jmx-service", "127.0.0.1:7199",
-        "--storage-location=gcp://" + BUCKET_NAME + "/test-dc/1",
+        "--storage-location=gcp://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--snapshot-tag=stefansnapshot",
         "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data"
     };
@@ -42,13 +42,13 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
         "--data-directory=" + cassandraRestoredDir.toAbsolutePath().toString() + "/data",
         "--config-directory=" + cassandraRestoredConfigDir.toAbsolutePath().toString(),
         "--snapshot-tag=stefansnapshot",
-        "--storage-location=gcp://" + BUCKET_NAME + "/test-dc/1",
+        "--storage-location=gcp://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--update-cassandra-yaml=true",
     };
 
     final String[] commitlogBackupArgs = new String[]{
         "commitlog-backup",
-        "--storage-location=gcp://" + BUCKET_NAME + "/test-dc/1",
+        "--storage-location=gcp://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data"
     };
 
@@ -56,7 +56,7 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
         "commitlog-restore",
         "--data-directory=" + cassandraRestoredDir.toAbsolutePath().toString() + "/data",
         "--config-directory=" + cassandraRestoredConfigDir.toAbsolutePath().toString(),
-        "--storage-location=gcp://" + BUCKET_NAME + "/test-dc/1",
+        "--storage-location=gcp://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--commitlog-download-dir=" + target("commitlog_download_dir"),
     };
 

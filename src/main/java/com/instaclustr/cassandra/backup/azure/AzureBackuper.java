@@ -110,7 +110,7 @@ public class AzureBackuper extends Backuper {
     private void deleteStaleBlobs() throws Exception {
         final Date expiryDate = Date.from(ZonedDateTime.now().minusWeeks(1).toInstant());
 
-        final CloudBlobDirectory directoryReference = blobContainer.getDirectoryReference(request.storageLocation.clusterId);
+        final CloudBlobDirectory directoryReference = blobContainer.getDirectoryReference(request.storageLocation.clusterId + "/" + request.storageLocation.datacenterId);
 
         for (final ListBlobItem blob : directoryReference.listBlobs(null, true, EnumSet.noneOf(BlobListingDetails.class), null, null)) {
             if (!(blob instanceof CloudBlob)) {
