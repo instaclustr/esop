@@ -27,11 +27,13 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.google.common.base.MoreObjects;
 import com.google.inject.Inject;
 import com.instaclustr.cassandra.backup.guice.StorageProviders;
 import picocli.CommandLine;
 
 public class StorageLocation {
+
     private static final Pattern filePattern = Pattern.compile("(.*)://(.*)/(.*)/(.*)/(.*)/(.*)");
     private static final Pattern cloudPattern = Pattern.compile("(.*)://(.*)/(.*)/(.*)/(.*)");
 
@@ -100,13 +102,23 @@ public class StorageLocation {
 
     @Override
     public String toString() {
-        return rawLocation;
+        return MoreObjects.toStringHelper(this)
+            .add("rawLocation", rawLocation)
+            .add("storageProvider", storageProvider)
+            .add("bucket", bucket)
+            .add("clusterId", clusterId)
+            .add("datacenterId", datacenterId)
+            .add("nodeId", nodeId)
+            .add("fileBackupDirectory", fileBackupDirectory)
+            .add("cloudLocation", cloudLocation)
+            .toString();
     }
 
     @Target({TYPE, PARAMETER, FIELD})
     @Retention(RUNTIME)
     @Constraint(validatedBy = ValidStorageLocation.StorageLocationValidator.class)
     public @interface ValidStorageLocation {
+
         String message() default "{com.instaclustr.cassandra.backup.impl.StorageLocation.StorageLocationValidator.message}";
 
         Class<?>[] groups() default {};
@@ -114,6 +126,7 @@ public class StorageLocation {
         Class<? extends Payload>[] payload() default {};
 
         class StorageLocationValidator implements ConstraintValidator<ValidStorageLocation, StorageLocation> {
+
             private final Set<String> storageProviders;
 
             @Inject
@@ -151,6 +164,7 @@ public class StorageLocation {
     }
 
     public static class StorageLocationTypeConverter implements CommandLine.ITypeConverter<StorageLocation> {
+
         @Override
         public StorageLocation convert(final String value) throws Exception {
             if (value == null) {
