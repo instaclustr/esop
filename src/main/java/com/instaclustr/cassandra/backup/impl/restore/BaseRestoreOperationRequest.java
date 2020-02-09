@@ -22,7 +22,7 @@ public class BaseRestoreOperationRequest extends OperationRequest implements Kub
     @Option(names = {"--sl", "--storage-location"},
             converter = StorageLocationTypeConverter.class,
             description = "Location from which files will be fetched for restore, in form " +
-                    "cloudProvider://bucketName/clusterId/nodeId or file:///some/path/bucketName/clusterId/nodeId. " +
+                    "cloudProvider://bucketName/clusterId/datacenterId/nodeId or file:///some/path/bucketName/clusterId/datacenterId/nodeId. " +
                     "'cloudProvider' is one of 'aws', 'azure' or 'gcp'.",
             required = true
     )

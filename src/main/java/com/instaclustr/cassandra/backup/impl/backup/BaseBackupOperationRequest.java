@@ -27,7 +27,7 @@ public class BaseBackupOperationRequest extends OperationRequest implements Kube
     @Option(names = {"--sl", "--storage-location"},
             converter = StorageLocationTypeConverter.class,
             description = "Location to which files will be backed up, in form " +
-                    "cloudProvider://bucketName/clusterId/nodeId or file:///some/path/bucketName/clusterId/nodeId. " +
+                    "cloudProvider://bucketName/clusterId/datacenterId/nodeId or file:///some/path/bucketName/clusterId/datacenterId/nodeId. " +
                     "'cloudProvider' is one of 's3', 'azure' or 'gcp'.",
             required = true)
     @NotNull
