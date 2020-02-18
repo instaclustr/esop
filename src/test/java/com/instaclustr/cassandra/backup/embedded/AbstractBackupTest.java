@@ -48,6 +48,8 @@ public class AbstractBackupTest {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractBackupTest.class);
 
+    private static final String CASSANDRA_VERSION = "3.11.6";
+
     // This is number of rows we inserted into Cassandra DB in total
     // we backed up first 6 rows. For the last two rows, they are stored in commit logs.
     // The backup procedure backs up also commit logs including remaining 2 rows
@@ -58,7 +60,7 @@ public class AbstractBackupTest {
     // We omitted one row here, on purpose, to demonstrate point in time restoration
     static int NUMBER_OF_ROWS_AFTER_RESTORATION = 7;
 
-    static Artifact CASSANDRA_ARTIFACT = Artifact.ofVersion(Version.of("3.11.5"));
+    static Artifact CASSANDRA_ARTIFACT = Artifact.ofVersion(Version.of(CASSANDRA_VERSION));
 
     protected final Path target = new File("target").toPath().toAbsolutePath();
     protected final Path cassandraDir = new File("target/cassandra").toPath().toAbsolutePath();

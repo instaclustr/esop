@@ -17,7 +17,6 @@
     <google-cloud-storage.version>1.84.0</google-cloud-storage.version>
     <aws-java-sdk.version>1.11.614</aws-java-sdk.version>
 
-    <cassandra.version>3.11.5</cassandra.version>
     <cassandra.driver.version>4.4.0</cassandra.driver.version>
 
     <version.embedded.cassandra>3.0.2</version.embedded.cassandra>
