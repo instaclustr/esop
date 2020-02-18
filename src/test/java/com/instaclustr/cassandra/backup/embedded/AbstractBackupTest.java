@@ -151,7 +151,7 @@ public class AbstractBackupTest {
         cassandraToRestoreFactory.setWorkingDirectory(cassandraRestoredDir);
         cassandraToRestoreFactory.getJvmOptions().add("-Xmx1g");
         cassandraToRestoreFactory.getJvmOptions().add("-Xms1g");
-        cassandraToRestoreFactory.setArtifact(new DefaultArtifact(Version.of("3.11.5"), cassandraRestoredDir));
+        cassandraToRestoreFactory.setArtifact(new DefaultArtifact(Version.of(CASSANDRA_VERSION), cassandraRestoredDir));
         Cassandra cassandraToRestore = cassandraToRestoreFactory.create();
 
         cassandraToRestore.start();
