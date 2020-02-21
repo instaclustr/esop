@@ -7,7 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
-import java.util.Iterator;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
@@ -100,11 +99,7 @@ public class AzureRestorer extends Restorer {
                                                                                  null,
                                                                                  null);
 
-        final Iterator<ListBlobItem> blobItemsIterator = blobItemsIterable.iterator();
-
-        while (blobItemsIterator.hasNext()) {
-            ListBlobItem listBlobItem = blobItemsIterator.next();
-
+        for (final ListBlobItem listBlobItem : blobItemsIterable) {
             try {
                 consumer.accept(objectKeyToRemoteReference(Paths.get(containerPattern.matcher(listBlobItem.getUri().getPath()).replaceFirst(""))));
             } catch (StorageException | URISyntaxException e) {

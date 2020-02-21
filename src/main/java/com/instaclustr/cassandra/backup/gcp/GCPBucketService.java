@@ -14,8 +14,12 @@ import com.instaclustr.cassandra.backup.gcp.GCPModule.GoogleStorageFactory;
 import com.instaclustr.cassandra.backup.impl.BucketService;
 import com.instaclustr.cassandra.backup.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GCPBucketService implements BucketService {
+
+    private static final Logger logger = LoggerFactory.getLogger(GCPBucketService.class);
 
     private final GoogleStorageFactory storageFactory;
 
@@ -43,9 +47,15 @@ public class GCPBucketService implements BucketService {
     @Override
     public void create(final String bucketName) {
         try {
-            storage.create(BucketInfo.of(bucketName));
+            if (!doesExist(bucketName)) {
+                storage.create(BucketInfo.of(bucketName));
+            }
         } catch (final StorageException ex) {
-            throw new GCPModuleException(format("Unable to create bucket %s", bucketName), ex);
+            if (ex.getCode() == 409 && ex.getMessage().contains("You already own this bucket.")) {
+                logger.warn(format("Unable to create bucket %s: %s", bucketName, ex.getMessage()));
+            } else {
+                throw new GCPModuleException(format("Unable to create bucket %s", bucketName), ex);
+            }
         }
     }
 

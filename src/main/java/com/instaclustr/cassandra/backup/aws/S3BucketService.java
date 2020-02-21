@@ -1,11 +1,15 @@
 package com.instaclustr.cassandra.backup.aws;
 
+import static java.lang.String.format;
+
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
+import com.instaclustr.cassandra.backup.aws.S3Module.S3ModuleException;
 import com.instaclustr.cassandra.backup.aws.S3Module.TransferManagerFactory;
 import com.instaclustr.cassandra.backup.impl.BucketService;
 import com.instaclustr.cassandra.backup.impl.backup.BackupCommitLogsOperationRequest;
@@ -38,7 +42,17 @@ public class S3BucketService implements BucketService {
 
     @Override
     public void create(final String bucketName) {
-        transferManager.getAmazonS3Client().createBucket(bucketName);
+        if (!doesExist(bucketName)) {
+            try {
+                transferManager.getAmazonS3Client().createBucket(bucketName);
+            } catch (final AmazonS3Exception ex) {
+                if (ex.getStatusCode() == 409 && "BucketAlreadyOwnedByYou".equals(ex.getErrorCode())) {
+                    logger.warn(ex.getErrorMessage());
+                } else {
+                    throw new S3ModuleException(format("Unable to create bucket %s", bucketName), ex);
+                }
+            }
+        }
     }
 
     @Override
