@@ -130,6 +130,11 @@ For S3, you have to set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` as envir
 or `aws.accessKeyId` and `aws.secretKey` as system properties or you put them into ~/.aws/credentials.
 S3 backup module is receptive to `AWS_REGION` as well as `AWS_ENDPOINT` environment variables.
 
+As of release `1.1.4` the aws-sdk-java library is capable of using
+https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html[IAM Roles for Service Accounts].
+IRSA allows you to grant an AWS IAM Role to a Kubernetes Service Account without mounting secrets,
+passing environment variables or using node profiles.
+
 ### Azure
 
 For Azure, you need to set `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` environment variables.
