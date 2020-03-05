@@ -50,17 +50,16 @@ please consult `help` of `backup` command to know details.
 
 ----
 $ backup --jmx-service 127.0.0.1:7199 \
-  --storage-location=file:///destination/to/backup/test-dc/1 \
-  --data-directory=/my/installation/of/cassandra
+  --storage-location=file:///destination/to/backup/cluster-name/dc-name/node-id \
+  --data-directory=/my/installation/of/cassandra/data
 ----
 
 If you want to upload SSTables into AWS / GCP or Azure, just change `file://` protocol to either `s3`,
 `gcp` or `azure`. The first part of the path is the bucket you want to upload files to, for `s3`,
-it would be like `s3://bucket-for-my-cluster/name-of-dc/name-of-host`. If you want to use different
+it would be like `s3://bucket-for-my-cluster/cluster-name/dc-name/node-id`. If you want to use different
 cloud, just change the protocol respectively.
 
-As of now, for cloud storage locations, a bucket to backup up to has to already exist prior to
-`backup` invocation.
+If a bucket does not exist, it will be automatically created.
 
 ## Example of `commitlog-backup`
 
@@ -68,8 +67,8 @@ You can backup commit logs as well. Example of commit log backup is like the fol
 
 ----
 $ commitlog-backup \
-  --storage-location=file:///destination/to/backup/test-dc/1, \
-  --data-directory=/my/installation/of/cassandra
+  --storage-location=file:///destination/to/backup/cluster-name/dc-name/node-id, \
+  --data-directory=/my/installation/of/cassandra/data
 ----
 
 Note that there is not any need to specify jmx-service because it is not needed. JMX is needed
@@ -80,10 +79,10 @@ for taking snapshots, but here we do not take any.
 The restoration of a node is achieved by following parameters
 
 ----
-$ restore --data-directory=/my/installation/of/restored-cassandra \
+$ restore --data-directory=/my/installation/of/restored-cassandra/data \
           --config-directory=/my/installation/of/restored-cassandra/conf \
           --snapshot-tag=stefansnapshot" \
-          --storage-location=file:///destination/to/backup/test-dc/1 \
+          --storage-location=s3://bucket-name/cluster-name/dc-name/node-id \
           --update-cassandra-yaml=true"
 ----
 
@@ -102,9 +101,9 @@ in backup directory, under `tokens` directory.
 The restoration of commit logs is done e.g. like this:
 
 ----
-$ commitlog-restore --data-directory=/my/installation/of/restored-cassandra
+$ commitlog-restore --data-directory=/my/installation/of/restored-cassandra/data
                     --config-directory=/my/installation/of/restored-cassandra/conf
-                    --storage-location=file:///destination/to/backup/test-dc/1
+                    --storage-location=s3://bucket-name/cluster-name/dc-name/node-id
                     --commitlog-download-dir=/dir/where/commitlogs/are/downloaded
                     --timestamp-end=unix_timestamp_of_last_transaction_to_replay
 ----
@@ -139,6 +138,30 @@ For Azure, you need to set `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` envir
 
 For GCP you have to use `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
 
+## Backup resolution for file:// protocol
+
+In every case, file has to start with full path (file:///, three slashes).
+File location does not have a notion of a _bucket_ but we are using it here
+regardless, it the following examples, _bucket_ will be _a_.
+
+If you do not specify full path (e.g. like it is shown in the last example),
+the path will be the directory from which you are invoking this tool _plus_ bucket ("a" in our case).
+
+It does not matter you put slash at the end of whole location, it will be removed.
+
+.file path resolution
+|===
+|storage location |path
+
+|file:///tmp/some/path/a/b/c/d
+|/tmp/some/path/a
+
+|file:///tmp/a/b/c/d
+|/tmp/a
+
+|file:///a/b/c/d
+|$(pwd)/a
+|===
 # Build
 
 You build this tool by invoking:
