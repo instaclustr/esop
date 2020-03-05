@@ -47,7 +47,12 @@ public class StorageLocation {
     public boolean cloudLocation;
 
     public StorageLocation(final String rawLocation) {
-        this.rawLocation = rawLocation;
+
+        if (rawLocation.endsWith("/")) {
+            this.rawLocation = rawLocation.substring(0, rawLocation.length() - 1);
+        } else {
+            this.rawLocation = rawLocation;
+        }
 
         if (this.rawLocation.startsWith("file")) {
             initializeFileBackupLocation(this.rawLocation);
@@ -71,6 +76,10 @@ public class StorageLocation {
         this.clusterId = matcher.group(4);
         this.datacenterId = matcher.group(5);
         this.nodeId = matcher.group(6);
+
+        if (fileBackupDirectory.toString().isEmpty()) {
+            fileBackupDirectory = fileBackupDirectory.toAbsolutePath();
+        }
     }
 
     private void initializeCloudBackupLocation(final String backupLocation) {
