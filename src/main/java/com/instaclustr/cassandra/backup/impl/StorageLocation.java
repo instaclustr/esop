@@ -90,12 +90,12 @@ public class StorageLocation {
 
     public void validate() throws IllegalStateException {
         if (cloudLocation) {
-            if (rawLocation == null || storageProvider == null || bucket == null || datacenterId == null || nodeId == null) {
-                throw new IllegalStateException(format("Backup location %s is not in form protocol://bucketName/clusterId/nodeId",
+            if (rawLocation == null || storageProvider == null || bucket == null || clusterId == null || datacenterId == null || nodeId == null) {
+                throw new IllegalStateException(format("Backup location %s is not in form protocol://bucketName/clusterId/datacenterid/nodeId",
                                                        rawLocation));
             }
-        } else if (rawLocation == null || storageProvider == null || bucket == null || datacenterId == null || nodeId == null || fileBackupDirectory == null) {
-            throw new IllegalStateException(format("Backup location %s is not in form file:///some/backup/path/bucketName/clusterId/nodeId",
+        } else if (rawLocation == null || storageProvider == null || bucket == null || clusterId == null || datacenterId == null || nodeId == null || fileBackupDirectory == null) {
+            throw new IllegalStateException(format("Backup location %s is not in form file:///some/backup/path/clusterId/datacenterId/nodeId",
                                                    rawLocation));
         }
     }
