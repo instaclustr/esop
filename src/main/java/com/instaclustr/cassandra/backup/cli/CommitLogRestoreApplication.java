@@ -19,10 +19,10 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
 @Command(name = "commitlog-restore",
-    mixinStandardHelpOptions = true,
     description = "Restores archived commit logs to node.",
     sortOptions = false,
-    versionProvider = BackupRestoreCLI.class
+    versionProvider = BackupRestoreCLI.class,
+    mixinStandardHelpOptions = true
 )
 public class CommitLogRestoreApplication implements Runnable {
 

@@ -19,10 +19,10 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
 @Command(name = "commitlog-backup",
-    mixinStandardHelpOptions = true,
     description = "Upload archived commit logs to remote storage.",
     sortOptions = false,
-    versionProvider = BackupRestoreCLI.class
+    versionProvider = BackupRestoreCLI.class,
+    mixinStandardHelpOptions = true
 )
 public class CommitLogBackupApplication implements Runnable {
 

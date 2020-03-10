@@ -28,19 +28,21 @@ import org.slf4j.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
-@Command(subcommands = {BackupApplication.class, RestoreApplication.class, CommitLogBackupApplication.class, CommitLogRestoreApplication.class},
-    synopsisSubcommandLabel = "COMMAND",
-    versionProvider = BackupRestoreCLI.class
+@Command(subcommands = {
+    BackupApplication.class,
+    RestoreApplication.class,
+    CommitLogBackupApplication.class,
+    CommitLogRestoreApplication.class
+},
+    versionProvider = BackupRestoreCLI.class,
+    name = "backup-restore",
+    usageHelpWidth = 128,
+    description = "Application for backup and restore of a Cassandra node.",
+    mixinStandardHelpOptions = true
 )
 public class BackupRestoreCLI extends CLIApplication implements Runnable {
-
-    @Option(names = {"-V", "--version"},
-        versionHelp = true,
-        description = "print version information and exit")
-    private boolean version;
 
     @Spec
     private CommandSpec spec;
@@ -59,11 +61,6 @@ public class BackupRestoreCLI extends CLIApplication implements Runnable {
         if (exit) {
             System.exit(exitCode);
         }
-    }
-
-    @Override
-    public void run() {
-        throw new CommandLine.ParameterException(spec.commandLine(), "Missing required subcommand.");
     }
 
     static void init(final Runnable command,
@@ -119,5 +116,10 @@ public class BackupRestoreCLI extends CLIApplication implements Runnable {
     @Override
     public String getImplementationTitle() {
         return "backup-restore";
+    }
+
+    @Override
+    public void run() {
+        throw new CommandLine.ParameterException(spec.commandLine(), "Missing required parameter.");
     }
 }

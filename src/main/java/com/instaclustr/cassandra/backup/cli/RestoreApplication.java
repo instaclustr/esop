@@ -19,10 +19,10 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
 @Command(name = "restore",
-    mixinStandardHelpOptions = true,
     description = "Restore the Cassandra data on this node to a specified point-in-time.",
     sortOptions = false,
-    versionProvider = BackupRestoreCLI.class
+    versionProvider = BackupRestoreCLI.class,
+    mixinStandardHelpOptions = true
 )
 public class RestoreApplication implements Runnable {
 

@@ -21,18 +21,18 @@ import picocli.CommandLine.Parameters;
 public class BackupOperationRequest extends BaseBackupOperationRequest {
 
     @Option(names = {"-s", "--st", "--snapshot-tag"},
-            description = "Snapshot tag name. Default is equiv. to 'autosnap-`date +s`'")
+        description = "Snapshot tag name. Default is equiv. to 'autosnap-`date +s`'")
     public String snapshotTag = format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis()));
 
     @Option(names = "--offline",
-            description = "Cassandra is not running (won't use JMX to snapshot, no token lists uploaded)")
+        description = "Cassandra is not running (won't use JMX to snapshot, no token lists uploaded)")
     public boolean offlineSnapshot;
 
     @Option(names = {"--table"},
-            description = "The column family to snapshot/upload. Requires a keyspace to be specified.")
+        description = "The column family to snapshot/upload. Requires a keyspace to be specified.")
     public String table;
 
-    @Parameters
+    @Parameters(description = "keyspaces to backup, if not specified, all keyspaces will be backed up")
     public List<String> keyspaces;
 
     public BackupOperationRequest() {
@@ -64,20 +64,20 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
-                .add("storageLocation", storageLocation)
-                .add("duration", duration)
-                .add("bandwidth", bandwidth)
-                .add("concurrentConnections", concurrentConnections)
-                .add("waitForLock", waitForLock)
-                .add("lockFile", lockFile)
-                .add("sharedContainerPath", sharedContainerPath)
-                .add("cassandraDirectory", cassandraDirectory)
-                .add("keyspaces", keyspaces)
-                .add("snapshotTag", snapshotTag)
-                .add("offlineSnapshot", offlineSnapshot)
-                .add("table", table)
-                .add("k8sNamespace", k8sNamespace)
-                .add("k8sSecretName", k8sBackupSecretName)
-                .toString();
+            .add("storageLocation", storageLocation)
+            .add("duration", duration)
+            .add("bandwidth", bandwidth)
+            .add("concurrentConnections", concurrentConnections)
+            .add("waitForLock", waitForLock)
+            .add("lockFile", lockFile)
+            .add("sharedContainerPath", sharedContainerPath)
+            .add("cassandraDirectory", cassandraDirectory)
+            .add("keyspaces", keyspaces)
+            .add("snapshotTag", snapshotTag)
+            .add("offlineSnapshot", offlineSnapshot)
+            .add("table", table)
+            .add("k8sNamespace", k8sNamespace)
+            .add("k8sSecretName", k8sBackupSecretName)
+            .toString();
     }
 }

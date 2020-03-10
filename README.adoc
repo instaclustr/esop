@@ -21,7 +21,7 @@ It is command line application, invoke it without any arguments to see help. You
 `help backup` for `backup` command, for example.
 
 ----
-java -jar target/instaclustr-backup-restore-1.0.0.jar
+java -jar target/instaclustr-backup-restore.jar
 Missing required subcommand.
 Usage: <main class> [-V] COMMAND
   -V, --version   print version information and exit
