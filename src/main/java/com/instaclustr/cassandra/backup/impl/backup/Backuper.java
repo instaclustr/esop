@@ -1,11 +1,11 @@
 package com.instaclustr.cassandra.backup.impl.backup;
 
-import static java.nio.file.StandardOpenOption.READ;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.io.InputStream;
-import java.nio.channels.FileChannel;
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -22,7 +22,6 @@ import com.instaclustr.cassandra.backup.impl.OperationProgressTracker;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.StorageInteractor;
 import com.instaclustr.io.RateLimitedInputStream;
-import com.instaclustr.io.SeekableByteChannelInputStream;
 import com.instaclustr.measure.DataRate;
 import com.instaclustr.measure.DataSize;
 import com.instaclustr.threading.Executors.ExecutorServiceSupplier;
@@ -76,7 +75,7 @@ public abstract class Backuper extends StorageInteractor {
         final Iterable<Future<?>> uploadResults = manifest.stream().map((manifestEntry) -> {
             try {
                 return executorService.submit(() -> {
-                    try (final InputStream s = new SeekableByteChannelInputStream(FileChannel.open(manifestEntry.localFile, READ))) {
+                    try (final InputStream s = new BufferedInputStream(new FileInputStream(manifestEntry.localFile.toFile()))) {
 
                         if (manifestEntry.type == ManifestEntry.Type.MANIFEST_FILE) {
                             completionLatch.await();
