@@ -48,7 +48,7 @@ public class AbstractBackupTest {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractBackupTest.class);
 
-    private static final String CASSANDRA_VERSION = "3.11.6";
+    private static final String CASSANDRA_VERSION = System.getProperty("backup.tests.cassandra.version", "3.11.6");
 
     // This is number of rows we inserted into Cassandra DB in total
     // we backed up first 6 rows. For the last two rows, they are stored in commit logs.
