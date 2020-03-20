@@ -5,7 +5,7 @@
 
   <groupId>com.instaclustr</groupId>
   <artifactId>instaclustr-backup-restore</artifactId>
-  <version>1.1.5-SNAPSHOT</version>
+  <version>1.1.5</version>
 
   <name>instaclustr-backup-restore</name>
   <description>Backup and restoration tooling for Cassandra</description>
