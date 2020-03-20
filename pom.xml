@@ -12,7 +12,7 @@
   <url>https://github.com/instaclustr/cassandra-backup</url>
 
   <properties>
-    <instaclustr.commons.version>1.2.0</instaclustr.commons.version>
+    <instaclustr.commons.version>1.2.1</instaclustr.commons.version>
     <azure-storage.version>8.6.0</azure-storage.version>
     <google-cloud-storage.version>1.84.0</google-cloud-storage.version>
     <aws-java-sdk.version>1.11.739</aws-java-sdk.version>
