@@ -47,7 +47,7 @@ jobs:
           key: cassandra-backup-{{ checksum "pom.xml" }}
 
       # Cassandra 3.x does not run with Java 11 so we are running with Cassandra 4.0 as tests are running embedded Cassandra instance too
-      - run: (echo "${google_application_credentials}" > /tmp/gcp.json) && mvn clean install -PcloudTests -Dbackup.tests.cassandra.version=4.0-alpha3
+      - run: (echo "${google_application_credentials}" > /tmp/gcp.json) && mvn clean install -PcloudTests -Dbackup.tests.cassandra.version=4.0-alpha3 -Djava.version=11
 
       - store_test_results:
           path: ~/cassandra-backup/target/surefire-reports

@@ -35,6 +35,7 @@
     <nexus.staging.maven.plugin.version>1.6.8</nexus.staging.maven.plugin.version>
     <cassandra.maven.plugin.version>3.6</cassandra.maven.plugin.version>
 
+    <java.version>8</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -258,8 +259,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${maven.compiler.plugin.version}</version>
         <configuration>
-          <source>8</source>
-          <target>8</target>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
           <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
