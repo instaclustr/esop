@@ -23,7 +23,8 @@ import com.instaclustr.picocli.CassandraJMXSpec;
 import com.instaclustr.threading.ExecutorsModule;
 import com.instaclustr.validation.GuiceInjectingConstraintValidatorFactory;
 import jmx.org.apache.cassandra.CassandraJMXConnectionInfo;
-import jmx.org.apache.cassandra.service.StorageServiceMBean;
+import jmx.org.apache.cassandra.service.cassandra3.StorageServiceMBean;
+import jmx.org.apache.cassandra.service.cassandra4.Cassandra4StorageServiceMBean;
 import org.slf4j.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -82,6 +83,7 @@ public class BackupRestoreCLI extends CLIApplication implements Runnable {
                 @Override
                 protected void configure() {
                     bind(StorageServiceMBean.class).toProvider(() -> null);
+                    bind(Cassandra4StorageServiceMBean.class).toProvider(() -> null);
                 }
             });
         }
