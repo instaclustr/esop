@@ -10,7 +10,6 @@ import java.util.EnumSet;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.cassandra.backup.azure.AzureModule.CloudStorageAccountFactory;
-import com.instaclustr.cassandra.backup.impl.OperationProgressTracker;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
@@ -91,15 +90,9 @@ public class AzureBackuper extends Backuper {
     @Override
     public void uploadFile(final long size,
                            final InputStream localFileStream,
-                           final RemoteObjectReference object,
-                           final OperationProgressTracker operationProgressTracker) throws Exception {
+                           final RemoteObjectReference object) throws Exception {
         final CloudBlockBlob blob = ((AzureRemoteObjectReference) object).blob;
-
-        try {
-            blob.upload(localFileStream, size);
-        } finally {
-            operationProgressTracker.update();
-        }
+        blob.upload(localFileStream, size);
     }
 
     @Override

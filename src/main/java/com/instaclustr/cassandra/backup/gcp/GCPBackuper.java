@@ -16,7 +16,6 @@ import com.google.common.io.ByteStreams;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.cassandra.backup.gcp.GCPModule.GoogleStorageFactory;
-import com.instaclustr.cassandra.backup.impl.OperationProgressTracker;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
@@ -71,15 +70,12 @@ public class GCPBackuper extends Backuper {
     @Override
     public void uploadFile(final long size,
                            final InputStream localFileStream,
-                           final RemoteObjectReference object,
-                           final OperationProgressTracker operationProgressTracker) throws Exception {
+                           final RemoteObjectReference object) throws Exception {
         final BlobId blobId = ((GCPRemoteObjectReference) object).blobId;
 
         try (final WriteChannel outputChannel = storage.writer(BlobInfo.newBuilder(blobId).build(), Storage.BlobWriteOption.predefinedAcl(BUCKET_OWNER_FULL_CONTROL));
             final ReadableByteChannel inputChannel = Channels.newChannel(localFileStream)) {
             ByteStreams.copy(inputChannel, outputChannel);
-        } finally {
-            operationProgressTracker.update();
         }
     }
 

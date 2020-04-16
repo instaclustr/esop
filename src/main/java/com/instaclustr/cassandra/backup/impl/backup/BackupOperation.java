@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -96,7 +97,12 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
                                                                     request.cassandraDirectory.resolve("data"));
 
         Iterables.addAll(manifest, saveTokenList(tokens));
-        Iterables.addAll(manifest, saveManifest(manifest, request.snapshotTag));
+
+        final Path snapshotManifestDirectory = Files.createDirectories(request.sharedContainerPath.resolve(Paths.get("tmp/cassandra-operator/manifests")));
+
+        Path manifestFile = prepareManifestFile(snapshotManifestDirectory, request.snapshotTag);
+
+        Iterables.addAll(manifest, saveManifest(manifest, manifestFile));
 
         try (final BucketService bucketService = bucketServiceFactoryMap.get(request.storageLocation.storageProvider).createBucketService(request)) {
             bucketService.createIfMissing(request.storageLocation.bucket);
@@ -104,6 +110,14 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
 
         try (final Backuper backuper = backuperFactoryMap.get(request.storageLocation.storageProvider).createBackuper(request)) {
             backuper.uploadOrFreshenFiles(manifest, new OperationProgressTracker(this, manifest.size()));
+        }
+
+        try {
+            if (!manifestFile.toFile().delete()) {
+                logger.error(format("Local backup manifest file %s was not deleted.", manifestFile.toFile().getAbsolutePath()));
+            }
+        } catch (Exception ex) {
+            logger.error(format("Unable to delete local manifest file %s", manifestFile.toFile().getAbsolutePath()), ex);
         }
     }
 
@@ -118,7 +132,7 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
 
         if (kcfss != null) {
             final String collect = StreamSupport.stream(kcfss.spliterator(), false)
-                .map(kcfs -> String.format("[%s %s %s]", kcfs.snapshotDirectory, kcfs.keyspace, kcfs.table))
+                .map(kcfs -> format("[%s %s %s]", kcfs.snapshotDirectory, kcfs.keyspace, kcfs.table))
                 .collect(joining(","));
 
             logger.debug("Found snapshots {}", collect);
@@ -154,22 +168,28 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
         return manifest;
     }
 
-    private Iterable<ManifestEntry> saveManifest(final Iterable<ManifestEntry> manifest, String tag) throws IOException {
-        final Path snapshotManifestDirectory = Files.createDirectories(request.sharedContainerPath.resolve(Paths.get("tmp/cassandra-operator/manifests")));
+    private Path prepareManifestFile(Path snapshotManifestDirectory, String tag) throws IOException {
         final Path manifestFilePath = snapshotManifestDirectory.resolve(tag);
 
         Files.deleteIfExists(manifestFilePath);
         Files.createFile(manifestFilePath);
+
+        return manifestFilePath;
+    }
+
+    private Iterable<ManifestEntry> saveManifest(final Iterable<ManifestEntry> manifest, Path manifestFilePath) throws IOException {
 
         try (final OutputStream stream = Files.newOutputStream(manifestFilePath);
             final PrintStream writer = new PrintStream(stream)) {
             for (final ManifestEntry manifestEntry : manifest) {
                 writer.println(Joiner.on(' ').join(manifestEntry.size, manifestEntry.objectKey));
             }
+        } catch (Exception ex) {
+            logger.error(format("Unable to write manifest entries into manifest file %s", manifestFilePath.toAbsolutePath().toString()), ex);
+            if (manifestFilePath.toFile().delete()) {
+                logger.error(format("It was not possible to delete manifest file %s after there was error to write manifest entries into it.", manifestFilePath.toString()));
+            }
         }
-
-        // TODO - clean this up! dont wait until jvm is shut down, what if this runs in sidecar?
-        manifestFilePath.toFile().deleteOnExit();
 
         return ImmutableList.of(new ManifestEntry(Paths.get("manifests").resolve(manifestFilePath.getFileName()),
                                                   manifestFilePath,
@@ -295,24 +315,26 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
             if (request.table != null) {
                 final String keyspace = Iterables.getOnlyElement(request.keyspaces);
 
-                logger.info("Taking snapshot {} on {}.{}.", request.tag, keyspace, request.table);
-                // Currently only supported option by Cassandra during snapshot is to skipFlush
-                // An empty map is used as skipping flush is currently not implemented.
+                logger.info("Taking snapshot {} on table {}.{}.", request.tag, keyspace, request.table);
 
                 cassandraJMXService.doWithStorageServiceMBean(new FunctionWithEx<StorageServiceMBean, Void>() {
                     @Override
                     public Void apply(StorageServiceMBean ssMBean) throws Exception {
-                        ssMBean.takeSnapshot(keyspace, request.table, request.tag);
+                        ssMBean.takeSnapshot(request.tag,
+                                             new HashMap<>(),
+                                             keyspace + "." + request.table);
                         return null;
                     }
                 });
             } else {
-                logger.info("Taking snapshot \"{}\" on {}.", request.tag, (request.keyspaces.isEmpty() ? "\"all\"" : request.keyspaces));
+                logger.info("Taking snapshot {} on {} keyspace(s).", request.tag, (request.keyspaces.isEmpty() ? "all" : request.keyspaces));
 
                 cassandraJMXService.doWithStorageServiceMBean(new FunctionWithEx<StorageServiceMBean, Void>() {
                     @Override
                     public Void apply(StorageServiceMBean ssMBean) throws Exception {
-                        ssMBean.takeSnapshot(request.tag, request.keyspaces.toArray(new String[0]));
+                        ssMBean.takeSnapshot(request.tag,
+                                             new HashMap<>(),
+                                             request.keyspaces.toArray(new String[0]));
                         return null;
                     }
                 });

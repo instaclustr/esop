@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 
 import com.google.common.util.concurrent.Futures;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
+import com.instaclustr.cassandra.backup.impl.OperationProgressTracker;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.StorageInteractor;
 import com.instaclustr.threading.Executors.ExecutorServiceSupplier;
@@ -51,7 +52,15 @@ public abstract class Restorer extends StorageInteractor {
 
     public abstract void consumeFiles(final RemoteObjectReference prefix, final Consumer<RemoteObjectReference> consumer) throws Exception;
 
-    public void downloadFiles(final Collection<ManifestEntry> manifest) throws Exception {
+    public void downloadFiles(final Collection<ManifestEntry> manifest,
+                              final OperationProgressTracker operationProgressTracker) throws Exception {
+
+        if (manifest.isEmpty()) {
+            operationProgressTracker.complete();
+            logger.info("0 files to download.");
+            return;
+        }
+
         logger.info("{} files to download.", manifest.size());
 
         final CountDownLatch completionLatch = new CountDownLatch(manifest.size());
@@ -63,21 +72,21 @@ public abstract class Restorer extends StorageInteractor {
                 return executorService.submit(() -> {
                     RemoteObjectReference remoteObjectReference = objectKeyToRemoteReference(entry.objectKey);
                     try {
-                        logger.info("Downloading file \"{}\" to \"{}\". {} files to go.", remoteObjectReference.getObjectKey(), entry.localFile, completionLatch.getCount());
+                        logger.info(String.format("Downloading file %s to %s. %s files to go.", remoteObjectReference.getObjectKey(), entry.localFile, completionLatch.getCount()));
 
                         this.downloadFile(entry.localFile, remoteObjectReference);
 
-                        logger.info("Successfully downloaded file \"{}\" to \"{}\".", remoteObjectReference.getObjectKey(), entry.localFile);
+                        logger.info(String.format("Successfully downloaded file %s to %s.", remoteObjectReference.getObjectKey(), entry.localFile));
 
                         return null;
                     } catch (final Throwable t) {
-                        logger.error("Failed to download file \"{}\".", remoteObjectReference.getObjectKey(), t);
+                        logger.error(String.format("Failed to download file %s.", remoteObjectReference.getObjectKey()), t);
 
                         executorService.shutdownNow(); // prevent new tasks or other tasks from running
 
                         throw t;
-
                     } finally {
+                        operationProgressTracker.update();
                         completionLatch.countDown();
                     }
                 });

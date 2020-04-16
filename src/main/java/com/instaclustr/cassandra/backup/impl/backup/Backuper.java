@@ -51,8 +51,7 @@ public abstract class Backuper extends StorageInteractor {
 
     public abstract void uploadFile(final long size,
                                     final InputStream localFileStream,
-                                    final RemoteObjectReference object,
-                                    final OperationProgressTracker operationProgressTracker) throws Exception;
+                                    final RemoteObjectReference object) throws Exception;
 
     public void uploadOrFreshenFiles(final Collection<ManifestEntry> manifest,
                                      final OperationProgressTracker operationProgressTracker) throws Exception {
@@ -102,7 +101,7 @@ public abstract class Backuper extends StorageInteractor {
                                     DataSize.bytesToHumanReadable(manifestEntry.size),
                                     completionLatch.getCount());
 
-                        uploadFile(manifestEntry.size, rateLimitedStream, remoteObjectReference, operationProgressTracker);
+                        uploadFile(manifestEntry.size, rateLimitedStream, remoteObjectReference);
 
                         return null;
                     } catch (final Throwable t) {
@@ -112,6 +111,7 @@ public abstract class Backuper extends StorageInteractor {
 
                         throw t;
                     } finally {
+                        operationProgressTracker.update();
                         completionLatch.countDown();
                     }
                 });

@@ -10,7 +10,7 @@ public class LocalBucketService implements BucketService {
     }
 
     @Override
-    public void createIfMissing(final String bucketname) {
+    public void createIfMissing(final String bucketName) {
 
     }
 

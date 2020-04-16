@@ -28,7 +28,6 @@ import com.amazonaws.services.s3.transfer.internal.S3ProgressListener;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.cassandra.backup.aws.S3Module.TransferManagerFactory;
-import com.instaclustr.cassandra.backup.impl.OperationProgressTracker;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
@@ -94,8 +93,7 @@ public class S3Backuper extends Backuper {
     public void uploadFile(
         final long size,
         final InputStream localFileStream,
-        final RemoteObjectReference object,
-        final OperationProgressTracker operationProgressTracker) throws Exception {
+        final RemoteObjectReference object) throws Exception {
         final S3RemoteObjectReference s3RemoteObjectReference = (S3RemoteObjectReference) object;
 
         final PutObjectRequest putObjectRequest = new PutObjectRequest(request.storageLocation.bucket,
@@ -108,8 +106,6 @@ public class S3Backuper extends Backuper {
         final UploadProgressListener listener = new UploadProgressListener(s3RemoteObjectReference);
 
         final Optional<AmazonClientException> exception = ofNullable(transferManager.upload(putObjectRequest, listener).waitForException());
-
-        operationProgressTracker.update();
 
         if (exception.isPresent()) {
             throw exception.get();

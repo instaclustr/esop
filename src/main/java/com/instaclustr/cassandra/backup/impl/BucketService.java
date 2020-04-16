@@ -4,9 +4,9 @@ public interface BucketService extends AutoCloseable {
 
     boolean doesExist(String bucketName);
 
-    default void createIfMissing(String bucketname) {
-        if (!doesExist(bucketname)) {
-            create(bucketname);
+    default void createIfMissing(String bucketName) {
+        if (!doesExist(bucketName)) {
+            create(bucketName);
         }
     }
 

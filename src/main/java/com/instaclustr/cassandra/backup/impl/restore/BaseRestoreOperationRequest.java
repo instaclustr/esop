@@ -1,11 +1,8 @@
 package com.instaclustr.cassandra.backup.impl.restore;
 
 import javax.validation.constraints.NotNull;
-
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.instaclustr.cassandra.backup.impl.KubernetesAwareRequest;

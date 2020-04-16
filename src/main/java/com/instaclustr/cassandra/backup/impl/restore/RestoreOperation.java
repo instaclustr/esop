@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.instaclustr.cassandra.backup.guice.RestorerFactory;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
+import com.instaclustr.cassandra.backup.impl.OperationProgressTracker;
 import com.instaclustr.cassandra.backup.impl.SSTableUtils;
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.io.GlobalLock;
@@ -166,7 +167,7 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> {
         });
 
         // 7. Download files in the manifest
-        restorer.downloadFiles(downloadManifest);
+        restorer.downloadFiles(downloadManifest, new OperationProgressTracker(this, downloadManifest.size()));
 
         // 8. download tokens
         downloadTokens(restorer);

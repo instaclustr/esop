@@ -28,6 +28,7 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.instaclustr.cassandra.backup.guice.RestorerFactory;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
+import com.instaclustr.cassandra.backup.impl.OperationProgressTracker;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.operations.Operation;
 import org.slf4j.Logger;
@@ -126,7 +127,7 @@ public class RestoreCommitLogsOperation extends Operation<RestoreCommitLogsOpera
             return;
         }
 
-        restorer.downloadFiles(parsedCommitlogList);
+        restorer.downloadFiles(parsedCommitlogList, new OperationProgressTracker(this, parsedCommitlogList.size()));
     }
 
     private void updateCommitLogArchivingProperties() {
