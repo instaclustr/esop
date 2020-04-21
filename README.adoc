@@ -229,3 +229,5 @@ You have to specify these system properties to run these tests succesfully:
 -Dazurestorageaccount={your azure storage account}
 -Dazurestoragekey={your azure storage key}
 ----
+
+Please see https://www.instaclustr.com/support/documentation/announcements/instaclustr-open-source-project-status/ for Instaclustr support status of this project
