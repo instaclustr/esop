@@ -95,14 +95,13 @@ public class SSTableUtils {
      * Traverses the {@code tablePath} directory and generates a stream of ManifestEntry to be uploaded to the {@code tableBackupPath}
      * directory. It includes files which only belongs to sstables or secondary indexes.
      *
-     * @param tablePath
+     * @param snapshotDirectory
      * @param tableBackupPath
      * @return
      * @throws IOException
      */
-    public static Stream<ManifestEntry> ssTableManifest(Path tablePath, Path tableBackupPath) throws IOException {
-
-        return Files.list(tablePath)
+    public static Stream<ManifestEntry> ssTableManifest(Path snapshotDirectory, Path tableBackupPath) throws IOException {
+        return Files.list(snapshotDirectory)
                 .flatMap(path -> {
                     if (isCassandra22SecIndex(path)) {
                         return tryListFiles(path);
@@ -111,34 +110,22 @@ public class SSTableUtils {
                 })
                 .filter(path -> SSTABLE_RE.matcher(path.getFileName().toString()).matches())
                 .sorted()
-                .map(path -> {
+                .map(localPath -> {
                     try {
-                        final String hash = sstableHash(path);
-                        final Path tableRelative = tablePath.relativize(path);
-                        final Path parent = tableRelative.getParent();
+                        final String hash = sstableHash(localPath);
+                        final Path manifestComponentFileName = snapshotDirectory.relativize(localPath);
+                        final Path parent = manifestComponentFileName.getParent();
                         Path backupPath = tableBackupPath;
                         if (parent != null) {
                             backupPath = backupPath.resolve(parent);
                         }
-                        backupPath = backupPath.resolve(hash).resolve(tableRelative.getFileName());
-                        return new ManifestEntry(backupPath, path, ManifestEntry.Type.FILE);
+                        backupPath = backupPath.resolve(hash).resolve(manifestComponentFileName.getFileName());
+                        return new ManifestEntry(backupPath, localPath, ManifestEntry.Type.FILE);
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
                 });
     }
-
-    public static Map<String, List<Path>> listSSTables(Path table) throws IOException {
-        return Files.list(table)
-                .filter(path -> SSTABLE_RE.matcher(path.getFileName().toString()).matches())
-                .collect(Collectors.groupingBy(path -> {
-                    Matcher matcher = SSTABLE_RE.matcher(path.getFileName().toString());
-                    //noinspection ResultOfMethodCallIgnored
-                    matcher.matches();
-                    return matcher.group(SSTABLE_GENERATION_IDX);
-                }));
-    }
-
 
     private static Stream<? extends Path> tryListFiles(Path path) {
         try {

@@ -74,9 +74,15 @@ public abstract class Restorer extends StorageInteractor {
                     try {
                         logger.info(String.format("Downloading file %s to %s. %s files to go.", remoteObjectReference.getObjectKey(), entry.localFile, completionLatch.getCount()));
 
-                        this.downloadFile(entry.localFile, remoteObjectReference);
+                        Path localPath = entry.localFile;
 
-                        logger.info(String.format("Successfully downloaded file %s to %s.", remoteObjectReference.getObjectKey(), entry.localFile));
+                        if (remoteObjectReference.canonicalPath.endsWith("-schema.cql")) {
+                            localPath = entry.localFile.getParent().resolve("schema.cql");
+                        }
+
+                        this.downloadFile(localPath, remoteObjectReference);
+
+                        logger.info(String.format("Successfully downloaded file %s to %s.", remoteObjectReference.getObjectKey(), localPath));
 
                         return null;
                     } catch (final Throwable t) {

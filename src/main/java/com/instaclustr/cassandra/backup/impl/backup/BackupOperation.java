@@ -29,6 +29,7 @@ import com.instaclustr.cassandra.backup.guice.BackuperFactory;
 import com.instaclustr.cassandra.backup.guice.BucketServiceFactory;
 import com.instaclustr.cassandra.backup.impl.BucketService;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
+import com.instaclustr.cassandra.backup.impl.ManifestEntry.Type;
 import com.instaclustr.cassandra.backup.impl.OperationProgressTracker;
 import com.instaclustr.cassandra.backup.impl.SSTableUtils;
 import com.instaclustr.io.GlobalLock;
@@ -155,8 +156,14 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
 
         // add snapshot files to the manifest
         for (final KeyspaceColumnFamilySnapshot keyspaceColumnFamilySnapshot : kcfss) {
-            final Path bucketKey = Paths.get("data").resolve(Paths.get(keyspaceColumnFamilySnapshot.keyspace, keyspaceColumnFamilySnapshot.table));
-            Iterables.addAll(manifest, SSTableUtils.ssTableManifest(keyspaceColumnFamilySnapshot.snapshotDirectory, bucketKey).collect(toList()));
+            final Path tablePath = Paths.get("data").resolve(Paths.get(keyspaceColumnFamilySnapshot.keyspace, keyspaceColumnFamilySnapshot.table));
+            Iterables.addAll(manifest, SSTableUtils.ssTableManifest(keyspaceColumnFamilySnapshot.snapshotDirectory, tablePath).collect(toList()));
+
+            Path schemaPath = keyspaceColumnFamilySnapshot.snapshotDirectory.resolve("schema.cql");
+
+            if (Files.exists(schemaPath)) {
+                manifest.add(new ManifestEntry(tablePath.resolve(snapshotTag + "-schema.cql"), schemaPath, Type.FILE));
+            }
         }
 
         logger.info("{} files in manifest for snapshot \"{}\".", manifest.size(), snapshotTag);
