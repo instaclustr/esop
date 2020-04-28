@@ -52,7 +52,7 @@ public @interface ValidBackupOperationRequest {
                 return false;
             }
 
-            if ((KubernetesHelper.isRunningInKubernetes() || KubernetesHelper.isRunningAsClient()) && value.k8sBackupSecretName == null) {
+            if ((KubernetesHelper.isRunningInKubernetes() || KubernetesHelper.isRunningAsClient()) && value.k8sBackupSecretName == null && value.storageLocation.cloudLocation) {
                 context.buildConstraintViolationWithTemplate("This code is running in Kubernetes or as a Kubernetes client "
                                                                  + "but there is not 'k8sSecretName' field set on backup request!").addConstraintViolation();
                 return false;
