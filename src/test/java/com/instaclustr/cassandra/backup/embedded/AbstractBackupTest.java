@@ -85,12 +85,29 @@ public class AbstractBackupTest {
         List<Long> insertionTimes = new ArrayList<>();
 
         try (CqlSession session = new CqlSessionCassandraConnectionFactory().create(cassandraToBackup).getConnection()) {
+
+            // keyspace, table
+
             session.execute(createKeyspace(KEYSPACE)
                                 .ifNotExists()
                                 .withNetworkTopologyStrategy(of("datacenter1", 1))
                                 .build());
 
             session.execute(createTable(KEYSPACE, TABLE)
+                                .ifNotExists()
+                                .withPartitionKey(ID, TEXT)
+                                .withClusteringColumn(DATE, TIMEUUID)
+                                .withColumn(NAME, TEXT)
+                                .build());
+
+            // keyspace2, table2
+
+            session.execute(createKeyspace(TestEntity2.KEYSPACE_2)
+                                .ifNotExists()
+                                .withNetworkTopologyStrategy(of("datacenter1", 1))
+                                .build());
+
+            session.execute(createTable(TestEntity2.KEYSPACE_2, TestEntity2.TABLE_2)
                                 .ifNotExists()
                                 .withPartitionKey(ID, TEXT)
                                 .withClusteringColumn(DATE, TIMEUUID)
@@ -193,6 +210,12 @@ public class AbstractBackupTest {
 
         try {
             session.execute(insertInto(KEYSPACE, TABLE)
+                                .value(ID, literal("1"))
+                                .value(DATE, literal(timeBased()))
+                                .value(NAME, literal("stefan1"))
+                                .build());
+
+            session.execute(insertInto(TestEntity2.KEYSPACE_2, TestEntity2.TABLE_2)
                                 .value(ID, literal("1"))
                                 .value(DATE, literal(timeBased()))
                                 .value(NAME, literal("stefan1"))

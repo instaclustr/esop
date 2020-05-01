@@ -26,7 +26,8 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
         "backup",
         "--jmx-service", "127.0.0.1:7199",
         "--storage-location=gcp://" + BUCKET_NAME + "/cluster/test-dc/1",
-        "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data"
+        "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+        "--entities=system_schema,test,test2" // keyspaces
     };
 
     final String[] backupArgsWithSnapshotName = new String[]{
@@ -34,7 +35,8 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
         "--jmx-service", "127.0.0.1:7199",
         "--storage-location=gcp://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--snapshot-tag=stefansnapshot",
-        "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data"
+        "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+        "--entities=system_schema,test,test2" // keyspaces
     };
 
     final String[] restoreArgs = new String[]{
@@ -44,6 +46,7 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
         "--snapshot-tag=stefansnapshot",
         "--storage-location=gcp://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--update-cassandra-yaml=true",
+        "--entities=system_schema,test,test2"
     };
 
     final String[] commitlogBackupArgs = new String[]{
