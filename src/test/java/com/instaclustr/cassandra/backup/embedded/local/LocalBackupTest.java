@@ -9,7 +9,8 @@ public class LocalBackupTest extends AbstractBackupTest {
         "backup",
         "--jmx-service", "127.0.0.1:7199",
         "--storage-location=file://" + target("backup1") + "/cluster/test-dc/1",
-        "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data"
+        "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+        "--entities=system_schema,test,test2" // keyspaces
     };
 
     final String[] backupArgsWithSnapshotName = new String[]{
@@ -17,7 +18,8 @@ public class LocalBackupTest extends AbstractBackupTest {
         "--jmx-service", "127.0.0.1:7199",
         "--storage-location=file://" + target("backup1") + "/cluster/test-dc/1",
         "--snapshot-tag=stefansnapshot",
-        "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data"
+        "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+        "--entities=system_schema,test,test2" // keyspaces
     };
 
     final String[] restoreArgs = new String[]{
@@ -27,6 +29,7 @@ public class LocalBackupTest extends AbstractBackupTest {
         "--snapshot-tag=stefansnapshot",
         "--storage-location=file://" + target("backup1") + "/cluster/test-dc/1",
         "--update-cassandra-yaml=true",
+        "--entities=system_schema,test,test2" // keyspaces
     };
 
     final String[] commitlogBackupArgs = new String[]{

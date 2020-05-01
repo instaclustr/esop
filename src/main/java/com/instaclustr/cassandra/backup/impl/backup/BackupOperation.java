@@ -2,7 +2,6 @@ package com.instaclustr.cassandra.backup.impl.backup;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
@@ -16,7 +15,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.StreamSupport;
+import java.util.stream.Stream;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
@@ -66,7 +65,7 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
 
         new GlobalLock(request.lockFile).waitForLock(request.waitForLock);
 
-        if (request.offlineSnapshot) {
+        if (request.offlineBackup) {
             executeUpload(ImmutableList.of());
 
             return;
@@ -74,9 +73,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
 
         try {
             new TakeSnapshotOperation(cassandraJMXService.get(),
-                                      new TakeSnapshotOperation.TakeSnapshotOperationRequest(request.keyspaces,
-                                                                                             request.snapshotTag,
-                                                                                             request.table)).run0();
+                                      new TakeSnapshotOperation.TakeSnapshotOperationRequest(request.entities,
+                                                                                             request.snapshotTag)).run0();
 
             final List<String> tokens = cassandraJMXService.get().doWithStorageServiceMBean(new FunctionWithEx<StorageServiceMBean, List<String>>() {
                 @Override
@@ -93,9 +91,7 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
     }
 
     private void executeUpload(List<String> tokens) throws Exception {
-        final Collection<ManifestEntry> manifest = generateManifest(request.keyspaces,
-                                                                    request.snapshotTag,
-                                                                    request.cassandraDirectory.resolve("data"));
+        final Collection<ManifestEntry> manifest = generateManifest(request.snapshotTag, request.cassandraDirectory.resolve("data"));
 
         Iterables.addAll(manifest, saveTokenList(tokens));
 
@@ -122,34 +118,11 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
         }
     }
 
-    private Collection<ManifestEntry> generateManifest(
-        final List<String> keyspaces,
-        final String snapshotTag,
-        final Path cassandraDataDirectory) throws IOException {
+    private Collection<ManifestEntry> generateManifest(final String snapshotTag, final Path cassandraDataDirectory) throws IOException {
         // find files belonging to snapshot
         final Map<String, ? extends Iterable<KeyspaceColumnFamilySnapshot>> snapshots = findKeyspaceColumnFamilySnapshots(cassandraDataDirectory);
 
         final Iterable<KeyspaceColumnFamilySnapshot> kcfss = snapshots.get(snapshotTag);
-
-        if (kcfss != null) {
-            final String collect = StreamSupport.stream(kcfss.spliterator(), false)
-                .map(kcfs -> format("[%s %s %s]", kcfs.snapshotDirectory, kcfs.keyspace, kcfs.table))
-                .collect(joining(","));
-
-            logger.debug("Found snapshots {}", collect);
-        } else {
-            logger.debug("No keyspace-column family snapshots were found for snapshot {}", snapshotTag);
-        }
-
-        if (kcfss == null) {
-            if (keyspaces != null && !keyspaces.isEmpty()) {
-                logger.warn("No keyspace column family snapshot directories were found for snapshot \"{}\" of {}", snapshotTag, Joiner.on(",").join(keyspaces));
-                return new LinkedList<>();
-            }
-
-            // There should at least be system keyspace tables
-            throw new IllegalStateException(format("No keyspace column family snapshot directories were found for snapshot \"%s\" of all data.", snapshotTag));
-        }
 
         // generate manifest (set of object keys and source files defining the snapshot)
         final Collection<ManifestEntry> manifest = new LinkedList<>(); // linked list to maintain order
@@ -300,7 +273,6 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
                 this.snapshotTag = snapshotTag;
             }
         }
-
     }
 
     public static class TakeSnapshotOperation extends Operation<TakeSnapshotOperation.TakeSnapshotOperationRequest> {
@@ -310,57 +282,76 @@ public class BackupOperation extends Operation<BackupOperationRequest> {
         private final TakeSnapshotOperationRequest request;
         private final CassandraJMXService cassandraJMXService;
 
-        public TakeSnapshotOperation(final CassandraJMXService cassandraJMXService,
-                                     final TakeSnapshotOperationRequest request) {
+        public TakeSnapshotOperation(final CassandraJMXService cassandraJMXService, final TakeSnapshotOperationRequest request) {
             super(request);
             this.request = request;
             this.cassandraJMXService = cassandraJMXService;
         }
 
+        public List<String> parseEntities() {
+
+            if (request.entities == null) {
+                return ImmutableList.of();
+            }
+
+            final String removedSpaces = request.entities.replace("\\s+", "");
+
+            if (removedSpaces.isEmpty()) {
+                return ImmutableList.of();
+            }
+
+            // if it contains a dot, check that it is in the form of "ks1.t1,ks1.t2,ks1.t3"
+            // otherwise it has to be in format "ks1,ks2"
+
+            if (removedSpaces.contains(".")) {
+
+                final String[] keyspaceTablePairs = removedSpaces.split(",");
+
+                for (final String keyspaceTablepair : keyspaceTablePairs) {
+                    if (keyspaceTablepair.isEmpty() || !keyspaceTablepair.contains(".")) {
+                        throw new IllegalStateException(String.format("Not in format 'ks.cf': %s", keyspaceTablepair));
+                    }
+                }
+
+                return Stream.of(keyspaceTablePairs).collect(toList());
+            }
+
+            return Stream.of(removedSpaces.split(",")).collect(toList());
+        }
+
         @Override
         protected void run0() throws Exception {
-            if (request.table != null) {
-                final String keyspace = Iterables.getOnlyElement(request.keyspaces);
+            final List<String> entities = parseEntities();
 
-                logger.info("Taking snapshot {} on table {}.{}.", request.tag, keyspace, request.table);
-
-                cassandraJMXService.doWithStorageServiceMBean(new FunctionWithEx<StorageServiceMBean, Void>() {
-                    @Override
-                    public Void apply(StorageServiceMBean ssMBean) throws Exception {
-                        ssMBean.takeSnapshot(request.tag,
-                                             new HashMap<>(),
-                                             keyspace + "." + request.table);
-                        return null;
-                    }
-                });
+            if (entities.isEmpty()) {
+                logger.info("Taking snapshot {} on all keyspaces.", request.tag);
             } else {
-                logger.info("Taking snapshot {} on {} keyspace(s).", request.tag, (request.keyspaces.isEmpty() ? "all" : request.keyspaces));
-
-                cassandraJMXService.doWithStorageServiceMBean(new FunctionWithEx<StorageServiceMBean, Void>() {
-                    @Override
-                    public Void apply(StorageServiceMBean ssMBean) throws Exception {
-                        ssMBean.takeSnapshot(request.tag,
-                                             new HashMap<>(),
-                                             request.keyspaces.toArray(new String[0]));
-                        return null;
-                    }
-                });
+                logger.info("Taking snapshot {} on {}", request.tag, entities);
             }
+
+            cassandraJMXService.doWithStorageServiceMBean(new FunctionWithEx<StorageServiceMBean, Void>() {
+                @Override
+                public Void apply(StorageServiceMBean ssMBean) throws Exception {
+
+                    if (entities.isEmpty()) {
+                        ssMBean.takeSnapshot(request.tag, new HashMap<>());
+                    } else {
+                        ssMBean.takeSnapshot(request.tag, new HashMap<>(), entities.toArray(new String[0]));
+                    }
+
+                    return null;
+                }
+            });
         }
 
         public static class TakeSnapshotOperationRequest extends OperationRequest {
 
-            final List<String> keyspaces;
+            final String entities;
             final String tag;
-            final String table;
 
-            public TakeSnapshotOperationRequest(
-                final List<String> keyspaces,
-                final String tag,
-                final String table) {
-                this.keyspaces = keyspaces == null ? ImmutableList.of() : keyspaces;
+            public TakeSnapshotOperationRequest(final String entities, final String tag) {
+                this.entities = entities;
                 this.tag = tag;
-                this.table = table;
             }
         }
     }

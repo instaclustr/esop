@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
 import com.instaclustr.cassandra.backup.guice.RestorerFactory;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
@@ -29,6 +30,7 @@ import com.instaclustr.cassandra.backup.impl.SSTableUtils;
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.io.GlobalLock;
 import com.instaclustr.operations.Operation;
+import jmx.org.apache.cassandra.service.CassandraJMXService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +78,7 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> {
         new GlobalLock(request.lockFile).waitForLock(request.waitForLock);
 
         // 2. Determine if just restoring a subset of tables
-        final boolean isTableSubsetOnly = request.keyspaceTables.size() > 0;
+        final boolean isTableSubsetOnly = request.entities.tableSubsetOnly();
 
         // 3. Download the manifest
         logger.info("Retrieving manifest for snapshot: {}", request.snapshotTag);
@@ -99,7 +101,7 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> {
             try (Stream<Path> paths = Files.walk(cassandraSstablesDirectory, skipBackupsAndSnapshotsFolders)) {
                 if (isTableSubsetOnly) {
                     paths.filter(Files::isRegularFile)
-                        .filter(isSubsetTable(request.keyspaceTables))
+                        .filter(isSubsetTable(request.entities))
                         .forEach(existingSstableList::add);
                 } else {
                     paths.filter(Files::isRegularFile).forEach(existingSstableList::add);
@@ -108,7 +110,7 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> {
         }
 
         final boolean isRestoringToExistingCluster = existingSstableList.size() > 0;
-        logger.info("Restoring to existing cluster? {}", isRestoringToExistingCluster);
+        logger.info("Restoring to existing cluster: {}", isRestoringToExistingCluster);
 
         // 5. Parse the manifest
         final LinkedList<ManifestEntry> downloadManifest = new LinkedList<>();
@@ -119,7 +121,7 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> {
             if (isRestoringToExistingCluster) {
                 if (isTableSubsetOnly) {
                     filteredManifest = manifestStream.lines()
-                        .filter(getManifestFilesForSubsetExistingRestore(request.keyspaceTables, request.restoreSystemKeyspace))
+                        .filter(getManifestFilesForSubsetExistingRestore(request.entities, request.restoreSystemKeyspace))
                         .collect(toList());
                 } else {
                     filteredManifest = manifestStream.lines()
@@ -129,7 +131,7 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> {
             } else {
                 if (isTableSubsetOnly) {
                     filteredManifest = manifestStream.lines()
-                        .filter(getManifestFilesForSubsetNewRestore(request.keyspaceTables, request.restoreSystemKeyspace))
+                        .filter(getManifestFilesForSubsetNewRestore(request.entities, request.restoreSystemKeyspace))
                         .collect(toList());
                 } else {
                     filteredManifest = manifestStream.lines()
@@ -153,7 +155,7 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> {
                     continue; // file already present, and the hash matches so don't add to manifest to download and don't delete
                 }
 
-                logger.info("Not keeping existing sstable {}", localPath);
+                logger.debug("Not keeping existing sstable {}", localPath);
                 downloadManifest.add(new ManifestEntry(manifestPath, localPath, ManifestEntry.Type.FILE, 0));
             }
         }

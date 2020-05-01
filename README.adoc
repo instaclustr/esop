@@ -13,7 +13,7 @@ The tool is able to perform these operations:
 * backup of commit logs
 * restore of commit logs
 
-# Usage
+## Usage
 
 After this project is built, the binary is in `target` and it is
 called `instaclustr-backup-restore-(version).jar`. This binary is all you need to backup / restore.
@@ -38,11 +38,11 @@ Commands:
 
 ----
 
-# Examples
+## Examples
 
 All commands should be preceded with `java -jar /path/to/backup/tool.jar`
 
-## Example of `backup`
+### Example of `backup`
 
 This command with copy over all SSTables to remote location. It is possible to choose also location
 in cloud. For backup, a node has to be up to back it up. There is possibility to backup also offline node,
@@ -61,7 +61,7 @@ cloud, just change the protocol respectively.
 
 If a bucket does not exist, it will be automatically created.
 
-## Example of `commitlog-backup`
+### Example of `commitlog-backup`
 
 You can backup commit logs as well. Example of commit log backup is like the following:
 
@@ -74,7 +74,7 @@ $ commitlog-backup \
 Note that there is not any need to specify jmx-service because it is not needed. JMX is needed
 for taking snapshots, but here we do not take any.
 
-## Example of `restore`
+### Example of `restore`
 
 The restoration of a node is achieved by following parameters
 
@@ -96,7 +96,7 @@ reference it.
 restored node. If it is false, you would have to set it up yourself, copying the content of tokens file
 in backup directory, under `tokens` directory.
 
-## Example of `commitlog-restore`
+### Example of `commitlog-restore`
 
 The restoration of commit logs is done e.g. like this:
 
@@ -120,7 +120,7 @@ restore_point_in_time=2020\:01\:13 11\:32\:51
 restore_command=cp -f %from %to
 ----
 
-# Credentials for backup and restore from a cloud
+## Credentials for backup and restore from a cloud
 
 If you deal with a cloud, you have to setup credentials to do so. The setup varies from cloud to cloud.
 
@@ -167,7 +167,7 @@ It does not matter you put slash at the end of whole location, it will be remove
 |file:///a/b/c/d
 |$(pwd)/a
 |===
-# Build
+## Build
 
 You build this tool by invoking:
 
@@ -175,7 +175,7 @@ You build this tool by invoking:
 $ ./mvnw clean install
 ----
 
-# Tests
+## Tests
 
 There are end-to-end tests which are testing all GCP, Azure and S3 integration as well
 as integration with Kubernetes when it comes to credential fetching.

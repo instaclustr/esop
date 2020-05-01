@@ -32,7 +32,8 @@ public class KubernetesS3BackupRestoreTest extends BaseS3BackupRestoreTest {
         "--jmx-service", "127.0.0.1:7199",
         "--storage-location=s3://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-        "--k8s-backup-secret-name=" + AWS_S3_SIDECAR_SECRET_NAME
+        "--k8s-backup-secret-name=" + AWS_S3_SIDECAR_SECRET_NAME,
+        "--entities=system_schema,test,test2" // keyspaces
     };
 
     final String[] backupArgsWithSnapshotName = new String[]{
@@ -41,7 +42,8 @@ public class KubernetesS3BackupRestoreTest extends BaseS3BackupRestoreTest {
         "--storage-location=s3://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--snapshot-tag=stefansnapshot",
         "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-        "--k8s-backup-secret-name=" + AWS_S3_SIDECAR_SECRET_NAME
+        "--k8s-backup-secret-name=" + AWS_S3_SIDECAR_SECRET_NAME,
+        "--entities=system_schema,test,test2" // keyspaces
     };
 
     final String[] restoreArgs = new String[]{
@@ -51,7 +53,8 @@ public class KubernetesS3BackupRestoreTest extends BaseS3BackupRestoreTest {
         "--snapshot-tag=stefansnapshot",
         "--storage-location=s3://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--update-cassandra-yaml=true",
-        "--k8s-backup-secret-name=" + AWS_S3_SIDECAR_SECRET_NAME
+        "--k8s-backup-secret-name=" + AWS_S3_SIDECAR_SECRET_NAME,
+        "--entities=system_schema,test,test2"
     };
 
     final String[] commitlogBackupArgs = new String[]{
