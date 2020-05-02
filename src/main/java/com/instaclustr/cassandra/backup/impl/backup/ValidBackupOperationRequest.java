@@ -35,13 +35,6 @@ public @interface ValidBackupOperationRequest {
 
             context.disableDefaultConstraintViolation();
 
-            if (value.table != null && (value.keyspaces == null || value.keyspaces.size() != 1)) {
-                context
-                    .buildConstraintViolationWithTemplate("{com.instaclustr.cassandra.backup.impl.backup.ValidBackupOperationRequest.BackupOperationRequestValidator.oneKeyspaceForColumnFamily}")
-                    .addConstraintViolation();
-                return false;
-            }
-
             if (!Files.exists(value.sharedContainerPath)) {
                 context.buildConstraintViolationWithTemplate(format("sharedContainerPath %s does not exist", value.sharedContainerPath)).addConstraintViolation();
                 return false;

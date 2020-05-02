@@ -37,7 +37,8 @@ public class KubernetesGoogleStorageBackupRestoreTest extends BaseGoogleStorageB
         "--jmx-service", "127.0.0.1:7199",
         "--storage-location=gcp://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-        "--k8s-backup-secret-name=" + GCP_SIDECAR_SECRET_NAME
+        "--k8s-backup-secret-name=" + GCP_SIDECAR_SECRET_NAME,
+        "--entities=system_schema,test,test2" // keyspaces
     };
 
     final String[] backupArgsWithSnapshotName = new String[]{
@@ -46,7 +47,8 @@ public class KubernetesGoogleStorageBackupRestoreTest extends BaseGoogleStorageB
         "--storage-location=gcp://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--snapshot-tag=stefansnapshot",
         "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-        "--k8s-backup-secret-name=" + GCP_SIDECAR_SECRET_NAME
+        "--k8s-backup-secret-name=" + GCP_SIDECAR_SECRET_NAME,
+        "--entities=system_schema,test,test2" // keyspaces
     };
 
     final String[] restoreArgs = new String[]{
@@ -56,7 +58,8 @@ public class KubernetesGoogleStorageBackupRestoreTest extends BaseGoogleStorageB
         "--snapshot-tag=stefansnapshot",
         "--storage-location=gcp://" + BUCKET_NAME + "/cluster/test-dc/1",
         "--update-cassandra-yaml=true",
-        "--k8s-backup-secret-name=" + GCP_SIDECAR_SECRET_NAME
+        "--k8s-backup-secret-name=" + GCP_SIDECAR_SECRET_NAME,
+        "--entities=system_schema,test,test2"
     };
 
     final String[] commitlogBackupArgs = new String[]{

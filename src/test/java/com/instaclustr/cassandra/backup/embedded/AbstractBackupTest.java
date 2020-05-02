@@ -25,8 +25,6 @@ import static org.testng.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.Socket;
-import java.net.SocketException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -84,13 +82,30 @@ public class AbstractBackupTest {
 
         List<Long> insertionTimes = new ArrayList<>();
 
-        try (CqlSession session = new CqlSessionCassandraConnectionFactory().create(cassandraToBackup).getConnection()) {
+        try (CqlSession session = CqlSession.builder().build()) {
+
+            // keyspace, table
+
             session.execute(createKeyspace(KEYSPACE)
                                 .ifNotExists()
                                 .withNetworkTopologyStrategy(of("datacenter1", 1))
                                 .build());
 
             session.execute(createTable(KEYSPACE, TABLE)
+                                .ifNotExists()
+                                .withPartitionKey(ID, TEXT)
+                                .withClusteringColumn(DATE, TIMEUUID)
+                                .withColumn(NAME, TEXT)
+                                .build());
+
+            // keyspace2, table2
+
+            session.execute(createKeyspace(TestEntity2.KEYSPACE_2)
+                                .ifNotExists()
+                                .withNetworkTopologyStrategy(of("datacenter1", 1))
+                                .build());
+
+            session.execute(createTable(TestEntity2.KEYSPACE_2, TestEntity2.TABLE_2)
                                 .ifNotExists()
                                 .withPartitionKey(ID, TEXT)
                                 .withClusteringColumn(DATE, TIMEUUID)
@@ -118,6 +133,8 @@ public class AbstractBackupTest {
             logger.info("Executing backup of commit logs {}", asList(arguments[2]));
 
             BackupRestoreCLI.mainWithoutExit(arguments[2]);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         } finally {
             copyCassandra(cassandraDir, cassandraRestoredDir);
             cassandraToBackup.stop();
@@ -159,9 +176,9 @@ public class AbstractBackupTest {
 
         cassandraToRestore.start();
 
-        waitForOpenPort("127.0.0.1", 9042);
+        waitForCql();
 
-        try (CqlSession session = new CqlSessionCassandraConnectionFactory().create(cassandraToRestore).getConnection()) {
+        try (CqlSession session = CqlSession.builder().build()) {
             List<Row> rows = session.execute(selectFrom(KEYSPACE, TABLE).all().build()).all();
 
             for (Row row : rows) {
@@ -198,6 +215,12 @@ public class AbstractBackupTest {
                                 .value(NAME, literal("stefan1"))
                                 .build());
 
+            session.execute(insertInto(TestEntity2.KEYSPACE_2, TestEntity2.TABLE_2)
+                                .value(ID, literal("1"))
+                                .value(DATE, literal(timeBased()))
+                                .value(NAME, literal("stefan1"))
+                                .build());
+
             Thread.sleep(2000);
         } catch (InterruptedException ex) {
             logger.error("Exception while sleeping!");
@@ -227,12 +250,11 @@ public class AbstractBackupTest {
 
     }
 
-    protected void waitForOpenPort(String hostname, int port) {
+    protected void waitForCql() {
         await().until(() -> {
-            try {
-                (new Socket("127.0.0.1", port)).close();
+            try (CqlSession cqlSession = CqlSession.builder().build()) {
                 return true;
-            } catch (SocketException e) {
+            } catch (Exception ex) {
                 return false;
             }
         });

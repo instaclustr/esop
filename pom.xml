@@ -18,7 +18,7 @@
     <aws-java-sdk.version>1.11.739</aws-java-sdk.version>
     <slf4j.version>1.7.30</slf4j.version>
 
-    <cassandra.driver.version>4.4.0</cassandra.driver.version>
+    <cassandra.driver.version>4.6.0</cassandra.driver.version>
 
     <version.embedded.cassandra>3.0.2</version.embedded.cassandra>
     <testng.version>6.14.3</testng.version>
@@ -133,8 +133,21 @@
       <artifactId>embedded-cassandra</artifactId>
       <version>${version.embedded.cassandra}</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.datastax.oss</groupId>
+          <artifactId>java-driver-core</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
-
+  
+    <dependency>
+      <groupId>com.datastax.oss</groupId>
+      <artifactId>java-driver-core</artifactId>
+      <version>${cassandra.driver.version}</version>
+      <scope>test</scope>
+    </dependency>
+    
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-query-builder</artifactId>

@@ -86,6 +86,10 @@ public class BaseBackupOperationRequest extends OperationRequest implements Kube
         description = "Name of Kubernetes secret used for credential retrieval for backup / restores when talking to cloud storages.")
     public String k8sBackupSecretName;
 
+    @Option(names = "--offline",
+        description = "Cassandra is not running (won't use JMX to snapshot, no token lists uploaded)")
+    public boolean offlineBackup;
+
     public BaseBackupOperationRequest() {
         // for picocli
     }
