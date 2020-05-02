@@ -82,7 +82,7 @@ public class AbstractBackupTest {
 
         List<Long> insertionTimes = new ArrayList<>();
 
-        try (CqlSession session = new CqlSessionCassandraConnectionFactory().create(cassandraToBackup).getConnection()) {
+        try (CqlSession session = CqlSession.builder().build()) {
 
             // keyspace, table
 
@@ -176,7 +176,7 @@ public class AbstractBackupTest {
 
         waitForCql();
 
-        try (CqlSession session = new CqlSessionCassandraConnectionFactory().create(cassandraToRestore).getConnection()) {
+        try (CqlSession session = CqlSession.builder().build()) {
             List<Row> rows = session.execute(selectFrom(KEYSPACE, TABLE).all().build()).all();
 
             for (Row row : rows) {
