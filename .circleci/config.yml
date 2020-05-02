@@ -58,3 +58,5 @@ workflows:
     jobs:
       - build-java-8
       - build-java-11
+          requires:
+            - build-java-8
