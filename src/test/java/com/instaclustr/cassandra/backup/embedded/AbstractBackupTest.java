@@ -133,6 +133,8 @@ public class AbstractBackupTest {
             logger.info("Executing backup of commit logs {}", asList(arguments[2]));
 
             BackupRestoreCLI.mainWithoutExit(arguments[2]);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         } finally {
             copyCassandra(cassandraDir, cassandraRestoredDir);
             cassandraToBackup.stop();
