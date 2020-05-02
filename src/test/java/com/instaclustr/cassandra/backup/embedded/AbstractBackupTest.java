@@ -25,8 +25,6 @@ import static org.testng.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.Socket;
-import java.net.SocketException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -176,7 +174,7 @@ public class AbstractBackupTest {
 
         cassandraToRestore.start();
 
-        waitForOpenPort("127.0.0.1", 9042);
+        waitForCql();
 
         try (CqlSession session = new CqlSessionCassandraConnectionFactory().create(cassandraToRestore).getConnection()) {
             List<Row> rows = session.execute(selectFrom(KEYSPACE, TABLE).all().build()).all();
@@ -250,12 +248,11 @@ public class AbstractBackupTest {
 
     }
 
-    protected void waitForOpenPort(String hostname, int port) {
+    protected void waitForCql() {
         await().until(() -> {
-            try {
-                (new Socket("127.0.0.1", port)).close();
+            try (CqlSession cqlSession = CqlSession.builder().build()) {
                 return true;
-            } catch (SocketException e) {
+            } catch (Exception ex) {
                 return false;
             }
         });
