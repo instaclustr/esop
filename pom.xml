@@ -133,8 +133,21 @@
       <artifactId>embedded-cassandra</artifactId>
       <version>${version.embedded.cassandra}</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.datastax.oss</groupId>
+          <artifactId>java-driver-</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
-
+  
+    <dependency>
+      <groupId>com.datastax.oss</groupId>
+      <artifactId>java-driver-core</artifactId>
+      <version>${cassandra.driver.version}</version>
+      <scope>test</scope>
+    </dependency>
+    
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-query-builder</artifactId>
