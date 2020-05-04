@@ -3,6 +3,7 @@ package com.instaclustr.cassandra.backup.azure;
 import static java.lang.String.format;
 
 import java.net.URISyntaxException;
+import java.util.stream.StreamSupport;
 
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
@@ -17,8 +18,13 @@ import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.BlobContainerPublicAccessType;
 import com.microsoft.azure.storage.blob.BlobRequestOptions;
 import com.microsoft.azure.storage.blob.CloudBlobClient;
+import com.microsoft.azure.storage.blob.CloudBlobContainer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AzureBucketService implements BucketService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AzureBucketService.class);
 
     private final CloudStorageAccount cloudStorageAccount;
 
@@ -49,13 +55,30 @@ public class AzureBucketService implements BucketService {
 
     @Override
     public void create(final String bucketName) {
-        try {
-            cloudBlobClient.getContainerReference(bucketName)
-                .createIfNotExists(BlobContainerPublicAccessType.OFF,
-                                   new BlobRequestOptions(),
-                                   new OperationContext());
-        } catch (URISyntaxException | StorageException ex) {
-            throw new IllegalStateException(format("Unable to create a bucket %s", bucketName), ex);
+
+        while (true) {
+            try {
+                cloudBlobClient.getContainerReference(bucketName)
+                    .createIfNotExists(BlobContainerPublicAccessType.OFF,
+                                       new BlobRequestOptions(),
+                                       new OperationContext());
+
+                break;
+            } catch (URISyntaxException ex) {
+                throw new AzureModuleException(format("Unable to create a bucket %s", bucketName), ex);
+            } catch (StorageException ex) {
+                if (ex.getHttpStatusCode() == 409
+                    && ex.getExtendedErrorInformation().getErrorMessage().contains("The specified container is being deleted. Try operation later.")) {
+                    try {
+                        logger.info("Bucket to create {} is being deleted, we are going to wait 5s and check again.", bucketName);
+                        Thread.sleep(5000);
+                    } catch (final Exception ex2) {
+                        ex2.printStackTrace();
+                    }
+                } else {
+                    throw new AzureModuleException(format("Unable to create a bucket %s", bucketName), ex);
+                }
+            }
         }
     }
 
@@ -63,6 +86,23 @@ public class AzureBucketService implements BucketService {
     public void delete(final String bucketName) {
         try {
             cloudBlobClient.getContainerReference(bucketName).deleteIfExists();
+
+            // waiting until it is really deleted
+            while (true) {
+
+                final Iterable<CloudBlobContainer> iterable = cloudBlobClient.listContainers();
+
+                if (StreamSupport.stream(iterable.spliterator(), false).noneMatch(container -> container.getName().equals(bucketName))) {
+                    break;
+                }
+
+                try {
+                    logger.info("Waiting until bucket {} is truly deleted.", bucketName);
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         } catch (URISyntaxException | StorageException ex) {
             throw new AzureModuleException(format("Unable to delete bucket %s", bucketName), ex);
         }

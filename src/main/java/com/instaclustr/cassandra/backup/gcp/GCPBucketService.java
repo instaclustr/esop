@@ -21,21 +21,17 @@ public class GCPBucketService implements BucketService {
 
     private static final Logger logger = LoggerFactory.getLogger(GCPBucketService.class);
 
-    private final GoogleStorageFactory storageFactory;
-
     private final Storage storage;
 
     @AssistedInject
     public GCPBucketService(final GoogleStorageFactory storageFactory,
                             @Assisted final BackupOperationRequest request) {
-        this.storageFactory = storageFactory;
         this.storage = storageFactory.build(request);
     }
 
     @AssistedInject
     public GCPBucketService(final GoogleStorageFactory storageFactory,
                             @Assisted final BackupCommitLogsOperationRequest request) {
-        this.storageFactory = storageFactory;
         this.storage = storageFactory.build(request);
     }
 

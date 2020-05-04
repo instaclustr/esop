@@ -147,7 +147,7 @@ For GCP you have to use `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
 
 In every case, file has to start with full path (file:///, three slashes).
 File location does not have a notion of a _bucket_ but we are using it here
-regardless, it the following examples, _bucket_ will be _a_.
+regardless, in the following examples, the _bucket_ will be _a_.
 
 If you do not specify full path (e.g. like it is shown in the last example),
 the path will be the directory from which you are invoking this tool _plus_ bucket ("a" in our case).

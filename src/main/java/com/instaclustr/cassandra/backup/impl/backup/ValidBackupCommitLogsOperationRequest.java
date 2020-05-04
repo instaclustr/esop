@@ -17,7 +17,7 @@ import com.instaclustr.kubernetes.KubernetesHelper;
 @Target({TYPE, PARAMETER})
 @Retention(RUNTIME)
 @Constraint(validatedBy = {
-        ValidBackupCommitLogsOperationRequest.BackupCommitLogsOperationRequestValidator.class,
+    ValidBackupCommitLogsOperationRequest.BackupCommitLogsOperationRequestValidator.class,
 })
 public @interface ValidBackupCommitLogsOperationRequest {
 
@@ -33,11 +33,6 @@ public @interface ValidBackupCommitLogsOperationRequest {
         public boolean isValid(final BackupCommitLogsOperationRequest value, final ConstraintValidatorContext context) {
 
             context.disableDefaultConstraintViolation();
-
-            if (!Files.exists(value.sharedContainerPath)) {
-                context.buildConstraintViolationWithTemplate(String.format("sharedContainerPath %s does not exist", value.sharedContainerPath)).addConstraintViolation();
-                return false;
-            }
 
             if (!Files.exists(value.cassandraDirectory)) {
                 context.buildConstraintViolationWithTemplate(String.format("cassandraDirectory %s does not exist", value.cassandraDirectory)).addConstraintViolation();

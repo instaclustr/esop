@@ -2,12 +2,47 @@ package com.instaclustr.cassandra.backup;
 
 import static org.testng.Assert.assertEquals;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import org.testng.annotations.Test;
 
 public class StorageLocationTest {
+
+    public static class Clone implements Cloneable {
+
+        public Path myPath;
+
+        public Clone(final Path myPath) {
+            this.myPath = myPath;
+        }
+
+        @Override
+        public Object clone() throws CloneNotSupportedException {
+            return super.clone();
+        }
+    }
+
+    @Test
+    public void updateStorageLocationDatacenterTest() {
+        StorageLocation storageLocation = new StorageLocation("gcp://bucket/cluster/dc/node");
+
+        StorageLocation changedNode = StorageLocation.updateNodeId(storageLocation, "node2");
+        StorageLocation changedDc = StorageLocation.updateDatacenter(changedNode, "dc2");
+
+        assertEquals(changedDc.datacenterId, "dc2");
+        assertEquals(changedDc.nodeId, "node2");
+    }
+
+    @Test
+    public void updateStorageLocationTest() {
+        StorageLocation storageLocation = new StorageLocation("gcp://bucket/cluster/dc/global");
+
+        StorageLocation updatedLocation = StorageLocation.updateNodeId(storageLocation, "node2");
+
+        assertEquals(updatedLocation.nodeId, "node2");
+    }
 
     @Test
     public void storageLocationTest() {

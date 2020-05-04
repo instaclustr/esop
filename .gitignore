@@ -3,3 +3,4 @@ target
 .idea
 dependency-reduced-pom.xml
 /cassandra.logdir_IS_UNDEFINED/
+/run-cloud-tests.sh

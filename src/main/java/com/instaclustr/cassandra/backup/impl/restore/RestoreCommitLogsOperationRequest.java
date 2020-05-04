@@ -73,7 +73,6 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
     @JsonCreator
     public RestoreCommitLogsOperationRequest(@JsonProperty("storageLocation") final StorageLocation storageLocation,
                                              @JsonProperty("concurrentConnections") final Integer concurrentConnections,
-                                             @JsonProperty("waitForLock") final Boolean waitForLock,
                                              @JsonProperty("lockFile") final Path lockFile,
                                              @JsonProperty("cassandraDirectory") final Path cassandraDirectory,
                                              @JsonProperty("sharedContainerPath") final Path sharedContainerPath,
@@ -84,7 +83,7 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
                                              @JsonProperty("keyspaceTables") final Multimap<String, String> keyspaceTables,
                                              @JsonProperty("k8sNamespace") final String k8sNamespace,
                                              @JsonProperty("k8sSecretName") final String k8sSecretName) {
-        super(storageLocation, concurrentConnections, waitForLock, lockFile, k8sNamespace, k8sSecretName);
+        super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName);
         this.cassandraDirectory = cassandraDirectory == null ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.sharedContainerPath = sharedContainerPath == null ? Paths.get("/") : sharedContainerPath;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
@@ -92,6 +91,7 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
         this.timestampEnd = timestampEnd;
         this.keyspaceTables = keyspaceTables;
         this.commitlogDownloadDir = commitlogDownloadDir;
+        this.type = "commitlog-restore";
     }
 
     @Override
@@ -99,7 +99,6 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
         return MoreObjects.toStringHelper(this)
                           .add("storageLocation", storageLocation)
                           .add("concurrentConnections", concurrentConnections)
-                          .add("waitForLock", waitForLock)
                           .add("lockFile", lockFile)
                           .add("cassandraDirectory", cassandraDirectory)
                           .add("sharedContainerPath", sharedContainerPath)

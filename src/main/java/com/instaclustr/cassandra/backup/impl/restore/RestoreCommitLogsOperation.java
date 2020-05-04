@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,8 +29,9 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.instaclustr.cassandra.backup.guice.RestorerFactory;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
-import com.instaclustr.cassandra.backup.impl.OperationProgressTracker;
+import com.instaclustr.operations.OperationProgressTracker;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
+import com.instaclustr.io.GlobalLock;
 import com.instaclustr.operations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,11 +57,17 @@ public class RestoreCommitLogsOperation extends Operation<RestoreCommitLogsOpera
 
     @Override
     protected void run0() throws Exception {
+
+        final FileLock fileLock = new GlobalLock(request.lockFile).waitForLock();
+
         try (final Restorer restorer = restorerFactoryMap.get(request.storageLocation.storageProvider).createCommitLogRestorer(request)) {
             backupCurrentCommitLogs();
             downloadCommitLogs(restorer);
             updateCommitLogArchivingProperties();
             writeConfigOptions();
+
+        } finally {
+            fileLock.release();
         }
     }
 
@@ -105,14 +113,16 @@ public class RestoreCommitLogsOperation extends Operation<RestoreCommitLogsOpera
                     parsedCommitlogList.add(new ManifestEntry(commitlogFile.getObjectKey(),
                                                               request.commitlogDownloadDir.resolve(matcherCommitlog.group(1)),
                                                               ManifestEntry.Type.FILE,
-                                                              0));
+                                                              0,
+                                                              null));
                 } else if (commitlogTimestamp > request.timestampEnd && commitlogTimestamp < overhangingTimestamp.get()) {
                     // Make sure we also catch the first commitlog that goes past the end of the timestamp
                     overhangingTimestamp.set(commitlogTimestamp);
                     overhangingManifestEntry.set(new ManifestEntry(commitlogFile.getObjectKey(),
                                                                    request.commitlogDownloadDir.resolve(matcherCommitlog.group(1)),
                                                                    ManifestEntry.Type.FILE,
-                                                                   0));
+                                                                   0,
+                                                                   null));
                 }
             }
         });

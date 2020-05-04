@@ -14,7 +14,10 @@ import static com.instaclustr.cassandra.backup.embedded.TestEntity.ID;
 import static com.instaclustr.cassandra.backup.embedded.TestEntity.KEYSPACE;
 import static com.instaclustr.cassandra.backup.embedded.TestEntity.NAME;
 import static com.instaclustr.cassandra.backup.embedded.TestEntity.TABLE;
+import static com.instaclustr.cassandra.backup.embedded.TestEntity2.KEYSPACE_2;
+import static com.instaclustr.cassandra.backup.embedded.TestEntity2.TABLE_2;
 import static com.instaclustr.io.FileUtils.cleanDirectory;
+import static com.instaclustr.io.FileUtils.deleteDirectory;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
@@ -26,6 +29,7 @@ import static org.testng.Assert.assertEquals;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -37,7 +41,6 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.github.nosan.embedded.cassandra.EmbeddedCassandraFactory;
 import com.github.nosan.embedded.cassandra.api.Cassandra;
 import com.github.nosan.embedded.cassandra.api.Version;
-import com.github.nosan.embedded.cassandra.api.connection.CqlSessionCassandraConnectionFactory;
 import com.github.nosan.embedded.cassandra.artifact.Artifact;
 import com.github.nosan.embedded.cassandra.artifact.DefaultArtifact;
 import com.instaclustr.cassandra.backup.cli.BackupRestoreCLI;
@@ -45,7 +48,7 @@ import io.kubernetes.client.ApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AbstractBackupTest {
+public abstract class AbstractBackupTest {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractBackupTest.class);
 
@@ -61,6 +64,9 @@ public class AbstractBackupTest {
     // We omitted one row here, on purpose, to demonstrate point in time restoration
     static int NUMBER_OF_ROWS_AFTER_RESTORATION = 7;
 
+    // inserted rows without these in commitlogs
+    static int NUMBER_OF_FLUSHED_ROWS = 6;
+
     static Artifact CASSANDRA_ARTIFACT = Artifact.ofVersion(Version.of(CASSANDRA_VERSION));
 
     protected final Path target = new File("target").toPath().toAbsolutePath();
@@ -68,14 +74,338 @@ public class AbstractBackupTest {
     protected final Path cassandraRestoredDir = new File("target/cassandra-restored").toPath().toAbsolutePath();
     protected final Path cassandraRestoredConfigDir = new File("target/cassandra-restored/conf").toPath().toAbsolutePath();
 
-    public void backupAndRestoreTest(final String[][] arguments) throws Exception {
+    ////////// ARGUMENTS
+
+    protected static final String BUCKET_NAME = UUID.randomUUID().toString();
+
+    protected static final String SIDECAR_SECRET_NAME = "test-sidecar-secret";
+
+    protected String[][] inPlaceArguments() {
+
+        // BACKUP
+
+        final String[] backupArgs = new String[]{
+            "backup",
+            "--jmx-service", "127.0.0.1:7199",
+            "--storage-location=" + getStorageLocation(),
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--entities=system_schema,test,test2", // keyspaces
+            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        final String[] backupArgsWithSnapshotName = new String[]{
+            "backup",
+            "--jmx-service", "127.0.0.1:7199",
+            "--storage-location=" + getStorageLocation(),
+            "--snapshot-tag=stefansnapshot",
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--entities=system_schema,test,test2", // keyspaces
+            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        // RESTORE
+
+        final String[] restoreArgs = new String[]{
+            "restore",
+            "--data-directory=" + cassandraRestoredDir.toAbsolutePath().toString() + "/data",
+            "--config-directory=" + cassandraRestoredConfigDir.toAbsolutePath().toString(),
+            "--snapshot-tag=stefansnapshot",
+            "--storage-location=" + getStorageLocation(),
+            "--update-cassandra-yaml=true",
+            "--entities=system_schema,test,test2",
+            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        // COMMIT LOGS
+
+        final String[] commitlogBackupArgs = new String[]{
+            "commitlog-backup",
+            "--storage-location=" + getStorageLocation(),
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        final String[] commitlogRestoreArgs = new String[]{
+            "commitlog-restore",
+            "--data-directory=" + cassandraRestoredDir.toAbsolutePath().toString() + "/data",
+            "--config-directory=" + cassandraRestoredConfigDir.toAbsolutePath().toString(),
+            "--storage-location=" + getStorageLocation(),
+            "--commitlog-download-dir=" + target("commitlog_download_dir"),
+            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        return new String[][]{
+            backupArgs,
+            backupArgsWithSnapshotName,
+            commitlogBackupArgs,
+            restoreArgs,
+            commitlogRestoreArgs
+        };
+    }
+
+    protected String[][] importArguments() {
+
+        // BACKUP
+
+        final String[] backupArgs = new String[]{
+            "backup",
+            "--jmx-service", "127.0.0.1:7199",
+            "--storage-location=" + getStorageLocation(),
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--entities=system_schema,test,test2", // keyspaces
+            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        final String[] backupArgsWithSnapshotName = new String[]{
+            "backup",
+            "--jmx-service", "127.0.0.1:7199",
+            "--storage-location=" + getStorageLocation(),
+            "--snapshot-tag=stefansnapshot",
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--entities=system_schema,test,test2", // keyspaces
+            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        // RESTORE
+
+        final String[] restoreArgsPhase1 = new String[]{
+            "restore",
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--snapshot-tag=stefansnapshot",
+            "--storage-location=" + getStorageLocation(),
+            "--update-cassandra-yaml=true",
+            "--entities=system_schema,test,test2",
+            "--restoration-strategy-type=import",
+            "--restoration-phase-type=download", /// DOWNLOAD
+            "--import-source-dir=" + target("downloaded"),
+            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        final String[] restoreArgsPhase2 = new String[]{
+            "restore",
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--snapshot-tag=stefansnapshot",
+            "--storage-location=" + getStorageLocation(),
+            "--update-cassandra-yaml=true",
+            "--entities=system_schema,test,test2",
+            "--restoration-strategy-type=import",
+            "--restoration-phase-type=truncate", // TRUNCATE
+            "--import-source-dir=" + target("downloaded"),
+            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        final String[] restoreArgsPhase3 = new String[]{
+            "restore",
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--snapshot-tag=stefansnapshot",
+            "--storage-location=" + getStorageLocation(),
+            "--update-cassandra-yaml=true",
+            "--entities=system_schema,test,test2",
+            "--restoration-strategy-type=import",
+            "--restoration-phase-type=import", // IMPORT
+            "--import-source-dir=" + target("downloaded"),
+            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        final String[] restoreArgsPhase4 = new String[]{
+            "restore",
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--snapshot-tag=stefansnapshot",
+            "--storage-location=" + getStorageLocation(),
+            "--update-cassandra-yaml=true",
+            "--entities=system_schema,test,test2",
+            "--restoration-strategy-type=import",
+            "--restoration-phase-type=cleanup", // CLEANUP
+            "--import-source-dir=" + target("downloaded"),
+            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        return new String[][]{
+            backupArgs,
+            backupArgsWithSnapshotName,
+            restoreArgsPhase1,
+            restoreArgsPhase2,
+            restoreArgsPhase3,
+            restoreArgsPhase4,
+        };
+    }
+
+    protected String[][] hardlinkingArguments() {
+
+        // BACKUP
+
+        final String[] backupArgs = new String[]{
+            "backup",
+            "--jmx-service", "127.0.0.1:7199",
+            "--storage-location=" + getStorageLocation(),
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--entities=system_schema,test,test2", // keyspaces
+            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        final String[] backupArgsWithSnapshotName = new String[]{
+            "backup",
+            "--jmx-service", "127.0.0.1:7199",
+            "--storage-location=" + getStorageLocation(),
+            "--snapshot-tag=stefansnapshot",
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--entities=system_schema,test,test2", // keyspaces
+            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        // RESTORE
+
+        final String[] restoreArgsPhase1 = new String[]{
+            "restore",
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--snapshot-tag=stefansnapshot",
+            "--storage-location=" + getStorageLocation(),
+            "--update-cassandra-yaml=true",
+            "--entities=test,test2",
+            "--restoration-strategy-type=hardlinks",
+            "--restoration-phase-type=download", /// DOWNLOAD
+            "--import-source-dir=" + target("downloaded"),
+            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        final String[] restoreArgsPhase2 = new String[]{
+            "restore",
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--snapshot-tag=stefansnapshot",
+            "--storage-location=" + getStorageLocation(),
+            "--update-cassandra-yaml=true",
+            "--entities=test,test2",
+            "--restoration-strategy-type=hardlinks",
+            "--restoration-phase-type=truncate", // TRUNCATE
+            "--import-source-dir=" + target("downloaded"),
+            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        final String[] restoreArgsPhase3 = new String[]{
+            "restore",
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--snapshot-tag=stefansnapshot",
+            "--storage-location=" + getStorageLocation(),
+            "--update-cassandra-yaml=true",
+            "--entities=test,test2",
+            "--restoration-strategy-type=hardlinks",
+            "--restoration-phase-type=import", // IMPORT
+            "--import-source-dir=" + target("downloaded"),
+            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        final String[] restoreArgsPhase4 = new String[]{
+            "restore",
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--snapshot-tag=stefansnapshot",
+            "--storage-location=" + getStorageLocation(),
+            "--update-cassandra-yaml=true",
+            "--entities=test,test2",
+            "--restoration-strategy-type=hardlinks",
+            "--restoration-phase-type=cleanup", // CLEANUP
+            "--import-source-dir=" + target("downloaded"),
+            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        return new String[][]{
+            backupArgs,
+            backupArgsWithSnapshotName,
+            restoreArgsPhase1,
+            restoreArgsPhase2,
+            restoreArgsPhase3,
+            restoreArgsPhase4,
+        };
+
+    }
+
+    protected abstract String getStorageLocation();
+
+    public void inPlaceBackupRestoreTest(final String[][] arguments) throws Exception {
+        try {
+            List<Long> insertionTimes = backup(arguments);
+            restoreOnStoppedNode(insertionTimes, arguments);
+        } catch (final Exception ex) {
+            deleteDirectory(Paths.get(target("commitlog_download_dir")));
+        }
+    }
+
+    public void liveBackupRestoreTest(final String[][] arguments) throws Exception {
+        EmbeddedCassandraFactory cassandraFactory = new EmbeddedCassandraFactory();
+        cassandraFactory.setWorkingDirectory(cassandraDir);
+        cassandraFactory.setArtifact(Artifact.ofVersion(Version.of("4.0-alpha4")));
+        cassandraFactory.getJvmOptions().add("-Xmx2g");
+        cassandraFactory.getJvmOptions().add("-Xms2g");
+
+        Cassandra cassandra = cassandraFactory.create();
+
+        cassandra.start();
+
+        try (CqlSession session = CqlSession.builder().build()) {
+
+            // keyspace, table
+
+            session.execute(createKeyspace(KEYSPACE)
+                                .ifNotExists()
+                                .withNetworkTopologyStrategy(of("datacenter1", 1))
+                                .build());
+
+            session.execute(createTable(KEYSPACE, TABLE)
+                                .ifNotExists()
+                                .withPartitionKey(ID, TEXT)
+                                .withClusteringColumn(DATE, TIMEUUID)
+                                .withColumn(NAME, TEXT)
+                                .build());
+
+            // keyspace2, table2
+
+            session.execute(createKeyspace(KEYSPACE_2)
+                                .ifNotExists()
+                                .withNetworkTopologyStrategy(of("datacenter1", 1))
+                                .build());
+
+            session.execute(createTable(KEYSPACE_2, TABLE_2)
+                                .ifNotExists()
+                                .withPartitionKey(ID, TEXT)
+                                .withClusteringColumn(DATE, TIMEUUID)
+                                .withColumn(NAME, TEXT)
+                                .build());
+
+            insertAndBackup(2, session, arguments[0]); // stefansnapshot-1
+            insertAndBackup(2, session, arguments[1]); // stefansnapshot-2
+
+            logger.info("Executing the first restoration phase - download {}", asList(arguments[2]));
+            BackupRestoreCLI.mainWithoutExit(arguments[2]);
+
+            logger.info("Executing the second restoration phase - truncate {}", asList(arguments[3]));
+            BackupRestoreCLI.mainWithoutExit(arguments[3]);
+
+            logger.info("Executing the third restoration phase - import {}", asList(arguments[4]));
+            BackupRestoreCLI.mainWithoutExit(arguments[4]);
+
+            logger.info("Executing the fourth restoration phase - cleanup {}", asList(arguments[5]));
+            BackupRestoreCLI.mainWithoutExit(arguments[5]);
+
+            // we expect 4 records to be there as 2 were there before the first backup and the second 2 before the second backup
+            dumpTable(KEYSPACE, TABLE, 4);
+            dumpTable(KEYSPACE_2, TABLE_2, 4);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            cassandra.stop();
+            deleteDirectory(Paths.get(target("backup1")));
+            deleteDirectory(Paths.get(target("commitlog_download_dir")));
+        }
+    }
+
+    public List<Long> backup(final String[][] arguments) throws Exception {
         // BACKUP
 
         EmbeddedCassandraFactory cassandraToBackupFactory = new EmbeddedCassandraFactory();
         cassandraToBackupFactory.setWorkingDirectory(cassandraDir);
         cassandraToBackupFactory.setArtifact(CASSANDRA_ARTIFACT);
-        cassandraToBackupFactory.getJvmOptions().add("-Xmx1g");
-        cassandraToBackupFactory.getJvmOptions().add("-Xms1g");
+        cassandraToBackupFactory.getJvmOptions().add("-Xmx2g");
+        cassandraToBackupFactory.getJvmOptions().add("-Xms2g");
         Cassandra cassandraToBackup = cassandraToBackupFactory.create();
 
         cassandraToBackup.start();
@@ -140,9 +470,14 @@ public class AbstractBackupTest {
             cassandraToBackup.stop();
         }
 
+        return insertionTimes;
+    }
+
+    public void restoreOnStoppedNode(List<Long> insertionTimes, String[][] arguments) {
+
         // RESTORE
 
-        logger.info("Executing restore with arguments {}", asList(arguments[3]));
+        logger.info("Executing restore on stopped node with arguments {}", asList(arguments[3]));
 
         BackupRestoreCLI.mainWithoutExit(arguments[3]);
 
@@ -169,8 +504,8 @@ public class AbstractBackupTest {
 
         EmbeddedCassandraFactory cassandraToRestoreFactory = new EmbeddedCassandraFactory();
         cassandraToRestoreFactory.setWorkingDirectory(cassandraRestoredDir);
-        cassandraToRestoreFactory.getJvmOptions().add("-Xmx1g");
-        cassandraToRestoreFactory.getJvmOptions().add("-Xms1g");
+        cassandraToRestoreFactory.getJvmOptions().add("-Xmx2g");
+        cassandraToRestoreFactory.getJvmOptions().add("-Xms2g");
         cassandraToRestoreFactory.setArtifact(new DefaultArtifact(Version.of(CASSANDRA_VERSION), cassandraRestoredDir));
         Cassandra cassandraToRestore = cassandraToRestoreFactory.create();
 
@@ -178,14 +513,8 @@ public class AbstractBackupTest {
 
         waitForCql();
 
-        try (CqlSession session = CqlSession.builder().build()) {
-            List<Row> rows = session.execute(selectFrom(KEYSPACE, TABLE).all().build()).all();
-
-            for (Row row : rows) {
-                logger.info(format("id: %s, date: %s, name: %s", row.getString(ID), uuidToDate(requireNonNull(row.getUuid(DATE))), row.getString(NAME)));
-            }
-
-            assertEquals(rows.size(), NUMBER_OF_ROWS_AFTER_RESTORATION);
+        try {
+            dumpTable(KEYSPACE, TABLE, NUMBER_OF_ROWS_AFTER_RESTORATION);
         } finally {
             cassandraToRestore.stop();
         }
@@ -193,7 +522,7 @@ public class AbstractBackupTest {
 
     // helpers
 
-    private List<Long> insertAndBackup(int records, CqlSession cqlSession, String[] backupArgs) {
+    protected List<Long> insertAndBackup(int records, CqlSession cqlSession, String[] backupArgs) {
         List<Long> executionTimes = insert(records, cqlSession);
 
         logger.info("Executing backup with arguments {}", asList(backupArgs));
@@ -202,11 +531,11 @@ public class AbstractBackupTest {
         return executionTimes;
     }
 
-    private List<Long> insert(int records, CqlSession cqlSession) {
+    protected List<Long> insert(int records, CqlSession cqlSession) {
         return range(0, records).mapToObj(i -> insert(cqlSession)).collect(toList());
     }
 
-    private long insert(CqlSession session) {
+    protected long insert(CqlSession session) {
 
         try {
             session.execute(insertInto(KEYSPACE, TABLE)
@@ -258,5 +587,17 @@ public class AbstractBackupTest {
                 return false;
             }
         });
+    }
+
+    protected void dumpTable(final String keyspace, final String table, int expectedLength) {
+        try (CqlSession session = CqlSession.builder().build()) {
+            List<Row> rows = session.execute(selectFrom(keyspace, table).all().build()).all();
+
+            for (Row row : rows) {
+                logger.info(format("id: %s, date: %s, name: %s", row.getString(ID), uuidToDate(requireNonNull(row.getUuid(DATE))), row.getString(NAME)));
+            }
+
+            assertEquals(rows.size(), expectedLength);
+        }
     }
 }

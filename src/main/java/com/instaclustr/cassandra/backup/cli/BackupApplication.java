@@ -55,11 +55,7 @@ public class BackupApplication implements Runnable {
 
         final List<Module> appSpecificModules = singletonList(new BackupModule());
 
-        if (request.offlineBackup) {
-            init(this, null, request, logger, appSpecificModules);
-        } else {
-            init(this, jmxSpec, request, logger, appSpecificModules);
-        }
+        init(this, jmxSpec, request, logger, appSpecificModules);
 
         final Operation<?> operation = operationsService.submitOperationRequest(request);
 

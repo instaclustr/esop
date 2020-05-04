@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,6 +32,7 @@ import com.google.common.base.MoreObjects;
 import com.google.inject.Inject;
 import com.instaclustr.cassandra.backup.guice.StorageProviders;
 import picocli.CommandLine;
+import picocli.CommandLine.ITypeConverter;
 
 public class StorageLocation {
 
@@ -109,6 +111,20 @@ public class StorageLocation {
         }
     }
 
+    public static StorageLocation updateDatacenter(final StorageLocation oldLocation, final String dc) {
+        final String withoutNodeId = oldLocation.rawLocation.substring(0, oldLocation.rawLocation.lastIndexOf("/"));
+        final String withoutDatacenter = withoutNodeId.substring(0, withoutNodeId.lastIndexOf("/"));
+        return new StorageLocation(withoutDatacenter + "/" + dc + "/" + oldLocation.nodeId);
+    }
+
+    public static StorageLocation updateNodeId(final StorageLocation oldLocation, String nodeId) {
+        return new StorageLocation(oldLocation.rawLocation.substring(0, oldLocation.rawLocation.lastIndexOf("/") + 1) + nodeId);
+    }
+
+    public static StorageLocation updateNodeId(final StorageLocation oldLocation, UUID nodeId) {
+        return StorageLocation.updateNodeId(oldLocation, nodeId.toString());
+    }
+
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
@@ -172,7 +188,7 @@ public class StorageLocation {
         }
     }
 
-    public static class StorageLocationTypeConverter implements CommandLine.ITypeConverter<StorageLocation> {
+    public static class StorageLocationTypeConverter implements ITypeConverter<StorageLocation> {
 
         @Override
         public StorageLocation convert(final String value) throws Exception {
@@ -203,7 +219,7 @@ public class StorageLocation {
         @Override
         public void serialize(final StorageLocation value, final JsonGenerator gen, final SerializerProvider provider) throws IOException {
             if (value != null) {
-                gen.writeString(value.toString());
+                gen.writeString(value.rawLocation);
             }
         }
     }

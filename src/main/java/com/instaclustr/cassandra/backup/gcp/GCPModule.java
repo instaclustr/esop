@@ -16,9 +16,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.instaclustr.cassandra.backup.impl.KubernetesAwareRequest;
+import com.instaclustr.cassandra.backup.impl.AbstractOperationRequest;
 import com.instaclustr.kubernetes.KubernetesHelper;
-import com.instaclustr.kubernetes.KubernetesSecretsReader;
 import com.instaclustr.kubernetes.SecretReader;
 import io.kubernetes.client.apis.CoreV1Api;
 import org.slf4j.Logger;
@@ -51,7 +50,7 @@ public class GCPModule extends AbstractModule {
             this.coreV1ApiProvider = coreV1ApiProvider;
         }
 
-        public Storage build(final KubernetesAwareRequest operationRequest) {
+        public Storage build(final AbstractOperationRequest operationRequest) {
 
             if (KubernetesHelper.isRunningInKubernetes() || KubernetesHelper.isRunningAsClient()) {
                 final GoogleCredentials credentials = resolveGoogleCredentials(operationRequest);
@@ -77,32 +76,28 @@ public class GCPModule extends AbstractModule {
             }
         }
 
-        private GoogleCredentials resolveGoogleCredentials(final KubernetesAwareRequest operationRequest) {
+        private GoogleCredentials resolveGoogleCredentials(final AbstractOperationRequest operationRequest) {
             final String dataKey = "gcp";
 
+            final String namespace = operationRequest.resolveKubernetesNamespace();
+            final String secretName = operationRequest.resolveSecretName();
+
             try {
-                final String namespace = resolveKubernetesKeyspace(operationRequest);
-                Optional<byte[]> gcpCredentials = new SecretReader(coreV1ApiProvider).read(namespace, operationRequest.getSecretName(), dataKey);
+                Optional<byte[]> gcpCredentials = new SecretReader(coreV1ApiProvider).read(namespace,
+                                                                                           secretName,
+                                                                                           dataKey);
 
                 if (!gcpCredentials.isPresent()) {
                     throw new GCPModuleException(format("GCP credentials from Kubernetes namespace %s from secret %s under key %s were not set.",
                                                         namespace,
-                                                        operationRequest.getSecretName(),
+                                                        secretName,
                                                         dataKey));
                 }
 
                 return GoogleCredentials.fromStream(new ByteArrayInputStream(gcpCredentials.get()))
                     .createScoped(Lists.newArrayList("https://www.googleapis.com/auth/cloud-platform"));
             } catch (final Exception ex) {
-                throw new GCPModuleException(format("Unable to resolve data for key %s on secret %s", dataKey, operationRequest.getSecretName()), ex);
-            }
-        }
-
-        private String resolveKubernetesKeyspace(final KubernetesAwareRequest operationRequest) {
-            if (operationRequest.getNamespace() != null) {
-                return operationRequest.getNamespace();
-            } else {
-                return KubernetesSecretsReader.readNamespace();
+                throw new GCPModuleException(format("Unable to resolve data for key %s on secret %s", dataKey, secretName), ex);
             }
         }
     }

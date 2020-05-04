@@ -1,10 +1,8 @@
 package com.instaclustr.cassandra.backup.impl.restore;
 
-import static com.instaclustr.cassandra.backup.impl.restore.Restorer.CompareFilesResult.DOWNLOAD_REQUIRED;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.stream.Collectors.toList;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
@@ -12,10 +10,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import com.google.common.util.concurrent.Futures;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
-import com.instaclustr.cassandra.backup.impl.OperationProgressTracker;
+import com.instaclustr.operations.OperationProgressTracker;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.StorageInteractor;
 import com.instaclustr.threading.Executors.ExecutorServiceSupplier;
@@ -23,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class Restorer extends StorageInteractor {
+
     private static final Logger logger = LoggerFactory.getLogger(Restorer.class);
 
     protected final BaseRestoreOperationRequest request;
@@ -36,19 +36,15 @@ public abstract class Restorer extends StorageInteractor {
 
     }
 
-    public enum CompareFilesResult {
-        MATCHING,
-        DOWNLOAD_REQUIRED
+    public void downloadManifestEntry(final ManifestEntry manifestEntry) throws Exception {
+        this.downloadFile(manifestEntry.localFile, objectKeyToRemoteReference(manifestEntry.objectKey));
     }
 
-    public CompareFilesResult compareRemoteObject(final long size, final Path localFilePath, final RemoteObjectReference object) throws Exception {
-        if ((!localFilePath.toFile().exists()) || (Files.size(localFilePath) != size))
-            return DOWNLOAD_REQUIRED;
-
-        return CompareFilesResult.MATCHING;
-    }
+    public abstract String downloadFileToString(final Path localPath, final RemoteObjectReference objectReference) throws Exception;
 
     public abstract void downloadFile(final Path localPath, final RemoteObjectReference objectReference) throws Exception;
+
+    public abstract Path downloadFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception;
 
     public abstract void consumeFiles(final RemoteObjectReference prefix, final Consumer<RemoteObjectReference> consumer) throws Exception;
 
@@ -105,8 +101,9 @@ public abstract class Restorer extends StorageInteractor {
         executorService.shutdown();
 
         while (true) {
-            if (executorService.awaitTermination(1, MINUTES))
+            if (executorService.awaitTermination(1, MINUTES)) {
                 break;
+            }
         }
 
         // rethrow any exception caused by a download task so we exit with failure

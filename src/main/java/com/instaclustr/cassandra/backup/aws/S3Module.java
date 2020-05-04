@@ -18,7 +18,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.instaclustr.cassandra.backup.impl.KubernetesAwareRequest;
+import com.instaclustr.cassandra.backup.impl.AbstractOperationRequest;
 import com.instaclustr.kubernetes.KubernetesHelper;
 import com.instaclustr.kubernetes.KubernetesSecretsReader;
 import com.instaclustr.kubernetes.SecretReader;
@@ -53,7 +53,7 @@ public class S3Module extends AbstractModule {
             this.coreV1ApiProvider = coreV1ApiProvider;
         }
 
-        public TransferManager build(final KubernetesAwareRequest operationRequest) {
+        public TransferManager build(final AbstractOperationRequest operationRequest) {
             final AmazonS3 amazonS3 = provideAmazonS3(coreV1ApiProvider, operationRequest);
             return TransferManagerBuilder.standard().withS3Client(amazonS3).build();
         }
@@ -62,7 +62,7 @@ public class S3Module extends AbstractModule {
             return KubernetesHelper.isRunningInKubernetes() || isRunningAsClient();
         }
 
-        private AmazonS3 provideAmazonS3(final Provider<CoreV1Api> coreV1ApiProvider, final KubernetesAwareRequest operationRequest) {
+        private AmazonS3 provideAmazonS3(final Provider<CoreV1Api> coreV1ApiProvider, final AbstractOperationRequest operationRequest) {
 
             final S3Configuration s3Conf = resolveS3Configuration(coreV1ApiProvider, operationRequest);
 
@@ -110,13 +110,14 @@ public class S3Module extends AbstractModule {
             return builder.build();
         }
 
-        private S3Configuration resolveS3Configuration(final Provider<CoreV1Api> coreV1ApiProvider, final KubernetesAwareRequest operationRequest) {
+        private S3Configuration resolveS3Configuration(final Provider<CoreV1Api> coreV1ApiProvider, final AbstractOperationRequest operationRequest) {
             if (isRunningInKubernetes()) {
                 try {
                     return resolveS3ConfigurationFromK8S(coreV1ApiProvider, operationRequest);
                 } catch (final S3ModuleException ex) {
                     logger.warn(String.format("Unable to resolve credentials for S3 from Kubernetes secret %s. The last chance "
-                                                  + "for this container to authenticate is to use AWS instance credentials."), ex);
+                                                  + "for this container to authenticate is to use AWS instance credentials.",
+                                              operationRequest.k8sBackupSecretName), ex);
                     return new S3Configuration();
                 }
             } else {
@@ -124,7 +125,7 @@ public class S3Module extends AbstractModule {
             }
         }
 
-        private S3Configuration resolveS3ConfigurationFromK8S(final Provider<CoreV1Api> coreV1ApiProvider, final KubernetesAwareRequest operationRequest) {
+        private S3Configuration resolveS3ConfigurationFromK8S(final Provider<CoreV1Api> coreV1ApiProvider, final AbstractOperationRequest operationRequest) {
 
             try {
 
@@ -132,7 +133,7 @@ public class S3Module extends AbstractModule {
                 final SecretReader secretReader = new SecretReader(coreV1ApiProvider);
 
                 return secretReader.readIntoObject(namespace,
-                                                   operationRequest.getSecretName(),
+                                                   operationRequest.resolveSecretName(),
                                                    secret -> {
                                                        final Map<String, byte[]> data = secret.getData();
 
@@ -185,9 +186,9 @@ public class S3Module extends AbstractModule {
             return s3Configuration;
         }
 
-        private String resolveKubernetesKeyspace(final KubernetesAwareRequest operationRequest) {
-            if (operationRequest.getNamespace() != null) {
-                return operationRequest.getNamespace();
+        private String resolveKubernetesKeyspace(final AbstractOperationRequest operationRequest) {
+            if (operationRequest.k8sNamespace != null) {
+                return operationRequest.k8sNamespace;
             } else {
                 return KubernetesSecretsReader.readNamespace();
             }

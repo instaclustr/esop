@@ -1,6 +1,8 @@
 package com.instaclustr.cassandra.backup.embedded.s3;
 
-import java.util.UUID;
+import static com.instaclustr.io.FileUtils.deleteDirectory;
+
+import java.nio.file.Paths;
 
 import com.instaclustr.cassandra.backup.aws.S3BucketService;
 import com.instaclustr.cassandra.backup.aws.S3Module.TransferManagerFactory;
@@ -9,17 +11,28 @@ import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
 
 public abstract class BaseS3BackupRestoreTest extends AbstractBackupTest {
 
-    protected static final String BUCKET_NAME = UUID.randomUUID().toString();
-
     protected abstract BackupOperationRequest getBackupOperationRequest();
 
-    protected abstract String[][] getProgramArguments();
+    @Override
+    protected String getStorageLocation() {
+        return "s3://" + BUCKET_NAME + "/cluster/datacenter1/node1";
+    }
 
-    public void test() throws Exception {
+    public void inPlaceTest(final String[][] programArguments) throws Exception {
         try {
-            backupAndRestoreTest(getProgramArguments());
+            inPlaceBackupRestoreTest(programArguments);
         } finally {
             new S3BucketService(getTransferManagerFactory(), getBackupOperationRequest()).delete(BUCKET_NAME);
+            deleteDirectory(Paths.get(target("commitlog_download_dir")));
+        }
+    }
+
+    public void liveCassandraTest(final String[][] programArguments) throws Exception {
+        try {
+            liveBackupRestoreTest(programArguments);
+        } finally {
+            new S3BucketService(getTransferManagerFactory(), getBackupOperationRequest()).delete(BUCKET_NAME);
+            deleteDirectory(Paths.get(target("commitlog_download_dir")));
         }
     }
 

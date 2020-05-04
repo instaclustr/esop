@@ -6,8 +6,11 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import com.google.inject.assistedinject.Assisted;
@@ -69,6 +72,11 @@ public class AzureRestorer extends Restorer {
     }
 
     @Override
+    public String downloadFileToString(final Path localPath, final RemoteObjectReference objectReference) throws Exception {
+        return ((AzureRemoteObjectReference) objectReference).blob.downloadText();
+    }
+
+    @Override
     public void downloadFile(final Path localPath, final RemoteObjectReference objectReference) throws Exception {
         final CloudBlockBlob blob = ((AzureRemoteObjectReference) objectReference).blob;
         Files.createDirectories(localPath.getParent());
@@ -76,15 +84,47 @@ public class AzureRestorer extends Restorer {
     }
 
     @Override
-    public void consumeFiles(final RemoteObjectReference prefix,
-                             final Consumer<RemoteObjectReference> consumer) throws Exception {
+    public Path downloadFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+
+        final Iterable<ListBlobItem> blobItemsIterable = list(remotePrefix);
+        final List<ListBlobItem> blobItems = new ArrayList<>();
+
+        for (final ListBlobItem listBlobItem : blobItemsIterable) {
+            if (keyFilter.test(listBlobItem.getUri().getPath())) {
+                blobItems.add(listBlobItem);
+            }
+        }
+
+        if (blobItems.size() != 1) {
+            throw new IllegalStateException(format("There is not one key which satisfies key filter: %s", blobItems.toString()));
+        }
+
+        final String blobItemPath = blobItems.get(0).getUri().getPath();
+        final String fileName = blobItemPath.split("/")[blobItemPath.split("/").length - 1];
+
+        final Path destination = destinationDir.resolve(fileName);
+
+        downloadFile(destination, objectKeyToRemoteReference(remotePrefix.resolve(fileName)));
+
+        return destination;
+    }
+
+    @Override
+    public void consumeFiles(final RemoteObjectReference prefix, final Consumer<RemoteObjectReference> consumer) throws Exception {
         final AzureRemoteObjectReference azureRemoteObjectReference = (AzureRemoteObjectReference) prefix;
+        final Iterable<ListBlobItem> blobItemsIterable = list(azureRemoteObjectReference.getObjectKey());
 
-        final String blobPrefix = Paths.get(request.storageLocation.clusterId)
-            .resolve(request.storageLocation.datacenterId)
-            .resolve(request.storageLocation.nodeId)
-            .resolve(azureRemoteObjectReference.getObjectKey()).toString();
+        for (final ListBlobItem listBlobItem : blobItemsIterable) {
+            try {
+                consumer.accept(objectKeyToRemoteReference(removeNodePrefix(listBlobItem)));
+            } catch (StorageException | URISyntaxException ex) {
+                logger.error("Error occurred while trying to consume {}", listBlobItem.getUri().toString(), ex);
+                throw ex;
+            }
+        }
+    }
 
+    private Path removeNodePrefix(final ListBlobItem listBlobItem) {
         final String pattern = format("^/%s/%s/%s/%s/",
                                       request.storageLocation.bucket,
                                       request.storageLocation.clusterId,
@@ -93,21 +133,16 @@ public class AzureRestorer extends Restorer {
 
         final Pattern containerPattern = Pattern.compile(pattern);
 
-        final Iterable<ListBlobItem> blobItemsIterable = blobContainer.listBlobs(blobPrefix,
-                                                                                 true,
-                                                                                 EnumSet.noneOf(BlobListingDetails.class),
-                                                                                 null,
-                                                                                 null);
+        return Paths.get(containerPattern.matcher(listBlobItem.getUri().getPath()).replaceFirst(""));
+    }
 
-        for (final ListBlobItem listBlobItem : blobItemsIterable) {
-            try {
-                consumer.accept(objectKeyToRemoteReference(Paths.get(containerPattern.matcher(listBlobItem.getUri().getPath()).replaceFirst(""))));
-            } catch (StorageException | URISyntaxException e) {
-                logger.error("Failed to generate objectKey for blob item \"{}\".", listBlobItem.getUri(), e);
+    private Iterable<ListBlobItem> list(final Path prefix) {
+        final String blobPrefix = Paths.get(request.storageLocation.clusterId)
+            .resolve(request.storageLocation.datacenterId)
+            .resolve(request.storageLocation.nodeId)
+            .resolve(prefix).toString();
 
-                throw e;
-            }
-        }
+        return blobContainer.listBlobs(blobPrefix, true, EnumSet.noneOf(BlobListingDetails.class), null, null);
     }
 
     @Override

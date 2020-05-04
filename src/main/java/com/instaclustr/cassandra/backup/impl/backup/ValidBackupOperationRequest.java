@@ -35,11 +35,6 @@ public @interface ValidBackupOperationRequest {
 
             context.disableDefaultConstraintViolation();
 
-            if (!Files.exists(value.sharedContainerPath)) {
-                context.buildConstraintViolationWithTemplate(format("sharedContainerPath %s does not exist", value.sharedContainerPath)).addConstraintViolation();
-                return false;
-            }
-
             if (!Files.exists(value.cassandraDirectory)) {
                 context.buildConstraintViolationWithTemplate(format("cassandraDirectory %s does not exist", value.cassandraDirectory)).addConstraintViolation();
                 return false;

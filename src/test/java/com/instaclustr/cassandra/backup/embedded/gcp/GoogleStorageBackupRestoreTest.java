@@ -22,47 +22,6 @@ import org.testng.annotations.Test;
 })
 public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupRestoreTest {
 
-    final String[] backupArgs = new String[]{
-        "backup",
-        "--jmx-service", "127.0.0.1:7199",
-        "--storage-location=gcp://" + BUCKET_NAME + "/cluster/test-dc/1",
-        "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-        "--entities=system_schema,test,test2" // keyspaces
-    };
-
-    final String[] backupArgsWithSnapshotName = new String[]{
-        "backup",
-        "--jmx-service", "127.0.0.1:7199",
-        "--storage-location=gcp://" + BUCKET_NAME + "/cluster/test-dc/1",
-        "--snapshot-tag=stefansnapshot",
-        "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-        "--entities=system_schema,test,test2" // keyspaces
-    };
-
-    final String[] restoreArgs = new String[]{
-        "restore",
-        "--data-directory=" + cassandraRestoredDir.toAbsolutePath().toString() + "/data",
-        "--config-directory=" + cassandraRestoredConfigDir.toAbsolutePath().toString(),
-        "--snapshot-tag=stefansnapshot",
-        "--storage-location=gcp://" + BUCKET_NAME + "/cluster/test-dc/1",
-        "--update-cassandra-yaml=true",
-        "--entities=system_schema,test,test2"
-    };
-
-    final String[] commitlogBackupArgs = new String[]{
-        "commitlog-backup",
-        "--storage-location=gcp://" + BUCKET_NAME + "/cluster/test-dc/1",
-        "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data"
-    };
-
-    final String[] commitlogRestoreArgs = new String[]{
-        "commitlog-restore",
-        "--data-directory=" + cassandraRestoredDir.toAbsolutePath().toString() + "/data",
-        "--config-directory=" + cassandraRestoredConfigDir.toAbsolutePath().toString(),
-        "--storage-location=gcp://" + BUCKET_NAME + "/cluster/test-dc/1",
-        "--commitlog-download-dir=" + target("commitlog_download_dir"),
-    };
-
     @Inject
     public GoogleStorageFactory googleStorageFactory;
 
@@ -90,23 +49,23 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
         return new BackupOperationRequest();
     }
 
-    protected String[][] getProgramArguments() {
-        return new String[][]{
-            backupArgs,
-            backupArgsWithSnapshotName,
-            commitlogBackupArgs,
-            restoreArgs,
-            commitlogRestoreArgs
-        };
-    }
-
     @Override
     public GoogleStorageFactory getGoogleStorageFactory() {
         return googleStorageFactory;
     }
 
     @Test
-    public void testBackupAndRestore() throws Exception {
-        test();
+    public void testInPlaceBackupRestore() throws Exception {
+        inPlaceTest(inPlaceArguments());
+    }
+
+    @Test
+    public void testImportingBackupAndRestore() throws Exception {
+        liveCassandraTest(importArguments());
+    }
+
+    @Test
+    public void testHardlinkingBackupAndRestore() throws Exception {
+        liveCassandraTest(hardlinkingArguments());
     }
 }

@@ -11,9 +11,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.instaclustr.cassandra.backup.impl.KubernetesAwareRequest;
+import com.instaclustr.cassandra.backup.impl.AbstractOperationRequest;
 import com.instaclustr.kubernetes.KubernetesHelper;
-import com.instaclustr.kubernetes.KubernetesSecretsReader;
 import com.instaclustr.kubernetes.SecretReader;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
@@ -44,7 +43,7 @@ public class AzureModule extends AbstractModule {
             this.coreV1ApiProvider = coreV1ApiProvider;
         }
 
-        public CloudStorageAccount build(final KubernetesAwareRequest operationRequest) throws AzureModuleException, URISyntaxException {
+        public CloudStorageAccount build(final AbstractOperationRequest operationRequest) throws AzureModuleException, URISyntaxException {
             return new CloudStorageAccount(provideStorageCredentialsAccountAndKey(coreV1ApiProvider, operationRequest), true);
         }
 
@@ -53,7 +52,7 @@ public class AzureModule extends AbstractModule {
         }
 
         private StorageCredentialsAccountAndKey provideStorageCredentialsAccountAndKey(final Provider<CoreV1Api> coreV1ApiProvider,
-                                                                                       final KubernetesAwareRequest operationrequest) throws AzureModuleException {
+                                                                                       final AbstractOperationRequest operationrequest) throws AzureModuleException {
             if (isRunningInKubernetes()) {
                 return resolveCredentialsFromK8S(coreV1ApiProvider, operationrequest);
             } else {
@@ -66,13 +65,13 @@ public class AzureModule extends AbstractModule {
         }
 
         private StorageCredentialsAccountAndKey resolveCredentialsFromK8S(final Provider<CoreV1Api> coreV1ApiProvider,
-                                                                          final KubernetesAwareRequest operationrequest) {
+                                                                          final AbstractOperationRequest operationrequest) {
             try {
-                final String namespace = resolveKubernetesKeyspace(operationrequest);
+                final String namespace = operationrequest.resolveKubernetesNamespace();
                 final SecretReader secretReader = new SecretReader(coreV1ApiProvider);
 
                 return secretReader.readIntoObject(namespace,
-                                                   operationrequest.getSecretName(),
+                                                   operationrequest.resolveSecretName(),
                                                    secret -> {
                                                        final Map<String, byte[]> data = secret.getData();
 
@@ -96,14 +95,6 @@ public class AzureModule extends AbstractModule {
                                                    });
             } catch (final Exception ex) {
                 throw new AzureModuleException("Unable to resolve Azure credentials for backup / restores from Kubernetes ", ex);
-            }
-        }
-
-        private String resolveKubernetesKeyspace(final KubernetesAwareRequest operationRequest) {
-            if (operationRequest.getNamespace() != null) {
-                return operationRequest.getNamespace();
-            } else {
-                return KubernetesSecretsReader.readNamespace();
             }
         }
     }

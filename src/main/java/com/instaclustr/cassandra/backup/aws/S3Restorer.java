@@ -1,12 +1,18 @@
 package com.instaclustr.cassandra.backup.aws;
 
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toCollection;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.event.ProgressEvent;
@@ -15,9 +21,12 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.PersistableTransfer;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.internal.S3ProgressListener;
+import com.google.common.io.CharStreams;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.cassandra.backup.aws.S3Module.TransferManagerFactory;
@@ -60,6 +69,14 @@ public class S3Restorer extends Restorer {
     }
 
     @Override
+    public String downloadFileToString(final Path localPath, final RemoteObjectReference objectReference) throws Exception {
+        final GetObjectRequest getObjectRequest = new GetObjectRequest(request.storageLocation.bucket, objectReference.canonicalPath);
+        try (final InputStream is = transferManager.getAmazonS3Client().getObject(getObjectRequest).getObjectContent(); final InputStreamReader isr = new InputStreamReader(is)) {
+            return CharStreams.toString(isr);
+        }
+    }
+
+    @Override
     public void downloadFile(final Path localPath, final RemoteObjectReference objectReference) throws Exception {
         final GetObjectRequest getObjectRequest = new GetObjectRequest(request.storageLocation.bucket, objectReference.canonicalPath);
 
@@ -76,6 +93,42 @@ public class S3Restorer extends Restorer {
 
             throw exception.get();
         }
+    }
+
+    @Override
+    public Path downloadFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+        ObjectListing objectListing = amazonS3.listObjects(request.storageLocation.bucket);
+
+        boolean hasMoreContent = true;
+
+        final List<S3ObjectSummary> summaryList = new ArrayList<>();
+
+        while (hasMoreContent) {
+            objectListing.getObjectSummaries().stream()
+                .filter(objectSummary -> !objectSummary.getKey().endsWith("/")) // no dirs
+                .filter(file -> keyFilter.test(file.getKey()))
+                .collect(toCollection(() -> summaryList));
+
+            if (objectListing.isTruncated()) {
+                objectListing = amazonS3.listNextBatchOfObjects(objectListing);
+            } else {
+                hasMoreContent = false;
+            }
+        }
+
+        if (summaryList.size() != 1) {
+            throw new IllegalStateException(String.format("There is not one key which satisfies key filter: %s", summaryList.toString()));
+        }
+
+        S3Object object = amazonS3.getObject(request.storageLocation.bucket, summaryList.get(0).getKey());
+
+        final String fileName = object.getKey().split("/")[object.getKey().split("/").length - 1];
+
+        final Path destination = destinationDir.resolve(fileName);
+
+        downloadFile(destination, objectKeyToRemoteReference(remotePrefix.resolve(fileName)));
+
+        return destination;
     }
 
     private static class DownloadProgressListener implements S3ProgressListener {
