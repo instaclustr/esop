@@ -38,7 +38,7 @@ public abstract class AbstractOperationRequest extends OperationRequest {
 
     @Option(names = {"--k8s-backup-secret-name"},
         description = "Name of Kubernetes secret used for credential retrieval for backup / restores when talking to cloud storages.")
-    public String k8sBackupSecretName;
+    public String k8sSecretName;
 
     public AbstractOperationRequest() {
         // for picocli
@@ -46,20 +46,20 @@ public abstract class AbstractOperationRequest extends OperationRequest {
 
     public AbstractOperationRequest(@NotNull final StorageLocation storageLocation,
                                     final String k8sNamespace,
-                                    final String k8sBackupSecretName) {
+                                    final String k8sSecretName) {
         this.storageLocation = storageLocation;
         this.k8sNamespace = k8sNamespace;
-        this.k8sBackupSecretName = k8sBackupSecretName;
+        this.k8sSecretName = k8sSecretName;
     }
 
     @JsonIgnore
     public String resolveSecretName() {
         String resolvedSecretName;
 
-        if (k8sBackupSecretName == null) {
+        if (k8sSecretName == null) {
             resolvedSecretName = String.format("cassandra-backup-restore-secret-cluster-%s", storageLocation.clusterId);
         } else {
-            resolvedSecretName = k8sBackupSecretName;
+            resolvedSecretName = k8sSecretName;
         }
 
         logger.info("Resolved secret name {}", resolvedSecretName);

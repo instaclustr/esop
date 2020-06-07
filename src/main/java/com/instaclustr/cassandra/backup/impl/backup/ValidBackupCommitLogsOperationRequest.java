@@ -39,7 +39,7 @@ public @interface ValidBackupCommitLogsOperationRequest {
                 return false;
             }
 
-            if (KubernetesHelper.isRunningInKubernetes() && value.k8sBackupSecretName == null) {
+            if (KubernetesHelper.isRunningInKubernetes() && value.k8sSecretName == null) {
                 context.buildConstraintViolationWithTemplate("This code is running in Kubernetes but there is not 'k8sSecretName' field set on backup request!").addConstraintViolation();
                 return false;
             }

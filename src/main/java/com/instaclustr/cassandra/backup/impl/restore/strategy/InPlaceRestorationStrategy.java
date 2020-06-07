@@ -174,6 +174,9 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
                 logger.info("1) add the content of the tokens.yaml in Cassandra installation dir to cassandra.yaml file");
                 logger.info("2) change 'auto_bootstrap: true' to 'auto_bootstrap: false' in cassandra.yaml");
             }
+        } catch (final Throwable t) {
+            t.printStackTrace();
+            throw t;
         } finally {
             fileLock.release();
         }

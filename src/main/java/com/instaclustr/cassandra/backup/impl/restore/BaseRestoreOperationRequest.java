@@ -33,6 +33,6 @@ public class BaseRestoreOperationRequest extends AbstractOperationRequest {
         ;
         this.lockFile = lockFile;
         this.k8sNamespace = k8sNamespace;
-        this.k8sBackupSecretName = k8sSecretName;
+        this.k8sSecretName = k8sSecretName;
     }
 }

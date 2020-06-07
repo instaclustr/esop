@@ -20,6 +20,7 @@ import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.Restoratio
 import com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy.RestorationStrategyType;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationCoordinator;
+import com.instaclustr.operations.OperationCoordinator.OperationCoordinatorException;
 import com.instaclustr.operations.OperationFailureException;
 import com.instaclustr.operations.ResultGatherer;
 
@@ -111,7 +112,7 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
         final ResultGatherer<RestoreOperationRequest> coordinatorResult = coordinator.coordinate(this);
 
         if (coordinatorResult.hasErrors()) {
-            throw new OperationCoordinator.OperationCoordinatorException(coordinatorResult.getErrorneousOperations().toString());
+            throw new OperationCoordinatorException(coordinatorResult.getErrorneousOperations().toString());
         }
     }
 }

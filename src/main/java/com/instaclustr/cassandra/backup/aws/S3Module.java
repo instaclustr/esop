@@ -117,7 +117,7 @@ public class S3Module extends AbstractModule {
                 } catch (final S3ModuleException ex) {
                     logger.warn(String.format("Unable to resolve credentials for S3 from Kubernetes secret %s. The last chance "
                                                   + "for this container to authenticate is to use AWS instance credentials.",
-                                              operationRequest.k8sBackupSecretName), ex);
+                                              operationRequest.k8sSecretName), ex);
                     return new S3Configuration();
                 }
             } else {

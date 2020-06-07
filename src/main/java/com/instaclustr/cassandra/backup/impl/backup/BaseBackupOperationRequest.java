@@ -67,6 +67,6 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
         this.concurrentConnections = concurrentConnections == null ? 10 : concurrentConnections;
         this.lockFile = lockFile;
         this.k8sNamespace = k8sNamespace;
-        this.k8sBackupSecretName = k8sBackupSecretName;
+        this.k8sSecretName = k8sBackupSecretName;
     }
 }

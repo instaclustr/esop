@@ -1,5 +1,7 @@
 package com.instaclustr.cassandra.backup.impl.backup;
 
+import static com.instaclustr.kubernetes.KubernetesHelper.isRunningAsClient;
+import static com.instaclustr.kubernetes.KubernetesHelper.isRunningInKubernetes;
 import static java.lang.String.format;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE;
@@ -13,7 +15,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.nio.file.Files;
 
-import com.instaclustr.kubernetes.KubernetesHelper;
+import com.instaclustr.cassandra.backup.impl.DatabaseEntities;
 
 @Target({TYPE, PARAMETER})
 @Retention(RUNTIME)
@@ -40,10 +42,25 @@ public @interface ValidBackupOperationRequest {
                 return false;
             }
 
-            if ((KubernetesHelper.isRunningInKubernetes() || KubernetesHelper.isRunningAsClient()) && value.k8sBackupSecretName == null) {
-                context.buildConstraintViolationWithTemplate("This code is running in Kubernetes or as a Kubernetes client "
-                                                                 + "but there is not 'k8sSecretName' field set on backup request!").addConstraintViolation();
-                return false;
+            if ((isRunningInKubernetes() || isRunningAsClient())) {
+
+                if (value.resolveSecretName() == null) {
+                    context.buildConstraintViolationWithTemplate("This code is running in Kubernetes or as a Kubernetes client "
+                                                                     + "but it is not possible to resolve k8s secret name for backups!").addConstraintViolation();
+
+                    return false;
+                }
+
+                if (value.resolveKubernetesNamespace() == null) {
+                    context.buildConstraintViolationWithTemplate("This code is running in Kubernetes or as a Kubernetes client "
+                                                                     + "but it is not possible to resolve k8s namespace for backups!").addConstraintViolation();
+
+                    return false;
+                }
+            }
+
+            if (value.entities == null) {
+                value.entities = DatabaseEntities.empty();
             }
 
             return true;

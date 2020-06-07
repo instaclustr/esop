@@ -75,7 +75,7 @@ public class KubernetesAzureBackupRestoreTest extends BaseAzureBackupRestoreTest
     @Override
     protected BackupOperationRequest getBackupOperationRequest() {
         final BackupOperationRequest backupOperationRequest = new BackupOperationRequest();
-        backupOperationRequest.k8sBackupSecretName = SIDECAR_SECRET_NAME;
+        backupOperationRequest.k8sSecretName = SIDECAR_SECRET_NAME;
         return backupOperationRequest;
     }
 

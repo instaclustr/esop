@@ -62,10 +62,10 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonDeserialize(using = DatabaseEntitiesDeserializer.class) final DatabaseEntities entities,
                                   @JsonProperty("snapshotTag") final String snapshotTag,
                                   @JsonProperty("k8sNamespace") final String k8sNamespace,
-                                  @JsonProperty("k8sBackupSecretName") final String k8sBackupSecretName,
+                                  @JsonProperty("k8sSecretName") final String k8sSecretName,
                                   @JsonProperty("globalRequest") final boolean globalRequest,
                                   @JsonProperty("dc") final String dc) {
-        super(storageLocation, duration, bandwidth, concurrentConnections, cassandraDirectory, lockFile, k8sNamespace, k8sBackupSecretName);
+        super(storageLocation, duration, bandwidth, concurrentConnections, cassandraDirectory, lockFile, k8sNamespace, k8sSecretName);
         this.entities = entities == null ? DatabaseEntities.empty() : entities;
         this.snapshotTag = snapshotTag == null ? format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis())) : snapshotTag;
         this.globalRequest = globalRequest;
@@ -85,7 +85,7 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
             .add("entities", entities)
             .add("snapshotTag", snapshotTag)
             .add("k8sNamespace", k8sNamespace)
-            .add("k8sSecretName", k8sBackupSecretName)
+            .add("k8sSecretName", k8sSecretName)
             .add("globalRequest", globalRequest)
             .add("dc", dc)
             .toString();

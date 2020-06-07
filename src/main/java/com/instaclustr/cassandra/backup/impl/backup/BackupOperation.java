@@ -69,7 +69,7 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonDeserialize(using = DatabaseEntitiesDeserializer.class) final DatabaseEntities entities,
                             @JsonProperty("snapshotTag") final String snapshotTag,
                             @JsonProperty("k8sNamespace") final String k8sNamespace,
-                            @JsonProperty("k8sBackupSecretName") final String k8sBackupSecretName,
+                            @JsonProperty("k8sSecretName") final String k8sBackupSecretName,
                             @JsonProperty("globalRequest") final boolean globalRequest,
                             @JsonProperty("dc") final String dc) {
         super(type, id, creationTime, state, failureCause, progress, startTime, new BackupOperationRequest(type,

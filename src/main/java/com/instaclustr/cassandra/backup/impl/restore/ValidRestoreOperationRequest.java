@@ -13,6 +13,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.nio.file.Files;
 
+import com.instaclustr.cassandra.backup.impl.DatabaseEntities;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.RestorationPhaseType;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy.RestorationStrategyType;
 import com.instaclustr.kubernetes.KubernetesHelper;
@@ -59,10 +60,25 @@ public @interface ValidRestoreOperationRequest {
                 return false;
             }
 
-            if ((KubernetesHelper.isRunningInKubernetes() || KubernetesHelper.isRunningAsClient()) && value.k8sBackupSecretName == null) {
-                context.buildConstraintViolationWithTemplate("This code is running in Kubernetes or as a Kubernetes client "
-                                                                 + "but there is not 'k8sSecretName' field set on backup request!").addConstraintViolation();
-                return false;
+            if ((KubernetesHelper.isRunningInKubernetes() || KubernetesHelper.isRunningAsClient())) {
+
+                if (value.resolveSecretName() == null) {
+                    context.buildConstraintViolationWithTemplate("This code is running in Kubernetes or as a Kubernetes client "
+                                                                     + "but it is not possible to resolve k8s secret name for restores!").addConstraintViolation();
+
+                    return false;
+                }
+
+                if (value.resolveKubernetesNamespace() == null) {
+                    context.buildConstraintViolationWithTemplate("This code is running in Kubernetes or as a Kubernetes client "
+                                                                     + "but it is not possible to resolve k8s namespace for restores!").addConstraintViolation();
+
+                    return false;
+                }
+            }
+
+            if (value.entities == null) {
+                value.entities = DatabaseEntities.empty();
             }
 
             return true;

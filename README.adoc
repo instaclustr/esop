@@ -4,7 +4,7 @@ image:https://img.shields.io/maven-central/v/com.instaclustr/instaclustr-backup-
 
 image:https://circleci.com/gh/instaclustr/cassandra-backup.svg?style=svg["Instaclustr",link="https://circleci.com/gh/instaclustr/cassandra-backup"]
 
-This repository is home of backup and restoration tool from Instaclustr.
+This repository is home of backup and restoration tool from Instaclustr for Cassandra.
 
 The tool is able to perform these operations:
 
@@ -45,16 +45,19 @@ All commands should be preceded with `java -jar /path/to/backup/tool.jar`
 ### Example of `backup`
 
 This command with copy over all SSTables to remote location. It is possible to choose also location
-in cloud. For backup, a node has to be up to back it up. There is possibility to backup also offline node,
-please consult `help` of `backup` command to know details.
+in cloud. For backup, a node has to be up to back it up.
 
 ----
-$ backup --jmx-service 127.0.0.1:7199 \
-  --storage-location=file:///destination/to/backup/cluster-name/dc-name/node-id \
-  --data-directory=/my/installation/of/cassandra/data
+
+backup \
+--jmx-service 127.0.0.1:7199 \
+--storage-location=s3://myBucket/mycluster/dc1/node1 \
+--data-directory=/my/installation/of/cassandra \
+--entities=ks1,ks2 \
+--snapshot-tag=mysnapshot
 ----
 
-If you want to upload SSTables into AWS / GCP or Azure, just change `file://` protocol to either `s3`,
+If you want to upload SSTables into AWS / GCP or Azure, just change protocol to either `s3`,
 `gcp` or `azure`. The first part of the path is the bucket you want to upload files to, for `s3`,
 it would be like `s3://bucket-for-my-cluster/cluster-name/dc-name/node-id`. If you want to use different
 cloud, just change the protocol respectively.
@@ -67,8 +70,8 @@ You can backup commit logs as well. Example of commit log backup is like the fol
 
 ----
 $ commitlog-backup \
-  --storage-location=file:///destination/to/backup/cluster-name/dc-name/node-id, \
-  --data-directory=/my/installation/of/cassandra/data
+  --storage-location=s3://myBucket/mycluster/dc1/node1, \
+  --data-directory=/my/installation/of/cassandra
 ----
 
 Note that there is not any need to specify jmx-service because it is not needed. JMX is needed
@@ -108,7 +111,7 @@ $ commitlog-restore --data-directory=/my/installation/of/restored-cassandra/data
                     --timestamp-end=unix_timestamp_of_last_transaction_to_replay
 ----
 
-The commitlog restorations is driven by Cassandra's `commitlog_archiving.properties` file. This
+The commitlog restorations are driven by Cassandra's `commitlog_archiving.properties` file. This
 tool will generate such file into node's `conf` directory so it will be read upon nodes start.
 
 After a node is restored in this manner, one has to *delete* `commitlog_archiving.properties` file
@@ -119,6 +122,17 @@ restore_directories=/home/smiklosovic/dev/instaclustr-backup-restore/target/comm
 restore_point_in_time=2020\:01\:13 11\:32\:51
 restore_command=cp -f %from %to
 ----
+
+## Restoration phases
+
+This tool is seamlessly integrated into Instaclustr's https://github.com/instaclustr/cassandra-sidecar[Cassandra Sidecar project]
+which is able to do backup and restore in a distributed manner - cluster wide. Please refer to documentation of Sidecar
+to understand what restoration phases are and what restoration strategies one might use. The very same
+restoration flow might be executed from CLI, Sidecar just accepts a JSON payload which is a different representation
+of the very same data structure as the one used from command like but the functionality as completely same.
+
+CLI tool is not responsive to `globalRequest` flag in restoration / backup requests, only Sidecar can coordinate
+cluster-wide restoration and backup.
 
 ## Credentials for backup and restore from a cloud
 

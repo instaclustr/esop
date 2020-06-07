@@ -176,7 +176,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             .add("exactSchemaVersion", exactSchemaVersion)
             .add("updateCassandraYaml", updateCassandraYaml)
             .add("k8sNamespace", k8sNamespace)
-            .add("k8sSecretName", k8sBackupSecretName)
+            .add("k8sSecretName", k8sSecretName)
             .add("globalRequest", globalRequest)
             .toString();
     }

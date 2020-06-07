@@ -12,13 +12,15 @@ import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.jackson.PathSerializer;
 import com.instaclustr.measure.DataRate;
 import com.instaclustr.measure.Time;
+import com.instaclustr.picocli.typeconverter.PathTypeConverter;
 import picocli.CommandLine.Option;
 
 @ValidBackupCommitLogsOperationRequest
 public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest {
 
     @Option(names = {"--cl-archive"},
-        description = "Override path to the commitlog archive directory, relative to the container root.")
+        description = "Override path to the commitlog archive directory, relative to the container root.",
+        converter = PathTypeConverter.class)
     @JsonProperty("commitLogRestoreDirectory")
     @JsonSerialize(using = PathSerializer.class)
     @JsonDeserialize(using = PathDeserializer.class)
@@ -54,7 +56,7 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
             .add("cassandraDirectory", cassandraDirectory)
             .add("commitLogRestoreDirectory", commitLogArchiveOverride)
             .add("k8sNamespace", k8sNamespace)
-            .add("k8sSecretName", k8sBackupSecretName)
+            .add("k8sSecretName", k8sSecretName)
             .toString();
     }
 }

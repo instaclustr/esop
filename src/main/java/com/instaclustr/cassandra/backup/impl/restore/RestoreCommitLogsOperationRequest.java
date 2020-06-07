@@ -108,7 +108,7 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
                           .add("keyspaceTables", keyspaceTables)
                           .add("commitlogDownloadDir", commitlogDownloadDir)
                           .add("k8sNamespace", k8sNamespace)
-                          .add("k8sSecretName", k8sBackupSecretName)
+                          .add("k8sSecretName", k8sSecretName)
                           .toString();
     }
 }

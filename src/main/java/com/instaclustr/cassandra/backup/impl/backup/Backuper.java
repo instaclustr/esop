@@ -106,10 +106,7 @@ public abstract class Backuper extends StorageInteractor {
                 logger.info("Uploading file '{}' ({}).", manifestEntry.objectKey, DataSize.bytesToHumanReadable(manifestEntry.size));
                 backuper.uploadFile(manifestEntry.size, rateLimitedStream, remoteObjectReference);
             } catch (final Throwable t) {
-                logger.error(format("Failed to upload file '%s', upload cancelled on purpose: %s",
-                                    manifestEntry.objectKey,
-                                    shouldCancel.get()),
-                             t);
+                logger.error(format("Failed to upload file '%s", manifestEntry.objectKey), t);
                 shouldCancel.set(true);
                 throw new FileUploadException(t);
             } finally {
