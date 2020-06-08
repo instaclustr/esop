@@ -50,9 +50,11 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractBackupTest {
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractBackupTest.class);
+    protected static final Logger logger = LoggerFactory.getLogger(AbstractBackupTest.class);
 
-    private static final String CASSANDRA_VERSION = System.getProperty("backup.tests.cassandra.version", "3.11.6");
+    private static final String CASSANDRA_VERSION = System.getProperty("backup.tests.cassandra.version", "3.11.8");
+
+    private static final String CASSANDRA_4_VERSION = System.getProperty("backup.tests.cassandra4.version", "4.0-beta2");
 
     // This is number of rows we inserted into Cassandra DB in total
     // we backed up first 6 rows. For the last two rows, they are stored in commit logs.
@@ -93,6 +95,7 @@ public abstract class AbstractBackupTest {
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--entities=system_schema,test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
+            "--create-missing-bucket"
         };
 
         final String[] backupArgsWithSnapshotName = new String[]{
@@ -103,6 +106,7 @@ public abstract class AbstractBackupTest {
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--entities=system_schema,test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
+            "--create-missing-bucket"
         };
 
         // RESTORE
@@ -115,6 +119,7 @@ public abstract class AbstractBackupTest {
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
             "--entities=system_schema,test,test2",
+            "--restore-system-keyspace",
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
@@ -158,6 +163,7 @@ public abstract class AbstractBackupTest {
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--entities=system_schema,test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
+            "--create-missing-bucket"
         };
 
         final String[] backupArgsWithSnapshotName = new String[]{
@@ -168,6 +174,7 @@ public abstract class AbstractBackupTest {
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--entities=system_schema,test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
+            "--create-missing-bucket"
         };
 
         // RESTORE
@@ -247,6 +254,7 @@ public abstract class AbstractBackupTest {
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--entities=system_schema,test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
+            "--create-missing-bucket"
         };
 
         final String[] backupArgsWithSnapshotName = new String[]{
@@ -257,6 +265,7 @@ public abstract class AbstractBackupTest {
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--entities=system_schema,test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
+            "--create-missing-bucket"
         };
 
         // RESTORE
@@ -338,7 +347,7 @@ public abstract class AbstractBackupTest {
     public void liveBackupRestoreTest(final String[][] arguments) throws Exception {
         EmbeddedCassandraFactory cassandraFactory = new EmbeddedCassandraFactory();
         cassandraFactory.setWorkingDirectory(cassandraDir);
-        cassandraFactory.setArtifact(Artifact.ofVersion(Version.of("4.0-alpha4")));
+        cassandraFactory.setArtifact(Artifact.ofVersion(Version.of(CASSANDRA_4_VERSION)));
         cassandraFactory.getJvmOptions().add("-Xmx2g");
         cassandraFactory.getJvmOptions().add("-Xms2g");
 
@@ -354,6 +363,8 @@ public abstract class AbstractBackupTest {
                                 .ifNotExists()
                                 .withNetworkTopologyStrategy(of("datacenter1", 1))
                                 .build());
+
+            Thread.sleep(5000);
 
             session.execute(createTable(KEYSPACE, TABLE)
                                 .ifNotExists()

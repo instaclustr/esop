@@ -1,6 +1,7 @@
 package com.instaclustr.cassandra.backup.impl;
 
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,6 +49,10 @@ public class DatabaseEntities {
 
     public boolean tableSubsetOnly() {
         return keyspaces.isEmpty() && !keyspacesAndTables.isEmpty();
+    }
+
+    public boolean keyspacesOnly() {
+        return !keyspaces.isEmpty() && keyspacesAndTables.isEmpty();
     }
 
     public boolean areEmpty() {
@@ -125,6 +130,59 @@ public class DatabaseEntities {
 
     public static DatabaseEntities empty() {
         return new DatabaseEntities();
+    }
+
+    public DatabaseEntities filter(final DatabaseEntities entitiesFromRequest,
+                                   final boolean systemEntities) {
+        if (entitiesFromRequest.areEmpty()) {
+            return this;
+        }
+
+        if (!entitiesFromRequest.getKeyspaces().isEmpty()) {
+
+            final List<String> keyspaces = entitiesFromRequest
+                .getKeyspaces()
+                .stream()
+                .filter(ks -> getKeyspaces().contains(ks))
+                .filter(ks -> {
+                    if (!systemEntities) {
+                        return !KeyspaceTable.isSystemKeyspace(ks);
+                    }
+                    return true;
+                })
+                .collect(toList());
+
+            final HashMultimap<String, String> keyspacesAndTables = HashMultimap.create();
+            
+            getKeyspacesAndTables()
+                .entries()
+                .stream()
+                .filter(entry -> keyspaces.contains(entry.getKey()))
+                .forEach(entry -> keyspacesAndTables.put(entry.getKey(), entry.getValue()));
+
+            return new DatabaseEntities(keyspaces, keyspacesAndTables);
+
+        }
+
+        if (!entitiesFromRequest.getKeyspacesAndTables().isEmpty()) {
+
+            final HashMultimap<String, String> map = HashMultimap.create();
+
+            entitiesFromRequest.getKeyspacesAndTables().entries()
+                .stream()
+                .filter(entry -> getKeyspacesAndTables().containsEntry(entry.getKey(), entry.getValue()))
+                .filter(entry -> {
+                    if (!systemEntities) {
+                        return !KeyspaceTable.isSystemKeyspace(entry.getKey());
+                    }
+                    return true;
+                })
+                .forEach(entry -> map.put(entry.getKey(), entry.getValue()));
+
+            return new DatabaseEntities(Collections.emptyList(), map);
+        }
+
+        throw new IllegalStateException("Unable to filter entities!");
     }
 
     public static class DatabaseEntitiesConverter implements CommandLine.ITypeConverter<DatabaseEntities> {

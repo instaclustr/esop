@@ -1,35 +1,29 @@
 package com.instaclustr.cassandra.backup.impl.restore.strategy;
 
+import static com.instaclustr.cassandra.backup.impl.SSTableUtils.isExistingSStable;
+import static com.instaclustr.cassandra.backup.impl.SSTableUtils.isSecondaryIndexManifest;
 import static com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy.RestorationStrategyType.IN_PLACE;
-import static com.instaclustr.cassandra.backup.impl.restore.RestorationUtilities.getManifestFilesForFullExistingRestore;
-import static com.instaclustr.cassandra.backup.impl.restore.RestorationUtilities.getManifestFilesForFullNewRestore;
-import static com.instaclustr.cassandra.backup.impl.restore.RestorationUtilities.getManifestFilesForSubsetExistingRestore;
-import static com.instaclustr.cassandra.backup.impl.restore.RestorationUtilities.getManifestFilesForSubsetNewRestore;
-import static com.instaclustr.cassandra.backup.impl.restore.RestorationUtilities.isAnExistingSstable;
-import static com.instaclustr.cassandra.backup.impl.restore.RestorationUtilities.isSecondaryIndexManifest;
-import static com.instaclustr.cassandra.backup.impl.restore.RestorationUtilities.isSubsetTable;
+import static com.instaclustr.cassandra.backup.impl.restore.RestorationUtilities.downloadManifest;
 import static com.instaclustr.io.FileUtils.cleanDirectory;
 import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
 
-import java.io.BufferedReader;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.instaclustr.cassandra.backup.impl.DatabaseEntities;
+import com.instaclustr.cassandra.backup.impl.Manifest;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
+import com.instaclustr.cassandra.backup.impl.ManifestEntry.Type;
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy;
-import com.instaclustr.cassandra.backup.impl.restore.RestorationUtilities.ManifestFilteringPredicate;
-import com.instaclustr.cassandra.backup.impl.restore.RestorationUtilities.TokensFilteringPredicate;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.Restorer;
 import com.instaclustr.cassandra.topology.CassandraClusterTopology.ClusterTopology;
@@ -85,94 +79,70 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
             }
 
             // 2. Determine if just restoring a subset of tables
-            final boolean isTableSubsetOnly = request.entities.tableSubsetOnly();
+            //final boolean isTableSubsetOnly = request.entities.tableSubsetOnly();
 
             // 3. Download the manifest & tokens, chance to error out soon before we actually pull big files if something goes wrong here
             logger.info("Retrieving manifest for snapshot: {}", request.snapshotTag);
 
-            final Path localManifestPath = restorer.downloadFileToDir(request.cassandraDirectory.resolve("manifests"),
-                                                                      Paths.get("manifests"),
-                                                                      new ManifestFilteringPredicate(operation.request, null));
+            final Manifest manifest = downloadManifest(operation.request, restorer, null, objectMapper);
+            manifest.enrichManifestEntries(request.cassandraDirectory);
+            final DatabaseEntities filteredManifestDatabaseEntities = manifest.getDatabaseEntities(true).filter(request.entities, request.restoreSystemKeyspace);
 
-            final Path localTokensPath = restorer.downloadFileToDir(request.cassandraDirectory.resolve("tokens"),
-                                                                    Paths.get("tokens"),
-                                                                    new TokensFilteringPredicate(operation.request, null));
+            final List<ManifestEntry> manifestFiles = manifest.getManifestFiles(filteredManifestDatabaseEntities, request.restoreSystemKeyspace);
 
             // 4. Clean out old data
-            cleanDirectory(request.cassandraDirectory.resolve("hints"));
-            cleanDirectory(request.cassandraDirectory.resolve("saved_caches"));
+            cleanDirectory(request.dirs.hints());
+            cleanDirectory(request.dirs.savedCaches());
+            cleanDirectory(request.dirs.commitLogs());
 
             // 5. Build a list of all SSTables currently present, that are candidates for deleting
-            final Set<Path> existingSstableList = new HashSet<>();
-            final int skipBackupsAndSnapshotsFolders = 4;
+            final Set<Path> existingFiles = Manifest.getLocalExistingEntries(request.dirs.data());
 
-            final Path cassandraSstablesDirectory = request.cassandraDirectory.resolve("data");
+            final List<ManifestEntry> entriesToDownload = new ArrayList<>();
+            final List<Path> filesToDelete = new ArrayList<>();
 
-            if (cassandraSstablesDirectory.toFile().exists()) {
-                try (Stream<Path> paths = Files.walk(cassandraSstablesDirectory, skipBackupsAndSnapshotsFolders)) {
-                    if (isTableSubsetOnly) {
-                        paths.filter(Files::isRegularFile)
-                            .filter(isSubsetTable(request.entities))
-                            .forEach(existingSstableList::add);
-                    } else {
-                        paths.filter(Files::isRegularFile).forEach(existingSstableList::add);
-                    }
+            logger.info("Restoring to existing cluster: {}", existingFiles.size() > 0);
+
+            // the first round, see what is in manifest and what is currently present,
+            // if it is not present, we will download it
+
+            for (final ManifestEntry manifestFile : manifestFiles)
+            {
+                // do not download schemas
+                if (manifestFile.type == Type.CQL_SCHEMA)
+                    continue;
+
+                if (Files.exists(manifestFile.localFile))
+                {
+                    // this file exists on a local disk as well as in manifest, there is nothing to download nor remove
+                    logger.info(String.format("%s found locally, not downloading", manifestFile.localFile));
+                } else
+                {
+                    // if it does not exist locally, we have to download it
+                    entriesToDownload.add(manifestFile);
                 }
             }
 
-            final boolean isRestoringToExistingCluster = existingSstableList.size() > 0;
-            logger.info("Restoring to existing cluster: {}", isRestoringToExistingCluster);
+            // the second round, see what is present locally but it is not in the manifest
+            // if it is not in the manifest, we need to remove it from disk
 
-            // 5. Parse the manifest
-            final LinkedList<ManifestEntry> downloadManifest = new LinkedList<>();
+            for (final Path localExistingFile : existingFiles) {
+                // if it is not in manifest
 
-            try (final BufferedReader manifestStream = Files.newBufferedReader(localManifestPath)) {
-                final List<String> filteredManifest;
+                final Optional<ManifestEntry> first = manifestFiles.stream().filter(me -> me.localFile.equals(localExistingFile)).findFirst();
 
-                if (isRestoringToExistingCluster) {
-                    if (isTableSubsetOnly) {
-                        filteredManifest = manifestStream.lines()
-                            .filter(getManifestFilesForSubsetExistingRestore(request.entities, request.restoreSystemKeyspace))
-                            .collect(toList());
-                    } else {
-                        filteredManifest = manifestStream.lines()
-                            .filter(getManifestFilesForFullExistingRestore(request.restoreSystemKeyspace))
-                            .collect(toList());
+                if (first.isPresent()) {
+                    // if it exists, hash has to be same, otherwise delete it
+                    if (!isExistingSStable(first.get().localFile, first.get().objectKey.getName(isSecondaryIndexManifest(first.get().objectKey) ? 4 : 3).toString())) {
+                        filesToDelete.add(localExistingFile);
                     }
                 } else {
-                    if (isTableSubsetOnly) {
-                        filteredManifest = manifestStream.lines()
-                            .filter(getManifestFilesForSubsetNewRestore(request.entities, request.restoreSystemKeyspace))
-                            .collect(toList());
-                    } else {
-                        filteredManifest = manifestStream.lines()
-                            .filter(getManifestFilesForFullNewRestore(request.restoreSystemKeyspace))
-                            .collect(toList());
-                    }
-                }
-
-                for (final String m : filteredManifest) {
-                    final String[] lineArray = m.trim().split(" ");
-
-                    final Path manifestPath = Paths.get(lineArray[1]);
-                    final int hashPathPart = isSecondaryIndexManifest(manifestPath) ? 4 : 3;
-
-                    //strip check hash from path
-                    final Path localPath = request.cassandraDirectory.resolve(manifestPath.subpath(0, hashPathPart).resolve(manifestPath.getFileName()));
-
-                    if (isAnExistingSstable(localPath, manifestPath.getName(hashPathPart).toString())) {
-                        logger.info("Keeping existing sstable " + localPath);
-                        existingSstableList.remove(localPath);
-                        continue; // file already present, and the hash matches so don't add to manifest to download and don't delete
-                    }
-
-                    logger.debug("Not keeping existing sstable {}", localPath);
-                    downloadManifest.add(new ManifestEntry(manifestPath, localPath, ManifestEntry.Type.FILE, 0, null));
+                    filesToDelete.add(localExistingFile);
                 }
             }
 
             // 6. Delete any entries left in existingSstableList
-            existingSstableList.forEach(sstablePath -> {
+            filesToDelete.forEach(sstablePath -> {
                 logger.info("Deleting existing sstable {}", sstablePath);
                 if (!sstablePath.toFile().delete()) {
                     logger.warn("Failed to delete {}", sstablePath);
@@ -180,7 +150,7 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
             });
 
             // 7. Download files in the manifest
-            restorer.downloadFiles(downloadManifest, new OperationProgressTracker(operation, downloadManifest.size()));
+            restorer.downloadFiles(entriesToDownload, new OperationProgressTracker(operation, entriesToDownload.size()));
 
             // K8S will handle copying over tokens.yaml fragment and disabling bootstrap fragment to right directory to be picked up by Cassandra
             // "standalone / vanilla" Cassandra installations has to cover this manually for now.
@@ -188,7 +158,7 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
             if (request.updateCassandraYaml) {
                 final Path cassandraYaml = request.cassandraConfigDirectory.resolve("cassandra.yaml");
 
-                FileUtils.appendToFile(cassandraYaml, localTokensPath);
+                FileUtils.appendToFile(cassandraYaml, manifest.getInitialTokensCassandraYamlFragment());
                 FileUtils.replaceInFile(cassandraYaml, "auto_bootstrap: true", "auto_bootstrap: false");
             } else {
                 logger.info("Update of cassandra.yaml was turned off by --update-cassandra-yaml=false (or not specifying that flag at all.");
@@ -221,7 +191,6 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
     }
 
     private NodeTopology getNodeTopology(final Restorer restorer, final RestoreOperationRequest request) {
-
         try {
             final String topologyFile = resolveTopologyFile(request);
             final String topology = restorer.downloadFileToString(Paths.get(topologyFile), fileName -> fileName.contains(topologyFile));

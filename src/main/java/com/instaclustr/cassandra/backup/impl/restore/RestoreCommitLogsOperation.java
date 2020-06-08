@@ -29,10 +29,10 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.instaclustr.cassandra.backup.guice.RestorerFactory;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
-import com.instaclustr.operations.OperationProgressTracker;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.io.GlobalLock;
 import com.instaclustr.operations.Operation;
+import com.instaclustr.operations.OperationProgressTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

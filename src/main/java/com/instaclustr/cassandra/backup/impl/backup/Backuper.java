@@ -1,5 +1,6 @@
 package com.instaclustr.cassandra.backup.impl.backup;
 
+import static com.instaclustr.cassandra.backup.impl.ManifestEntry.Type.MANIFEST_FILE;
 import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
@@ -23,7 +24,6 @@ import java.util.stream.Collectors;
 
 import com.google.common.util.concurrent.RateLimiter;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
-import com.instaclustr.cassandra.backup.impl.ManifestEntry.Type;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.StorageInteractor;
 import com.instaclustr.io.RateLimitedInputStream;
@@ -71,17 +71,17 @@ public abstract class Backuper extends StorageInteractor {
         }
     }
 
-    private static final class ManifestEntryDownload implements Supplier<Void> {
+    private static final class ManifestEntryUpload implements Supplier<Void> {
 
         private final ManifestEntry manifestEntry;
         private final Backuper backuper;
         private final OperationProgressTracker operationProgressTracker;
         private final AtomicBoolean shouldCancel;
 
-        public ManifestEntryDownload(final Backuper backuper,
-                                     final ManifestEntry manifestEntry,
-                                     final OperationProgressTracker operationProgressTracker,
-                                     final AtomicBoolean shouldCancel) {
+        public ManifestEntryUpload(final Backuper backuper,
+                                   final ManifestEntry manifestEntry,
+                                   final OperationProgressTracker operationProgressTracker,
+                                   final AtomicBoolean shouldCancel) {
             this.manifestEntry = manifestEntry;
             this.backuper = backuper;
             this.operationProgressTracker = operationProgressTracker;
@@ -95,7 +95,7 @@ public abstract class Backuper extends StorageInteractor {
                 final RemoteObjectReference remoteObjectReference = backuper.objectKeyToNodeAwareRemoteReference(manifestEntry.objectKey);
 
                 try {
-                    if (manifestEntry.type != Type.MANIFEST_FILE && backuper.freshenRemoteObject(remoteObjectReference) == Backuper.FreshenResult.FRESHENED) {
+                    if (manifestEntry.type != MANIFEST_FILE && backuper.freshenRemoteObject(remoteObjectReference) == Backuper.FreshenResult.FRESHENED) {
                         logger.debug("Skipping the upload of already uploaded file {}", remoteObjectReference.canonicalPath);
                         return null;
                     }
@@ -138,26 +138,34 @@ public abstract class Backuper extends StorageInteractor {
 
         final ExecutorService executorService = executorServiceSupplier.get(request.concurrentConnections);
 
-        final Collection<ManifestEntry> noManifestEntries = manifest.stream().filter(entry -> entry.type != Type.MANIFEST_FILE).collect(Collectors.toSet());
-        final Optional<ManifestEntry> manifestEntry = manifest.stream().filter(entry -> entry.type == Type.MANIFEST_FILE).findFirst();
+        final Collection<ManifestEntry> noManifestEntries = manifest.stream().filter(entry -> entry.type != MANIFEST_FILE).collect(Collectors.toSet());
+        final Optional<ManifestEntry> manifestEntry = manifest.stream().filter(entry -> entry.type == MANIFEST_FILE).findFirst();
 
-        final Collection<ManifestEntryDownload> entriesToDownload = new ArrayList<>();
+        final Collection<ManifestEntryUpload> entriesToUpload = new ArrayList<>();
 
         // this might throw
         for (final ManifestEntry entry : noManifestEntries) {
-            entriesToDownload.add(new ManifestEntryDownload(this, entry, operationProgressTracker, operation.getShouldCancel()));
+            entriesToUpload.add(new ManifestEntryUpload(this, entry, operationProgressTracker, operation.getShouldCancel()));
         }
 
         final List<Throwable> exceptions = Collections.synchronizedList(new ArrayList<>());
 
-        allOf(entriesToDownload.stream().map(etd -> supplyAsync(etd, executorService).whenComplete((r, t) -> {
+        allOf(entriesToUpload.stream().map(entryToUpload -> supplyAsync(entryToUpload, executorService).whenComplete((r, t) -> {
             if (t != null) {
                 exceptions.add(t);
             }
         })).toArray(CompletableFuture<?>[]::new)).get();
 
-        if (exceptions.isEmpty() && !operation.getShouldCancel().get()) {
-            manifestEntry.ifPresent(entry -> new ManifestEntryDownload(this, entry, operationProgressTracker, operation.getShouldCancel()).get());
+        if (exceptions.isEmpty()) {
+            manifestEntry.ifPresent(entry -> {
+                try {
+                    new ManifestEntryUpload(this, entry, operationProgressTracker, operation.getShouldCancel()).get();
+                } catch (final Exception ex) {
+                    // TODO try to delete that file?
+                }
+            });
+        } else {
+            // TODO - if above if fails, delete files we have uploaded so far so remote bucket becomes clean
         }
 
         executorService.shutdown();

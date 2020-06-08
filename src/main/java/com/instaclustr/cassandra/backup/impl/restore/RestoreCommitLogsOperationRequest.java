@@ -1,6 +1,5 @@
 package com.instaclustr.cassandra.backup.impl.restore;
 
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -22,49 +21,49 @@ import picocli.CommandLine.Option;
 public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationRequest {
 
     @Option(names = {"--dd", "--data-directory"},
-            description = "Base directory that contains the Cassandra data, cache and commitlog directories",
-            converter = PathTypeConverter.class,
-            defaultValue = "/var/lib/cassandra/")
+        description = "Base directory that contains the Cassandra data, cache and commitlog directories",
+        converter = PathTypeConverter.class,
+        defaultValue = "/var/lib/cassandra/")
     @JsonDeserialize(using = PathDeserializer.class)
     @JsonSerialize(using = PathSerializer.class)
     public Path cassandraDirectory;
 
     @Option(names = {"-p", "--shared-path"},
-            description = "Shared Container path for pod",
-            converter = PathTypeConverter.class,
-            defaultValue = "/")
+        description = "Shared Container path for pod",
+        converter = PathTypeConverter.class,
+        defaultValue = "/")
     @JsonDeserialize(using = PathDeserializer.class)
     @JsonSerialize(using = PathSerializer.class)
     public Path sharedContainerPath;
 
     @Option(names = {"--cd", "--config-directory"},
-            description = "Directory where configuration of Cassandra is stored.",
-            converter = PathTypeConverter.class,
-            defaultValue = "/etc/cassandra/")
+        description = "Directory where configuration of Cassandra is stored.",
+        converter = PathTypeConverter.class,
+        defaultValue = "/etc/cassandra/")
     @JsonDeserialize(using = PathDeserializer.class)
     @JsonSerialize(using = PathSerializer.class)
     public Path cassandraConfigDirectory;
 
     @Option(names = {"--ts", "--timestamp-start"},
-            description = "When the base snapshot was taken. Only relevant if archived commitlogs are available.",
-            required = true)
+        description = "When the base snapshot was taken. Only relevant if archived commitlogs are available.",
+        required = true)
     @NotNull
     public long timestampStart;
 
     @Option(names = {"--te", "--timestamp-end"},
-            description = "Point-in-time to restore up to. Only relevant if archived commitlogs are available.",
-            required = true)
+        description = "Point-in-time to restore up to. Only relevant if archived commitlogs are available.",
+        required = true)
     @NotNull
     public long timestampEnd;
 
     @Option(names = {"--kt", "--keyspace-tables"},
-            description = "Comma separated list of tables to restore. Must include keyspace name in the format <keyspace.table>",
-            converter = KeyspaceTablePairsConverter.class)
+        description = "Comma separated list of tables to restore. Must include keyspace name in the format <keyspace.table>",
+        converter = KeyspaceTablePairsConverter.class)
     public Multimap<String, String> keyspaceTables = ImmutableMultimap.of();
 
     @Option(names = {"--commitlog-download-dir"},
-            description = "Path to directory where commitlogs will be downloaded for restoration.",
-            required = true)
+        description = "Path to directory where commitlogs will be downloaded for restoration.",
+        required = true)
     public Path commitlogDownloadDir;
 
     public RestoreCommitLogsOperationRequest() {
@@ -99,19 +98,19 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
-                          .add("storageLocation", storageLocation)
-                          .add("concurrentConnections", concurrentConnections)
-                          .add("lockFile", lockFile)
-                          .add("cassandraDirectory", cassandraDirectory)
-                          .add("sharedContainerPath", sharedContainerPath)
-                          .add("cassandraConfigDirectory", cassandraConfigDirectory)
-                          .add("timestampStart", timestampStart)
-                          .add("timestampEnd", timestampEnd)
-                          .add("keyspaceTables", keyspaceTables)
-                          .add("commitlogDownloadDir", commitlogDownloadDir)
-                          .add("k8sNamespace", k8sNamespace)
-                          .add("k8sSecretName", k8sSecretName)
-                          .add("insecure", insecure)
-                          .toString();
+            .add("storageLocation", storageLocation)
+            .add("concurrentConnections", concurrentConnections)
+            .add("lockFile", lockFile)
+            .add("cassandraDirectory", cassandraDirectory)
+            .add("sharedContainerPath", sharedContainerPath)
+            .add("cassandraConfigDirectory", cassandraConfigDirectory)
+            .add("timestampStart", timestampStart)
+            .add("timestampEnd", timestampEnd)
+            .add("keyspaceTables", keyspaceTables)
+            .add("commitlogDownloadDir", commitlogDownloadDir)
+            .add("k8sNamespace", k8sNamespace)
+            .add("k8sSecretName", k8sSecretName)
+            .add("insecure", insecure)
+            .toString();
     }
 }

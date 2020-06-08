@@ -9,10 +9,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ObjectListing;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -28,9 +26,9 @@ import com.instaclustr.kubernetes.KubernetesApiModule;
 import com.instaclustr.threading.Executors.FixedTasksExecutorSupplier;
 import com.instaclustr.threading.ExecutorsModule;
 import io.kubernetes.client.ApiException;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 @Test(groups = {
@@ -87,8 +85,7 @@ public class S3BackupRestoreTest extends BaseS3BackupRestoreTest {
     }
 
     @Test
-    @Ignore
-    public void testDownloadOfRemoteManifest() throws Exception {
+    public void testDownload() throws Exception {
         S3BucketService s3BucketService = new S3BucketService(getTransferManagerFactory(), getBackupOperationRequest());
 
         try {
@@ -97,29 +94,40 @@ public class S3BackupRestoreTest extends BaseS3BackupRestoreTest {
             AmazonS3 amazonS3Client = getTransferManagerFactory().build(getBackupOperationRequest()).getAmazonS3Client();
 
             amazonS3Client.putObject(BUCKET_NAME, "cluster/dc/node/manifests/snapshot-name-" + BUCKET_NAME, "hello");
+            amazonS3Client.putObject(BUCKET_NAME, "snapshot/in/dir/my-name-" + BUCKET_NAME, "hello world");
 
-            Thread.sleep(5000);
+            amazonS3Client.listObjects(BUCKET_NAME).getObjectSummaries().forEach(summary -> logger.info(summary.getKey()));
 
-            ObjectListing objectListing = amazonS3Client.listObjects(BUCKET_NAME);
-
-            objectListing.getObjectSummaries().forEach(summary -> System.out.println(summary.getKey()));
-
-            RestoreOperationRequest restoreOperationRequest = new RestoreOperationRequest();
+            final RestoreOperationRequest restoreOperationRequest = new RestoreOperationRequest();
             restoreOperationRequest.storageLocation = new StorageLocation("s3://" + BUCKET_NAME + "/cluster/dc/node");
 
-            S3Restorer s3Restorer = new S3Restorer(getTransferManagerFactory(), new FixedTasksExecutorSupplier(), restoreOperationRequest);
+            final S3Restorer s3Restorer = new S3Restorer(getTransferManagerFactory(), new FixedTasksExecutorSupplier(), restoreOperationRequest);
 
-            final Path downloadedFile = s3Restorer.downloadFileToDir(Paths.get("/tmp"), Paths.get("manifests"), new Predicate<String>() {
-                @Override
-                public boolean test(final String s) {
-                    return s.contains("manifests/snapshot-name");
-                }
-            });
+            // 1
 
+            final Path downloadedFile = s3Restorer.downloadNodeFileToDir(Paths.get("/tmp"), Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
             assertTrue(Files.exists(downloadedFile));
+
+            // 2
+
+            final String content = s3Restorer.downloadNodeFileToString(Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
+            Assert.assertEquals("hello", content);
+
+            // 3
+
+            final String content2 = s3Restorer.downloadFileToString(Paths.get("snapshot/in/dir"), s -> s.endsWith("my-name-" + BUCKET_NAME));
+            Assert.assertEquals("hello world", content2);
+
+            // 4
+
+            s3Restorer.downloadFile(Paths.get("/tmp/some-file"), s3Restorer.objectKeyToRemoteReference(Paths.get("snapshot/in/dir/my-name-" + BUCKET_NAME)));
+
+            Assert.assertTrue(Files.exists(Paths.get("/tmp/some-file")));
+            Assert.assertEquals("hello world", new String(Files.readAllBytes(Paths.get("/tmp/some-file"))));
         } finally {
             s3BucketService.delete(BUCKET_NAME);
             deleteDirectory(Paths.get(target("commitlog_download_dir")));
+            Files.deleteIfExists(Paths.get("/tmp/some-file"));
         }
     }
 }

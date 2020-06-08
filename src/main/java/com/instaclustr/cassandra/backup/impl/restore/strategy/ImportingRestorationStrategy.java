@@ -7,6 +7,7 @@ import static com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.Res
 import static com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy.RestorationStrategyType.IMPORT;
 import static java.lang.String.format;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.instaclustr.cassandra.CassandraVersion;
@@ -37,17 +38,16 @@ import jmx.org.apache.cassandra.service.CassandraJMXService;
  */
 public class ImportingRestorationStrategy extends AbstractRestorationStrategy {
 
-    private final Provider<CassandraVersion> cassandraVersion;
 
     @Inject
     public ImportingRestorationStrategy(final CassandraJMXService cassandraJMXService,
-                                        final Provider<CassandraVersion> cassandraVersion) {
-        super(cassandraJMXService);
-        this.cassandraVersion = cassandraVersion;
+                                        final Provider<CassandraVersion> cassandraVersion,
+                                        final ObjectMapper objectMapper) {
+        super(cassandraJMXService, cassandraVersion, objectMapper);
     }
 
     @Override
-    public void isEligibleToRun() throws Exception {
+    public void isEligibleToRun() {
         final CassandraVersion cassandraVersion = this.cassandraVersion.get();
 
         if (!CassandraVersion.isFour(this.cassandraVersion.get())) {
@@ -63,21 +63,24 @@ public class ImportingRestorationStrategy extends AbstractRestorationStrategy {
 
     @Override
     public RestorationPhase resolveRestorationPhase(final Operation<RestoreOperationRequest> operation, final Restorer restorer) {
-        final RestorationPhaseType phaseType = operation.request.restorationPhase;
+
+        final RestorationContext ctxt = initialiseRestorationContext(operation, restorer, objectMapper, cassandraVersion);
+        final RestorationPhaseType phaseType = ctxt.operation.request.restorationPhase;
 
         if (phaseType == INIT) {
-            return new InitPhase(operation);
+            return new InitPhase(ctxt);
         } else if (phaseType == DOWNLOAD) {
-            return new DownloadingPhase(cassandraJMXService, operation, restorer);
+            return new DownloadingPhase(ctxt);
         } else if (phaseType == TRUNCATE) {
-            return new TruncatingPhase(cassandraJMXService, operation);
+            return new TruncatingPhase(ctxt);
         } else if (phaseType == RestorationPhaseType.IMPORT) {
-            return new ImportingPhase(cassandraJMXService, operation, cassandraVersion.get());
+            return new ImportingPhase(ctxt);
         } else if (phaseType == CLEANUP) {
-            return new CleaningPhase(operation);
+            return new CleaningPhase(ctxt);
         }
 
-        throw new IllegalStateException(format("Unable to resolve phase for phase type %s for %s.", phaseType, ImportingRestorationStrategy.class.getName()));
+        throw new IllegalStateException(format("Unable to resolve phase for phase type %s for %s.",
+                                               phaseType,
+                                               ImportingRestorationStrategy.class.getName()));
     }
-
 }

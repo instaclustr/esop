@@ -9,6 +9,9 @@ import static java.util.stream.Stream.of;
 import java.nio.channels.FileLock;
 import java.util.Set;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Provider;
+import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.ClusterHealthCheckPhase;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.RestorationPhaseType;
@@ -22,12 +25,39 @@ import jmx.org.apache.cassandra.service.CassandraJMXService;
 public abstract class AbstractRestorationStrategy implements RestorationStrategy {
 
     protected final CassandraJMXService cassandraJMXService;
+    protected final Provider<CassandraVersion> cassandraVersion;
+    protected final ObjectMapper objectMapper;
 
-    public AbstractRestorationStrategy(final CassandraJMXService cassandraJMXService) {
+    public AbstractRestorationStrategy(final CassandraJMXService cassandraJMXService,
+                                       final Provider<CassandraVersion> cassandraVersion,
+                                       final ObjectMapper objectMapper) {
         this.cassandraJMXService = cassandraJMXService;
+        this.cassandraVersion = cassandraVersion;
+        this.objectMapper = objectMapper;
     }
 
     public abstract RestorationPhase resolveRestorationPhase(Operation<RestoreOperationRequest> operation, Restorer restorer);
+
+    public RestorationContext initialiseRestorationContext(final Operation<RestoreOperationRequest> operation,
+                                                           final Restorer restorer,
+                                                           final ObjectMapper objectMapper,
+                                                           final Provider<CassandraVersion> cassandraVersion) {
+        final RestorationPhaseType phaseType = operation.request.restorationPhase;
+
+        final RestorationContext ctxt = new RestorationContext();
+
+        ctxt.jmx = cassandraJMXService;
+        ctxt.operation = operation;
+        ctxt.restorer = restorer;
+        ctxt.objectMapper = objectMapper;
+        ctxt.phaseType = phaseType;
+
+        if (phaseType == DOWNLOAD || phaseType == TRUNCATE || phaseType == RestorationPhaseType.IMPORT) {
+            ctxt.cassandraVersion = cassandraVersion.get();
+        }
+
+        return ctxt;
+    }
 
     @Override
     public void restore(final Restorer restorer, final Operation<RestoreOperationRequest> operation) throws Exception {
@@ -40,7 +70,10 @@ public abstract class AbstractRestorationStrategy implements RestorationStrategy
             final Set<RestorationPhaseType> restorationPhaseTypes = of(DOWNLOAD, TRUNCATE, IMPORT).collect(toSet());
 
             if (restorationPhaseTypes.contains(restorationPhase.getRestorationPhaseType())) {
-                new ClusterHealthCheckPhase(cassandraJMXService, operation).execute();
+                final RestorationContext ctxt = new RestorationContext();
+                ctxt.jmx = cassandraJMXService;
+                ctxt.operation = operation;
+                new ClusterHealthCheckPhase(ctxt).execute();
             }
 
             restorationPhase.execute();

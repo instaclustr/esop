@@ -85,8 +85,9 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonProperty("dc") final String dc,
                                   @JsonProperty("keepExistingSnapshot") final boolean keepExistingSnapshot,
                                   @JsonProperty("timeout") @Min(1) final Integer timeout,
-                                  @JsonProperty("insecure") final boolean insecure) {
-        super(storageLocation, duration, bandwidth, concurrentConnections, cassandraDirectory, lockFile, metadataDirective, k8sNamespace, k8sSecretName, insecure);
+                                  @JsonProperty("insecure") final boolean insecure,
+                                  @JsonProperty("createMissingBucket") final boolean createMissingBucket) {
+        super(storageLocation, duration, bandwidth, concurrentConnections, cassandraDirectory, lockFile, metadataDirective, k8sNamespace, k8sSecretName, insecure, createMissingBucket);
         this.entities = entities == null ? DatabaseEntities.empty() : entities;
         this.snapshotTag = snapshotTag == null ? format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis())) : snapshotTag;
         this.globalRequest = globalRequest;

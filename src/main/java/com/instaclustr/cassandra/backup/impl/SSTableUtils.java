@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import java.util.zip.Adler32;
 
 import com.google.common.collect.ImmutableList;
+import com.instaclustr.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,7 +93,7 @@ public class SSTableUtils {
         return Files.list(snapshotDirectory)
             .flatMap(path -> {
                 if (isCassandra22SecIndex(path)) {
-                    return tryListFiles(path);
+                    return FileUtils.tryListFiles(path);
                 }
                 return Stream.of(path);
             })
@@ -102,12 +103,17 @@ public class SSTableUtils {
                 try {
                     final String hash = sstableHash(localPath);
                     final Path manifestComponentFileName = snapshotDirectory.relativize(localPath);
+
                     final Path parent = manifestComponentFileName.getParent();
+
                     Path backupPath = tableBackupPath;
+
                     if (parent != null) {
                         backupPath = backupPath.resolve(parent);
                     }
+
                     backupPath = backupPath.resolve(hash).resolve(manifestComponentFileName.getFileName());
+
                     return new ManifestEntry(backupPath, localPath, ManifestEntry.Type.FILE);
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
@@ -115,19 +121,34 @@ public class SSTableUtils {
             });
     }
 
-    private static Stream<? extends Path> tryListFiles(Path path) {
-        try {
-            return Files.list(path);
-        } catch (IOException e) {
-            logger.error("Failed to retrieve the file(s)", e);
-            return Stream.empty();
-        }
-    }
-
     /**
      * Checks whether or not the given table path leads to a secondary index folder (for Cassandra 2.2 +)
      */
     private static boolean isCassandra22SecIndex(final Path tablepath) {
         return tablepath.toFile().isDirectory() && tablepath.getFileName().toString().startsWith(".");
+    }
+
+    /**
+     * Decides whether or not the manifest path includes secondary index files
+     *
+     * @param manifestPath path to manifest
+     * @return true if manifest path includes secondary index files, false otherwise
+     */
+    public static boolean isSecondaryIndexManifest(final Path manifestPath) {
+        // When there's a secondary index, manifest path contains 6 elements (including '.indexName' and 'hashcode')
+        // '.indexName' is filtered by subpath(3,4), to avoid the other parts of the manifest path getting misidentified with the '.'
+        return manifestPath.getNameCount() == 6 && manifestPath.subpath(3, 4).toString().startsWith(".");
+    }
+
+    public static boolean isExistingSStable(final Path localPath, final String sstable) {
+        try {
+            if (localPath.toFile().exists() && sstableHash(localPath).equals(sstable)) {
+                return true;
+            }
+        } catch (IOException e) {
+            // SSTableUtils.sstableHash may throw exception if SSTable has not been probably downloaded
+            logger.error(e.getMessage());
+        }
+        return false;
     }
 }

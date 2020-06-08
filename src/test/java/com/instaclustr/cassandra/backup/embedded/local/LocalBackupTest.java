@@ -15,7 +15,6 @@ import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
 import com.instaclustr.cassandra.backup.local.LocalFileRestorer;
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.threading.Executors.FixedTasksExecutorSupplier;
-import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 public class LocalBackupTest extends AbstractBackupTest {
@@ -36,7 +35,6 @@ public class LocalBackupTest extends AbstractBackupTest {
     }
 
     @Test
-    @Ignore
     public void testDownloadOfRemoteManifest() throws Exception {
         try {
             RestoreOperationRequest restoreOperationRequest = new RestoreOperationRequest();
@@ -52,7 +50,7 @@ public class LocalBackupTest extends AbstractBackupTest {
 
             LocalFileRestorer localFileRestorer = new LocalFileRestorer(new FixedTasksExecutorSupplier(), restoreOperationRequest);
 
-            final Path downloadedFile = localFileRestorer.downloadFileToDir(Paths.get("/tmp"), Paths.get("manifests"), s -> s.startsWith("snapshot-name-"));
+            final Path downloadedFile = localFileRestorer.downloadNodeFileToDir(Paths.get("/tmp"), Paths.get("manifests"), s -> s.contains("snapshot-name-"));
 
             assertTrue(Files.exists(downloadedFile));
         } finally {

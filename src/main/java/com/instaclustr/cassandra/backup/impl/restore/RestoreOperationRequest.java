@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -20,6 +21,7 @@ import com.instaclustr.cassandra.backup.impl.DatabaseEntities;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities.DatabaseEntitiesConverter;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities.DatabaseEntitiesDeserializer;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities.DatabaseEntitiesSerializer;
+import com.instaclustr.cassandra.backup.impl.Directories;
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import com.instaclustr.cassandra.backup.impl._import.ImportOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.RestorationPhaseType;
@@ -33,6 +35,9 @@ import picocli.CommandLine.Option;
 
 @ValidRestoreOperationRequest
 public class RestoreOperationRequest extends BaseRestoreOperationRequest {
+
+    @JsonIgnore
+    public final Directories dirs = new Directories(this);
 
     @Option(names = {"--dd", "--data-directory"},
         description = "Base directory that contains the Cassandra data, cache and commitlog directories",
@@ -61,7 +66,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
     public String snapshotTag;
 
     @Option(names = {"--entities"},
-        description = "Comma separated list of keyspaces or keyspaces and tables to restore either in for 'ks1,ks2' or 'ks1.cf1,ks2.cf2'",
+        description = "Comma separated list of keyspaces or keyspaces and tables to restore either in form 'ks1,ks2' or 'ks1.cf1,ks2.cf2'",
         converter = DatabaseEntitiesConverter.class)
     @JsonProperty("entities")
     @JsonSerialize(using = DatabaseEntitiesSerializer.class)

@@ -68,4 +68,5 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
     public void testHardlinkingBackupAndRestore() throws Exception {
         liveCassandraTest(hardlinkingArguments());
     }
+
 }

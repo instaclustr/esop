@@ -1,0 +1,1449 @@
+{
+  "snapshot" : {
+    "name" : "snapshot4",
+    "keyspaces" : {
+      "system_traces" : {
+        "tables" : {
+          "sessions" : {
+            "entries" : [ ],
+            "id" : "c5e99f1686773914b17e960613512345"
+          },
+          "events" : {
+            "entries" : [ ],
+            "id" : "8826e8e9e16a372887533bc1fc713c25"
+          }
+        }
+      },
+      "system" : {
+        "tables" : {
+          "available_ranges_v2" : {
+            "entries" : [ ],
+            "id" : "4224a0882ac93d0c889dfbb5f0facda0"
+          },
+          "built_views" : {
+            "entries" : [ ],
+            "id" : "4b3c50a9ea873d7691016dbc9c38494a"
+          },
+          "sstable_activity" : {
+            "entries" : [ {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/1-937685388/na-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/1-937685388/na-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 169
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/1-937685388/na-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/1-937685388/na-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 24
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/1-937685388/na-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 301
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/1-937685388/na-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4766
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/1-937685388/na-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 127
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/1-937685388/na-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/2-2179947454/na-2-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/2-2179947454/na-2-big-Data.db",
+              "type" : "FILE",
+              "size" : 140
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/2-2179947454/na-2-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/2-2179947454/na-2-big-Filter.db",
+              "type" : "FILE",
+              "size" : 24
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/2-2179947454/na-2-big-Index.db",
+              "type" : "FILE",
+              "size" : 297
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/2-2179947454/na-2-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4759
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/2-2179947454/na-2-big-Summary.db",
+              "type" : "FILE",
+              "size" : 141
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/2-2179947454/na-2-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/3-2792323569/na-3-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/3-2792323569/na-3-big-Data.db",
+              "type" : "FILE",
+              "size" : 93
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/3-2792323569/na-3-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/3-2792323569/na-3-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/3-2792323569/na-3-big-Index.db",
+              "type" : "FILE",
+              "size" : 157
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/3-2792323569/na-3-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4747
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/3-2792323569/na-3-big-Summary.db",
+              "type" : "FILE",
+              "size" : 149
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/3-2792323569/na-3-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/4-1945872313/na-4-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/4-1945872313/na-4-big-Data.db",
+              "type" : "FILE",
+              "size" : 166
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/4-1945872313/na-4-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/4-1945872313/na-4-big-Filter.db",
+              "type" : "FILE",
+              "size" : 24
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/4-1945872313/na-4-big-Index.db",
+              "type" : "FILE",
+              "size" : 281
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/4-1945872313/na-4-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4762
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/4-1945872313/na-4-big-Summary.db",
+              "type" : "FILE",
+              "size" : 129
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/4-1945872313/na-4-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "5a1ff267ace03f128563cfae6103c65e"
+          },
+          "view_builds_in_progress" : {
+            "entries" : [ ],
+            "id" : "6c22df66c3bd3df6b74d21179c6a9fe9"
+          },
+          "peers_v2" : {
+            "entries" : [ ],
+            "id" : "c4325fbb8e5e3bafbd070f9250ed818e"
+          },
+          "table_estimates" : {
+            "entries" : [ {
+              "objectKey" : "data/system/table_estimates-176c39cdb93d33a5a2188eb06a56f66e/1-2256137569/na-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 319
+            }, {
+              "objectKey" : "data/system/table_estimates-176c39cdb93d33a5a2188eb06a56f66e/1-2256137569/na-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 164685
+            }, {
+              "objectKey" : "data/system/table_estimates-176c39cdb93d33a5a2188eb06a56f66e/1-2256137569/na-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system/table_estimates-176c39cdb93d33a5a2188eb06a56f66e/1-2256137569/na-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system/table_estimates-176c39cdb93d33a5a2188eb06a56f66e/1-2256137569/na-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 1489
+            }, {
+              "objectKey" : "data/system/table_estimates-176c39cdb93d33a5a2188eb06a56f66e/1-2256137569/na-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4950
+            }, {
+              "objectKey" : "data/system/table_estimates-176c39cdb93d33a5a2188eb06a56f66e/1-2256137569/na-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 79
+            }, {
+              "objectKey" : "data/system/table_estimates-176c39cdb93d33a5a2188eb06a56f66e/1-2256137569/na-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "176c39cdb93d33a5a2188eb06a56f66e"
+          },
+          "prepared_statements" : {
+            "entries" : [ ],
+            "id" : "18a9c2576a0c3841ba718cd529849fef"
+          },
+          "compaction_history" : {
+            "entries" : [ {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/1-3079530705/na-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/1-3079530705/na-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 182
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/1-3079530705/na-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/1-3079530705/na-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/1-3079530705/na-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 41
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/1-3079530705/na-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 5035
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/1-3079530705/na-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/1-3079530705/na-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/2-589039060/na-2-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/2-589039060/na-2-big-Data.db",
+              "type" : "FILE",
+              "size" : 163
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/2-589039060/na-2-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/2-589039060/na-2-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/2-589039060/na-2-big-Index.db",
+              "type" : "FILE",
+              "size" : 40
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/2-589039060/na-2-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 5036
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/2-589039060/na-2-big-Summary.db",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/2-589039060/na-2-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/3-1677275179/na-3-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/3-1677275179/na-3-big-Data.db",
+              "type" : "FILE",
+              "size" : 121
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/3-1677275179/na-3-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/3-1677275179/na-3-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/3-1677275179/na-3-big-Index.db",
+              "type" : "FILE",
+              "size" : 20
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/3-1677275179/na-3-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 5032
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/3-1677275179/na-3-big-Summary.db",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/3-1677275179/na-3-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/4-2962858996/na-4-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/4-2962858996/na-4-big-Data.db",
+              "type" : "FILE",
+              "size" : 99
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/4-2962858996/na-4-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/4-2962858996/na-4-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/4-2962858996/na-4-big-Index.db",
+              "type" : "FILE",
+              "size" : 20
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/4-2962858996/na-4-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 5032
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/4-2962858996/na-4-big-Summary.db",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/4-2962858996/na-4-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "b4dbb7b4dc493fb5b3bfce6e434832ca"
+          },
+          "peers" : {
+            "entries" : [ ],
+            "id" : "37f71aca7dc2383ba70672528af04d4f"
+          },
+          "IndexInfo" : {
+            "entries" : [ ],
+            "id" : "9f5c6374d48532299a0a5094af9ad1e3"
+          },
+          "transferred_ranges_v2" : {
+            "entries" : [ ],
+            "id" : "1ff78f1a7df13a2aa9986f4932270af5"
+          },
+          "local" : {
+            "entries" : [ {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/10-614956417/na-10-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 55
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/10-614956417/na-10-big-Data.db",
+              "type" : "FILE",
+              "size" : 5247
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/10-614956417/na-10-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/10-614956417/na-10-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/10-614956417/na-10-big-Index.db",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/10-614956417/na-10-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 5765
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/10-614956417/na-10-big-Summary.db",
+              "type" : "FILE",
+              "size" : 59
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/10-614956417/na-10-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/11-2664951812/na-11-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/11-2664951812/na-11-big-Data.db",
+              "type" : "FILE",
+              "size" : 48
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/11-2664951812/na-11-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/11-2664951812/na-11-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/11-2664951812/na-11-big-Index.db",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/11-2664951812/na-11-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4641
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/11-2664951812/na-11-big-Summary.db",
+              "type" : "FILE",
+              "size" : 59
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/11-2664951812/na-11-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "7ad54392bcdd35a684174e047860b377"
+          },
+          "peer_events_v2" : {
+            "entries" : [ ],
+            "id" : "0e65065fe40138ed9507b9213fae8d11"
+          },
+          "repairs" : {
+            "entries" : [ ],
+            "id" : "a3d277d1cfaf36f5a2a738d5eea9ad6a"
+          },
+          "batches" : {
+            "entries" : [ ],
+            "id" : "919a4bc57a333573b03e13fc3f68b465"
+          },
+          "available_ranges" : {
+            "entries" : [ ],
+            "id" : "c539fcabd65a31d18133d25605643ee3"
+          },
+          "paxos" : {
+            "entries" : [ ],
+            "id" : "b7b7f0c2fd0a34108c053ef614bb7c2d"
+          },
+          "transferred_ranges" : {
+            "entries" : [ ],
+            "id" : "6cad20f7d4f53af2b6e20da33c6c1f83"
+          },
+          "peer_events" : {
+            "entries" : [ ],
+            "id" : "59dfeaea8db2334191ef109974d81484"
+          },
+          "size_estimates" : {
+            "entries" : [ {
+              "objectKey" : "data/system/size_estimates-618f817b005f3678b8a453f3930b8e86/1-3402333639/na-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 167
+            }, {
+              "objectKey" : "data/system/size_estimates-618f817b005f3678b8a453f3930b8e86/1-3402333639/na-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 81441
+            }, {
+              "objectKey" : "data/system/size_estimates-618f817b005f3678b8a453f3930b8e86/1-3402333639/na-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system/size_estimates-618f817b005f3678b8a453f3930b8e86/1-3402333639/na-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system/size_estimates-618f817b005f3678b8a453f3930b8e86/1-3402333639/na-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 256
+            }, {
+              "objectKey" : "data/system/size_estimates-618f817b005f3678b8a453f3930b8e86/1-3402333639/na-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4885
+            }, {
+              "objectKey" : "data/system/size_estimates-618f817b005f3678b8a453f3930b8e86/1-3402333639/na-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 79
+            }, {
+              "objectKey" : "data/system/size_estimates-618f817b005f3678b8a453f3930b8e86/1-3402333639/na-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "618f817b005f3678b8a453f3930b8e86"
+          }
+        }
+      },
+      "system_distributed" : {
+        "tables" : {
+          "view_build_status" : {
+            "entries" : [ ],
+            "id" : "5582b59f8e4e35e1b9133acada51eb04"
+          },
+          "parent_repair_history" : {
+            "entries" : [ ],
+            "id" : "deabd734b99d3b9c92e5fd92eb5abf14"
+          },
+          "repair_history" : {
+            "entries" : [ ],
+            "id" : "759fffad624b318180eefa9a52d1f627"
+          }
+        }
+      },
+      "system_schema" : {
+        "tables" : {
+          "dropped_columns" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/dropped_columns-5e7583b5f3f43af19a39b7e1d6f5f11f/1-1145062752/na-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system_schema/dropped_columns-5e7583b5f3f43af19a39b7e1d6f5f11f/1-1145062752/na-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 98
+            }, {
+              "objectKey" : "data/system_schema/dropped_columns-5e7583b5f3f43af19a39b7e1d6f5f11f/1-1145062752/na-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system_schema/dropped_columns-5e7583b5f3f43af19a39b7e1d6f5f11f/1-1145062752/na-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/dropped_columns-5e7583b5f3f43af19a39b7e1d6f5f11f/1-1145062752/na-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 27
+            }, {
+              "objectKey" : "data/system_schema/dropped_columns-5e7583b5f3f43af19a39b7e1d6f5f11f/1-1145062752/na-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4887
+            }, {
+              "objectKey" : "data/system_schema/dropped_columns-5e7583b5f3f43af19a39b7e1d6f5f11f/1-1145062752/na-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 76
+            }, {
+              "objectKey" : "data/system_schema/dropped_columns-5e7583b5f3f43af19a39b7e1d6f5f11f/1-1145062752/na-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "5e7583b5f3f43af19a39b7e1d6f5f11f"
+          },
+          "tables" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/5-330680822/na-5-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 63
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/5-330680822/na-5-big-Data.db",
+              "type" : "FILE",
+              "size" : 3436
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/5-330680822/na-5-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/5-330680822/na-5-big-Filter.db",
+              "type" : "FILE",
+              "size" : 24
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/5-330680822/na-5-big-Index.db",
+              "type" : "FILE",
+              "size" : 103
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/5-330680822/na-5-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 6377
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/5-330680822/na-5-big-Summary.db",
+              "type" : "FILE",
+              "size" : 69
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/5-330680822/na-5-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/6-3341822473/na-6-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/6-3341822473/na-6-big-Data.db",
+              "type" : "FILE",
+              "size" : 362
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/6-3341822473/na-6-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/6-3341822473/na-6-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/6-3341822473/na-6-big-Index.db",
+              "type" : "FILE",
+              "size" : 7
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/6-3341822473/na-6-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 6329
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/6-3341822473/na-6-big-Summary.db",
+              "type" : "FILE",
+              "size" : 53
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/6-3341822473/na-6-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/7-3341822473/na-7-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/7-3341822473/na-7-big-Data.db",
+              "type" : "FILE",
+              "size" : 362
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/7-3341822473/na-7-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/7-3341822473/na-7-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/7-3341822473/na-7-big-Index.db",
+              "type" : "FILE",
+              "size" : 7
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/7-3341822473/na-7-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 6329
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/7-3341822473/na-7-big-Summary.db",
+              "type" : "FILE",
+              "size" : 53
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/7-3341822473/na-7-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "afddfb9dbc1e30688056eed6c302ba09"
+          },
+          "types" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/types-5a8b1ca866023f77a0459273d308917a/1-298362237/na-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system_schema/types-5a8b1ca866023f77a0459273d308917a/1-298362237/na-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system_schema/types-5a8b1ca866023f77a0459273d308917a/1-298362237/na-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system_schema/types-5a8b1ca866023f77a0459273d308917a/1-298362237/na-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/types-5a8b1ca866023f77a0459273d308917a/1-298362237/na-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 27
+            }, {
+              "objectKey" : "data/system_schema/types-5a8b1ca866023f77a0459273d308917a/1-298362237/na-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4649
+            }, {
+              "objectKey" : "data/system_schema/types-5a8b1ca866023f77a0459273d308917a/1-298362237/na-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 76
+            }, {
+              "objectKey" : "data/system_schema/types-5a8b1ca866023f77a0459273d308917a/1-298362237/na-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "5a8b1ca866023f77a0459273d308917a"
+          },
+          "indexes" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/indexes-0feb57ac311f382fba6d9024d305702f/1-298362237/na-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system_schema/indexes-0feb57ac311f382fba6d9024d305702f/1-298362237/na-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system_schema/indexes-0feb57ac311f382fba6d9024d305702f/1-298362237/na-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system_schema/indexes-0feb57ac311f382fba6d9024d305702f/1-298362237/na-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/indexes-0feb57ac311f382fba6d9024d305702f/1-298362237/na-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 27
+            }, {
+              "objectKey" : "data/system_schema/indexes-0feb57ac311f382fba6d9024d305702f/1-298362237/na-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4690
+            }, {
+              "objectKey" : "data/system_schema/indexes-0feb57ac311f382fba6d9024d305702f/1-298362237/na-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 76
+            }, {
+              "objectKey" : "data/system_schema/indexes-0feb57ac311f382fba6d9024d305702f/1-298362237/na-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "0feb57ac311f382fba6d9024d305702f"
+          },
+          "keyspaces" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/10-4210996798/na-10-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/10-4210996798/na-10-big-Data.db",
+              "type" : "FILE",
+              "size" : 122
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/10-4210996798/na-10-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/10-4210996798/na-10-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/10-4210996798/na-10-big-Index.db",
+              "type" : "FILE",
+              "size" : 7
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/10-4210996798/na-10-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4824
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/10-4210996798/na-10-big-Summary.db",
+              "type" : "FILE",
+              "size" : 53
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/10-4210996798/na-10-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/9-521329152/na-9-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 55
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/9-521329152/na-9-big-Data.db",
+              "type" : "FILE",
+              "size" : 347
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/9-521329152/na-9-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/9-521329152/na-9-big-Filter.db",
+              "type" : "FILE",
+              "size" : 24
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/9-521329152/na-9-big-Index.db",
+              "type" : "FILE",
+              "size" : 100
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/9-521329152/na-9-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4868
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/9-521329152/na-9-big-Summary.db",
+              "type" : "FILE",
+              "size" : 69
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/9-521329152/na-9-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "abac5682dea631c5b535b3d6cffd0fb6"
+          },
+          "functions" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/functions-96489b7980be3e14a70166a0b9159450/1-298362237/na-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system_schema/functions-96489b7980be3e14a70166a0b9159450/1-298362237/na-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system_schema/functions-96489b7980be3e14a70166a0b9159450/1-298362237/na-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system_schema/functions-96489b7980be3e14a70166a0b9159450/1-298362237/na-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/functions-96489b7980be3e14a70166a0b9159450/1-298362237/na-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 27
+            }, {
+              "objectKey" : "data/system_schema/functions-96489b7980be3e14a70166a0b9159450/1-298362237/na-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4776
+            }, {
+              "objectKey" : "data/system_schema/functions-96489b7980be3e14a70166a0b9159450/1-298362237/na-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 76
+            }, {
+              "objectKey" : "data/system_schema/functions-96489b7980be3e14a70166a0b9159450/1-298362237/na-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "96489b7980be3e14a70166a0b9159450"
+          },
+          "columns" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/5-608357518/na-5-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 63
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/5-608357518/na-5-big-Data.db",
+              "type" : "FILE",
+              "size" : 7180
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/5-608357518/na-5-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/5-608357518/na-5-big-Filter.db",
+              "type" : "FILE",
+              "size" : 24
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/5-608357518/na-5-big-Index.db",
+              "type" : "FILE",
+              "size" : 103
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/5-608357518/na-5-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 5016
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/5-608357518/na-5-big-Summary.db",
+              "type" : "FILE",
+              "size" : 69
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/5-608357518/na-5-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/6-3825251232/na-6-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/6-3825251232/na-6-big-Data.db",
+              "type" : "FILE",
+              "size" : 156
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/6-3825251232/na-6-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/6-3825251232/na-6-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/6-3825251232/na-6-big-Index.db",
+              "type" : "FILE",
+              "size" : 7
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/6-3825251232/na-6-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4954
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/6-3825251232/na-6-big-Summary.db",
+              "type" : "FILE",
+              "size" : 53
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/6-3825251232/na-6-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/7-1899869730/na-7-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/7-1899869730/na-7-big-Data.db",
+              "type" : "FILE",
+              "size" : 77
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/7-1899869730/na-7-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/7-1899869730/na-7-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/7-1899869730/na-7-big-Index.db",
+              "type" : "FILE",
+              "size" : 7
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/7-1899869730/na-7-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4964
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/7-1899869730/na-7-big-Summary.db",
+              "type" : "FILE",
+              "size" : 53
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/7-1899869730/na-7-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "24101c25a2ae3af787c1b40ee1aca33f"
+          },
+          "aggregates" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/aggregates-924c55872e3a345bb10c12f37c1ba895/1-298362237/na-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system_schema/aggregates-924c55872e3a345bb10c12f37c1ba895/1-298362237/na-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system_schema/aggregates-924c55872e3a345bb10c12f37c1ba895/1-298362237/na-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system_schema/aggregates-924c55872e3a345bb10c12f37c1ba895/1-298362237/na-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/aggregates-924c55872e3a345bb10c12f37c1ba895/1-298362237/na-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 27
+            }, {
+              "objectKey" : "data/system_schema/aggregates-924c55872e3a345bb10c12f37c1ba895/1-298362237/na-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4776
+            }, {
+              "objectKey" : "data/system_schema/aggregates-924c55872e3a345bb10c12f37c1ba895/1-298362237/na-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 76
+            }, {
+              "objectKey" : "data/system_schema/aggregates-924c55872e3a345bb10c12f37c1ba895/1-298362237/na-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "924c55872e3a345bb10c12f37c1ba895"
+          },
+          "triggers" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/triggers-4df70b666b05325195a132b54005fd48/1-298362237/na-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system_schema/triggers-4df70b666b05325195a132b54005fd48/1-298362237/na-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system_schema/triggers-4df70b666b05325195a132b54005fd48/1-298362237/na-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system_schema/triggers-4df70b666b05325195a132b54005fd48/1-298362237/na-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/triggers-4df70b666b05325195a132b54005fd48/1-298362237/na-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 27
+            }, {
+              "objectKey" : "data/system_schema/triggers-4df70b666b05325195a132b54005fd48/1-298362237/na-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4690
+            }, {
+              "objectKey" : "data/system_schema/triggers-4df70b666b05325195a132b54005fd48/1-298362237/na-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 76
+            }, {
+              "objectKey" : "data/system_schema/triggers-4df70b666b05325195a132b54005fd48/1-298362237/na-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "4df70b666b05325195a132b54005fd48"
+          },
+          "views" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/views-9786ac1cdd583201a7cdad556410c985/1-298362237/na-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system_schema/views-9786ac1cdd583201a7cdad556410c985/1-298362237/na-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system_schema/views-9786ac1cdd583201a7cdad556410c985/1-298362237/na-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system_schema/views-9786ac1cdd583201a7cdad556410c985/1-298362237/na-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/views-9786ac1cdd583201a7cdad556410c985/1-298362237/na-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 27
+            }, {
+              "objectKey" : "data/system_schema/views-9786ac1cdd583201a7cdad556410c985/1-298362237/na-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4649
+            }, {
+              "objectKey" : "data/system_schema/views-9786ac1cdd583201a7cdad556410c985/1-298362237/na-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 76
+            }, {
+              "objectKey" : "data/system_schema/views-9786ac1cdd583201a7cdad556410c985/1-298362237/na-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "9786ac1cdd583201a7cdad556410c985"
+          }
+        }
+      },
+      "ks1" : {
+        "tables" : {
+          "ks1t1" : {
+            "entries" : [ {
+              "objectKey" : "data/ks1/ks1t1-e17ff4b0e89211eab4313d37e7f4ac07/1-1146970048/na-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks1/ks1t1-e17ff4b0e89211eab4313d37e7f4ac07/1-1146970048/na-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 53
+            }, {
+              "objectKey" : "data/ks1/ks1t1-e17ff4b0e89211eab4313d37e7f4ac07/1-1146970048/na-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/ks1/ks1t1-e17ff4b0e89211eab4313d37e7f4ac07/1-1146970048/na-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks1/ks1t1-e17ff4b0e89211eab4313d37e7f4ac07/1-1146970048/na-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 5
+            }, {
+              "objectKey" : "data/ks1/ks1t1-e17ff4b0e89211eab4313d37e7f4ac07/1-1146970048/na-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4712
+            }, {
+              "objectKey" : "data/ks1/ks1t1-e17ff4b0e89211eab4313d37e7f4ac07/1-1146970048/na-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks1/ks1t1-e17ff4b0e89211eab4313d37e7f4ac07/1-1146970048/na-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks1/ks1t1-e17ff4b0e89211eab4313d37e7f4ac07/2-2173655652/na-2-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks1/ks1t1-e17ff4b0e89211eab4313d37e7f4ac07/2-2173655652/na-2-big-Data.db",
+              "type" : "FILE",
+              "size" : 53
+            }, {
+              "objectKey" : "data/ks1/ks1t1-e17ff4b0e89211eab4313d37e7f4ac07/2-2173655652/na-2-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/ks1/ks1t1-e17ff4b0e89211eab4313d37e7f4ac07/2-2173655652/na-2-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks1/ks1t1-e17ff4b0e89211eab4313d37e7f4ac07/2-2173655652/na-2-big-Index.db",
+              "type" : "FILE",
+              "size" : 5
+            }, {
+              "objectKey" : "data/ks1/ks1t1-e17ff4b0e89211eab4313d37e7f4ac07/2-2173655652/na-2-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4712
+            }, {
+              "objectKey" : "data/ks1/ks1t1-e17ff4b0e89211eab4313d37e7f4ac07/2-2173655652/na-2-big-Summary.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks1/ks1t1-e17ff4b0e89211eab4313d37e7f4ac07/2-2173655652/na-2-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks1/ks1t1-e17ff4b0e89211eab4313d37e7f4ac07/schema.cql",
+              "type" : "CQL_SCHEMA",
+              "size" : 934
+            } ],
+            "id" : "e17ff4b0e89211eab4313d37e7f4ac07",
+            "schemaContent" : "CREATE TABLE IF NOT EXISTS ks1.ks1t1 (\n    id text,\n    date timeuuid,\n    name text,\n    PRIMARY KEY (id, date)\n) WITH ID = e17ff4b0-e892-11ea-b431-3d37e7f4ac07\n    AND CLUSTERING ORDER BY (date ASC)\n    AND additional_write_policy = '99p'\n    AND bloom_filter_fp_chance = 0.01\n    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}\n    AND cdc = false\n    AND comment = ''\n    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}\n    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}\n    AND crc_check_chance = 1.0\n    AND default_time_to_live = 0\n    AND extensions = {}\n    AND gc_grace_seconds = 864000\n    AND max_index_interval = 2048\n    AND memtable_flush_period_in_ms = 0\n    AND min_index_interval = 128\n    AND read_repair = 'BLOCKING'\n    AND speculative_retry = '99p';\n"
+          },
+          "ks1t2" : {
+            "entries" : [ {
+              "objectKey" : "data/ks1/ks1t2-e283a910e89211eab4313d37e7f4ac07/1-235571548/na-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks1/ks1t2-e283a910e89211eab4313d37e7f4ac07/1-235571548/na-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 53
+            }, {
+              "objectKey" : "data/ks1/ks1t2-e283a910e89211eab4313d37e7f4ac07/1-235571548/na-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/ks1/ks1t2-e283a910e89211eab4313d37e7f4ac07/1-235571548/na-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks1/ks1t2-e283a910e89211eab4313d37e7f4ac07/1-235571548/na-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 5
+            }, {
+              "objectKey" : "data/ks1/ks1t2-e283a910e89211eab4313d37e7f4ac07/1-235571548/na-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4712
+            }, {
+              "objectKey" : "data/ks1/ks1t2-e283a910e89211eab4313d37e7f4ac07/1-235571548/na-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks1/ks1t2-e283a910e89211eab4313d37e7f4ac07/1-235571548/na-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks1/ks1t2-e283a910e89211eab4313d37e7f4ac07/2-848460407/na-2-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks1/ks1t2-e283a910e89211eab4313d37e7f4ac07/2-848460407/na-2-big-Data.db",
+              "type" : "FILE",
+              "size" : 53
+            }, {
+              "objectKey" : "data/ks1/ks1t2-e283a910e89211eab4313d37e7f4ac07/2-848460407/na-2-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/ks1/ks1t2-e283a910e89211eab4313d37e7f4ac07/2-848460407/na-2-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks1/ks1t2-e283a910e89211eab4313d37e7f4ac07/2-848460407/na-2-big-Index.db",
+              "type" : "FILE",
+              "size" : 5
+            }, {
+              "objectKey" : "data/ks1/ks1t2-e283a910e89211eab4313d37e7f4ac07/2-848460407/na-2-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4712
+            }, {
+              "objectKey" : "data/ks1/ks1t2-e283a910e89211eab4313d37e7f4ac07/2-848460407/na-2-big-Summary.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks1/ks1t2-e283a910e89211eab4313d37e7f4ac07/2-848460407/na-2-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks1/ks1t2-e283a910e89211eab4313d37e7f4ac07/schema.cql",
+              "type" : "CQL_SCHEMA",
+              "size" : 934
+            } ],
+            "id" : "e283a910e89211eab4313d37e7f4ac07",
+            "schemaContent" : "CREATE TABLE IF NOT EXISTS ks1.ks1t2 (\n    id text,\n    date timeuuid,\n    name text,\n    PRIMARY KEY (id, date)\n) WITH ID = e283a910-e892-11ea-b431-3d37e7f4ac07\n    AND CLUSTERING ORDER BY (date ASC)\n    AND additional_write_policy = '99p'\n    AND bloom_filter_fp_chance = 0.01\n    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}\n    AND cdc = false\n    AND comment = ''\n    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}\n    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}\n    AND crc_check_chance = 1.0\n    AND default_time_to_live = 0\n    AND extensions = {}\n    AND gc_grace_seconds = 864000\n    AND max_index_interval = 2048\n    AND memtable_flush_period_in_ms = 0\n    AND min_index_interval = 128\n    AND read_repair = 'BLOCKING'\n    AND speculative_retry = '99p';\n"
+          }
+        }
+      },
+      "ks2" : {
+        "tables" : {
+          "ks2t2" : {
+            "entries" : [ {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/1-2898859104/na-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/1-2898859104/na-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 53
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/1-2898859104/na-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/1-2898859104/na-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/1-2898859104/na-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 5
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/1-2898859104/na-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4712
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/1-2898859104/na-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/1-2898859104/na-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/2-317958388/na-2-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/2-317958388/na-2-big-Data.db",
+              "type" : "FILE",
+              "size" : 53
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/2-317958388/na-2-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/2-317958388/na-2-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/2-317958388/na-2-big-Index.db",
+              "type" : "FILE",
+              "size" : 5
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/2-317958388/na-2-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4712
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/2-317958388/na-2-big-Summary.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/2-317958388/na-2-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/3-407122076/na-3-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/3-407122076/na-3-big-Data.db",
+              "type" : "FILE",
+              "size" : 53
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/3-407122076/na-3-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/3-407122076/na-3-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/3-407122076/na-3-big-Index.db",
+              "type" : "FILE",
+              "size" : 5
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/3-407122076/na-3-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4712
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/3-407122076/na-3-big-Summary.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/3-407122076/na-3-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/4-2882646044/na-4-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/4-2882646044/na-4-big-Data.db",
+              "type" : "FILE",
+              "size" : 53
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/4-2882646044/na-4-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/4-2882646044/na-4-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/4-2882646044/na-4-big-Index.db",
+              "type" : "FILE",
+              "size" : 5
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/4-2882646044/na-4-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4712
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/4-2882646044/na-4-big-Summary.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/4-2882646044/na-4-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks2/ks2t2-04731970e89311eab4313d37e7f4ac07/schema.cql",
+              "type" : "CQL_SCHEMA",
+              "size" : 954
+            } ],
+            "id" : "04731970e89311eab4313d37e7f4ac07",
+            "schemaContent" : "CREATE TABLE IF NOT EXISTS ks2.ks2t2 (\n    id text,\n    date timeuuid,\n    name text,\n    something text,\n    PRIMARY KEY (id, date)\n) WITH ID = 04731970-e893-11ea-b431-3d37e7f4ac07\n    AND CLUSTERING ORDER BY (date ASC)\n    AND additional_write_policy = '99p'\n    AND bloom_filter_fp_chance = 0.01\n    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}\n    AND cdc = false\n    AND comment = ''\n    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}\n    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}\n    AND crc_check_chance = 1.0\n    AND default_time_to_live = 0\n    AND extensions = {}\n    AND gc_grace_seconds = 864000\n    AND max_index_interval = 2048\n    AND memtable_flush_period_in_ms = 0\n    AND min_index_interval = 128\n    AND read_repair = 'BLOCKING'\n    AND speculative_retry = '99p';\n"
+          },
+          "ks2t1" : {
+            "entries" : [ {
+              "objectKey" : "data/ks2/ks2t1-03389da0e89311eab4313d37e7f4ac07/1-3528028441/na-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks2/ks2t1-03389da0e89311eab4313d37e7f4ac07/1-3528028441/na-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 53
+            }, {
+              "objectKey" : "data/ks2/ks2t1-03389da0e89311eab4313d37e7f4ac07/1-3528028441/na-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/ks2/ks2t1-03389da0e89311eab4313d37e7f4ac07/1-3528028441/na-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks2/ks2t1-03389da0e89311eab4313d37e7f4ac07/1-3528028441/na-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 5
+            }, {
+              "objectKey" : "data/ks2/ks2t1-03389da0e89311eab4313d37e7f4ac07/1-3528028441/na-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4712
+            }, {
+              "objectKey" : "data/ks2/ks2t1-03389da0e89311eab4313d37e7f4ac07/1-3528028441/na-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks2/ks2t1-03389da0e89311eab4313d37e7f4ac07/1-3528028441/na-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks2/ks2t1-03389da0e89311eab4313d37e7f4ac07/2-1006765816/na-2-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks2/ks2t1-03389da0e89311eab4313d37e7f4ac07/2-1006765816/na-2-big-Data.db",
+              "type" : "FILE",
+              "size" : 53
+            }, {
+              "objectKey" : "data/ks2/ks2t1-03389da0e89311eab4313d37e7f4ac07/2-1006765816/na-2-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/ks2/ks2t1-03389da0e89311eab4313d37e7f4ac07/2-1006765816/na-2-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks2/ks2t1-03389da0e89311eab4313d37e7f4ac07/2-1006765816/na-2-big-Index.db",
+              "type" : "FILE",
+              "size" : 5
+            }, {
+              "objectKey" : "data/ks2/ks2t1-03389da0e89311eab4313d37e7f4ac07/2-1006765816/na-2-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4712
+            }, {
+              "objectKey" : "data/ks2/ks2t1-03389da0e89311eab4313d37e7f4ac07/2-1006765816/na-2-big-Summary.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/ks2/ks2t1-03389da0e89311eab4313d37e7f4ac07/2-1006765816/na-2-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks2/ks2t1-03389da0e89311eab4313d37e7f4ac07/schema.cql",
+              "type" : "CQL_SCHEMA",
+              "size" : 934
+            } ],
+            "id" : "03389da0e89311eab4313d37e7f4ac07",
+            "schemaContent" : "CREATE TABLE IF NOT EXISTS ks2.ks2t1 (\n    id text,\n    date timeuuid,\n    name text,\n    PRIMARY KEY (id, date)\n) WITH ID = 03389da0-e893-11ea-b431-3d37e7f4ac07\n    AND CLUSTERING ORDER BY (date ASC)\n    AND additional_write_policy = '99p'\n    AND bloom_filter_fp_chance = 0.01\n    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}\n    AND cdc = false\n    AND comment = ''\n    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}\n    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}\n    AND crc_check_chance = 1.0\n    AND default_time_to_live = 0\n    AND extensions = {}\n    AND gc_grace_seconds = 864000\n    AND max_index_interval = 2048\n    AND memtable_flush_period_in_ms = 0\n    AND min_index_interval = 128\n    AND read_repair = 'BLOCKING'\n    AND speculative_retry = '99p';\n"
+          }
+        }
+      },
+      "system_auth" : {
+        "tables" : {
+          "role_permissions" : {
+            "entries" : [ ],
+            "id" : "3afbe79f219431a7add7f5ab90d8ec9c"
+          },
+          "roles" : {
+            "entries" : [ {
+              "objectKey" : "data/system_auth/roles-5bc52802de2535edaeab188eecebb090/1-1561108885/na-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 47
+            }, {
+              "objectKey" : "data/system_auth/roles-5bc52802de2535edaeab188eecebb090/1-1561108885/na-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 102
+            }, {
+              "objectKey" : "data/system_auth/roles-5bc52802de2535edaeab188eecebb090/1-1561108885/na-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system_auth/roles-5bc52802de2535edaeab188eecebb090/1-1561108885/na-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_auth/roles-5bc52802de2535edaeab188eecebb090/1-1561108885/na-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 13
+            }, {
+              "objectKey" : "data/system_auth/roles-5bc52802de2535edaeab188eecebb090/1-1561108885/na-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4749
+            }, {
+              "objectKey" : "data/system_auth/roles-5bc52802de2535edaeab188eecebb090/1-1561108885/na-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 71
+            }, {
+              "objectKey" : "data/system_auth/roles-5bc52802de2535edaeab188eecebb090/1-1561108885/na-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "5bc52802de2535edaeab188eecebb090"
+          },
+          "resource_role_permissons_index" : {
+            "entries" : [ ],
+            "id" : "5f2fbdad91f13946bd25d5da3a5c35ec"
+          },
+          "network_permissions" : {
+            "entries" : [ ],
+            "id" : "d46780c22f1c3db9b4c1b8d9fbc0cc23"
+          },
+          "role_members" : {
+            "entries" : [ ],
+            "id" : "0ecdaa87f8fb3e6088d174fb36fe5c0d"
+          }
+        }
+      }
+    }
+  },
+  "tokens" : [ "-1025679257793152318", "-126823146888567559", "-1270263939319509305", "-1275828919395742727", "-1330015271638737061", "-1353940175601192831", "-1366764724909826161", "-1377447554808493169", "-1397668985635260398", "-1445042659093612244", "-1481836653596880759", "-150241151296415483", "-1661800315472395804", "-1725366312346126678", "-172756862042939219", "-1775921723857800741", "-1812352481177364052", "-2060283131090543970", "-2102900782374761986", "-2168435142756531042", "-2208985786508537876", "-2222895488613426778", "-2488275379184050324", "-264086935924632303", "-2645304337427610890", "-2753177826597382482", "-280594633451782506", "-3094760885732303082", "-3244196857304286629", "-3328459824054678987", "-336610647505204670", "-3430362699649569389", "-3431616755655100528", "-3500837576830796896", "-3533056696980191595", "-3542409244346277641", "-3616841187801823453", "-3679816154198055790", "-3754226570615465981", "-3858036118779316764", "-4004480767185848271", "-403138399361990555", "-4092686688921484735", "-4099239634634823027", "-4172037219869299480", "-421949662558134321", "-4265284479202822560", "-43118882374099521", "-4329098240588399162", "-4351069411228748268", "-4615442891060941134", "-4680602292687447311", "-4760057261986303220", "-4794915050945945363", "-4840806421801386130", "-4932193008598937301", "-505842342950628500", "-5148005698292129293", "-5224324350637510407", "-5266545033794561439", "-5271291311129873303", "-5298560881933679803", "-5358745632199588959", "-5377235393494139568", "-5419522002266781371", "-5494473861021583798", "-5600169062795688939", "-5618556686663609558", "-5710714842430806493", "-5818312765761025395", "-5976272297036019525", "-6082953361497561349", "-6125821071525173330", "-6223985117434527072", "-6291715702169819104", "-6350743788731850836", "-6404152986027041328", "-6527348768916046132", "-6531298712844579934", "-666246642924414976", "-6856151119262478426", "-6897733354999095722", "-6917748604136997584", "-6940377871061503122", "-7057733930262717286", "-7128119975581771749", "-7176202494838131158", "-7232152330816142624", "-7261925965478215601", "-7287708511432466386", "-7343174515352546725", "-7393270719271937435", "-7446098828259114744", "-7504194077581110269", "-7573874542911986811", "-7650299026992144260", "-7709401125196460484", "-7751563638501313393", "-7826517578904297785", "-7961282541970533848", "-8050918076073639107", "-8058118468002120159", "-8121779180880562361", "-8143850269997524531", "-8236105116802595176", "-8290258226781340317", "-8383144885058832424", "-8396665548722760210", "-8511406900332482866", "-8572043733306243430", "-8635843571552332932", "-8728150519595991434", "-8734345822061209145", "-8753629219992357032", "-8760376833678457809", "-8869895709130731855", "-8885746179021359958", "-8982340354220910849", "-8986805320959668171", "-9035243386616566808", "-9062764000102896777", "-907461734180212795", "1000274360031540453", "1038493715235442517", "1039523207540646791", "1041461459699847545", "104670456548166943", "1201024346642106179", "1243595697391590204", "1313344889220654778", "1390824126017729587", "1508878160385819201", "1704999336172857566", "1741591199611554507", "1904781280142217985", "1914384725362842205", "1956739879383742332", "1962657922839378507", "1991343143948283208", "2115887549357608913", "2278185077211710255", "2303933744933535442", "2314167821039894256", "2331690251147682759", "2348493526051181849", "2368120268599921907", "2412197782773640147", "2471363828600775718", "2667144670062603778", "2701460016972010367", "2784999877339159352", "2794406473473710290", "2981651067414195738", "3050535088209372477", "3072762025368981710", "307681071924849326", "3077909492510506887", "3091821476476526101", "309519250344413407", "3364105168936049392", "3466368940157547128", "3916363738182226263", "4119105330563198553", "4126775464213736565", "4132401951447272102", "4137978867156879208", "4226954085153076662", "4523720896894359857", "4533807727748586857", "4570365547324436647", "4731305783416687812", "4772135438390032434", "4815894306228210557", "4829380836618823093", "4850282148034622796", "4922888754770334757", "4938176174115495996", "5023793327535049800", "5068721983958021845", "5160804067176909285", "5230294800320521433", "5299051162414574931", "530890874678877658", "5313606017263906667", "5454426302747597719", "5465605161947433639", "5476961581526188539", "5720516325136082117", "5726355687233646078", "5735110588939410675", "5897351075255122015", "5903502321914107428", "596347196053313490", "5976466089496642836", "601357470107386580", "6138012854148662842", "6226991114601113476", "6302286612852011525", "6303768225488089631", "6313620771990972548", "636604997208968420", "639493600317628113", "6511228698192058625", "6633124561066370873", "6667346144961238315", "6727147782177271782", "6878816194540199562", "6890000750803201167", "6897968590297109768", "69014576911548855", "6906317009102589075", "7048203964160558300", "7199496429646228646", "7235288343430755046", "7375527594336839624", "7420054662280658352", "7465188219816924909", "7491489042222612679", "7516880687849336581", "7521128362158652644", "7576973495268650514", "7606956675492409191", "7797932356680306414", "7799215613104723754", "7821722790537703515", "7849696026061216988", "7861626274196353828", "7986804588874538187", "801636641604169351", "8062841745866313719", "8077052008599024357", "8079734350742046948", "8093285189528731511", "8106259274980471037", "8145216657141347283", "8224458940689858887", "8245305247796372311", "8496797232843383076", "8525762293950286612", "8574040059322054874", "8590066622971472741", "8674144722750320306", "8719704384238744838", "8733745913186186448", "878758909120260805", "880960654234321906", "8879916638350926562", "8888702487573912354", "8963315263936979668", "9041081309368668295", "9158178216702863157", "91951649297765314", "937700598533556023", "941269884716650847", "943033592301427191", "962331079647559549" ],
+  "schemaVersion" : "af4d29d8-4af4-3f98-bf90-30640a70bee3"
+}

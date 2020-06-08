@@ -2,6 +2,7 @@ package com.instaclustr.cassandra.backup.impl.backup.coordination;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.instaclustr.cassandra.backup.guice.BackuperFactory;
 import com.instaclustr.cassandra.backup.guice.BucketServiceFactory;
@@ -16,8 +17,9 @@ public class DefaultBackupOperationCoordinator extends BaseBackupOperationCoordi
     @Inject
     public DefaultBackupOperationCoordinator(final CassandraJMXService cassandraJMXService,
                                              final Map<String, BackuperFactory> backuperFactoryMap,
-                                             final Map<String, BucketServiceFactory> bucketServiceFactoryMap) {
-        super(cassandraJMXService, backuperFactoryMap, bucketServiceFactoryMap);
+                                             final Map<String, BucketServiceFactory> bucketServiceFactoryMap,
+                                             final ObjectMapper objectMapper) {
+        super(cassandraJMXService, backuperFactoryMap, bucketServiceFactoryMap, objectMapper);
     }
 
     @Override

@@ -16,6 +16,7 @@ import com.google.inject.Stage;
 import com.instaclustr.cassandra.CassandraModule;
 import com.instaclustr.cassandra.backup.guice.StorageModules;
 import com.instaclustr.guice.GuiceInjectorHolder;
+import com.instaclustr.jackson.JacksonModule;
 import com.instaclustr.operations.OperationRequest;
 import com.instaclustr.operations.OperationsModule;
 import com.instaclustr.picocli.CLIApplication;
@@ -91,6 +92,7 @@ public class BackupRestoreCLI extends CLIApplication implements Runnable {
             });
         }
 
+        modules.add(new JacksonModule());
         modules.add(new OperationsModule());
         modules.add(new StorageModules());
         modules.add(new ExecutorsModule());

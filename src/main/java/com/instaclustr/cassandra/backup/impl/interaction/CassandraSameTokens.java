@@ -1,9 +1,5 @@
 package com.instaclustr.cassandra.backup.impl.interaction;
 
-import static java.nio.file.Files.readAllLines;
-import static java.util.Arrays.asList;
-
-import java.nio.file.Path;
 import java.util.List;
 
 import com.instaclustr.cassandra.CassandraInteraction;
@@ -12,28 +8,21 @@ import jmx.org.apache.cassandra.service.CassandraJMXService;
 public class CassandraSameTokens implements CassandraInteraction<Boolean> {
 
     private final CassandraJMXService cassandraJMXService;
-    private final Path tokenFile;
+    private final List<String> tokens;
 
     public CassandraSameTokens(final CassandraJMXService cassandraJMXService,
-                               final Path tokenFile) {
+                               final List<String> tokens) {
         this.cassandraJMXService = cassandraJMXService;
-        this.tokenFile = tokenFile;
+        this.tokens = tokens;
     }
 
     @Override
     public Boolean act() throws Exception {
-        final List<String> tokensFromFile = tokensFromFile();
         final List<String> tokensOfNode = new CassandraTokens(cassandraJMXService).act();
+        if (!(tokens.size() == tokensOfNode.size() && tokens.containsAll(tokensOfNode))) {
+            throw new IllegalStateException("Tokens from snapshot and tokens of this node does not match!");
+        }
 
-        return tokensFromFile.size() == tokensOfNode.size() && tokensFromFile.containsAll(tokensOfNode);
-    }
-
-    private List<String> tokensFromFile() throws Exception {
-        return asList(readAllLines(tokenFile)
-                          .stream()
-                          .filter(line -> !line.trim().isEmpty() && line.trim().startsWith("initial_token:"))
-                          .map(line -> line.trim().split(" ")[1])
-                          .findFirst().orElseThrow(() -> new IllegalStateException("Malformat of initial_token line in tokens file."))
-                          .split(","));
+        return true;
     }
 }

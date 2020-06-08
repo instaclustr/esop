@@ -42,8 +42,9 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
                                             @JsonProperty("commitLogRestoreDirectory") final Path commitLogArchiveOverride,
                                             @JsonProperty("k8sNamespace") final String k8sNamespace,
                                             @JsonProperty("k8sSecretName") final String k8sSecretName,
-                                            @JsonProperty("insecure") final boolean insecure) {
-        super(storageLocation, duration, bandwidth, concurrentConnections, cassandraDirectory, lockFile, metadataDirective, k8sNamespace, k8sSecretName, insecure);
+                                            @JsonProperty("insecure") final boolean insecure,
+                                            @JsonProperty("createMissingBucket") final boolean createMissingBucket) {
+        super(storageLocation, duration, bandwidth, concurrentConnections, cassandraDirectory, lockFile, metadataDirective, k8sNamespace, k8sSecretName, insecure, createMissingBucket);
         this.commitLogArchiveOverride = commitLogArchiveOverride;
         this.type = "commitlog-backup";
     }

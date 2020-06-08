@@ -35,13 +35,13 @@ public class LocalFileRestorer extends Restorer {
     }
 
     @Override
-    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey) throws Exception {
-        return new LocalFileObjectReference(objectKey, resolveNodeAwareRemotePath(objectKey));
+    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception {
+        return new LocalFileObjectReference(objectKey, objectKey.toFile().getCanonicalFile().toString());
     }
 
     @Override
-    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception {
-        return new LocalFileObjectReference(objectKey, objectKey.toFile().getCanonicalFile().toString());
+    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey) throws Exception {
+        return new LocalFileObjectReference(objectKey, resolveNodeAwareRemotePath(objectKey));
     }
 
     @Override
@@ -67,12 +67,17 @@ public class LocalFileRestorer extends Restorer {
 
     @Override
     public String downloadFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+        return downloadNodeFileToString(remotePrefix, keyFilter);
+    }
+
+    @Override
+    public String downloadNodeFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
         final String blobItem = getFileToDownload(keyFilter, remotePrefix);
         return new String(Files.readAllBytes(Paths.get(blobItem)));
     }
 
     @Override
-    public Path downloadFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+    public Path downloadNodeFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
         final String fileName = getFileToDownload(keyFilter, remotePrefix);
         final Path destination = destinationDir.resolve(fileName);
         downloadFile(destination, objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
@@ -83,8 +88,6 @@ public class LocalFileRestorer extends Restorer {
 
         final Path pathToList = Paths.get(request.storageLocation.rawLocation.replaceAll("file://", "")).resolve(remotePrefix);
 
-        System.out.println(pathToList);
-
         final List<Path> filtered = Files.list(pathToList)
             .filter(path -> !Files.isDirectory(path) && keyFilter.test(path.toString()))
             .collect(toList());
@@ -94,7 +97,7 @@ public class LocalFileRestorer extends Restorer {
                                                    filtered.toString(),
                                                    remotePrefix));
         }
-        return filtered.get(0).getFileName().toString();
+        return filtered.get(0).toString();
     }
 
     @Override

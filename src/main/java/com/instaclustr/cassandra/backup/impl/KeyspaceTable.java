@@ -1,8 +1,14 @@
 package com.instaclustr.cassandra.backup.impl;
 
-import com.google.common.base.MoreObjects;
+import java.nio.file.Path;
+import java.util.Optional;
 
-public class KeyspaceTable {
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.MoreObjects;
+import org.apache.commons.lang3.StringUtils;
+
+public class KeyspaceTable implements Cloneable {
 
     public enum TableType {
         SYSTEM,
@@ -15,10 +21,25 @@ public class KeyspaceTable {
     public final String table;
     public final TableType tableType;
 
-    public KeyspaceTable(final String keyspace, final String table) {
+    public static Optional<KeyspaceTable> parse(final Path relativePath) {
+        if (!relativePath.getName(0).toString().equals("data")) {
+            return Optional.empty(); // don't parse non-data files
+        }
+
+        return Optional.of(new KeyspaceTable(relativePath.getName(1).toString(),
+                                             StringUtils.split(relativePath.getName(2).toString(), '-')[0]));
+    }
+
+    @JsonCreator
+    public KeyspaceTable(final @JsonProperty("keyspace") String keyspace,
+                         final @JsonProperty("table") String table) {
         this.keyspace = keyspace;
         this.table = table;
         this.tableType = classifyTable(keyspace, table);
+    }
+
+    public static boolean isSystemKeyspace(final String keyspace) {
+        return keyspace.equals("system") || keyspace.equals("system_schema");
     }
 
     public TableType classifyTable(final String keyspace, final String table) {
@@ -41,5 +62,10 @@ public class KeyspaceTable {
             .add("table", table)
             .add("tableType", tableType)
             .toString();
+    }
+
+    @Override
+    public KeyspaceTable clone() throws CloneNotSupportedException {
+        return new KeyspaceTable(this.keyspace, this.table);
     }
 }

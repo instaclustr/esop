@@ -97,11 +97,19 @@ public class AzureRestorer extends Restorer {
     @Override
     public String downloadFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
         final String blobItemPath = getBlobItemPath(globalList(remotePrefix), keyFilter);
-        return downloadFileToString(objectKeyToRemoteReference(Paths.get(blobItemPath)));
+        final String fileName = blobItemPath.split("/")[blobItemPath.split("/").length - 1];
+        return downloadFileToString(objectKeyToRemoteReference(remotePrefix.resolve(fileName)));
     }
 
     @Override
-    public Path downloadFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+    public String downloadNodeFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+        final String blobItemPath = getBlobItemPath(nodeList(remotePrefix), keyFilter);
+        final String fileName = blobItemPath.split("/")[blobItemPath.split("/").length - 1];
+        return downloadFileToString(objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
+    }
+
+    @Override
+    public Path downloadNodeFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
         final String blobItemPath = getBlobItemPath(nodeList(remotePrefix), keyFilter);
         final String fileName = blobItemPath.split("/")[blobItemPath.split("/").length - 1];
 

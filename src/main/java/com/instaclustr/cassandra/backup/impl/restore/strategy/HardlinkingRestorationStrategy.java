@@ -8,7 +8,10 @@ import static com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.Res
 import static com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy.RestorationStrategyType.HARDLINKS;
 import static java.lang.String.format;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.CleaningPhase;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.DownloadingPhase;
@@ -38,8 +41,10 @@ import jmx.org.apache.cassandra.service.CassandraJMXService;
 public class HardlinkingRestorationStrategy extends AbstractRestorationStrategy {
 
     @Inject
-    public HardlinkingRestorationStrategy(final CassandraJMXService cassandraJMXService) {
-        super(cassandraJMXService);
+    public HardlinkingRestorationStrategy(final CassandraJMXService cassandraJMXService,
+                                          final Provider<CassandraVersion> cassandraVersion,
+                                          final ObjectMapper objectMapper) {
+        super(cassandraJMXService, cassandraVersion, objectMapper);
     }
 
     @Override
@@ -49,20 +54,24 @@ public class HardlinkingRestorationStrategy extends AbstractRestorationStrategy 
 
     @Override
     public RestorationPhase resolveRestorationPhase(final Operation<RestoreOperationRequest> operation, final Restorer restorer) {
-        final RestorationPhaseType phaseType = operation.request.restorationPhase;
+
+        final RestorationContext ctxt = initialiseRestorationContext(operation, restorer, objectMapper, cassandraVersion);
+        final RestorationPhaseType phaseType = ctxt.operation.request.restorationPhase;
 
         if (phaseType == INIT) {
-            return new InitPhase(operation);
+            return new InitPhase(ctxt);
         } else if (phaseType == DOWNLOAD) {
-            return new DownloadingPhase(cassandraJMXService, operation, restorer);
+            return new DownloadingPhase(ctxt);
         } else if (phaseType == TRUNCATE) {
-            return new TruncatingPhase(cassandraJMXService, operation);
+            return new TruncatingPhase(ctxt);
         } else if (phaseType == IMPORT) {
-            return new HardlinkingPhase(cassandraJMXService, operation);
+            return new HardlinkingPhase(ctxt);
         } else if (phaseType == CLEANUP) {
-            return new CleaningPhase(operation);
+            return new CleaningPhase(ctxt);
         }
 
-        throw new IllegalStateException(format("Unable to resolve phase for phase type %s for %s.", phaseType, HardlinkingRestorationStrategy.class.getName()));
+        throw new IllegalStateException(format("Unable to resolve phase for phase type %s for %s.",
+                                               phaseType,
+                                               HardlinkingRestorationStrategy.class.getName()));
     }
 }

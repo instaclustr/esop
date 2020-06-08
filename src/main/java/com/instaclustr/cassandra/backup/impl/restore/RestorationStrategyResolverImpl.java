@@ -38,7 +38,7 @@ public class RestorationStrategyResolverImpl implements RestorationStrategyResol
             try {
                 cassandraJMXServiceProvider.get().doWithStorageServiceMBean(new FunctionWithEx<StorageServiceMBean, Object>() {
                     @Override
-                    public Object apply(final StorageServiceMBean object) throws Exception {
+                    public Object apply(final StorageServiceMBean object) {
                         return object.getSchemaVersion();
                     }
                 });

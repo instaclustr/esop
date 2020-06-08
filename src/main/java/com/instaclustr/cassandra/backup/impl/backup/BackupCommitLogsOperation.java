@@ -58,7 +58,9 @@ public class BackupCommitLogsOperation extends Operation<BackupCommitLogsOperati
                 final Backuper backuper = backuperFactoryMap.get(request.storageLocation.storageProvider).createCommitLogBackuper(request);
                 final BucketService bucketService = bucketServiceMap.get(request.storageLocation.storageProvider).createBucketService(request)) {
 
-                bucketService.createIfMissing(request.storageLocation.bucket);
+                if (request.createMissingBucket) {
+                    bucketService.createIfMissing(request.storageLocation.bucket);
+                }
 
                 for (final Path commitLog : commitLogs) {
                     // Append file modified date so we have some idea of the time range this commitlog covers

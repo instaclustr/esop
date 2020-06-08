@@ -43,13 +43,13 @@ public class GCPBackuper extends Backuper {
     }
 
     @Override
-    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey) {
-        return new GCPRemoteObjectReference(objectKey, resolveNodeAwareRemotePath(objectKey), request.storageLocation.bucket);
+    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception {
+        return new GCPRemoteObjectReference(objectKey, objectKey.toString(), request.storageLocation.bucket);
     }
 
     @Override
-    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) {
-        return new GCPRemoteObjectReference(objectKey, objectKey.toString(), request.storageLocation.bucket);
+    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey) {
+        return new GCPRemoteObjectReference(objectKey, resolveNodeAwareRemotePath(objectKey), request.storageLocation.bucket);
     }
 
     @Override

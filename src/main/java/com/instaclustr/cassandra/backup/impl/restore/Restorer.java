@@ -45,7 +45,9 @@ public abstract class Restorer extends StorageInteractor {
 
     public abstract String downloadFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception;
 
-    public abstract Path downloadFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception;
+    public abstract String downloadNodeFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception;
+
+    public abstract Path downloadNodeFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception;
 
     public abstract void consumeFiles(final RemoteObjectReference prefix, final Consumer<RemoteObjectReference> consumer) throws Exception;
 

@@ -77,7 +77,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonProperty("dc") final String dc,
                             @JsonProperty("keepExistingSnapshot") final boolean keepExistingSnapshot,
                             @JsonProperty("timeout") @Min(1) final Integer timeout,
-                            @JsonProperty("insecure") final boolean insecure) {
+                            @JsonProperty("insecure") final boolean insecure,
+                            @JsonProperty("createMissingBucket") final boolean createMissingBucket) {
         super(type, id, creationTime, state, failureCause, progress, startTime, new BackupOperationRequest(type,
                                                                                                            storageLocation,
                                                                                                            duration,
@@ -94,7 +95,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                                                                                                            dc,
                                                                                                            keepExistingSnapshot,
                                                                                                            timeout,
-                                                                                                           insecure));
+                                                                                                           insecure,
+                                                                                                           createMissingBucket));
         coordinator = null;
     }
 

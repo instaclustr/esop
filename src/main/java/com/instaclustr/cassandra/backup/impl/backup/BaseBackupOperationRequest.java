@@ -49,6 +49,10 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
         description = "Directory which will be used for locking purposes for backups")
     public Path lockFile;
 
+    @Option(names = {"--create-missing-bucket"},
+        description = "Automatically creates a bucket if it does not exist. If a bucket does not exist, backup operation will fail.")
+    public boolean createMissingBucket;
+
     public static class MetadataDirectiveTypeConverter implements CommandLine.ITypeConverter<MetadataDirective> {
 
         @Override
@@ -78,7 +82,8 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
                                       final MetadataDirective metadataDirective,
                                       final String k8sNamespace,
                                       final String k8sBackupSecretName,
-                                      final boolean insecure) {
+                                      final boolean insecure,
+                                      final boolean createMissingBucket) {
         super(storageLocation, k8sNamespace, k8sBackupSecretName, insecure);
         this.storageLocation = storageLocation;
         this.duration = duration;
@@ -89,5 +94,6 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
         this.metadataDirective = metadataDirective == null ? MetadataDirective.COPY : metadataDirective;
         this.k8sNamespace = k8sNamespace;
         this.k8sSecretName = k8sBackupSecretName;
+        this.createMissingBucket = createMissingBucket;
     }
 }
