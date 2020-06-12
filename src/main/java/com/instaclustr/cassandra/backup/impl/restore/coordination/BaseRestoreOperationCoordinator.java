@@ -2,6 +2,7 @@ package com.instaclustr.cassandra.backup.impl.restore.coordination;
 
 import static com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy.RestorationStrategyType.HARDLINKS;
 import static com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy.RestorationStrategyType.IMPORT;
+import static com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy.RestorationStrategyType.IN_PLACE;
 import static java.lang.String.format;
 
 import java.util.Map;
@@ -9,6 +10,7 @@ import java.util.Map;
 import com.instaclustr.cassandra.backup.guice.RestorerFactory;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhaseResultGatherer;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy;
+import com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy.RestorationStrategyType;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationStrategyResolver;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.Restorer;
@@ -42,6 +44,11 @@ public abstract class BaseRestoreOperationCoordinator extends OperationCoordinat
                 throw new IllegalStateException(format("you can not run %s strategy and have 'restorationPhase' empty!",
                                                        request.restorationStrategyType));
             }
+        }
+
+        if (request.restoreSystemKeyspace && (request.restorationStrategyType != IN_PLACE)) {
+            throw new IllegalStateException("you can not set 'restoreSystemKeyspace' to true when your restoration strategy is not IN_PLACE, "
+                                                + "it is not possible to restore system keyspace on a running node");
         }
 
         final RestorationPhaseResultGatherer gatherer = new RestorationPhaseResultGatherer();

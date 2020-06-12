@@ -50,7 +50,7 @@ public @interface ValidRestoreOperationRequest {
 
             if (value.restorationStrategyType == RestorationStrategyType.IMPORT) {
                 if (value.importing == null) {
-                    context.buildConstraintViolationWithTemplate("you can not specify IMPORTING restorationStrategyType and have 'import' field empty!");
+                    context.buildConstraintViolationWithTemplate("you can not specify IMPORT restorationStrategyType and have 'import' field empty!");
                     return false;
                 }
             }
