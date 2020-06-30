@@ -11,6 +11,7 @@ import javax.validation.Payload;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import com.instaclustr.kubernetes.KubernetesHelper;
 
@@ -34,14 +35,22 @@ public @interface ValidBackupCommitLogsOperationRequest {
 
             context.disableDefaultConstraintViolation();
 
+            if (value.cassandraDirectory == null || value.cassandraDirectory.toFile().getAbsolutePath().equals("/")) {
+                value.cassandraDirectory = Paths.get("/var/lib/cassandra");
+            }
+
             if (!Files.exists(value.cassandraDirectory)) {
                 context.buildConstraintViolationWithTemplate(String.format("cassandraDirectory %s does not exist", value.cassandraDirectory)).addConstraintViolation();
                 return false;
             }
 
-            if (KubernetesHelper.isRunningInKubernetes() && value.k8sSecretName == null) {
+            if (KubernetesHelper.isRunningInKubernetes() && value.resolveKubernetesSecretName() == null) {
                 context.buildConstraintViolationWithTemplate("This code is running in Kubernetes but there is not 'k8sSecretName' field set on backup request!").addConstraintViolation();
                 return false;
+            }
+
+            if (value.lockFile == null || value.lockFile.toFile().getAbsolutePath().equals("/")) {
+                value.lockFile = Paths.get(System.getProperty("java.io.tmpdir"));
             }
 
             return true;

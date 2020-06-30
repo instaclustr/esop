@@ -63,7 +63,7 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
         this.storageLocation = storageLocation;
         this.duration = duration;
         this.bandwidth = bandwidth;
-        this.cassandraDirectory = cassandraDirectory == null ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
+        this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/")) ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.concurrentConnections = concurrentConnections == null ? 10 : concurrentConnections;
         this.lockFile = lockFile;
         this.k8sNamespace = k8sNamespace;

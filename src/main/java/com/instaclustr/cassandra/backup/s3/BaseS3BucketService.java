@@ -1,4 +1,4 @@
-package com.instaclustr.cassandra.backup.aws;
+package com.instaclustr.cassandra.backup.s3;
 
 import static java.lang.String.format;
 
@@ -7,33 +7,28 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.TransferManager;
-import com.google.inject.assistedinject.Assisted;
-import com.google.inject.assistedinject.AssistedInject;
-import com.instaclustr.cassandra.backup.aws.S3Module.S3ModuleException;
-import com.instaclustr.cassandra.backup.aws.S3Module.TransferManagerFactory;
 import com.instaclustr.cassandra.backup.impl.BucketService;
 import com.instaclustr.cassandra.backup.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class S3BucketService implements BucketService {
+public class BaseS3BucketService implements BucketService {
 
-    private static final Logger logger = LoggerFactory.getLogger(S3BucketService.class);
+    private static final Logger logger = LoggerFactory.getLogger(BaseS3BucketService.class);
 
     private final TransferManager transferManager;
 
-    @AssistedInject
-    public S3BucketService(final TransferManagerFactory transferManagerFactory,
-                           @Assisted final BackupOperationRequest request) {
+    public BaseS3BucketService(final TransferManagerFactory transferManagerFactory,
+                               final BackupOperationRequest request) {
         this.transferManager = transferManagerFactory.build(request);
     }
 
-    @AssistedInject
-    public S3BucketService(final TransferManagerFactory transferManagerFactory,
-                           @Assisted final BackupCommitLogsOperationRequest request) {
+    public BaseS3BucketService(final TransferManagerFactory transferManagerFactory,
+                               final BackupCommitLogsOperationRequest request) {
         this.transferManager = transferManagerFactory.build(request);
     }
+
 
     @Override
     public boolean doesExist(final String bucketName) {

@@ -17,13 +17,13 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.instaclustr.cassandra.backup.aws.S3BucketService;
-import com.instaclustr.cassandra.backup.aws.S3Module;
-import com.instaclustr.cassandra.backup.aws.S3Module.TransferManagerFactory;
-import com.instaclustr.cassandra.backup.aws.S3Restorer;
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
+import com.instaclustr.cassandra.backup.s3.aws.S3BucketService;
+import com.instaclustr.cassandra.backup.s3.aws.S3Module;
+import com.instaclustr.cassandra.backup.s3.aws.S3Module.S3TransferManagerFactory;
+import com.instaclustr.cassandra.backup.s3.aws.S3Restorer;
 import com.instaclustr.kubernetes.KubernetesApiModule;
 import com.instaclustr.threading.Executors.FixedTasksExecutorSupplier;
 import com.instaclustr.threading.ExecutorsModule;
@@ -40,7 +40,7 @@ import org.testng.annotations.Test;
 public class S3BackupRestoreTest extends BaseS3BackupRestoreTest {
 
     @Inject
-    public TransferManagerFactory transferManagerFactory;
+    public S3TransferManagerFactory transferManagerFactory;
 
     @BeforeMethod
     public void setup() throws ApiException, IOException {
@@ -63,7 +63,7 @@ public class S3BackupRestoreTest extends BaseS3BackupRestoreTest {
     }
 
     @Override
-    public TransferManagerFactory getTransferManagerFactory() {
+    public S3TransferManagerFactory getTransferManagerFactory() {
         return transferManagerFactory;
     }
 

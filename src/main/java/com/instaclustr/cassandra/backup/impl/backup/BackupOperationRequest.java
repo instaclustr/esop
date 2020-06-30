@@ -28,6 +28,12 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
     @JsonProperty("snapshotTag")
     public String snapshotTag = format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis()));
 
+    @Option(names = {"--keep-existing-snapshot-tag"},
+        description = "If snapshotTag represents existing snapshot and this flag is not set, that snapshot will be deleted. "
+            + "If snapshot exists and this flag is specified, whole request will fail because it can not take a snapshot with same name.")
+    @JsonProperty("keepExistingSnapshot")
+    public boolean keepExistingSnapshot;
+
     @Option(names = "--entities",
         description = "entities to backup, if not specified, all keyspaces will be backed up, form 'ks1,ks2,ks2' or 'ks1.cf1,ks2.cf2'",
         converter = DatabaseEntitiesConverter.class)
@@ -64,13 +70,15 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonProperty("k8sNamespace") final String k8sNamespace,
                                   @JsonProperty("k8sSecretName") final String k8sSecretName,
                                   @JsonProperty("globalRequest") final boolean globalRequest,
-                                  @JsonProperty("dc") final String dc) {
+                                  @JsonProperty("dc") final String dc,
+                                  @JsonProperty("keepExistingSnapshot") final boolean keepExistingSnapshot) {
         super(storageLocation, duration, bandwidth, concurrentConnections, cassandraDirectory, lockFile, k8sNamespace, k8sSecretName);
         this.entities = entities == null ? DatabaseEntities.empty() : entities;
         this.snapshotTag = snapshotTag == null ? format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis())) : snapshotTag;
         this.globalRequest = globalRequest;
         this.type = type;
         this.dc = dc;
+        this.keepExistingSnapshot = keepExistingSnapshot;
     }
 
     @Override
@@ -88,6 +96,7 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
             .add("k8sSecretName", k8sSecretName)
             .add("globalRequest", globalRequest)
             .add("dc", dc)
+            .add("keepExistingSnapshot", keepExistingSnapshot)
             .toString();
     }
 }

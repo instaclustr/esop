@@ -71,7 +71,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonProperty("k8sNamespace") final String k8sNamespace,
                             @JsonProperty("k8sSecretName") final String k8sBackupSecretName,
                             @JsonProperty("globalRequest") final boolean globalRequest,
-                            @JsonProperty("dc") final String dc) {
+                            @JsonProperty("dc") final String dc,
+                            @JsonProperty("keepExistingSnapshot") final boolean keepExistingSnapshot) {
         super(type, id, creationTime, state, failureCause, progress, startTime, new BackupOperationRequest(type,
                                                                                                            storageLocation,
                                                                                                            duration,
@@ -84,7 +85,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                                                                                                            k8sNamespace,
                                                                                                            k8sBackupSecretName,
                                                                                                            globalRequest,
-                                                                                                           dc));
+                                                                                                           dc,
+                                                                                                           keepExistingSnapshot));
         coordinator = null;
     }
 

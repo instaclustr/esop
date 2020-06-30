@@ -1,28 +1,16 @@
 package com.instaclustr.cassandra.backup;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import org.testng.annotations.Test;
 
 public class StorageLocationTest {
-
-    public static class Clone implements Cloneable {
-
-        public Path myPath;
-
-        public Clone(final Path myPath) {
-            this.myPath = myPath;
-        }
-
-        @Override
-        public Object clone() throws CloneNotSupportedException {
-            return super.clone();
-        }
-    }
 
     @Test
     public void updateStorageLocationDatacenterTest() {
@@ -97,5 +85,80 @@ public class StorageLocationTest {
         assertEquals(fileLocation.clusterId, "b");
         assertEquals(fileLocation.datacenterId, "c");
         assertEquals(fileLocation.nodeId, "d");
+    }
+
+    @Test
+    public void globalLocationTest() {
+        StorageLocation globalLocation = new StorageLocation("oracle://my-bucket");
+
+        globalLocation.validate();
+
+        assertEquals(globalLocation.storageProvider, "oracle");
+        assertEquals(globalLocation.bucket, "my-bucket");
+        assertNull(globalLocation.clusterId);
+        assertNull(globalLocation.datacenterId);
+        assertNull(globalLocation.nodeId);
+        assertTrue(globalLocation.cloudLocation);
+        assertTrue(globalLocation.globalRequest);
+    }
+
+    @Test
+    public void updateGlobalLocationTest() {
+        StorageLocation globalLocation = new StorageLocation("oracle://my-bucket");
+
+        StorageLocation updated = StorageLocation.update(globalLocation, "clusterName", "datacenterId", "nodeId");
+
+        assertEquals(updated.storageProvider, "oracle");
+        assertEquals(updated.bucket, "my-bucket");
+        assertEquals(updated.clusterId, "clusterName");
+        assertEquals(updated.datacenterId, "datacenterId");
+        assertEquals(updated.nodeId, "nodeId");
+        assertTrue(updated.cloudLocation);
+        assertFalse(updated.globalRequest);
+    }
+
+    @Test
+    public void updateNodeIdLocationTest() {
+        StorageLocation location = new StorageLocation("oracle://my-bucket/clusterName/datacenterId/nodeId");
+
+        StorageLocation updated = StorageLocation.updateNodeId(location, "nodeId2");
+
+        assertEquals(updated.storageProvider, "oracle");
+        assertEquals(updated.bucket, "my-bucket");
+        assertEquals(updated.clusterId, "clusterName");
+        assertEquals(updated.datacenterId, "datacenterId");
+        assertEquals(updated.nodeId, "nodeId2");
+        assertTrue(updated.cloudLocation);
+        assertFalse(updated.globalRequest);
+    }
+
+    @Test
+    public void updateDatacenterIdLocationTest() {
+        StorageLocation location = new StorageLocation("oracle://my-bucket/clusterName/datacenterId/nodeId");
+
+        StorageLocation updated = StorageLocation.updateDatacenter(location, "datacenterId2");
+
+        assertEquals(updated.storageProvider, "oracle");
+        assertEquals(updated.bucket, "my-bucket");
+        assertEquals(updated.clusterId, "clusterName");
+        assertEquals(updated.datacenterId, "datacenterId2");
+        assertEquals(updated.nodeId, "nodeId");
+        assertTrue(updated.cloudLocation);
+        assertFalse(updated.globalRequest);
+    }
+
+    @Test
+    public void updateClusterNameLocationTest() {
+        StorageLocation location = new StorageLocation("oracle://my-bucket/clusterName/datacenterId/nodeId");
+
+        StorageLocation updated = StorageLocation.updateClusterName(location, "clusterName2");
+
+        assertEquals(updated.storageProvider, "oracle");
+        assertEquals(updated.bucket, "my-bucket");
+        assertEquals(updated.clusterId, "clusterName2");
+        assertEquals(updated.datacenterId, "datacenterId");
+        assertEquals(updated.nodeId, "nodeId");
+        assertTrue(updated.cloudLocation);
+        assertFalse(updated.globalRequest);
     }
 }

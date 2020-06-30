@@ -14,6 +14,7 @@ import javax.validation.Payload;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities;
 
@@ -37,6 +38,10 @@ public @interface ValidBackupOperationRequest {
 
             context.disableDefaultConstraintViolation();
 
+            if (value.cassandraDirectory == null || value.cassandraDirectory.toFile().getAbsolutePath().equals("/")) {
+                value.cassandraDirectory = Paths.get("/var/lib/cassandra");
+            }
+
             if (!Files.exists(value.cassandraDirectory)) {
                 context.buildConstraintViolationWithTemplate(format("cassandraDirectory %s does not exist", value.cassandraDirectory)).addConstraintViolation();
                 return false;
@@ -44,7 +49,7 @@ public @interface ValidBackupOperationRequest {
 
             if ((isRunningInKubernetes() || isRunningAsClient())) {
 
-                if (value.resolveSecretName() == null) {
+                if (value.resolveKubernetesSecretName() == null) {
                     context.buildConstraintViolationWithTemplate("This code is running in Kubernetes or as a Kubernetes client "
                                                                      + "but it is not possible to resolve k8s secret name for backups!").addConstraintViolation();
 
@@ -61,6 +66,10 @@ public @interface ValidBackupOperationRequest {
 
             if (value.entities == null) {
                 value.entities = DatabaseEntities.empty();
+            }
+
+            if (value.lockFile == null || value.lockFile.toFile().getAbsolutePath().equals("/")) {
+                value.lockFile = Paths.get(System.getProperty("java.io.tmpdir"));
             }
 
             return true;

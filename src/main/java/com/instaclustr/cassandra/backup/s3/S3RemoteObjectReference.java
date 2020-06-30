@@ -1,4 +1,4 @@
-package com.instaclustr.cassandra.backup.aws;
+package com.instaclustr.cassandra.backup.s3;
 
 import java.nio.file.Path;
 

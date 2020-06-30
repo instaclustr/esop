@@ -3,6 +3,7 @@ package com.instaclustr.cassandra.backup.impl;
 import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.instaclustr.cassandra.backup.impl.StorageLocation.StorageLocationDeserializer;
@@ -23,7 +24,7 @@ public abstract class AbstractOperationRequest extends OperationRequest {
         converter = StorageLocationTypeConverter.class,
         description = "Location to which files will be backed up or restored from, in form " +
             "cloudProvider://bucketName/clusterId/datacenterId/nodeId or file:///some/path/bucketName/clusterId/datacenterId/nodeId. " +
-            "'cloudProvider' is one of 's3', 'azure' or 'gcp'.",
+            "'cloudProvider' is one of 's3', 'oracle', 'azure' or 'gcp'.",
         required = true)
     @NotNull
     @ValidStorageLocation
@@ -34,10 +35,12 @@ public abstract class AbstractOperationRequest extends OperationRequest {
     @Option(names = {"--k8s-namespace"},
         description = "Name of Kubernetes namespace backup tool runs in, if any.",
         defaultValue = "default")
-    public String k8sNamespace = "default";
+    @JsonProperty("k8sNamespace")
+    public String k8sNamespace;
 
-    @Option(names = {"--k8s-backup-secret-name"},
+    @Option(names = {"--k8s-secret-name"},
         description = "Name of Kubernetes secret used for credential retrieval for backup / restores when talking to cloud storages.")
+    @JsonProperty("k8sSecretName")
     public String k8sSecretName;
 
     public AbstractOperationRequest() {
@@ -53,7 +56,7 @@ public abstract class AbstractOperationRequest extends OperationRequest {
     }
 
     @JsonIgnore
-    public String resolveSecretName() {
+    public String resolveKubernetesSecretName() {
         String resolvedSecretName;
 
         if (k8sSecretName == null) {

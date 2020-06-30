@@ -62,6 +62,9 @@ If you want to upload SSTables into AWS / GCP or Azure, just change protocol to 
 it would be like `s3://bucket-for-my-cluster/cluster-name/dc-name/node-id`. If you want to use different
 cloud, just change the protocol respectively.
 
+We are also supporting https://docs.cloud.oracle.com/en-us/iaas/Content/Object/Tasks/s3compatibleapi.htm[Oracle cloud],
+use `oracle://` protocol for your backup and restores.
+
 If a bucket does not exist, it will be automatically created.
 
 ### Example of `commitlog-backup`

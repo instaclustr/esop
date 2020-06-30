@@ -90,7 +90,7 @@ public abstract class AbstractBackupTest {
             "--storage-location=" + getStorageLocation(),
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--entities=system_schema,test,test2", // keyspaces
-            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] backupArgsWithSnapshotName = new String[]{
@@ -100,7 +100,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=stefansnapshot",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--entities=system_schema,test,test2", // keyspaces
-            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         // RESTORE
@@ -113,7 +113,7 @@ public abstract class AbstractBackupTest {
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
             "--entities=system_schema,test,test2",
-            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         // COMMIT LOGS
@@ -122,7 +122,7 @@ public abstract class AbstractBackupTest {
             "commitlog-backup",
             "--storage-location=" + getStorageLocation(),
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] commitlogRestoreArgs = new String[]{
@@ -131,7 +131,7 @@ public abstract class AbstractBackupTest {
             "--config-directory=" + cassandraRestoredConfigDir.toAbsolutePath().toString(),
             "--storage-location=" + getStorageLocation(),
             "--commitlog-download-dir=" + target("commitlog_download_dir"),
-            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         return new String[][]{
@@ -153,7 +153,7 @@ public abstract class AbstractBackupTest {
             "--storage-location=" + getStorageLocation(),
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--entities=system_schema,test,test2", // keyspaces
-            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] backupArgsWithSnapshotName = new String[]{
@@ -163,7 +163,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=stefansnapshot",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--entities=system_schema,test,test2", // keyspaces
-            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         // RESTORE
@@ -178,7 +178,7 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=import",
             "--restoration-phase-type=download", /// DOWNLOAD
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] restoreArgsPhase2 = new String[]{
@@ -191,7 +191,7 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=import",
             "--restoration-phase-type=truncate", // TRUNCATE
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] restoreArgsPhase3 = new String[]{
@@ -204,7 +204,7 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=import",
             "--restoration-phase-type=import", // IMPORT
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] restoreArgsPhase4 = new String[]{
@@ -217,7 +217,7 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=import",
             "--restoration-phase-type=cleanup", // CLEANUP
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         return new String[][]{
@@ -240,7 +240,7 @@ public abstract class AbstractBackupTest {
             "--storage-location=" + getStorageLocation(),
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--entities=system_schema,test,test2", // keyspaces
-            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] backupArgsWithSnapshotName = new String[]{
@@ -250,7 +250,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=stefansnapshot",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--entities=system_schema,test,test2", // keyspaces
-            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         // RESTORE
@@ -265,7 +265,7 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=hardlinks",
             "--restoration-phase-type=download", /// DOWNLOAD
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] restoreArgsPhase2 = new String[]{
@@ -278,7 +278,7 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=hardlinks",
             "--restoration-phase-type=truncate", // TRUNCATE
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] restoreArgsPhase3 = new String[]{
@@ -291,7 +291,7 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=hardlinks",
             "--restoration-phase-type=import", // IMPORT
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] restoreArgsPhase4 = new String[]{
@@ -304,7 +304,7 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=hardlinks",
             "--restoration-phase-type=cleanup", // CLEANUP
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-backup-secret-name=" + SIDECAR_SECRET_NAME,
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         return new String[][]{

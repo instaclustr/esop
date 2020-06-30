@@ -71,7 +71,7 @@ public class AzureModule extends AbstractModule {
                 final SecretReader secretReader = new SecretReader(coreV1ApiProvider);
 
                 return secretReader.readIntoObject(namespace,
-                                                   operationrequest.resolveSecretName(),
+                                                   operationrequest.resolveKubernetesSecretName(),
                                                    secret -> {
                                                        final Map<String, byte[]> data = secret.getData();
 

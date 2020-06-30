@@ -1,4 +1,4 @@
-package com.instaclustr.cassandra.backup.aws;
+package com.instaclustr.cassandra.backup.s3;
 
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toCollection;
@@ -27,9 +27,6 @@ import com.amazonaws.services.s3.transfer.PersistableTransfer;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.internal.S3ProgressListener;
 import com.google.common.io.CharStreams;
-import com.google.inject.assistedinject.Assisted;
-import com.google.inject.assistedinject.AssistedInject;
-import com.instaclustr.cassandra.backup.aws.S3Module.TransferManagerFactory;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
@@ -38,30 +35,29 @@ import com.instaclustr.threading.Executors.ExecutorServiceSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class S3Restorer extends Restorer {
+public class BaseS3Restorer extends Restorer {
 
-    private static final Logger logger = LoggerFactory.getLogger(S3Restorer.class);
+    private static final Logger logger = LoggerFactory.getLogger(BaseS3Restorer.class);
 
-    private final AmazonS3 amazonS3;
-    private final TransferManager transferManager;
+    protected final AmazonS3 amazonS3;
+    protected final TransferManager transferManager;
 
-    @AssistedInject
-    public S3Restorer(final TransferManagerFactory transferManagerFactory,
-                      final ExecutorServiceSupplier executorServiceSupplier,
-                      @Assisted final RestoreOperationRequest request) {
+    public BaseS3Restorer(final TransferManagerFactory transferManagerFactory,
+                          final ExecutorServiceSupplier executorServiceSupplier,
+                          final RestoreOperationRequest request) {
         super(request, executorServiceSupplier);
         this.transferManager = transferManagerFactory.build(request);
         this.amazonS3 = this.transferManager.getAmazonS3Client();
     }
 
-    @AssistedInject
-    public S3Restorer(final TransferManagerFactory transferManagerFactory,
-                      final ExecutorServiceSupplier executorServiceSupplier,
-                      @Assisted final RestoreCommitLogsOperationRequest request) {
+    public BaseS3Restorer(final TransferManagerFactory transferManagerFactory,
+                          final ExecutorServiceSupplier executorServiceSupplier,
+                          final RestoreCommitLogsOperationRequest request) {
         super(request, executorServiceSupplier);
         this.transferManager = transferManagerFactory.build(request);
         this.amazonS3 = this.transferManager.getAmazonS3Client();
     }
+
 
     @Override
     public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) {

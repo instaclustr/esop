@@ -83,6 +83,10 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
 
             fileLock = new GlobalLock(request.lockFile).waitForLock();
 
+            if (!request.keepExistingSnapshot) {
+                new ClearSnapshotOperation(cassandraJMXService, new ClearSnapshotOperationRequest(request.snapshotTag)).run0();
+            }
+
             new TakeSnapshotOperation(cassandraJMXService, new TakeSnapshotOperationRequest(request.entities, request.snapshotTag)).run0();
 
             final List<String> tokens = new CassandraTokens(cassandraJMXService).act();
@@ -317,6 +321,10 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
                 cassandraJMXService.doWithStorageServiceMBean(new FunctionWithEx<StorageServiceMBean, Void>() {
                     @Override
                     public Void apply(StorageServiceMBean ssMBean) throws Exception {
+                        if (ssMBean.getSnapshotDetails().get(request.snapshotTag) == null) {
+                            logger.debug("Not cleaning snapshot {} because it does not exist", request.snapshotTag);
+                            return null;
+                        }
                         ssMBean.clearSnapshot(request.snapshotTag);
                         return null;
                     }

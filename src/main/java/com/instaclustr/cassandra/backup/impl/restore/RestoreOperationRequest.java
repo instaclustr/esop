@@ -139,7 +139,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonProperty("k8sSecretName") final String k8sSecretName,
                                    @JsonProperty("globalRequest") final boolean globalRequest) {
         super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName);
-        this.cassandraDirectory = cassandraDirectory == null ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
+        this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/"))  ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
         this.restoreSystemKeyspace = restoreSystemKeyspace;
         this.snapshotTag = snapshotTag;

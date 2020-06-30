@@ -8,9 +8,10 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.instaclustr.cassandra.backup.aws.S3Module;
-import com.instaclustr.cassandra.backup.aws.S3Module.TransferManagerFactory;
+import com.instaclustr.cassandra.backup.s3.aws.S3Module;
+import com.instaclustr.cassandra.backup.s3.TransferManagerFactory;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
+import com.instaclustr.cassandra.backup.s3.aws.S3Module.S3TransferManagerFactory;
 import com.instaclustr.kubernetes.KubernetesApiModule;
 import com.instaclustr.kubernetes.KubernetesService;
 import com.instaclustr.threading.ExecutorsModule;
@@ -30,7 +31,7 @@ public class KubernetesS3BackupRestoreTest extends BaseS3BackupRestoreTest {
     public KubernetesService kubernetesService;
 
     @Inject
-    public TransferManagerFactory transferManagerFactory;
+    public S3TransferManagerFactory transferManagerFactory;
 
     @BeforeMethod
     public void setup() throws ApiException {
@@ -76,7 +77,7 @@ public class KubernetesS3BackupRestoreTest extends BaseS3BackupRestoreTest {
     }
 
     @Override
-    public TransferManagerFactory getTransferManagerFactory() {
+    public S3TransferManagerFactory getTransferManagerFactory() {
         return transferManagerFactory;
     }
 

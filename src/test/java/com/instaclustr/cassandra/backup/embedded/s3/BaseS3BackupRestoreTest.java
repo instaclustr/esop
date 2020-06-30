@@ -4,10 +4,10 @@ import static com.instaclustr.io.FileUtils.deleteDirectory;
 
 import java.nio.file.Paths;
 
-import com.instaclustr.cassandra.backup.aws.S3BucketService;
-import com.instaclustr.cassandra.backup.aws.S3Module.TransferManagerFactory;
 import com.instaclustr.cassandra.backup.embedded.AbstractBackupTest;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
+import com.instaclustr.cassandra.backup.s3.aws.S3BucketService;
+import com.instaclustr.cassandra.backup.s3.aws.S3Module.S3TransferManagerFactory;
 
 public abstract class BaseS3BackupRestoreTest extends AbstractBackupTest {
 
@@ -36,5 +36,5 @@ public abstract class BaseS3BackupRestoreTest extends AbstractBackupTest {
         }
     }
 
-    public abstract TransferManagerFactory getTransferManagerFactory();
+    public abstract S3TransferManagerFactory getTransferManagerFactory();
 }

@@ -62,7 +62,7 @@ public @interface ValidRestoreOperationRequest {
 
             if ((KubernetesHelper.isRunningInKubernetes() || KubernetesHelper.isRunningAsClient())) {
 
-                if (value.resolveSecretName() == null) {
+                if (value.resolveKubernetesSecretName() == null) {
                     context.buildConstraintViolationWithTemplate("This code is running in Kubernetes or as a Kubernetes client "
                                                                      + "but it is not possible to resolve k8s secret name for restores!").addConstraintViolation();
 

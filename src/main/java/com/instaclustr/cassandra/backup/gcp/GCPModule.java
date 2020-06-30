@@ -80,7 +80,7 @@ public class GCPModule extends AbstractModule {
             final String dataKey = "gcp";
 
             final String namespace = operationRequest.resolveKubernetesNamespace();
-            final String secretName = operationRequest.resolveSecretName();
+            final String secretName = operationRequest.resolveKubernetesSecretName();
 
             try {
                 Optional<byte[]> gcpCredentials = new SecretReader(coreV1ApiProvider).read(namespace,
