@@ -10,7 +10,6 @@ import java.util.Map;
 import com.instaclustr.cassandra.backup.guice.RestorerFactory;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhaseResultGatherer;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy;
-import com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy.RestorationStrategyType;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationStrategyResolver;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.Restorer;
