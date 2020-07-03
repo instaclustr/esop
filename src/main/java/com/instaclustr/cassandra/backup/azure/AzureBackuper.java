@@ -62,7 +62,13 @@ public class AzureBackuper extends Backuper {
 
     @Override
     public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception {
-        final String canonicalPath = resolveRemotePath(objectKey);
+        final String canonicalPath = objectKey.toFile().toString();
+        return new AzureRemoteObjectReference(objectKey, canonicalPath, this.blobContainer.getBlockBlobReference(canonicalPath));
+    }
+
+    @Override
+    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey) throws Exception {
+        final String canonicalPath = resolveNodeAwareRemotePath(objectKey);
         return new AzureRemoteObjectReference(objectKey, canonicalPath, this.blobContainer.getBlockBlobReference(canonicalPath));
     }
 
@@ -90,9 +96,15 @@ public class AzureBackuper extends Backuper {
     @Override
     public void uploadFile(final long size,
                            final InputStream localFileStream,
-                           final RemoteObjectReference object) throws Exception {
-        final CloudBlockBlob blob = ((AzureRemoteObjectReference) object).blob;
+                           final RemoteObjectReference objectReference) throws Exception {
+        final CloudBlockBlob blob = ((AzureRemoteObjectReference) objectReference).blob;
         blob.upload(localFileStream, size);
+    }
+
+    @Override
+    public void uploadText(final String text, final RemoteObjectReference objectReference) throws Exception {
+        final CloudBlockBlob blob = ((AzureRemoteObjectReference) objectReference).blob;
+        blob.uploadText(text);
     }
 
     @Override

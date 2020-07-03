@@ -33,16 +33,17 @@ public abstract class Restorer extends StorageInteractor {
         super(request.storageLocation);
         this.request = request;
         this.executorServiceSupplier = executorServiceSupplier;
-
     }
 
     public void downloadManifestEntry(final ManifestEntry manifestEntry) throws Exception {
-        this.downloadFile(manifestEntry.localFile, objectKeyToRemoteReference(manifestEntry.objectKey));
+        this.downloadFile(manifestEntry.localFile, objectKeyToNodeAwareRemoteReference(manifestEntry.objectKey));
     }
 
-    public abstract String downloadFileToString(final Path localPath, final RemoteObjectReference objectReference) throws Exception;
+    public abstract String downloadFileToString(final RemoteObjectReference objectReference) throws Exception;
 
     public abstract void downloadFile(final Path localPath, final RemoteObjectReference objectReference) throws Exception;
+
+    public abstract String downloadFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception;
 
     public abstract Path downloadFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception;
 
@@ -66,7 +67,7 @@ public abstract class Restorer extends StorageInteractor {
         final Iterable<Future<?>> downloadResults = manifest.stream().map((entry) -> {
             try {
                 return executorService.submit(() -> {
-                    RemoteObjectReference remoteObjectReference = objectKeyToRemoteReference(entry.objectKey);
+                    RemoteObjectReference remoteObjectReference = objectKeyToNodeAwareRemoteReference(entry.objectKey);
                     try {
                         logger.info(String.format("Downloading file %s to %s. %s files to go.", remoteObjectReference.getObjectKey(), entry.localFile, completionLatch.getCount()));
 

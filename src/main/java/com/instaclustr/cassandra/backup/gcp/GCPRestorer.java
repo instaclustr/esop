@@ -51,15 +51,19 @@ public class GCPRestorer extends Restorer {
     }
 
     @Override
-    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) {
-        // objectKey is kept simple (e.g. "manifests/autosnap-123") so that it directly reflects the local path
-        return new GCPRemoteObjectReference(objectKey, resolveRemotePath(objectKey), request.storageLocation.bucket);
+    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception {
+        return new GCPRemoteObjectReference(objectKey, objectKey.toString(), request.storageLocation.bucket);
     }
 
     @Override
-    public String downloadFileToString(final Path localFile, final RemoteObjectReference objectReference) throws Exception {
+    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey) {
+        // objectKey is kept simple (e.g. "manifests/autosnap-123") so that it directly reflects the local path
+        return new GCPRemoteObjectReference(objectKey, resolveNodeAwareRemotePath(objectKey), request.storageLocation.bucket);
+    }
+
+    @Override
+    public String downloadFileToString(final RemoteObjectReference objectReference) throws Exception {
         final BlobId blobId = ((GCPRemoteObjectReference) objectReference).blobId;
-        Files.createDirectories(localFile.getParent());
 
         try (final ReadChannel inputChannel = storage.reader(blobId)) {
             try (final InputStreamReader isr = new InputStreamReader(Channels.newInputStream(inputChannel))) {
@@ -79,9 +83,24 @@ public class GCPRestorer extends Restorer {
     }
 
     @Override
-    public Path downloadFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+    public String downloadFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+        final String blobItemPath = getBlobItemPath(globalList(request.storageLocation.bucket, remotePrefix), keyFilter);
+        return downloadFileToString(objectKeyToRemoteReference(Paths.get(blobItemPath)));
+    }
 
-        final Page<Blob> blobs = list(request.storageLocation.bucket, remotePrefix.toString());
+    @Override
+    public Path downloadFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+        final String blobItemPath = getBlobItemPath(nodeList(request.storageLocation.bucket, remotePrefix), keyFilter);
+        final String fileName = blobItemPath.split("/")[blobItemPath.split("/").length - 1];
+
+        final Path destination = destinationDir.resolve(fileName);
+
+        downloadFile(destination, objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
+
+        return destination;
+    }
+
+    private String getBlobItemPath(final Page<Blob> blobs, final Predicate<String> keyFilter) {
         final List<Blob> blobItems = new ArrayList<>();
 
         for (final Blob blob : blobs.iterateAll()) {
@@ -94,14 +113,7 @@ public class GCPRestorer extends Restorer {
             throw new IllegalStateException(format("There is not one key which satisfies key filter: %s", blobItems.toString()));
         }
 
-        final String blobItemPath = blobItems.get(0).getName();
-        final String fileName = blobItemPath.split("/")[blobItemPath.split("/").length - 1];
-
-        final Path destination = destinationDir.resolve(fileName);
-
-        downloadFile(destination, objectKeyToRemoteReference(remotePrefix.resolve(fileName)));
-
-        return destination;
+        return blobItems.get(0).getName();
     }
 
     @Override
@@ -111,24 +123,39 @@ public class GCPRestorer extends Restorer {
         final String bucket = gcpRemoteObjectReference.blobId.getBucket();
         final String pathPrefix = gcpRemoteObjectReference.getObjectKey().toString();
 
-        list(bucket, pathPrefix).iterateAll().iterator().forEachRemaining(blob -> {
+        nodeList(bucket, Paths.get(pathPrefix)).iterateAll().iterator().forEachRemaining(blob -> {
             if (!blob.getName().endsWith("/")) {
-                consumer.accept(objectKeyToRemoteReference(removeNodePrefix(blob)));
+                consumer.accept(objectKeyToNodeAwareRemoteReference(removeNodePrefix(blob)));
             }
         });
     }
 
     private Path removeNodePrefix(final Blob blob) {
-        final Pattern nodeIdPattern = Pattern.compile(request.storageLocation.clusterId + "/" + request.storageLocation.datacenterId + "/" + request.storageLocation.nodeId + "/");
+        final String pattern = String.format("%s/%s/%s/",
+                                             request.storageLocation.clusterId,
+                                             request.storageLocation.datacenterId,
+                                             request.storageLocation.nodeId);
+        final Pattern nodeIdPattern = Pattern.compile(pattern);
         return Paths.get(nodeIdPattern.matcher(blob.getName()).replaceFirst(""));
     }
 
-    private Page<Blob> list(final String bucket, final String pathPrefix) {
-        return storage.list(bucket, BlobListOption.prefix(request.storageLocation.clusterId
-                                                              + "/" + request.storageLocation.datacenterId
-                                                              + "/" + request.storageLocation.nodeId
-                                                              + "/" + pathPrefix + "/"),
-                            BlobListOption.currentDirectory());
+    private Page<Blob> globalList(final String bucket, final Path pathPrefix) {
+        return list(bucket, pathPrefix.toString());
+    }
+
+    private Page<Blob> nodeList(final String bucket, final Path prefix) {
+        final String resolvedPrefix = String.format("%s/%s/%s/%s/",
+                                                    request.storageLocation.clusterId,
+                                                    request.storageLocation.datacenterId,
+                                                    request.storageLocation.nodeId,
+                                                    prefix.toString());
+
+        return list(bucket, resolvedPrefix);
+    }
+
+    private Page<Blob> list(final String bucket, final String prefix) {
+        final String resolvedPrefix = prefix.startsWith("/") ? prefix.replaceFirst("/", "") : prefix;
+        return storage.list(bucket, BlobListOption.prefix(resolvedPrefix), BlobListOption.currentDirectory());
     }
 
     @Override

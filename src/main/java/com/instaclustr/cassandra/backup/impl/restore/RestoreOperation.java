@@ -1,5 +1,6 @@
 package com.instaclustr.cassandra.backup.impl.restore;
 
+import javax.validation.constraints.Min;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Optional;
@@ -75,7 +76,9 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                              @JsonSerialize(using = UUIDSerializer.class) final UUID schemaVersion,
                              @JsonProperty("k8sNamespace") final String k8sNamespace,
                              @JsonProperty("k8sSecretName") final String k8sSecretName,
-                             @JsonProperty("globalRequest") final boolean globalRequest) {
+                             @JsonProperty("globalRequest") final boolean globalRequest,
+                             @JsonProperty("timeout") @Min(1) final Integer timeout,
+                             @JsonProperty("resolveHostIdFromTopology") final Boolean resolveHostIdFromTopology) {
         super(type, id, creationTime, state, failureCause, progress, startTime, new RestoreOperationRequest(type,
                                                                                                             storageLocation,
                                                                                                             concurrentConnections,
@@ -96,7 +99,9 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                                                                                                             schemaVersion,
                                                                                                             k8sNamespace,
                                                                                                             k8sSecretName,
-                                                                                                            globalRequest));
+                                                                                                            globalRequest,
+                                                                                                            timeout,
+                                                                                                            resolveHostIdFromTopology));
         this.coordinator = null;
     }
 

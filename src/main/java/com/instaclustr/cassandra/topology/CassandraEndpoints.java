@@ -1,4 +1,4 @@
-package com.instaclustr.cassandra.backup.impl.interaction;
+package com.instaclustr.cassandra.topology;
 
 import java.net.InetAddress;
 import java.util.HashMap;
@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import java.util.UUID;
 
 import com.google.common.base.Strings;
+import com.instaclustr.cassandra.CassandraInteraction;
 import com.instaclustr.operations.FunctionWithEx;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 import jmx.org.apache.cassandra.service.cassandra3.StorageServiceMBean;

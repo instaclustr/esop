@@ -1,6 +1,7 @@
 package com.instaclustr.cassandra.backup.impl.restore;
 
 import static java.lang.String.format;
+import static java.util.stream.Collectors.reducing;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 
@@ -301,7 +302,8 @@ public class RestorationUtilities {
 
         @Override
         public boolean test(final String s) {
-            return (s.contains("manifests/" + request.snapshotTag) || s.startsWith(request.snapshotTag)) && filter(s);
+            String path = request.storageLocation.nodePath() + "/manifests/" + request.snapshotTag;
+            return (s.contains(path) || s.startsWith(request.snapshotTag)) && filter(s);
         }
     }
 
@@ -313,7 +315,8 @@ public class RestorationUtilities {
 
         @Override
         public boolean test(final String s) {
-            return (s.contains(request.snapshotTag) && s.endsWith("-tokens.yaml")) && filter(s);
+            String path = request.storageLocation.nodePath() + "/tokens/" + request.snapshotTag;
+            return (s.contains(path) && s.contains(request.snapshotTag) && s.endsWith("-tokens.yaml")) && filter(s);
         }
     }
 }

@@ -6,6 +6,7 @@ import static java.util.Arrays.asList;
 import java.nio.file.Path;
 import java.util.List;
 
+import com.instaclustr.cassandra.CassandraInteraction;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 
 public class CassandraSameTokens implements CassandraInteraction<Boolean> {

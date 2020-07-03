@@ -3,6 +3,7 @@ package com.instaclustr.cassandra.backup.impl.interaction;
 import java.util.List;
 import java.util.Map;
 
+import com.instaclustr.cassandra.CassandraInteraction;
 import com.instaclustr.operations.FunctionWithEx;
 import jmx.org.apache.cassandra.CassandraObjectNames.V3;
 import jmx.org.apache.cassandra.service.CassandraJMXService;

@@ -1,5 +1,6 @@
-package com.instaclustr.cassandra.backup.impl.interaction;
+package com.instaclustr.cassandra.topology;
 
+import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
@@ -13,11 +14,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.MoreObjects;
-import com.instaclustr.cassandra.backup.impl.interaction.CassandraClusterTopology.ClusterTopology;
-import com.instaclustr.cassandra.backup.impl.interaction.CassandraClusterTopology.ClusterTopology.NodeTopology;
+import com.instaclustr.cassandra.CassandraInteraction;
+import com.instaclustr.cassandra.backup.impl.interaction.CassandraSchemaVersion;
+import com.instaclustr.cassandra.topology.CassandraClusterTopology.ClusterTopology;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 
 public class CassandraClusterTopology implements CassandraInteraction<ClusterTopology> {
@@ -51,31 +54,43 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
 
         final Map<InetAddress, String> endpointRacks = new CassandraEndpointRack(cassandraJMXService, endpoints.keySet()).act();
 
-        return constructTopology(clusterName, endpoints, endpointDcs, hostnames, endpointRacks);
+        final String schemaVersion = new CassandraSchemaVersion(cassandraJMXService).act();
+
+        return constructTopology(clusterName, endpoints, endpointDcs, hostnames, endpointRacks, schemaVersion);
     }
 
     private ClusterTopology constructTopology(final String clusterName,
                                               final Map<InetAddress, UUID> endpoints,
                                               final Map<InetAddress, String> endpointDcs,
                                               final Map<InetAddress, String> hostnames,
-                                              final Map<InetAddress, String> endpointRacks) {
+                                              final Map<InetAddress, String> endpointRacks,
+                                              final String schemaVersion) {
         final ClusterTopology topology = new ClusterTopology();
 
         for (InetAddress inetAddress : endpoints.keySet()) {
 
-            final NodeTopology nodeTopology = new NodeTopology();
+            final ClusterTopology.NodeTopology nodeTopology = new ClusterTopology.NodeTopology();
 
             nodeTopology.setCluster(clusterName);
             nodeTopology.setDc(endpointDcs.get(inetAddress));
             nodeTopology.setHostId(endpoints.get(inetAddress));
             nodeTopology.setHostname(hostnames.get(inetAddress));
             nodeTopology.setRack(endpointRacks.get(inetAddress));
-            nodeTopology.setIpAddress(inetAddress);
+            nodeTopology.setIpAddress(inetAddress.getHostAddress());
 
             topology.topology.add(nodeTopology);
         }
 
-        return filter(topology, dc);
+        final ClusterTopology filteredTopology = filter(topology, dc);
+
+        filteredTopology.clusterName = clusterName;
+        filteredTopology.endpoints = endpoints;
+        filteredTopology.endpointDcs = endpointDcs;
+        filteredTopology.hostnames = hostnames;
+        filteredTopology.endpointRacks = endpointRacks;
+        filteredTopology.schemaVersion = schemaVersion;
+
+        return filteredTopology;
     }
 
     public ClusterTopology filter(final ClusterTopology clusterTopology, final String dc) {
@@ -90,20 +105,42 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
 
     public static class ClusterTopology {
 
+        @JsonIgnore
+        public String clusterName;
+
+        @JsonIgnore
+        public Map<InetAddress, UUID> endpoints;
+
+        @JsonIgnore
+        public Map<InetAddress, String> endpointDcs;
+
+        @JsonIgnore
+        public Map<InetAddress, String> hostnames;
+
+        @JsonIgnore
+        public Map<InetAddress, String> endpointRacks;
+
+        @JsonIgnore
+        public String schemaVersion;
+
         public List<NodeTopology> topology = new ArrayList<>();
 
+        @JsonIgnore
         public int getClusterSize() {
             return topology.size();
         }
 
+        @JsonIgnore
         public int getNumberOfDcs() {
             return getDcs().size();
         }
 
+        @JsonIgnore
         public Set<String> getDcs() {
             return topology.stream().map(NodeTopology::getDc).collect(toSet());
         }
 
+        @JsonIgnore
         public List<NodeTopology> getNodesFromDc(final String dc) {
             return topology.stream().filter(nodeTopology -> dc.equals(nodeTopology.dc)).collect(toList());
         }
@@ -114,16 +151,33 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
             return clusterTopology;
         }
 
+        @JsonIgnore
         public int getNumberOfNodesFromDc(final String dc) {
             return getNodesFromDc(dc).size();
         }
 
+        @JsonIgnore
         public List<NodeTopology> getNodesFromDcAndRack(final String dc, final String rack) {
             return getNodesFromDc(dc).stream().filter(nodeTopology -> rack.equals(nodeTopology.rack)).collect(toList());
         }
 
+        @JsonIgnore
         public int getNumberOfNodesFromDcAndRack(final String dc, final String rack) {
             return getNodesFromDcAndRack(dc, rack).size();
+        }
+
+        public NodeTopology translateToNodeTopology(final String name) {
+            final List<NodeTopology> nodes = topology.stream().filter(nodeTopology -> nodeTopology.hostname.startsWith(name)).collect(toList());
+
+            if (nodes.size() == 1) {
+                return nodes.get(0);
+            }
+
+            if (nodes.isEmpty()) {
+                throw new IllegalStateException(format("There are no nodes which starts on '%s'", name));
+            } else {
+                throw new IllegalStateException(format("There are more than 1 nodes which starts on '%s': %s", name, nodes.toString()));
+            }
         }
 
         public static String writeToString(final ObjectMapper objectMapper, final ClusterTopology clusterTopology) throws JsonProcessingException {
@@ -142,8 +196,6 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
 
             public String hostname;
 
-            public String shortHostname;
-
             public String cluster;
 
             public String dc;
@@ -152,7 +204,7 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
 
             public UUID hostId;
 
-            public InetAddress ipAddress;
+            public String ipAddress;
 
             public String getHostname() {
                 return hostname;
@@ -160,14 +212,6 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
 
             public void setHostname(final String hostname) {
                 this.hostname = hostname;
-            }
-
-            public String getShortHostname() {
-                return shortHostname;
-            }
-
-            public void setShortHostname(final String shortHostname) {
-                this.shortHostname = shortHostname;
             }
 
             public String getCluster() {
@@ -202,11 +246,11 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
                 this.hostId = hostId;
             }
 
-            public InetAddress getIpAddress() {
+            public String getIpAddress() {
                 return ipAddress;
             }
 
-            public void setIpAddress(final InetAddress ipAddress) {
+            public void setIpAddress(final String ipAddress) {
                 this.ipAddress = ipAddress;
             }
 
@@ -224,3 +268,4 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
         }
     }
 }
+

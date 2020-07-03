@@ -28,6 +28,7 @@ import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.StorageInteractor;
 import com.instaclustr.io.RateLimitedInputStream;
 import com.instaclustr.measure.DataRate;
+import com.instaclustr.measure.DataRate.DataRateUnit;
 import com.instaclustr.measure.DataSize;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationProgressTracker;
@@ -58,7 +59,10 @@ public abstract class Backuper extends StorageInteractor {
 
     public abstract void uploadFile(final long size,
                                     final InputStream localFileStream,
-                                    final RemoteObjectReference object) throws Exception;
+                                    final RemoteObjectReference objectReference) throws Exception;
+
+    public abstract void uploadText(final String text,
+                                    final RemoteObjectReference objectReference) throws Exception;
 
     private static final class FileUploadException extends RuntimeException {
 
@@ -88,7 +92,7 @@ public abstract class Backuper extends StorageInteractor {
         public Void get() {
             try (final InputStream fileStream = new BufferedInputStream(new FileInputStream(manifestEntry.localFile.toFile()))) {
 
-                final RemoteObjectReference remoteObjectReference = backuper.objectKeyToRemoteReference(manifestEntry.objectKey);
+                final RemoteObjectReference remoteObjectReference = backuper.objectKeyToNodeAwareRemoteReference(manifestEntry.objectKey);
 
                 try {
                     if (manifestEntry.type != Type.MANIFEST_FILE && backuper.freshenRemoteObject(remoteObjectReference) == Backuper.FreshenResult.FRESHENED) {
@@ -174,22 +178,28 @@ public abstract class Backuper extends StorageInteractor {
     }
 
     private void computeBPS(final BaseBackupOperationRequest request, final long filesSizeSum) {
+
+        long bpsFromBandwidth = 0;
+        long bpsFromDuration = 0;
+
+        if (request.bandwidth != null) {
+            bpsFromBandwidth = request.bandwidth.asBytesPerSecond().value;
+        }
+
         if (request.duration != null) {
-            long bps = filesSizeSum / request.duration.asSeconds().value;
-            if (request.bandwidth != null) {
-                bps = Math.min(request.bandwidth.asBytesPerSecond().value, bps);
-            }
+            bpsFromDuration = filesSizeSum / request.duration.asSeconds().value;
+        }
 
-            bps = Math.max(new DataRate(500L, DataRate.DataRateUnit.KBPS).asBytesPerSecond().value, bps);
-
-            request.bandwidth = new DataRate(bps, DataRate.DataRateUnit.BPS);
+        if (bpsFromBandwidth != 0 || bpsFromDuration != 0) {
+            long bps = Math.max(bpsFromBandwidth, bpsFromDuration);
+            request.bandwidth = new DataRate(bps, DataRateUnit.BPS);
         }
     }
 
     private Function<InputStream, InputStream> getUploadingInputStreamFunction(final AtomicBoolean shouldCancel) {
         return request.bandwidth == null ? identity() : inputStream -> {
             final RateLimiter rateLimiter = RateLimiter.create(request.bandwidth.asBytesPerSecond().value);
-            logger.info("Upload bandwidth capped at {}.", request.bandwidth);
+            logger.debug("Upload bandwidth capped at {}.", request.bandwidth);
             return new RateLimitedInputStream(inputStream, rateLimiter, shouldCancel);
         };
     }

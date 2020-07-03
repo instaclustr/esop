@@ -94,7 +94,7 @@ public class RestoreCommitLogsOperation extends Operation<RestoreCommitLogsOpera
     }
 
     private void downloadCommitLogs(final Restorer restorer) throws Exception {
-        final RemoteObjectReference remoteObjectReference = restorer.objectKeyToRemoteReference(Paths.get("commitlog"));
+        final RemoteObjectReference remoteObjectReference = restorer.objectKeyToNodeAwareRemoteReference(Paths.get("commitlog"));
         final Pattern commitlogPattern = Pattern.compile(".*(CommitLog-\\d+-\\d+\\.log)\\.(\\d+)");
         final HashSet<ManifestEntry> parsedCommitlogList = new HashSet<>();
 

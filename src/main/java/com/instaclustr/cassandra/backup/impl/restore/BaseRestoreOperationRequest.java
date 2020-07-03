@@ -30,7 +30,6 @@ public class BaseRestoreOperationRequest extends AbstractOperationRequest {
         super(storageLocation, k8sNamespace, k8sSecretName);
         this.storageLocation = storageLocation;
         this.concurrentConnections = concurrentConnections == null ? 10 : concurrentConnections;
-        ;
         this.lockFile = lockFile;
         this.k8sNamespace = k8sNamespace;
         this.k8sSecretName = k8sSecretName;

@@ -1,5 +1,6 @@
 package com.instaclustr.cassandra.backup.impl.restore.strategy;
 
+import static com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy.RestorationStrategyType.IN_PLACE;
 import static com.instaclustr.cassandra.backup.impl.restore.RestorationUtilities.getManifestFilesForFullExistingRestore;
 import static com.instaclustr.cassandra.backup.impl.restore.RestorationUtilities.getManifestFilesForFullNewRestore;
 import static com.instaclustr.cassandra.backup.impl.restore.RestorationUtilities.getManifestFilesForSubsetExistingRestore;
@@ -22,16 +23,21 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Inject;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
-import com.instaclustr.operations.OperationProgressTracker;
+import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationUtilities.ManifestFilteringPredicate;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationUtilities.TokensFilteringPredicate;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.Restorer;
+import com.instaclustr.cassandra.topology.CassandraClusterTopology.ClusterTopology;
+import com.instaclustr.cassandra.topology.CassandraClusterTopology.ClusterTopology.NodeTopology;
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.io.GlobalLock;
 import com.instaclustr.operations.Operation;
+import com.instaclustr.operations.OperationProgressTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +53,13 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
 
     private static final Logger logger = LoggerFactory.getLogger(InPlaceRestorationStrategy.class);
 
+    private final ObjectMapper objectMapper;
+
+    @Inject
+    public InPlaceRestorationStrategy(final ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+
     @Override
     public void restore(final Restorer restorer, final Operation<RestoreOperationRequest> operation) throws Exception {
 
@@ -55,11 +68,20 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
         final FileLock fileLock = new GlobalLock(request.lockFile).waitForLock();
 
         try {
-            if (operation.request.restorationStrategyType != RestorationStrategyType.IN_PLACE) {
+            if (operation.request.restorationStrategyType != IN_PLACE) {
                 throw new IllegalStateException(format("restorationStrategyType has to be of type '%s' in case you want to use %s, it is of type '%s'",
-                                                       RestorationStrategyType.IN_PLACE,
+                                                       IN_PLACE,
                                                        InPlaceRestorationStrategy.class.getName(),
                                                        operation.request.restorationStrategyType));
+            }
+
+            // 1. Resolve node to restore to
+
+            if (operation.request.resolveHostIdFromTopology) {
+                final NodeTopology nodeTopology = getNodeTopology(restorer, request);
+                operation.request.storageLocation = StorageLocation.updateNodeId(operation.request.storageLocation, nodeTopology.hostId);
+                restorer.updateStorageLocation(operation.request.storageLocation);
+                logger.info(format("Updated storage location to %s", operation.request.storageLocation));
             }
 
             // 2. Determine if just restoring a subset of tables
@@ -184,6 +206,30 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
 
     @Override
     public RestorationStrategyType getStrategyType() {
-        return RestorationStrategyType.IN_PLACE;
+        return IN_PLACE;
     }
+
+    private String resolveTopologyFile(final RestoreOperationRequest request) {
+        if (request.exactSchemaVersion) {
+            return format("topology/%s-%s-%s",
+                          request.storageLocation.clusterId,
+                          request.snapshotTag,
+                          request.schemaVersion);
+        } else {
+            return format("topology/%s-%s", request.storageLocation.clusterId, request.snapshotTag);
+        }
+    }
+
+    private NodeTopology getNodeTopology(final Restorer restorer, final RestoreOperationRequest request) {
+
+        try {
+            final String topologyFile = resolveTopologyFile(request);
+            final String topology = restorer.downloadFileToString(Paths.get(topologyFile), fileName -> fileName.contains(topologyFile));
+            final ClusterTopology clusterTopology = objectMapper.readValue(topology, ClusterTopology.class);
+            return clusterTopology.translateToNodeTopology(request.storageLocation.nodeId);
+        } catch (final Exception ex) {
+            throw new IllegalStateException(format("Unable to resolve node hostId to restore to for request %s", request), ex);
+        }
+    }
+
 }

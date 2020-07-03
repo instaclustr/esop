@@ -58,14 +58,21 @@ public class BaseS3Restorer extends Restorer {
         this.amazonS3 = this.transferManager.getAmazonS3Client();
     }
 
-
     @Override
     public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) {
-        return new S3RemoteObjectReference(objectKey, resolveRemotePath(objectKey));
+        return new S3RemoteObjectReference(objectKey, objectKey.toFile().toString());
     }
 
     @Override
-    public String downloadFileToString(final Path localPath, final RemoteObjectReference objectReference) throws Exception {
+    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey) {
+        return new S3RemoteObjectReference(objectKey, resolveNodeAwareRemotePath(objectKey));
+    }
+
+    @Override
+    public String downloadFileToString(final RemoteObjectReference objectReference) throws Exception {
+
+        System.out.println("DOWNLOAD FILE TO STRING '" + objectReference.canonicalPath + "'");
+
         final GetObjectRequest getObjectRequest = new GetObjectRequest(request.storageLocation.bucket, objectReference.canonicalPath);
         try (final InputStream is = transferManager.getAmazonS3Client().getObject(getObjectRequest).getObjectContent(); final InputStreamReader isr = new InputStreamReader(is)) {
             return CharStreams.toString(isr);
@@ -92,7 +99,23 @@ public class BaseS3Restorer extends Restorer {
     }
 
     @Override
+    public String downloadFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+        final String blobItemPath = getBlobItemPath(keyFilter).getKey();
+        return downloadFileToString(objectKeyToRemoteReference(Paths.get(blobItemPath)));
+    }
+
+    @Override
     public Path downloadFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+        final S3Object s3Object = getBlobItemPath(keyFilter);
+        final String fileName = s3Object.getKey().split("/")[s3Object.getKey().split("/").length - 1];
+        final Path destination = destinationDir.resolve(fileName);
+
+        downloadFile(destination, objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
+
+        return destination;
+    }
+
+    private S3Object getBlobItemPath(final Predicate<String> keyFilter) {
         ObjectListing objectListing = amazonS3.listObjects(request.storageLocation.bucket);
 
         boolean hasMoreContent = true;
@@ -116,15 +139,7 @@ public class BaseS3Restorer extends Restorer {
             throw new IllegalStateException(String.format("There is not one key which satisfies key filter: %s", summaryList.toString()));
         }
 
-        S3Object object = amazonS3.getObject(request.storageLocation.bucket, summaryList.get(0).getKey());
-
-        final String fileName = object.getKey().split("/")[object.getKey().split("/").length - 1];
-
-        final Path destination = destinationDir.resolve(fileName);
-
-        downloadFile(destination, objectKeyToRemoteReference(remotePrefix.resolve(fileName)));
-
-        return destination;
+        return amazonS3.getObject(request.storageLocation.bucket, summaryList.get(0).getKey());
     }
 
     private static class DownloadProgressListener implements S3ProgressListener {
@@ -161,7 +176,7 @@ public class BaseS3Restorer extends Restorer {
         while (hasMoreContent) {
             objectListing.getObjectSummaries().stream()
                 .filter(objectSummary -> !objectSummary.getKey().endsWith("/"))
-                .forEach(objectSummary -> consumer.accept(objectKeyToRemoteReference(bucketPath.relativize(Paths.get(objectSummary.getKey())))));
+                .forEach(objectSummary -> consumer.accept(objectKeyToNodeAwareRemoteReference(bucketPath.relativize(Paths.get(objectSummary.getKey())))));
 
             if (objectListing.isTruncated()) {
                 objectListing = amazonS3.listNextBatchOfObjects(objectListing);

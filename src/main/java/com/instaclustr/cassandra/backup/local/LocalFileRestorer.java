@@ -35,12 +35,17 @@ public class LocalFileRestorer extends Restorer {
     }
 
     @Override
-    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception {
-        return new LocalFileObjectReference(objectKey, resolveRemotePath(objectKey));
+    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey) throws Exception {
+        return new LocalFileObjectReference(objectKey, resolveNodeAwareRemotePath(objectKey));
     }
 
     @Override
-    public String downloadFileToString(final Path localPath, final RemoteObjectReference objectReference) throws Exception {
+    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception {
+        return new LocalFileObjectReference(objectKey, objectKey.toFile().getCanonicalFile().toString());
+    }
+
+    @Override
+    public String downloadFileToString(final RemoteObjectReference objectReference) throws Exception {
         final Path remoteFilePath = request.storageLocation.fileBackupDirectory
             .resolve(request.storageLocation.bucket)
             .resolve(Paths.get(((LocalFileObjectReference) objectReference).canonicalPath));
@@ -61,7 +66,20 @@ public class LocalFileRestorer extends Restorer {
     }
 
     @Override
+    public String downloadFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+        final String blobItem = getFileToDownload(keyFilter, remotePrefix);
+        return new String(Files.readAllBytes(Paths.get(blobItem)));
+    }
+
+    @Override
     public Path downloadFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+        final String fileName = getFileToDownload(keyFilter, remotePrefix);
+        final Path destination = destinationDir.resolve(fileName);
+        downloadFile(destination, objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
+        return destination;
+    }
+
+    private String getFileToDownload(final Predicate<String> keyFilter, final Path remotePrefix) throws Exception {
         final List<Path> filtered = Files.list(Paths.get(request.storageLocation.rawLocation.replaceAll("file://", "")).resolve(remotePrefix))
             .filter(path -> keyFilter.test(path.getFileName().toString()))
             .collect(toList());
@@ -69,13 +87,7 @@ public class LocalFileRestorer extends Restorer {
         if (filtered.size() != 1) {
             throw new IllegalStateException(format("There is more than one key which satisfies key filter! %s", filtered.toString()));
         }
-
-        final Path destination = destinationDir.resolve(filtered.get(0).getFileName().toString());
-
-        downloadFile(destination,
-                     objectKeyToRemoteReference(remotePrefix.resolve(filtered.get(0).getFileName().toString())));
-
-        return destination;
+        return filtered.get(0).getFileName().toString();
     }
 
     @Override
@@ -92,7 +104,7 @@ public class LocalFileRestorer extends Restorer {
             .collect(toList());
 
         for (final Path path : pathsList) {
-            consumer.accept(objectKeyToRemoteReference(path));
+            consumer.accept(objectKeyToNodeAwareRemoteReference(path));
         }
     }
 

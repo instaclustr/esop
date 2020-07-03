@@ -1,5 +1,6 @@
 package com.instaclustr.cassandra.backup.impl.backup;
 
+import javax.validation.constraints.Min;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Optional;
@@ -72,7 +73,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonProperty("k8sSecretName") final String k8sBackupSecretName,
                             @JsonProperty("globalRequest") final boolean globalRequest,
                             @JsonProperty("dc") final String dc,
-                            @JsonProperty("keepExistingSnapshot") final boolean keepExistingSnapshot) {
+                            @JsonProperty("keepExistingSnapshot") final boolean keepExistingSnapshot,
+                            @JsonProperty("timeout") @Min(1) final Integer timeout) {
         super(type, id, creationTime, state, failureCause, progress, startTime, new BackupOperationRequest(type,
                                                                                                            storageLocation,
                                                                                                            duration,
@@ -86,7 +88,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                                                                                                            k8sBackupSecretName,
                                                                                                            globalRequest,
                                                                                                            dc,
-                                                                                                           keepExistingSnapshot));
+                                                                                                           keepExistingSnapshot,
+                                                                                                           timeout));
         coordinator = null;
     }
 

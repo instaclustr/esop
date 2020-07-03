@@ -4,6 +4,7 @@ import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+import javax.validation.constraints.Min;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -48,7 +49,16 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
     @JsonProperty("dc")
     public String dc;
 
+    @Option(names = "--timeout",
+        description = "Timeout, in hours, after which backup operation will be aborted when not finished. It defaults to 5 (hours). This "
+            + "flag is effectively used only upon global requests.",
+        defaultValue = "5")
+    @JsonProperty("timeout")
+    public int timeout;
+
     @JsonProperty("globalRequest")
+    @Option(names = "--globalRequest",
+        description = "If set, a node this tool will connect to will coordinate cluster-wide backup.")
     public boolean globalRequest;
 
     public BackupOperationRequest() {
@@ -71,7 +81,8 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonProperty("k8sSecretName") final String k8sSecretName,
                                   @JsonProperty("globalRequest") final boolean globalRequest,
                                   @JsonProperty("dc") final String dc,
-                                  @JsonProperty("keepExistingSnapshot") final boolean keepExistingSnapshot) {
+                                  @JsonProperty("keepExistingSnapshot") final boolean keepExistingSnapshot,
+                                  @JsonProperty("timeout") @Min(1) final Integer timeout) {
         super(storageLocation, duration, bandwidth, concurrentConnections, cassandraDirectory, lockFile, k8sNamespace, k8sSecretName);
         this.entities = entities == null ? DatabaseEntities.empty() : entities;
         this.snapshotTag = snapshotTag == null ? format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis())) : snapshotTag;
@@ -79,6 +90,7 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
         this.type = type;
         this.dc = dc;
         this.keepExistingSnapshot = keepExistingSnapshot;
+        this.timeout = timeout == null ? 5 : timeout;
     }
 
     @Override
@@ -97,6 +109,7 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
             .add("globalRequest", globalRequest)
             .add("dc", dc)
             .add("keepExistingSnapshot", keepExistingSnapshot)
+            .add("timeout", timeout)
             .toString();
     }
 }

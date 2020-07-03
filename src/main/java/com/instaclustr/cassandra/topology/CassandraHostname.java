@@ -1,10 +1,12 @@
-package com.instaclustr.cassandra.backup.impl.interaction;
+package com.instaclustr.cassandra.topology;
 
 import java.net.InetAddress;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import com.instaclustr.cassandra.CassandraInteraction;
 
 public class CassandraHostname implements CassandraInteraction<Map<InetAddress, String>> {
 

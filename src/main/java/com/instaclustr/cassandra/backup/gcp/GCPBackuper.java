@@ -43,8 +43,13 @@ public class GCPBackuper extends Backuper {
     }
 
     @Override
+    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey) {
+        return new GCPRemoteObjectReference(objectKey, resolveNodeAwareRemotePath(objectKey), request.storageLocation.bucket);
+    }
+
+    @Override
     public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) {
-        return new GCPRemoteObjectReference(objectKey, resolveRemotePath(objectKey), request.storageLocation.bucket);
+        return new GCPRemoteObjectReference(objectKey, objectKey.toString(), request.storageLocation.bucket);
     }
 
     @Override
@@ -70,13 +75,19 @@ public class GCPBackuper extends Backuper {
     @Override
     public void uploadFile(final long size,
                            final InputStream localFileStream,
-                           final RemoteObjectReference object) throws Exception {
-        final BlobId blobId = ((GCPRemoteObjectReference) object).blobId;
+                           final RemoteObjectReference objectReference) throws Exception {
+        final BlobId blobId = ((GCPRemoteObjectReference) objectReference).blobId;
 
         try (final WriteChannel outputChannel = storage.writer(BlobInfo.newBuilder(blobId).build(), Storage.BlobWriteOption.predefinedAcl(BUCKET_OWNER_FULL_CONTROL));
             final ReadableByteChannel inputChannel = Channels.newChannel(localFileStream)) {
             ByteStreams.copy(inputChannel, outputChannel);
         }
+    }
+
+    @Override
+    public void uploadText(final String text, final RemoteObjectReference objectReference) throws Exception {
+        final BlobId blobId = ((GCPRemoteObjectReference) objectReference).blobId;
+        storage.create(BlobInfo.newBuilder(blobId).build(), text.getBytes(), Storage.BlobTargetOption.predefinedAcl(BUCKET_OWNER_FULL_CONTROL));
     }
 
     @Override

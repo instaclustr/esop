@@ -3,6 +3,7 @@ package com.instaclustr.cassandra.backup.impl.restore;
 import static com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.RestorationPhaseType.UNKNOWN;
 import static com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy.RestorationStrategyType.IN_PLACE;
 
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -106,7 +107,23 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
     @JsonProperty("import")
     public ImportOperationRequest importing;
 
+    @Option(names = "--timeout",
+        description = "Timeout, in hours, after which restore operation will be aborted when not finished. It defaults to 5 (hours). This "
+            + "flag is effectively used only upon global requests.",
+        defaultValue = "5")
+    @JsonProperty("timeout")
+    public int timeout;
+
+    @JsonProperty("globalRequest")
+    @Option(names = "--globalRequest",
+        description = "If set, a node this tool will connect to will coordinate cluster-wide restore.")
     public boolean globalRequest;
+
+    @JsonProperty("resolveHostIdFromTopology")
+    @Option(names = "--resolveHostIdFromTopology",
+        description = "If set, restoration process will translate nodeId in storage location to hostname in topology file uploaded to remote bucket upon backup "
+            + "based on snapshot name and schema version.")
+    public boolean resolveHostIdFromTopology;
 
     public RestoreOperationRequest() {
         // for picocli
@@ -137,9 +154,11 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonSerialize(using = UUIDSerializer.class) final UUID schemaVersion,
                                    @JsonProperty("k8sNamespace") final String k8sNamespace,
                                    @JsonProperty("k8sSecretName") final String k8sSecretName,
-                                   @JsonProperty("globalRequest") final boolean globalRequest) {
+                                   @JsonProperty("globalRequest") final boolean globalRequest,
+                                   @JsonProperty("timeout") @Min(1) final Integer timeout,
+                                   @JsonProperty("resolveHostIdFromTopology") final Boolean resolveHostIdFromTopology) {
         super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName);
-        this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/"))  ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
+        this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/")) ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
         this.restoreSystemKeyspace = restoreSystemKeyspace;
         this.snapshotTag = snapshotTag;
@@ -155,6 +174,8 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
         this.exactSchemaVersion = exactSchemaVersion;
         this.globalRequest = globalRequest;
         this.type = type;
+        this.timeout = timeout == null ? 5 : timeout;
+        this.resolveHostIdFromTopology = resolveHostIdFromTopology;
     }
 
     @Override
@@ -178,6 +199,8 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             .add("k8sNamespace", k8sNamespace)
             .add("k8sSecretName", k8sSecretName)
             .add("globalRequest", globalRequest)
+            .add("timeout", timeout)
+            .add("resolveHostId", resolveHostIdFromTopology)
             .toString();
     }
 }

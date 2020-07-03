@@ -66,13 +66,24 @@ public class AzureRestorer extends Restorer {
     }
 
     @Override
-    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws StorageException, URISyntaxException {
-        final String canonicalPath = resolveRemotePath(objectKey);
+    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception {
+        String canonicalPath = objectKey.toFile().toString();
+
+        if (canonicalPath.startsWith("/" + this.blobContainer.getName() + "/")) {
+            canonicalPath = canonicalPath.replaceFirst("/" + this.blobContainer.getName() + "/", "");
+        }
+
         return new AzureRemoteObjectReference(objectKey, canonicalPath, this.blobContainer.getBlockBlobReference(canonicalPath));
     }
 
     @Override
-    public String downloadFileToString(final Path localPath, final RemoteObjectReference objectReference) throws Exception {
+    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey) throws StorageException, URISyntaxException {
+        final String canonicalPath = resolveNodeAwareRemotePath(objectKey);
+        return new AzureRemoteObjectReference(objectKey, canonicalPath, this.blobContainer.getBlockBlobReference(canonicalPath));
+    }
+
+    @Override
+    public String downloadFileToString(final RemoteObjectReference objectReference) throws Exception {
         return ((AzureRemoteObjectReference) objectReference).blob.downloadText();
     }
 
@@ -84,9 +95,24 @@ public class AzureRestorer extends Restorer {
     }
 
     @Override
-    public Path downloadFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+    public String downloadFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+        final String blobItemPath = getBlobItemPath(globalList(remotePrefix), keyFilter);
+        return downloadFileToString(objectKeyToRemoteReference(Paths.get(blobItemPath)));
+    }
 
-        final Iterable<ListBlobItem> blobItemsIterable = list(remotePrefix);
+    @Override
+    public Path downloadFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+        final String blobItemPath = getBlobItemPath(nodeList(remotePrefix), keyFilter);
+        final String fileName = blobItemPath.split("/")[blobItemPath.split("/").length - 1];
+
+        final Path destination = destinationDir.resolve(fileName);
+
+        downloadFile(destination, objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
+
+        return destination;
+    }
+
+    private String getBlobItemPath(final Iterable<ListBlobItem> blobItemsIterable, final Predicate<String> keyFilter) {
         final List<ListBlobItem> blobItems = new ArrayList<>();
 
         for (final ListBlobItem listBlobItem : blobItemsIterable) {
@@ -99,24 +125,17 @@ public class AzureRestorer extends Restorer {
             throw new IllegalStateException(format("There is not one key which satisfies key filter: %s", blobItems.toString()));
         }
 
-        final String blobItemPath = blobItems.get(0).getUri().getPath();
-        final String fileName = blobItemPath.split("/")[blobItemPath.split("/").length - 1];
-
-        final Path destination = destinationDir.resolve(fileName);
-
-        downloadFile(destination, objectKeyToRemoteReference(remotePrefix.resolve(fileName)));
-
-        return destination;
+        return blobItems.get(0).getUri().getPath();
     }
 
     @Override
     public void consumeFiles(final RemoteObjectReference prefix, final Consumer<RemoteObjectReference> consumer) throws Exception {
         final AzureRemoteObjectReference azureRemoteObjectReference = (AzureRemoteObjectReference) prefix;
-        final Iterable<ListBlobItem> blobItemsIterable = list(azureRemoteObjectReference.getObjectKey());
+        final Iterable<ListBlobItem> blobItemsIterable = nodeList(azureRemoteObjectReference.getObjectKey());
 
         for (final ListBlobItem listBlobItem : blobItemsIterable) {
             try {
-                consumer.accept(objectKeyToRemoteReference(removeNodePrefix(listBlobItem)));
+                consumer.accept(objectKeyToNodeAwareRemoteReference(removeNodePrefix(listBlobItem)));
             } catch (StorageException | URISyntaxException ex) {
                 logger.error("Error occurred while trying to consume {}", listBlobItem.getUri().toString(), ex);
                 throw ex;
@@ -136,13 +155,21 @@ public class AzureRestorer extends Restorer {
         return Paths.get(containerPattern.matcher(listBlobItem.getUri().getPath()).replaceFirst(""));
     }
 
-    private Iterable<ListBlobItem> list(final Path prefix) {
+    private Iterable<ListBlobItem> globalList(final Path prefix) {
+        return list(prefix.toString());
+    }
+
+    private Iterable<ListBlobItem> nodeList(final Path prefix) {
         final String blobPrefix = Paths.get(request.storageLocation.clusterId)
             .resolve(request.storageLocation.datacenterId)
             .resolve(request.storageLocation.nodeId)
             .resolve(prefix).toString();
 
-        return blobContainer.listBlobs(blobPrefix, true, EnumSet.noneOf(BlobListingDetails.class), null, null);
+        return list(blobPrefix);
+    }
+
+    private Iterable<ListBlobItem> list(final String prefix) {
+        return blobContainer.listBlobs(prefix, true, EnumSet.noneOf(BlobListingDetails.class), null, null);
     }
 
     @Override

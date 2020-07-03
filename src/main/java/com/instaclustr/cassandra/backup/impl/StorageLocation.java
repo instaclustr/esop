@@ -143,6 +143,10 @@ public class StorageLocation {
         }
     }
 
+    public String nodePath() {
+        return String.format("%s/%s/%s", clusterId, datacenterId, nodeId);
+    }
+
     public static StorageLocation updateClusterName(final StorageLocation oldLocation, final String clusterName) {
         final String withoutNodeId = oldLocation.rawLocation.substring(0, oldLocation.rawLocation.lastIndexOf("/"));
         final String withoutDatacenter = withoutNodeId.substring(0, withoutNodeId.lastIndexOf("/"));

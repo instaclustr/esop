@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 import com.google.inject.assistedinject.Assisted;
@@ -34,7 +35,12 @@ public class LocalFileBackuper extends Backuper {
 
     @Override
     public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception {
-        return new LocalFileObjectReference(objectKey, resolveRemotePath(objectKey));
+        return new LocalFileObjectReference(objectKey, objectKey.toFile().getCanonicalFile().toString());
+    }
+
+    @Override
+    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey) throws Exception {
+        return new LocalFileObjectReference(objectKey, resolveNodeAwareRemotePath(objectKey));
     }
 
     @Override
@@ -52,10 +58,17 @@ public class LocalFileBackuper extends Backuper {
     @Override
     public void uploadFile(final long size,
                            final InputStream localFileStream,
-                           final RemoteObjectReference object) throws Exception {
-        Path snapshotPath = resolveFullRemoteObjectPath(object);
-        Files.createDirectories(snapshotPath.getParent());
-        Files.copy(localFileStream, snapshotPath, StandardCopyOption.REPLACE_EXISTING);
+                           final RemoteObjectReference objectReference) throws Exception {
+        Path remotePath = resolveFullRemoteObjectPath(objectReference);
+        Files.createDirectories(remotePath.getParent());
+        Files.copy(localFileStream, remotePath, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    @Override
+    public void uploadText(final String text, final RemoteObjectReference objectReference) throws Exception {
+        Path dir = request.storageLocation.fileBackupDirectory.resolve(request.storageLocation.bucket);
+        Files.createDirectories(dir.resolve(objectReference.objectKey).getParent());
+        Files.write(dir.resolve(objectReference.objectKey), text.getBytes());
     }
 
     @Override

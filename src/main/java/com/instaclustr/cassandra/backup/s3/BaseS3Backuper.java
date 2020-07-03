@@ -4,6 +4,7 @@ import static com.amazonaws.event.ProgressEventType.TRANSFER_COMPLETED_EVENT;
 import static com.amazonaws.event.ProgressEventType.TRANSFER_FAILED_EVENT;
 import static java.util.Optional.ofNullable;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -26,6 +27,7 @@ import com.amazonaws.services.s3.model.StorageClass;
 import com.amazonaws.services.s3.transfer.PersistableTransfer;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.internal.S3ProgressListener;
+import com.instaclustr.cassandra.backup.gcp.GCPRemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
@@ -54,8 +56,13 @@ public class BaseS3Backuper extends Backuper {
     }
 
     @Override
-    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) {
-        return new S3RemoteObjectReference(objectKey, resolveRemotePath(objectKey));
+    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception {
+        return new S3RemoteObjectReference(objectKey, objectKey.toFile().getCanonicalFile().toString());
+    }
+
+    @Override
+    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey) {
+        return new S3RemoteObjectReference(objectKey, resolveNodeAwareRemotePath(objectKey));
     }
 
     @Override
@@ -84,11 +91,8 @@ public class BaseS3Backuper extends Backuper {
     }
 
     @Override
-    public void uploadFile(
-        final long size,
-        final InputStream localFileStream,
-        final RemoteObjectReference object) throws Exception {
-        final S3RemoteObjectReference s3RemoteObjectReference = (S3RemoteObjectReference) object;
+    public void uploadFile(final long size, final InputStream localFileStream, final RemoteObjectReference objectReference) throws Exception {
+        final S3RemoteObjectReference s3RemoteObjectReference = (S3RemoteObjectReference) objectReference;
 
         final PutObjectRequest putObjectRequest = new PutObjectRequest(request.storageLocation.bucket,
                                                                        s3RemoteObjectReference.canonicalPath,
@@ -97,6 +101,25 @@ public class BaseS3Backuper extends Backuper {
                                                                            setContentLength(size);
                                                                        }});
 
+        upload(s3RemoteObjectReference, putObjectRequest);
+    }
+
+    @Override
+    public void uploadText(final String text, final RemoteObjectReference objectReference) throws Exception {
+        final S3RemoteObjectReference s3RemoteObjectReference = (S3RemoteObjectReference) objectReference;
+
+        final PutObjectRequest putObjectRequest = new PutObjectRequest(request.storageLocation.bucket,
+                                                                       s3RemoteObjectReference.canonicalPath,
+                                                                       new ByteArrayInputStream(text.getBytes()),
+                                                                       new ObjectMetadata() {{
+                                                                           setContentLength(text.getBytes().length);
+                                                                       }});
+
+        upload(s3RemoteObjectReference, putObjectRequest);
+    }
+
+    private void upload(final S3RemoteObjectReference s3RemoteObjectReference,
+                        final PutObjectRequest putObjectRequest) throws Exception {
         final UploadProgressListener listener = new UploadProgressListener(s3RemoteObjectReference);
 
         final Optional<AmazonClientException> exception = ofNullable(transferManager.upload(putObjectRequest, listener).waitForException());

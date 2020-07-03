@@ -1,5 +1,6 @@
-package com.instaclustr.cassandra.backup.impl.interaction;
+package com.instaclustr.cassandra.topology;
 
+import com.instaclustr.cassandra.CassandraInteraction;
 import com.instaclustr.operations.FunctionWithEx;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 import jmx.org.apache.cassandra.service.cassandra3.StorageServiceMBean;
