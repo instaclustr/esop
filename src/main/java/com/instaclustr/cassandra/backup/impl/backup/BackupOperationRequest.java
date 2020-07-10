@@ -7,6 +7,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import javax.validation.constraints.Min;
 import java.nio.file.Path;
 
+import com.amazonaws.services.s3.model.MetadataDirective;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -72,6 +73,7 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonProperty("bandwidth") final DataRate bandwidth,
                                   @JsonProperty("concurrentConnections") final Integer concurrentConnections,
                                   @JsonProperty("lockFile") final Path lockFile,
+                                  @JsonProperty("metadataDirective") final MetadataDirective metadataDirective,
                                   @JsonProperty("cassandraDirectory") final Path cassandraDirectory,
                                   @JsonProperty("entities")
                                   @JsonSerialize(using = DatabaseEntitiesSerializer.class)
@@ -83,7 +85,7 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonProperty("dc") final String dc,
                                   @JsonProperty("keepExistingSnapshot") final boolean keepExistingSnapshot,
                                   @JsonProperty("timeout") @Min(1) final Integer timeout) {
-        super(storageLocation, duration, bandwidth, concurrentConnections, cassandraDirectory, lockFile, k8sNamespace, k8sSecretName);
+        super(storageLocation, duration, bandwidth, concurrentConnections, cassandraDirectory, lockFile, metadataDirective, k8sNamespace, k8sSecretName);
         this.entities = entities == null ? DatabaseEntities.empty() : entities;
         this.snapshotTag = snapshotTag == null ? format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis())) : snapshotTag;
         this.globalRequest = globalRequest;
@@ -110,6 +112,7 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
             .add("dc", dc)
             .add("keepExistingSnapshot", keepExistingSnapshot)
             .add("timeout", timeout)
+            .add("metadataDirective", metadataDirective)
             .toString();
     }
 }
