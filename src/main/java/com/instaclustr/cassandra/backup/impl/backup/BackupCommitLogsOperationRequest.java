@@ -2,6 +2,7 @@ package com.instaclustr.cassandra.backup.impl.backup;
 
 import java.nio.file.Path;
 
+import com.amazonaws.services.s3.model.MetadataDirective;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -36,11 +37,12 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
                                             @JsonProperty("bandwidth") final DataRate bandwidth,
                                             @JsonProperty("concurrentConnections") final Integer concurrentConnections,
                                             @JsonProperty("lockFile") final Path lockFile,
+                                            @JsonProperty("metadataDirective") final MetadataDirective metadataDirective,
                                             @JsonProperty("cassandraDirectory") final Path cassandraDirectory,
                                             @JsonProperty("commitLogRestoreDirectory") final Path commitLogArchiveOverride,
                                             @JsonProperty("k8sNamespace") final String k8sNamespace,
                                             @JsonProperty("k8sSecretName") final String k8sSecretName) {
-        super(storageLocation, duration, bandwidth, concurrentConnections, cassandraDirectory, lockFile, k8sNamespace, k8sSecretName);
+        super(storageLocation, duration, bandwidth, concurrentConnections, cassandraDirectory, lockFile, metadataDirective, k8sNamespace, k8sSecretName);
         this.commitLogArchiveOverride = commitLogArchiveOverride;
         this.type = "commitlog-backup";
     }
@@ -53,6 +55,7 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
             .add("bandwidth", bandwidth)
             .add("concurrentConnections", concurrentConnections)
             .add("lockFile", lockFile)
+            .add("metadataDirective", metadataDirective)
             .add("cassandraDirectory", cassandraDirectory)
             .add("commitLogRestoreDirectory", commitLogArchiveOverride)
             .add("k8sNamespace", k8sNamespace)

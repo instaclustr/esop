@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.amazonaws.services.s3.model.MetadataDirective;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -63,6 +64,7 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonProperty("bandwidth") final DataRate bandwidth,
                             @JsonProperty("concurrentConnections") final Integer concurrentConnections,
                             @JsonProperty("lockFile") final Path lockFile,
+                            @JsonProperty("metadataDirective") final MetadataDirective metadataDirective,
                             @JsonProperty("cassandraDirectory") final Path cassandraDirectory,
                             @JsonProperty("entities")
                             @JsonSerialize(using = DatabaseEntitiesSerializer.class)
@@ -79,6 +81,7 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                                                                                                            bandwidth,
                                                                                                            concurrentConnections,
                                                                                                            lockFile,
+                                                                                                           metadataDirective,
                                                                                                            cassandraDirectory,
                                                                                                            entities,
                                                                                                            snapshotTag,
