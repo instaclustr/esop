@@ -1,5 +1,6 @@
 package com.instaclustr.cassandra.backup.gcp;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.instaclustr.cassandra.backup.guice.BackupRestoreBindings.installBindings;
 import static java.lang.String.format;
 
@@ -51,36 +52,47 @@ public class GCPModule extends AbstractModule {
         }
 
         public Storage build(final AbstractOperationRequest operationRequest) {
-
             if (KubernetesHelper.isRunningInKubernetes() || KubernetesHelper.isRunningAsClient()) {
-                final GoogleCredentials credentials = resolveGoogleCredentials(operationRequest);
-                return StorageOptions.newBuilder().setCredentials(credentials).build().getService();
+                if (isNullOrEmpty(operationRequest.resolveKubernetesSecretName())) {
+                    logger.warn("Kubernetes secret name for resolving GCP credentials was not specified, going to resolve them from file.");
+                    return resolveStorageFromEnvProperties();
+                } else {
+                    return resolveStorageFromKubernetesSecret(operationRequest);
+                }
             } else {
-                String googleAppCredentialsPath = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
-
-                if (googleAppCredentialsPath == null) {
-                    logger.warn("You are not running in Kubernetes and GOOGLE_APPLICATION_CREDENTIALS environment property was not set, "
-                                    + "going to try system property google.application.credentials");
-
-                    googleAppCredentialsPath = System.getProperty("google.application.credentials");
-
-                    if (googleAppCredentialsPath == null) {
-                        throw new GCPModuleException("You are not running in Kubernetes and google.application.credentials system property was not set.");
-                    }
-                }
-
-                if (!Files.exists(Paths.get(googleAppCredentialsPath))) {
-                    throw new GCPModuleException(format("You are not running in Kubernetes and file %s does not exist!", googleAppCredentialsPath));
-                }
-                return StorageOptions.getDefaultInstance().getService();
+                return resolveStorageFromEnvProperties();
             }
         }
 
-        private GoogleCredentials resolveGoogleCredentials(final AbstractOperationRequest operationRequest) {
-            final String dataKey = "gcp";
+        private Storage resolveStorageFromKubernetesSecret(final AbstractOperationRequest operationRequest) {
+            final GoogleCredentials credentials = resolveGoogleCredentials(operationRequest);
+            return StorageOptions.newBuilder().setCredentials(credentials).build().getService();
+        }
 
-            final String namespace = operationRequest.resolveKubernetesNamespace();
+        private Storage resolveStorageFromEnvProperties() {
+            String googleAppCredentialsPath = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
+
+            if (googleAppCredentialsPath == null) {
+                logger.warn("GOOGLE_APPLICATION_CREDENTIALS environment property was not set, going to try system property google.application.credentials");
+
+                googleAppCredentialsPath = System.getProperty("google.application.credentials");
+
+                if (googleAppCredentialsPath == null) {
+                    throw new GCPModuleException("google.application.credentials system property was not set.");
+                }
+            }
+
+            if (!Files.exists(Paths.get(googleAppCredentialsPath))) {
+                throw new GCPModuleException(format("GCP credentials file %s does not exist!", googleAppCredentialsPath));
+            }
+
+            return StorageOptions.getDefaultInstance().getService();
+        }
+
+        private GoogleCredentials resolveGoogleCredentials(final AbstractOperationRequest operationRequest) {
             final String secretName = operationRequest.resolveKubernetesSecretName();
+            final String dataKey = "gcp";
+            final String namespace = operationRequest.resolveKubernetesNamespace();
 
             try {
                 Optional<byte[]> gcpCredentials = new SecretReader(coreV1ApiProvider).read(namespace,

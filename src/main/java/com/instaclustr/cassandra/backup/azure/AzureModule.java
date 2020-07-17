@@ -1,5 +1,6 @@
 package com.instaclustr.cassandra.backup.azure;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.instaclustr.cassandra.backup.guice.BackupRestoreBindings.installBindings;
 import static com.instaclustr.kubernetes.KubernetesHelper.isRunningAsClient;
 import static java.lang.String.format;
@@ -7,6 +8,7 @@ import static java.lang.String.format;
 import java.net.URISyntaxException;
 import java.util.Map;
 
+import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
@@ -17,8 +19,12 @@ import com.instaclustr.kubernetes.SecretReader;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
 import io.kubernetes.client.apis.CoreV1Api;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AzureModule extends AbstractModule {
+
+    private static final Logger logger = LoggerFactory.getLogger(AzureModule.class);
 
     @Override
     protected void configure() {
@@ -52,9 +58,13 @@ public class AzureModule extends AbstractModule {
         }
 
         private StorageCredentialsAccountAndKey provideStorageCredentialsAccountAndKey(final Provider<CoreV1Api> coreV1ApiProvider,
-                                                                                       final AbstractOperationRequest operationrequest) throws AzureModuleException {
+                                                                                       final AbstractOperationRequest operationRequest) throws AzureModuleException {
             if (isRunningInKubernetes()) {
-                return resolveCredentialsFromK8S(coreV1ApiProvider, operationrequest);
+                if (isNullOrEmpty(operationRequest.resolveKubernetesSecretName())) {
+                    logger.warn("Kubernetes secret name for resolving Azure credentials was not specified, going to resolve them from env. properties.");
+                    return resolveCredentialsFromEnvProperties();
+                }
+                return resolveCredentialsFromK8S(coreV1ApiProvider, operationRequest);
             } else {
                 return resolveCredentialsFromEnvProperties();
             }
@@ -66,12 +76,15 @@ public class AzureModule extends AbstractModule {
 
         private StorageCredentialsAccountAndKey resolveCredentialsFromK8S(final Provider<CoreV1Api> coreV1ApiProvider,
                                                                           final AbstractOperationRequest operationrequest) {
+
+            final String secretName = operationrequest.resolveKubernetesSecretName();
+
             try {
                 final String namespace = operationrequest.resolveKubernetesNamespace();
                 final SecretReader secretReader = new SecretReader(coreV1ApiProvider);
 
                 return secretReader.readIntoObject(namespace,
-                                                   operationrequest.resolveKubernetesSecretName(),
+                                                   secretName,
                                                    secret -> {
                                                        final Map<String, byte[]> data = secret.getData();
 
@@ -94,7 +107,7 @@ public class AzureModule extends AbstractModule {
                                                        );
                                                    });
             } catch (final Exception ex) {
-                throw new AzureModuleException("Unable to resolve Azure credentials for backup / restores from Kubernetes ", ex);
+                throw new AzureModuleException("Unable to resolve Azure credentials for backup / restores from Kubernetes secret " + secretName, ex);
             }
         }
     }

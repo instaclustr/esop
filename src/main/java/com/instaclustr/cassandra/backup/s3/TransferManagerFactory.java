@@ -1,5 +1,6 @@
 package com.instaclustr.cassandra.backup.s3;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.instaclustr.kubernetes.KubernetesHelper.isRunningAsClient;
 import static java.lang.String.format;
 
@@ -102,14 +103,12 @@ public class TransferManagerFactory {
 
     private S3Configuration resolveS3Configuration(final Provider<CoreV1Api> coreV1ApiProvider, final AbstractOperationRequest operationRequest) {
         if (isRunningInKubernetes()) {
-            try {
-                return resolveS3ConfigurationFromK8S(coreV1ApiProvider, operationRequest);
-            } catch (final S3ModuleException ex) {
-                logger.warn(String.format("Unable to resolve credentials for S3 from Kubernetes secret %s. The last chance "
-                                              + "for this container to authenticate is to use AWS instance credentials.",
-                                          operationRequest.resolveKubernetesSecretName()), ex);
-                return new S3Configuration();
+            if (isNullOrEmpty(operationRequest.resolveKubernetesSecretName())) {
+                logger.warn("Kubernetes secret name for resolving S3 credentials was not specified, going to resolve them from env. properties. "
+                                + "If env. properties are not specified, credentials will be fetched from AWS instance itself.");
+                return resolveS3ConfigurationFromEnvProperties();
             }
+            return resolveS3ConfigurationFromK8S(coreV1ApiProvider, operationRequest);
         } else {
             return resolveS3ConfigurationFromEnvProperties();
         }
@@ -117,13 +116,14 @@ public class TransferManagerFactory {
 
     private S3Configuration resolveS3ConfigurationFromK8S(final Provider<CoreV1Api> coreV1ApiProvider, final AbstractOperationRequest operationRequest) {
 
-        try {
+        final String secretName = operationRequest.resolveKubernetesSecretName();
 
+        try {
             final String namespace = resolveKubernetesKeyspace(operationRequest);
             final SecretReader secretReader = new SecretReader(coreV1ApiProvider);
 
             return secretReader.readIntoObject(namespace,
-                                               operationRequest.resolveKubernetesSecretName(),
+                                               secretName,
                                                secret -> {
                                                    final Map<String, byte[]> data = secret.getData();
 
@@ -159,7 +159,7 @@ public class TransferManagerFactory {
                                                    return s3Configuration;
                                                });
         } catch (final Exception ex) {
-            throw new S3ModuleException("Unable to resolve S3Configuration for backup / restores from Kubernetes. ", ex);
+            throw new S3ModuleException("Unable to resolve S3 credentials for backup / restores from Kubernetes secret " + secretName, ex);
         }
     }
 
