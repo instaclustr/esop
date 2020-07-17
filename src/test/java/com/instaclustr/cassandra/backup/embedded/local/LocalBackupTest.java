@@ -15,6 +15,7 @@ import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
 import com.instaclustr.cassandra.backup.local.LocalFileRestorer;
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.threading.Executors.FixedTasksExecutorSupplier;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 public class LocalBackupTest extends AbstractBackupTest {
@@ -35,6 +36,7 @@ public class LocalBackupTest extends AbstractBackupTest {
     }
 
     @Test
+    @Ignore
     public void testDownloadOfRemoteManifest() throws Exception {
         try {
             RestoreOperationRequest restoreOperationRequest = new RestoreOperationRequest();

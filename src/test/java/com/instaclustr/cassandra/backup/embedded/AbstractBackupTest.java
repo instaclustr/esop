@@ -82,6 +82,8 @@ public abstract class AbstractBackupTest {
 
     protected String[][] inPlaceArguments() {
 
+        final String snapshotName = UUID.randomUUID().toString();
+
         // BACKUP
 
         final String[] backupArgs = new String[]{
@@ -97,7 +99,7 @@ public abstract class AbstractBackupTest {
             "backup",
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
-            "--snapshot-tag=stefansnapshot",
+            "--snapshot-tag=" + snapshotName,
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--entities=system_schema,test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
@@ -109,7 +111,7 @@ public abstract class AbstractBackupTest {
             "restore",
             "--data-directory=" + cassandraRestoredDir.toAbsolutePath().toString() + "/data",
             "--config-directory=" + cassandraRestoredConfigDir.toAbsolutePath().toString(),
-            "--snapshot-tag=stefansnapshot",
+            "--snapshot-tag=" + snapshotName,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
             "--entities=system_schema,test,test2",
@@ -145,6 +147,8 @@ public abstract class AbstractBackupTest {
 
     protected String[][] importArguments() {
 
+        final String snapshotName = UUID.randomUUID().toString();
+
         // BACKUP
 
         final String[] backupArgs = new String[]{
@@ -160,7 +164,7 @@ public abstract class AbstractBackupTest {
             "backup",
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
-            "--snapshot-tag=stefansnapshot",
+            "--snapshot-tag=" + snapshotName,
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--entities=system_schema,test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
@@ -171,7 +175,7 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase1 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--snapshot-tag=stefansnapshot",
+            "--snapshot-tag=" + snapshotName,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
             "--entities=system_schema,test,test2",
@@ -184,7 +188,7 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase2 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--snapshot-tag=stefansnapshot",
+            "--snapshot-tag=" + snapshotName,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
             "--entities=system_schema,test,test2",
@@ -197,7 +201,7 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase3 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--snapshot-tag=stefansnapshot",
+            "--snapshot-tag=" + snapshotName,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
             "--entities=system_schema,test,test2",
@@ -210,7 +214,7 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase4 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--snapshot-tag=stefansnapshot",
+            "--snapshot-tag=" + snapshotName,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
             "--entities=system_schema,test,test2",
@@ -232,6 +236,8 @@ public abstract class AbstractBackupTest {
 
     protected String[][] hardlinkingArguments() {
 
+        final String snapshotName = UUID.randomUUID().toString();
+
         // BACKUP
 
         final String[] backupArgs = new String[]{
@@ -247,7 +253,7 @@ public abstract class AbstractBackupTest {
             "backup",
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
-            "--snapshot-tag=stefansnapshot",
+            "--snapshot-tag=" + snapshotName,
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--entities=system_schema,test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
@@ -258,7 +264,7 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase1 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--snapshot-tag=stefansnapshot",
+            "--snapshot-tag=" + snapshotName,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
             "--entities=test,test2",
@@ -271,7 +277,7 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase2 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--snapshot-tag=stefansnapshot",
+            "--snapshot-tag=" + snapshotName,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
             "--entities=test,test2",
@@ -284,7 +290,7 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase3 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--snapshot-tag=stefansnapshot",
+            "--snapshot-tag=" + snapshotName,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
             "--entities=test,test2",
@@ -297,7 +303,7 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase4 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--snapshot-tag=stefansnapshot",
+            "--snapshot-tag=" + snapshotName,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
             "--entities=test,test2",

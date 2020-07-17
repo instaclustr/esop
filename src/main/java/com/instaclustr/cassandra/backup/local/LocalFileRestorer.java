@@ -80,12 +80,19 @@ public class LocalFileRestorer extends Restorer {
     }
 
     private String getFileToDownload(final Predicate<String> keyFilter, final Path remotePrefix) throws Exception {
-        final List<Path> filtered = Files.list(Paths.get(request.storageLocation.rawLocation.replaceAll("file://", "")).resolve(remotePrefix))
-            .filter(path -> keyFilter.test(path.getFileName().toString()))
+
+        final Path pathToList = Paths.get(request.storageLocation.rawLocation.replaceAll("file://", "")).resolve(remotePrefix);
+
+        System.out.println(pathToList);
+
+        final List<Path> filtered = Files.list(pathToList)
+            .filter(path -> !Files.isDirectory(path) && keyFilter.test(path.toString()))
             .collect(toList());
 
         if (filtered.size() != 1) {
-            throw new IllegalStateException(format("There is more than one key which satisfies key filter! %s", filtered.toString()));
+            throw new IllegalStateException(format("There is not one key which satisfies key filter! %s for remote prefix %s",
+                                                   filtered.toString(),
+                                                   remotePrefix));
         }
         return filtered.get(0).getFileName().toString();
     }
