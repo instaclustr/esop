@@ -27,7 +27,6 @@ import com.amazonaws.services.s3.model.StorageClass;
 import com.amazonaws.services.s3.transfer.PersistableTransfer;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.internal.S3ProgressListener;
-import com.instaclustr.cassandra.backup.gcp.GCPRemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;

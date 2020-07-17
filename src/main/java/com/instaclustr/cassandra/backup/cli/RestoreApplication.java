@@ -12,7 +12,6 @@ import com.instaclustr.cassandra.backup.impl._import.ImportOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreModules.RestorationStrategyModule;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreModules.RestoreModule;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
-import com.instaclustr.cassandra.backup.impl.truncate.TruncateModule;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
 import com.instaclustr.picocli.CassandraJMXSpec;
@@ -59,8 +58,7 @@ public class RestoreApplication implements Runnable {
         request.importing = importRequest;
 
         init(this, jmxSpec, request, logger, Arrays.asList(new RestoreModule(),
-                                                           new RestorationStrategyModule(),
-                                                           new TruncateModule()));
+                                                           new RestorationStrategyModule()));
 
         final Operation<?> operation = operationsService.submitOperationRequest(request);
 
