@@ -77,7 +77,10 @@ public class BackupRestoreCLI extends CLIApplication implements Runnable {
                                                                            jmxSpec.jmxUser,
                                                                            jmxSpec.jmxServiceURL,
                                                                            jmxSpec.trustStore,
-                                                                           jmxSpec.trustStorePassword)));
+                                                                           jmxSpec.trustStorePassword,
+                                                                           jmxSpec.keyStore,
+                                                                           jmxSpec.keyStorePassword,
+                                                                           jmxSpec.jmxClientAuth)));
         } else {
             modules.add(new AbstractModule() {
                 @Override
