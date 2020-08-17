@@ -6,6 +6,8 @@ import static java.lang.String.format;
 
 import java.util.Map;
 
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.Protocol;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
@@ -68,6 +70,10 @@ public class TransferManagerFactory {
         if (enablePathStyleAccess) {
             // for being able to work with Oracle "s3"
             builder.enablePathStyleAccess();
+        }
+
+        if (operationRequest.insecure) {
+            builder.withClientConfiguration(new ClientConfiguration().withProtocol(Protocol.HTTP));
         }
 
         // if we are not running against Kubernetes, credentials should be fetched from ~/.aws/...

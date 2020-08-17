@@ -43,16 +43,23 @@ public abstract class AbstractOperationRequest extends OperationRequest {
     @JsonProperty("k8sSecretName")
     public String k8sSecretName;
 
+    @Option(names = {"--insecure-http"},
+        description = "If specified, the connection to remote bucket will be insecure, instead HTTPS, HTTP will be used, currently relevant only for s3.")
+    @JsonProperty("insecure")
+    public boolean insecure;
+
     public AbstractOperationRequest() {
         // for picocli
     }
 
     public AbstractOperationRequest(@NotNull final StorageLocation storageLocation,
                                     final String k8sNamespace,
-                                    final String k8sSecretName) {
+                                    final String k8sSecretName,
+                                    final boolean insecure) {
         this.storageLocation = storageLocation;
         this.k8sNamespace = k8sNamespace;
         this.k8sSecretName = k8sSecretName;
+        this.insecure = insecure;
     }
 
     @JsonIgnore

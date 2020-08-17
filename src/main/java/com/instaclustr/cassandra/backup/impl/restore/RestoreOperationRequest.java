@@ -156,8 +156,9 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonProperty("k8sSecretName") final String k8sSecretName,
                                    @JsonProperty("globalRequest") final boolean globalRequest,
                                    @JsonProperty("timeout") @Min(1) final Integer timeout,
-                                   @JsonProperty("resolveHostIdFromTopology") final Boolean resolveHostIdFromTopology) {
-        super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName);
+                                   @JsonProperty("resolveHostIdFromTopology") final Boolean resolveHostIdFromTopology,
+                                   @JsonProperty("insecure") final boolean insecure) {
+        super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure);
         this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/")) ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
         this.restoreSystemKeyspace = restoreSystemKeyspace;
@@ -201,6 +202,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             .add("globalRequest", globalRequest)
             .add("timeout", timeout)
             .add("resolveHostId", resolveHostIdFromTopology)
+            .add("insecure", insecure)
             .toString();
     }
 }

@@ -78,7 +78,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                              @JsonProperty("k8sSecretName") final String k8sSecretName,
                              @JsonProperty("globalRequest") final boolean globalRequest,
                              @JsonProperty("timeout") @Min(1) final Integer timeout,
-                             @JsonProperty("resolveHostIdFromTopology") final Boolean resolveHostIdFromTopology) {
+                             @JsonProperty("resolveHostIdFromTopology") final Boolean resolveHostIdFromTopology,
+                             @JsonProperty("insecure") final boolean insecure) {
         super(type, id, creationTime, state, failureCause, progress, startTime, new RestoreOperationRequest(type,
                                                                                                             storageLocation,
                                                                                                             concurrentConnections,
@@ -101,7 +102,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                                                                                                             k8sSecretName,
                                                                                                             globalRequest,
                                                                                                             timeout,
-                                                                                                            resolveHostIdFromTopology));
+                                                                                                            resolveHostIdFromTopology,
+                                                                                                            insecure));
         this.coordinator = null;
     }
 

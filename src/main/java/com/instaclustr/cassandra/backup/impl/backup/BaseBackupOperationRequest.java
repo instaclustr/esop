@@ -77,8 +77,9 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
                                       final Path lockFile,
                                       final MetadataDirective metadataDirective,
                                       final String k8sNamespace,
-                                      final String k8sBackupSecretName) {
-        super(storageLocation, k8sNamespace, k8sBackupSecretName);
+                                      final String k8sBackupSecretName,
+                                      final boolean insecure) {
+        super(storageLocation, k8sNamespace, k8sBackupSecretName, insecure);
         this.storageLocation = storageLocation;
         this.duration = duration;
         this.bandwidth = bandwidth;

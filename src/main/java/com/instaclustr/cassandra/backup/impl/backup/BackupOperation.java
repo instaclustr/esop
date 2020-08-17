@@ -76,7 +76,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonProperty("globalRequest") final boolean globalRequest,
                             @JsonProperty("dc") final String dc,
                             @JsonProperty("keepExistingSnapshot") final boolean keepExistingSnapshot,
-                            @JsonProperty("timeout") @Min(1) final Integer timeout) {
+                            @JsonProperty("timeout") @Min(1) final Integer timeout,
+                            @JsonProperty("insecure") final boolean insecure) {
         super(type, id, creationTime, state, failureCause, progress, startTime, new BackupOperationRequest(type,
                                                                                                            storageLocation,
                                                                                                            duration,
@@ -92,7 +93,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                                                                                                            globalRequest,
                                                                                                            dc,
                                                                                                            keepExistingSnapshot,
-                                                                                                           timeout));
+                                                                                                           timeout,
+                                                                                                           insecure));
         coordinator = null;
     }
 
