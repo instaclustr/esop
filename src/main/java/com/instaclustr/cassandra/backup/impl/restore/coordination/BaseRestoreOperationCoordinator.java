@@ -16,8 +16,12 @@ import com.instaclustr.cassandra.backup.impl.restore.Restorer;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationCoordinator;
 import com.instaclustr.operations.ResultGatherer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class BaseRestoreOperationCoordinator extends OperationCoordinator<RestoreOperationRequest> {
+
+    private static final Logger logger = LoggerFactory.getLogger(BaseRestoreOperationCoordinator.class);
 
     private final Map<String, RestorerFactory> restorerFactoryMap;
     private final RestorationStrategyResolver restorationStrategyResolver;
@@ -52,6 +56,8 @@ public abstract class BaseRestoreOperationCoordinator extends OperationCoordinat
 
         final RestorationPhaseResultGatherer gatherer = new RestorationPhaseResultGatherer();
 
+        Throwable cause = null;
+
         try (final Restorer restorer = restorerFactoryMap.get(request.storageLocation.storageProvider).createRestorer(request)) {
 
             final RestorationStrategy restorationStrategy = restorationStrategyResolver.resolve(request);
@@ -59,10 +65,11 @@ public abstract class BaseRestoreOperationCoordinator extends OperationCoordinat
             restorationStrategy.restore(restorer, operation);
 
             gatherer.gather(operation, null);
-        } catch (Exception ex) {
-            gatherer.gather(operation, ex);
+        } catch (final Exception ex) {
+            logger.error("Unable to perform restore! - " + ex.getMessage(), ex);
+            cause = ex;
         }
 
-        return gatherer;
+        return gatherer.gather(operation, cause);
     }
 }

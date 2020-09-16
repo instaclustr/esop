@@ -83,7 +83,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
     public RestorationStrategyType restorationStrategyType = IN_PLACE;
 
     @Option(names = {"--restoration-phase-type"},
-        description = "Restoration phase a particular restoration strategy is in during this request invocation, a must to specify upon IMPORTING or TRUNCATING strategy",
+        description = "Restoration phase a particular restoration strategy is in during this request invocation, a must to specify upon IMPORT or HARDLINKS strategy",
         converter = RestorationPhaseTypeConverter.class)
     public RestorationPhaseType restorationPhase;
 
@@ -181,7 +181,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
         this.globalRequest = globalRequest;
         this.type = type;
         this.timeout = timeout == null ? 5 : timeout;
-        this.resolveHostIdFromTopology = resolveHostIdFromTopology;
+        this.resolveHostIdFromTopology = resolveHostIdFromTopology == null ? false : resolveHostIdFromTopology;
     }
 
     @Override

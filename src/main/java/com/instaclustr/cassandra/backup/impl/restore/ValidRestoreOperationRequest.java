@@ -43,9 +43,11 @@ public @interface ValidRestoreOperationRequest {
                 return false;
             }
 
-            if (value.restorationPhase == RestorationPhaseType.UNKNOWN) {
-                context.buildConstraintViolationWithTemplate("restorationPhase is not recognized").addConstraintViolation();
-                return false;
+            if (value.restorationStrategyType != RestorationStrategyType.IN_PLACE) {
+                if (value.restorationPhase == RestorationPhaseType.UNKNOWN) {
+                    context.buildConstraintViolationWithTemplate("restorationPhase is not recognized").addConstraintViolation();
+                    return false;
+                }
             }
 
             if (value.restorationStrategyType == RestorationStrategyType.IMPORT) {

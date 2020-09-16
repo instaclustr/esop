@@ -6,23 +6,15 @@ import static org.testng.Assert.assertTrue;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
-import com.google.inject.Guice;
 import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.Module;
+import com.instaclustr.cassandra.backup.azure.AzureBackuper;
 import com.instaclustr.cassandra.backup.azure.AzureBucketService;
-import com.instaclustr.cassandra.backup.azure.AzureModule;
 import com.instaclustr.cassandra.backup.azure.AzureModule.CloudStorageAccountFactory;
 import com.instaclustr.cassandra.backup.azure.AzureRestorer;
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
-import com.instaclustr.kubernetes.KubernetesApiModule;
-import com.instaclustr.threading.Executors.FixedTasksExecutorSupplier;
-import com.instaclustr.threading.ExecutorsModule;
 import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
@@ -42,17 +34,7 @@ public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
 
     @BeforeMethod
     public void setup() throws Exception {
-
-        final List<Module> modules = new ArrayList<Module>()
-        {{
-            add(new KubernetesApiModule());
-            add(new AzureModule());
-            add(new ExecutorsModule());
-        }};
-
-        final Injector injector = Guice.createInjector(modules);
-        injector.injectMembers(this);
-
+        inject();
         init();
     }
 
@@ -77,12 +59,12 @@ public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
 
     @Test
     public void testImportingBackupAndRestore() throws Exception {
-        liveCassandraTest(importArguments());
+        liveCassandraTest(importArguments(), CASSANDRA_4_VERSION);
     }
 
     @Test
     public void testHardlinkingBackupAndRestore() throws Exception {
-        liveCassandraTest(hardlinkingArguments());
+        liveCassandraTest(hardlinkingArguments(), CASSANDRA_VERSION);
     }
 
     @Test
@@ -105,7 +87,11 @@ public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
             final RestoreOperationRequest restoreOperationRequest = new RestoreOperationRequest();
             restoreOperationRequest.storageLocation = new StorageLocation("azure://" + BUCKET_NAME + "/cluster/dc/node");
 
-            final AzureRestorer azureRestorer = new AzureRestorer(cloudStorageAccountFactory, new FixedTasksExecutorSupplier(), restoreOperationRequest);
+            final BackupOperationRequest backupOperationRequest = new BackupOperationRequest();
+            backupOperationRequest.storageLocation = new StorageLocation("azure://" + BUCKET_NAME + "/cluster/dc/node");
+
+            final AzureRestorer azureRestorer = new AzureRestorer(cloudStorageAccountFactory, restoreOperationRequest);
+            final AzureBackuper azureBackuper = new AzureBackuper(cloudStorageAccountFactory, backupOperationRequest);
 
             // 1
 
@@ -128,6 +114,17 @@ public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
 
             Assert.assertTrue(Files.exists(Paths.get("/tmp/some-file")));
             Assert.assertEquals("hello world", new String(Files.readAllBytes(Paths.get("/tmp/some-file"))));
+
+            // backup
+
+            azureBackuper.uploadText("hello world", azureBackuper.objectKeyToRemoteReference(Paths.get("topology/some-file-in-here.txt")));
+            String text = azureRestorer.downloadFileToString(azureBackuper.objectKeyToRemoteReference(Paths.get("topology/some-file-in-here.txt")));
+
+            Assert.assertEquals("hello world", text);
+
+            String topology = azureRestorer.downloadFileToString(Paths.get("topology/some-file-in"), fileName -> fileName.contains("topology/some-file-in"));
+
+            Assert.assertEquals("hello world", topology);
         } finally {
             azureBucketService.delete(BUCKET_NAME);
             deleteDirectory(Paths.get(target("commitlog_download_dir")));

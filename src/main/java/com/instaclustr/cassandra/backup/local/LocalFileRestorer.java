@@ -18,20 +18,17 @@ import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.Restorer;
-import com.instaclustr.threading.Executors.ExecutorServiceSupplier;
 
 public class LocalFileRestorer extends Restorer {
 
     @AssistedInject
-    public LocalFileRestorer(final ExecutorServiceSupplier executorServiceSupplier,
-                             @Assisted final RestoreOperationRequest request) {
-        super(request, executorServiceSupplier);
+    public LocalFileRestorer(@Assisted final RestoreOperationRequest request) {
+        super(request);
     }
 
     @AssistedInject
-    public LocalFileRestorer(final ExecutorServiceSupplier executorServiceSupplier,
-                             @Assisted final RestoreCommitLogsOperationRequest request) {
-        super(request, executorServiceSupplier);
+    public LocalFileRestorer(@Assisted final RestoreCommitLogsOperationRequest request) {
+        super(request);
     }
 
     @Override
@@ -67,27 +64,37 @@ public class LocalFileRestorer extends Restorer {
 
     @Override
     public String downloadFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
-        return downloadNodeFileToString(remotePrefix, keyFilter);
+
+        Path pathToList = request.storageLocation.fileBackupDirectory.resolve(request.storageLocation.bucket);
+
+        if (remotePrefix.getParent() != null) {
+            pathToList = pathToList.resolve(remotePrefix.getParent());
+        }
+
+        String fileToDownload = getFileToDownload(pathToList,
+                                                  keyFilter,
+                                                  remotePrefix);
+
+        return new String(Files.readAllBytes(Paths.get(fileToDownload)));
     }
 
     @Override
     public String downloadNodeFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
-        final String blobItem = getFileToDownload(keyFilter, remotePrefix);
+        final Path pathToList = Paths.get(request.storageLocation.rawLocation.replaceAll("file://", "")).resolve(remotePrefix);
+        final String blobItem = getFileToDownload(pathToList, keyFilter, remotePrefix);
         return new String(Files.readAllBytes(Paths.get(blobItem)));
     }
 
     @Override
     public Path downloadNodeFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
-        final String fileName = getFileToDownload(keyFilter, remotePrefix);
+        final Path pathToList = Paths.get(request.storageLocation.rawLocation.replaceAll("file://", "")).resolve(remotePrefix);
+        final String fileName = getFileToDownload(pathToList, keyFilter, remotePrefix);
         final Path destination = destinationDir.resolve(fileName);
         downloadFile(destination, objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
         return destination;
     }
 
-    private String getFileToDownload(final Predicate<String> keyFilter, final Path remotePrefix) throws Exception {
-
-        final Path pathToList = Paths.get(request.storageLocation.rawLocation.replaceAll("file://", "")).resolve(remotePrefix);
-
+    private String getFileToDownload(final Path pathToList, final Predicate<String> keyFilter, final Path remotePrefix) throws Exception {
         final List<Path> filtered = Files.list(pathToList)
             .filter(path -> !Files.isDirectory(path) && keyFilter.test(path.toString()))
             .collect(toList());

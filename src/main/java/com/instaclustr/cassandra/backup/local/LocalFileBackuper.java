@@ -12,20 +12,17 @@ import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.Backuper;
-import com.instaclustr.threading.Executors.ExecutorServiceSupplier;
 
 public class LocalFileBackuper extends Backuper {
 
     @AssistedInject
-    public LocalFileBackuper(final ExecutorServiceSupplier executorServiceSupplier,
-                             @Assisted final BackupOperationRequest request) {
-        super(request, executorServiceSupplier);
+    public LocalFileBackuper(@Assisted final BackupOperationRequest request) {
+        super(request);
     }
 
     @AssistedInject
-    public LocalFileBackuper(final ExecutorServiceSupplier executorServiceSupplier,
-                             @Assisted final BackupCommitLogsOperationRequest request) {
-        super(request, executorServiceSupplier);
+    public LocalFileBackuper(@Assisted final BackupCommitLogsOperationRequest request) {
+        super(request);
     }
 
     private Path resolveFullRemoteObjectPath(final RemoteObjectReference objectReference) {

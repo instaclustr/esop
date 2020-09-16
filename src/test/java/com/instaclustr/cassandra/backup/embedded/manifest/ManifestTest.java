@@ -26,7 +26,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
@@ -210,7 +209,6 @@ public class ManifestTest {
             Keyspace ks2BeforeAlter = manifests[2].getSnapshot().getKeyspace("ks2").get();
             Keyspace ks2AfterAlter = manifests[3].getSnapshot().getKeyspace("ks2").get();
 
-
             // TODO - get entities with different schemas
             List<String> tablesWithDifferentSchemas = ks2BeforeAlter.getTablesWithDifferentSchemas(ks2AfterAlter);
 
@@ -287,7 +285,7 @@ public class ManifestTest {
             Manifest manifest = new Manifest(snapshots.get("snapshot3").get());
 
             // manifest itself, but it wont be serialised
-            final Path localManifestPath = getLocalManifestPath(cassandraDir, "snapshot1", java.util.UUID.randomUUID().toString());
+            final Path localManifestPath = getLocalManifestPath(cassandraDir, "snapshot1");
             manifest.setManifest(getManifestAsManifestEntry(localManifestPath));
 
             // tokens

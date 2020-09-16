@@ -17,12 +17,12 @@ import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities.DatabaseEntitiesDeserializer;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities.DatabaseEntitiesSerializer;
+import com.instaclustr.cassandra.backup.impl.GatheringOperationCoordinatorException;
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import com.instaclustr.measure.DataRate;
 import com.instaclustr.measure.Time;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationCoordinator;
-import com.instaclustr.operations.OperationCoordinator.OperationCoordinatorException;
 import com.instaclustr.operations.OperationFailureException;
 import com.instaclustr.operations.ResultGatherer;
 
@@ -64,7 +64,6 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonProperty("duration") final Time duration,
                             @JsonProperty("bandwidth") final DataRate bandwidth,
                             @JsonProperty("concurrentConnections") final Integer concurrentConnections,
-                            @JsonProperty("lockFile") final Path lockFile,
                             @JsonProperty("metadataDirective") final MetadataDirective metadataDirective,
                             @JsonProperty("cassandraDirectory") final Path cassandraDirectory,
                             @JsonProperty("entities")
@@ -75,16 +74,15 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonProperty("k8sSecretName") final String k8sBackupSecretName,
                             @JsonProperty("globalRequest") final boolean globalRequest,
                             @JsonProperty("dc") final String dc,
-                            @JsonProperty("keepExistingSnapshot") final boolean keepExistingSnapshot,
                             @JsonProperty("timeout") @Min(1) final Integer timeout,
                             @JsonProperty("insecure") final boolean insecure,
-                            @JsonProperty("createMissingBucket") final boolean createMissingBucket) {
+                            @JsonProperty("createMissingBucket") final boolean createMissingBucket,
+                            @JsonProperty("schemaVersion") final String schemaVersion) {
         super(type, id, creationTime, state, failureCause, progress, startTime, new BackupOperationRequest(type,
                                                                                                            storageLocation,
                                                                                                            duration,
                                                                                                            bandwidth,
                                                                                                            concurrentConnections,
-                                                                                                           lockFile,
                                                                                                            metadataDirective,
                                                                                                            cassandraDirectory,
                                                                                                            entities,
@@ -93,10 +91,10 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                                                                                                            k8sBackupSecretName,
                                                                                                            globalRequest,
                                                                                                            dc,
-                                                                                                           keepExistingSnapshot,
                                                                                                            timeout,
                                                                                                            insecure,
-                                                                                                           createMissingBucket));
+                                                                                                           createMissingBucket,
+                                                                                                           schemaVersion));
         coordinator = null;
     }
 
@@ -112,7 +110,7 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
         final ResultGatherer<BackupOperationRequest> coordinatorResult = coordinator.coordinate(this);
 
         if (coordinatorResult.hasErrors()) {
-            throw new OperationCoordinatorException(coordinatorResult.getErrorneousOperations().toString());
+            throw new GatheringOperationCoordinatorException(coordinatorResult.getErrorneousOperations());
         }
     }
 }

@@ -17,7 +17,7 @@ public class CassandraSchemaVersion implements CassandraInteraction<String> {
     public String act() throws Exception {
         return cassandraJMXService.doWithStorageServiceMBean(new FunctionWithEx<StorageServiceMBean, String>() {
             @Override
-            public String apply(final StorageServiceMBean ssMBean) throws Exception {
+            public String apply(final StorageServiceMBean ssMBean) {
                 return ssMBean.getSchemaVersion();
             }
         });

@@ -28,11 +28,12 @@ import com.google.common.base.Joiner;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.instaclustr.cassandra.backup.guice.RestorerFactory;
+import com.instaclustr.cassandra.backup.impl.AbstractTracker.Session;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
+import com.instaclustr.cassandra.backup.impl.restore.DownloadTracker.DownloadUnit;
 import com.instaclustr.io.GlobalLock;
 import com.instaclustr.operations.Operation;
-import com.instaclustr.operations.OperationProgressTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,15 +44,17 @@ public class RestoreCommitLogsOperation extends Operation<RestoreCommitLogsOpera
     private final static String CASSANDRA_COMMIT_LOGS = "commitlog";
 
     private final Map<String, RestorerFactory> restorerFactoryMap;
+    private final DownloadTracker downloadTracker;
 
     private final Path commitlogsPath;
 
     @Inject
     public RestoreCommitLogsOperation(final Map<String, RestorerFactory> restorerFactoryMap,
+                                      final DownloadTracker downloadTracker,
                                       @Assisted final RestoreCommitLogsOperationRequest request) {
         super(request);
-
         this.restorerFactoryMap = restorerFactoryMap;
+        this.downloadTracker = downloadTracker;
         commitlogsPath = request.cassandraDirectory.resolve(CASSANDRA_COMMIT_LOGS);
     }
 
@@ -137,7 +140,15 @@ public class RestoreCommitLogsOperation extends Operation<RestoreCommitLogsOpera
             return;
         }
 
-        restorer.downloadFiles(parsedCommitlogList, new OperationProgressTracker(this, parsedCommitlogList.size()));
+        Session<DownloadUnit> downloadSession = null;
+
+        try {
+            downloadSession = downloadTracker.submit(restorer, this, parsedCommitlogList, null, this.request.concurrentConnections);
+            downloadSession.waitUntilConsideredFinished();
+            downloadTracker.cancelIfNecessary(downloadSession);
+        } finally {
+            downloadTracker.removeSession(downloadSession);
+        }
     }
 
     private void updateCommitLogArchivingProperties() {

@@ -31,7 +31,6 @@ import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.Restorer;
-import com.instaclustr.threading.Executors.ExecutorServiceSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,17 +42,15 @@ public class BaseS3Restorer extends Restorer {
     protected final TransferManager transferManager;
 
     public BaseS3Restorer(final TransferManagerFactory transferManagerFactory,
-                          final ExecutorServiceSupplier executorServiceSupplier,
                           final RestoreOperationRequest request) {
-        super(request, executorServiceSupplier);
+        super(request);
         this.transferManager = transferManagerFactory.build(request);
         this.amazonS3 = this.transferManager.getAmazonS3Client();
     }
 
     public BaseS3Restorer(final TransferManagerFactory transferManagerFactory,
-                          final ExecutorServiceSupplier executorServiceSupplier,
                           final RestoreCommitLogsOperationRequest request) {
-        super(request, executorServiceSupplier);
+        super(request);
         this.transferManager = transferManagerFactory.build(request);
         this.amazonS3 = this.transferManager.getAmazonS3Client();
     }
@@ -98,8 +95,7 @@ public class BaseS3Restorer extends Restorer {
     @Override
     public String downloadFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
         final S3Object s3Object = getBlobItemPath(remotePrefix.toString(), keyFilter);
-        final String fileName = s3Object.getKey().split("/")[s3Object.getKey().split("/").length - 1];
-        return downloadFileToString(objectKeyToRemoteReference(remotePrefix.resolve(fileName)));
+        return downloadFileToString(objectKeyToRemoteReference(Paths.get(s3Object.getKey())));
     }
 
     @Override

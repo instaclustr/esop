@@ -13,16 +13,22 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.instaclustr.cassandra.backup.guice.BucketServiceFactory;
+import com.instaclustr.cassandra.backup.impl.AbstractTracker.Session;
+import com.instaclustr.cassandra.backup.impl.BucketService;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities;
 import com.instaclustr.cassandra.backup.impl.Manifest;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry.Type;
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
+import com.instaclustr.cassandra.backup.impl.restore.DownloadTracker;
+import com.instaclustr.cassandra.backup.impl.restore.DownloadTracker.DownloadUnit;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.Restorer;
@@ -30,8 +36,8 @@ import com.instaclustr.cassandra.topology.CassandraClusterTopology.ClusterTopolo
 import com.instaclustr.cassandra.topology.CassandraClusterTopology.ClusterTopology.NodeTopology;
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.io.GlobalLock;
+import com.instaclustr.kubernetes.KubernetesHelper;
 import com.instaclustr.operations.Operation;
-import com.instaclustr.operations.OperationProgressTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,10 +54,16 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
     private static final Logger logger = LoggerFactory.getLogger(InPlaceRestorationStrategy.class);
 
     private final ObjectMapper objectMapper;
+    private final DownloadTracker downloadTracker;
+    private final Map<String, BucketServiceFactory> bucketServiceFactoryMap;
 
     @Inject
-    public InPlaceRestorationStrategy(final ObjectMapper objectMapper) {
+    public InPlaceRestorationStrategy(final ObjectMapper objectMapper,
+                                      final DownloadTracker downloadTracker,
+                                      final Map<String, BucketServiceFactory> bucketServiceFactoryMap) {
         this.objectMapper = objectMapper;
+        this.downloadTracker = downloadTracker;
+        this.bucketServiceFactoryMap = bucketServiceFactoryMap;
     }
 
     @Override
@@ -69,11 +81,18 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
                                                        operation.request.restorationStrategyType));
             }
 
+            // 0. check that bucket is there
+
+            try (final BucketService bucketService = bucketServiceFactoryMap.get(request.storageLocation.storageProvider).createBucketService(request)) {
+                bucketService.checkBucket(request.storageLocation.bucket, false);
+            }
+
             // 1. Resolve node to restore to
 
             if (operation.request.resolveHostIdFromTopology) {
                 final NodeTopology nodeTopology = getNodeTopology(restorer, request);
-                operation.request.storageLocation = StorageLocation.updateNodeId(operation.request.storageLocation, nodeTopology.hostId);
+                // here, nodeTopology.nodeId is uuid, not hostname
+                operation.request.storageLocation = StorageLocation.updateNodeId(operation.request.storageLocation, nodeTopology.nodeId);
                 restorer.updateStorageLocation(operation.request.storageLocation);
                 logger.info(format("Updated storage location to %s", operation.request.storageLocation));
             }
@@ -106,18 +125,16 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
             // the first round, see what is in manifest and what is currently present,
             // if it is not present, we will download it
 
-            for (final ManifestEntry manifestFile : manifestFiles)
-            {
+            for (final ManifestEntry manifestFile : manifestFiles) {
                 // do not download schemas
-                if (manifestFile.type == Type.CQL_SCHEMA)
+                if (manifestFile.type == Type.CQL_SCHEMA) {
                     continue;
+                }
 
-                if (Files.exists(manifestFile.localFile))
-                {
+                if (Files.exists(manifestFile.localFile)) {
                     // this file exists on a local disk as well as in manifest, there is nothing to download nor remove
                     logger.info(String.format("%s found locally, not downloading", manifestFile.localFile));
-                } else
-                {
+                } else {
                     // if it does not exist locally, we have to download it
                     entriesToDownload.add(manifestFile);
                 }
@@ -150,20 +167,46 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
             });
 
             // 7. Download files in the manifest
-            restorer.downloadFiles(entriesToDownload, new OperationProgressTracker(operation, entriesToDownload.size()));
+
+            Session<DownloadUnit> downloadSession = null;
+
+            try {
+                downloadSession = downloadTracker.submit(restorer, operation, entriesToDownload, operation.request.snapshotTag, operation.request.concurrentConnections);
+                downloadSession.waitUntilConsideredFinished();
+                downloadTracker.cancelIfNecessary(downloadSession);
+            } finally {
+                downloadTracker.removeSession(downloadSession);
+            }
 
             // K8S will handle copying over tokens.yaml fragment and disabling bootstrap fragment to right directory to be picked up by Cassandra
             // "standalone / vanilla" Cassandra installations has to cover this manually for now.
             // in the future, we might implement automatic configuration of cassandra.yaml for standalone installations
             if (request.updateCassandraYaml) {
-                final Path cassandraYaml = request.cassandraConfigDirectory.resolve("cassandra.yaml");
 
-                FileUtils.appendToFile(cassandraYaml, manifest.getInitialTokensCassandraYamlFragment());
-                FileUtils.replaceInFile(cassandraYaml, "auto_bootstrap: true", "auto_bootstrap: false");
+                Path fileToAppendTo;
+                boolean shouldAppend = true;
+
+                if (KubernetesHelper.isRunningInKubernetes()) {
+                    // Cassandra operator specific dir
+                    fileToAppendTo = Paths.get("/var/lib/cassandra/tokens.yaml");
+                } else {
+                    fileToAppendTo = request.cassandraConfigDirectory.resolve("cassandra.yaml");
+                    if (!Files.exists(fileToAppendTo)) {
+                        logger.info(String.format("File %s does not exist, not going to append to it!", fileToAppendTo));
+                        shouldAppend = false;
+                    }
+                }
+
+                if (shouldAppend) {
+                    FileUtils.createFile(fileToAppendTo);
+                    FileUtils.appendToFile(fileToAppendTo, manifest.getInitialTokensCassandraYamlFragment());
+                    // TODO - cover case for vanilla Cassandra
+                    FileUtils.appendToFile(fileToAppendTo, "auto_bootstrap: false");
+                }
             } else {
                 logger.info("Update of cassandra.yaml was turned off by --update-cassandra-yaml=false (or not specifying that flag at all.");
-                logger.info("For the successful start of a node, you have to do the following:");
-                logger.info("1) add the content of the tokens.yaml in Cassandra installation dir to cassandra.yaml file");
+                logger.info("For the successful start of a node by Cassandra operator or manually, you have to do the following:");
+                logger.info("1) add tokens in Cassandra installation dir to cassandra.yaml file");
                 logger.info("2) change 'auto_bootstrap: true' to 'auto_bootstrap: false' in cassandra.yaml");
             }
         } catch (final Throwable t) {
@@ -179,22 +222,13 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
         return IN_PLACE;
     }
 
-    private String resolveTopologyFile(final RestoreOperationRequest request) {
-        if (request.exactSchemaVersion) {
-            return format("topology/%s-%s-%s",
-                          request.storageLocation.clusterId,
-                          request.snapshotTag,
-                          request.schemaVersion);
-        } else {
-            return format("topology/%s-%s", request.storageLocation.clusterId, request.snapshotTag);
-        }
-    }
-
     private NodeTopology getNodeTopology(final Restorer restorer, final RestoreOperationRequest request) {
         try {
-            final String topologyFile = resolveTopologyFile(request);
+            final String topologyFile = format("topology/%s-%s", request.storageLocation.clusterId, request.snapshotTag);
             final String topology = restorer.downloadFileToString(Paths.get(topologyFile), fileName -> fileName.contains(topologyFile));
             final ClusterTopology clusterTopology = objectMapper.readValue(topology, ClusterTopology.class);
+            // nodeId here is propagated by Cassandra operator and it is "hostname"
+            // by translating, we get proper node id (uuid) so we fetch the right node in remote bucket
             return clusterTopology.translateToNodeTopology(request.storageLocation.nodeId);
         } catch (final Exception ex) {
             throw new IllegalStateException(format("Unable to resolve node hostId to restore to for request %s", request), ex);

@@ -1,8 +1,8 @@
 version: 2
 jobs:
-  build-java-8:
+  build:
 
-    working_directory: ~/cassandra-backup-java-8
+    working_directory: ~/cassandra-backup
 
     docker:
       - image: circleci/openjdk:8-jdk-stretch
@@ -21,42 +21,13 @@ jobs:
             - ~/.m2
           key: cassandra-backup-{{ checksum "pom.xml" }}
 
-      - run: (echo "${google_application_credentials}" > /tmp/gcp.json) && mvn clean install
+      - run: (echo "${google_application_credentials}" > /tmp/gcp.json) && mvn clean install -PcloudTests
 
       - store_test_results:
-          path: ~/cassandra-backup/target/surefire-reports
-  build-java-11:
-
-    working_directory: ~/cassandra-backup-java-11
-
-    docker:
-      - image: circleci/openjdk:11-jdk-stretch
-
-    steps:
-
-      - checkout
-
-      - restore_cache:
-          key: cassandra-backup-{{ checksum "pom.xml" }}
-
-      - run: mvn dependency:go-offline # gets the project dependencies
-
-      - save_cache:
-          paths:
-            - ~/.m2
-          key: cassandra-backup-{{ checksum "pom.xml" }}
-
-      # Cassandra 3.x does not run with Java 11 so we are running with Cassandra 4.0 as tests are running embedded Cassandra instance too
-      - run: (echo "${google_application_credentials}" > /tmp/gcp.json) && mvn clean install -Dbackup.tests.cassandra.version=4.0-beta2 -Dbackup.tests.cassandra4.version=4.0-beta2 -Djava.version=11
-
-      - store_test_results:
-          path: ~/cassandra-backup/target/surefire-reports
+          path: ~/cassandra-backup/target/instaclustr-backup-restore.jar
 
 workflows:
   version: 2
   build:
     jobs:
-      - build-java-8
-      - build-java-11:
-          requires:
-            - build-java-8
+      - build

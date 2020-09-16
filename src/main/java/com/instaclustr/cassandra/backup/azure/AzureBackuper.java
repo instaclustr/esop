@@ -14,7 +14,6 @@ import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.Backuper;
-import com.instaclustr.threading.Executors.ExecutorServiceSupplier;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.BlobListingDetails;
@@ -38,9 +37,8 @@ public class AzureBackuper extends Backuper {
 
     @AssistedInject
     public AzureBackuper(final CloudStorageAccountFactory cloudStorageAccountFactory,
-                         final ExecutorServiceSupplier executorServiceSupplier,
                          @Assisted final BackupOperationRequest request) throws Exception {
-        super(request, executorServiceSupplier);
+        super(request);
 
         cloudStorageAccount = cloudStorageAccountFactory.build(request);
         cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
@@ -50,9 +48,8 @@ public class AzureBackuper extends Backuper {
 
     @AssistedInject
     public AzureBackuper(final CloudStorageAccountFactory cloudStorageAccountFactory,
-                         final ExecutorServiceSupplier executorServiceSupplier,
                          @Assisted final BackupCommitLogsOperationRequest request) throws Exception {
-        super(request, executorServiceSupplier);
+        super(request);
 
         cloudStorageAccount = cloudStorageAccountFactory.build(request);
         cloudBlobClient = cloudStorageAccount.createCloudBlobClient();

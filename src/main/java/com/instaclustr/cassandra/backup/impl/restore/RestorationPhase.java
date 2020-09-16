@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.instaclustr.cassandra.backup.impl.AbstractTracker.Session;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities;
 import com.instaclustr.cassandra.backup.impl.Manifest;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
@@ -37,12 +38,12 @@ import com.instaclustr.cassandra.backup.impl.interaction.ClusterState;
 import com.instaclustr.cassandra.backup.impl.interaction.FailureDetector;
 import com.instaclustr.cassandra.backup.impl.refresh.RefreshOperation;
 import com.instaclustr.cassandra.backup.impl.refresh.RefreshOperationRequest;
+import com.instaclustr.cassandra.backup.impl.restore.DownloadTracker.DownloadUnit;
 import com.instaclustr.cassandra.backup.impl.restore.strategy.RestorationContext;
 import com.instaclustr.cassandra.backup.impl.truncate.TruncateOperation;
 import com.instaclustr.cassandra.backup.impl.truncate.TruncateOperationRequest;
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.operations.Operation;
-import com.instaclustr.operations.OperationProgressTracker;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.FileFileFilter;
 import org.slf4j.Logger;
@@ -243,7 +244,20 @@ public abstract class RestorationPhase {
                 final List<ManifestEntry> manifestFiles = manifest.getManifestFiles(ctxt.operation.request.entities,
                                                                                     false /* not possible to restore system keyspace on a live cluster */);
 
-                ctxt.restorer.downloadFiles(manifestFiles, new OperationProgressTracker(ctxt.operation, manifestFiles.size()));
+                Session<DownloadUnit> session = null;
+
+                try {
+                    session = ctxt.downloadTracker.submit(ctxt.restorer,
+                                                          ctxt.operation,
+                                                          manifestFiles,
+                                                          ctxt.operation.request.snapshotTag,
+                                                          ctxt.operation.request.concurrentConnections);
+
+                    session.waitUntilConsideredFinished();
+                    ctxt.downloadTracker.cancelIfNecessary(session);
+                } finally {
+                    ctxt.downloadTracker.removeSession(session);
+                }
 
                 logger.info("Downloading phase was successfully completed.");
             } catch (final Exception ex) {

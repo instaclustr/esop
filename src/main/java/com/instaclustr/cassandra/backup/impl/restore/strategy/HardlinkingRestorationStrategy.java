@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.instaclustr.cassandra.CassandraVersion;
+import com.instaclustr.cassandra.backup.impl.restore.DownloadTracker;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.CleaningPhase;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.DownloadingPhase;
@@ -43,8 +44,9 @@ public class HardlinkingRestorationStrategy extends AbstractRestorationStrategy 
     @Inject
     public HardlinkingRestorationStrategy(final CassandraJMXService cassandraJMXService,
                                           final Provider<CassandraVersion> cassandraVersion,
-                                          final ObjectMapper objectMapper) {
-        super(cassandraJMXService, cassandraVersion, objectMapper);
+                                          final ObjectMapper objectMapper,
+                                          final DownloadTracker downloadTracker) {
+        super(cassandraJMXService, cassandraVersion, objectMapper, downloadTracker);
     }
 
     @Override
@@ -55,7 +57,7 @@ public class HardlinkingRestorationStrategy extends AbstractRestorationStrategy 
     @Override
     public RestorationPhase resolveRestorationPhase(final Operation<RestoreOperationRequest> operation, final Restorer restorer) {
 
-        final RestorationContext ctxt = initialiseRestorationContext(operation, restorer, objectMapper, cassandraVersion);
+        final RestorationContext ctxt = initialiseRestorationContext(operation, restorer, objectMapper, cassandraVersion, downloadTracker);
         final RestorationPhaseType phaseType = ctxt.operation.request.restorationPhase;
 
         if (phaseType == INIT) {

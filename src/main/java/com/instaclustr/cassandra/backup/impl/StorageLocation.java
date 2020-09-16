@@ -174,7 +174,7 @@ public class StorageLocation {
         } else {
             final StorageLocation updatedNodeId = updateNodeId(oldLocation, hostId);
             final StorageLocation updatedDatacenter = updateDatacenter(updatedNodeId, datacenterId);
-            return updateClusterName(updatedDatacenter, datacenterId);
+            return updateClusterName(updatedDatacenter, clusterName);
         }
     }
 

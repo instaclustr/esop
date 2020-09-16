@@ -1,19 +1,35 @@
 package com.instaclustr.cassandra.backup.embedded.gcp;
 
-import static com.instaclustr.io.FileUtils.deleteDirectory;
+import java.util.ArrayList;
+import java.util.List;
 
-import java.nio.file.Paths;
-
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
 import com.instaclustr.cassandra.backup.embedded.AbstractBackupTest;
 import com.instaclustr.cassandra.backup.gcp.GCPBucketService;
+import com.instaclustr.cassandra.backup.gcp.GCPModule;
 import com.instaclustr.cassandra.backup.gcp.GCPModule.GoogleStorageFactory;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
+import com.instaclustr.kubernetes.KubernetesApiModule;
 
 public abstract class BaseGoogleStorageBackupRestoreTest extends AbstractBackupTest {
 
     protected abstract BackupOperationRequest getBackupOperationRequest();
 
     public abstract GoogleStorageFactory getGoogleStorageFactory();
+
+    public void inject() {
+        final List<Module> modules = new ArrayList<Module>() {{
+            add(new KubernetesApiModule());
+            add(new GCPModule());
+        }};
+
+        modules.addAll(defaultModules);
+
+        final Injector injector = Guice.createInjector(modules);
+        injector.injectMembers(this);
+    }
 
     @Override
     protected String getStorageLocation() {
@@ -25,16 +41,14 @@ public abstract class BaseGoogleStorageBackupRestoreTest extends AbstractBackupT
             inPlaceBackupRestoreTest(programArguments);
         } finally {
             new GCPBucketService(getGoogleStorageFactory(), getBackupOperationRequest()).delete(BUCKET_NAME);
-            deleteDirectory(Paths.get(target("commitlog_download_dir")));
         }
     }
 
-    public void liveCassandraTest(final String[][] programArguments) throws Exception {
+    public void liveCassandraTest(final String[][] programArguments, final String cassandraVersion) throws Exception {
         try {
-            liveBackupRestoreTest(programArguments);
+            liveBackupRestoreTest(programArguments, cassandraVersion);
         } finally {
             new GCPBucketService(getGoogleStorageFactory(), getBackupOperationRequest()).delete(BUCKET_NAME);
-            deleteDirectory(Paths.get(target("commitlog_download_dir")));
         }
     }
 }
