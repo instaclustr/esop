@@ -15,13 +15,13 @@ import com.fasterxml.jackson.databind.ser.std.UUIDSerializer;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities;
+import com.instaclustr.cassandra.backup.impl.GatheringOperationCoordinatorException;
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import com.instaclustr.cassandra.backup.impl._import.ImportOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.RestorationPhaseType;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy.RestorationStrategyType;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationCoordinator;
-import com.instaclustr.operations.OperationCoordinator.OperationCoordinatorException;
 import com.instaclustr.operations.OperationFailureException;
 import com.instaclustr.operations.ResultGatherer;
 
@@ -119,7 +119,7 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
         final ResultGatherer<RestoreOperationRequest> coordinatorResult = coordinator.coordinate(this);
 
         if (coordinatorResult.hasErrors()) {
-            throw new OperationCoordinatorException(coordinatorResult.getErrorneousOperations().toString());
+            throw new GatheringOperationCoordinatorException(coordinatorResult.getErrorneousOperations());
         }
     }
 }

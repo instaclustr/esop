@@ -2,20 +2,12 @@ package com.instaclustr.cassandra.backup.embedded.azure;
 
 import static org.testng.Assert.assertNotNull;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
-import com.google.inject.Guice;
 import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.Module;
-import com.instaclustr.cassandra.backup.azure.AzureModule;
 import com.instaclustr.cassandra.backup.azure.AzureModule.CloudStorageAccountFactory;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
-import com.instaclustr.kubernetes.KubernetesApiModule;
 import com.instaclustr.kubernetes.KubernetesService;
-import com.instaclustr.threading.ExecutorsModule;
 import io.kubernetes.client.ApiException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -36,16 +28,7 @@ public class KubernetesAzureBackupRestoreTest extends BaseAzureBackupRestoreTest
 
     @BeforeMethod
     public void setup() throws Exception {
-
-        final List<Module> modules = new ArrayList<Module>() {{
-            add(new KubernetesApiModule());
-            add(new AzureModule());
-            add(new ExecutorsModule());
-        }};
-
-        final Injector injector = Guice.createInjector(modules);
-        injector.injectMembers(this);
-
+        inject();
         init();
     }
 
@@ -61,8 +44,18 @@ public class KubernetesAzureBackupRestoreTest extends BaseAzureBackupRestoreTest
         assertNotNull(kubernetesService);
 
         kubernetesService.createSecret(SIDECAR_SECRET_NAME, new HashMap<String, String>() {{
-            put("azurestorageaccount", System.getProperty("azurestorageaccount"));
-            put("azurestoragekey", System.getProperty("azurestoragekey"));
+
+            String accountProp = System.getProperty("azurestorageaccount");
+            String keyProp = System.getProperty("azurestoragekey");
+
+            String accountEnv = System.getenv("AZURE_STORAGE_ACCOUNT");
+            String keyEnv = System.getenv("AZURE_STORAGE_KEY");
+
+            String account = accountProp != null ? accountProp : accountEnv;
+            String key = keyProp != null ? keyProp : keyEnv;
+
+            put("azurestorageaccount", account);
+            put("azurestoragekey", key);
         }});
     }
 
@@ -91,12 +84,12 @@ public class KubernetesAzureBackupRestoreTest extends BaseAzureBackupRestoreTest
 
     @Test
     public void testImportingBackupAndRestore() throws Exception {
-        liveCassandraTest(importArguments());
+        liveCassandraTest(importArguments(), CASSANDRA_4_VERSION);
     }
 
     @Test
     @Ignore
     public void testHardlinkingBackupAndRestore() throws Exception {
-        liveCassandraTest(hardlinkingArguments());
+        liveCassandraTest(hardlinkingArguments(), CASSANDRA_VERSION);
     }
 }

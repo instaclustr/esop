@@ -3,6 +3,7 @@ package com.instaclustr.cassandra.backup;
 import com.instaclustr.cassandra.CassandraVersion;
 
 public class TestFileConfig {
+
     public String sha1Hash;
     public final CassandraVersion cassandraVersion;
     public final String sstableVersion;

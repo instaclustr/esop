@@ -7,11 +7,12 @@ import java.util.stream.StreamSupport;
 
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
-import com.instaclustr.cassandra.backup.azure.AzureModule.AzureModuleException;
 import com.instaclustr.cassandra.backup.azure.AzureModule.CloudStorageAccountFactory;
 import com.instaclustr.cassandra.backup.impl.BucketService;
 import com.instaclustr.cassandra.backup.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
+import com.instaclustr.cassandra.backup.impl.restore.RestoreCommitLogsOperationRequest;
+import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.OperationContext;
 import com.microsoft.azure.storage.StorageException;
@@ -22,7 +23,7 @@ import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AzureBucketService implements BucketService {
+public class AzureBucketService extends BucketService {
 
     private static final Logger logger = LoggerFactory.getLogger(AzureBucketService.class);
 
@@ -44,17 +45,31 @@ public class AzureBucketService implements BucketService {
         this.cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
     }
 
+    @AssistedInject
+    public AzureBucketService(final CloudStorageAccountFactory accountFactory,
+                              @Assisted final RestoreOperationRequest request) throws URISyntaxException {
+        this.cloudStorageAccount = accountFactory.build(request);
+        this.cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+    }
+
+    @AssistedInject
+    public AzureBucketService(final CloudStorageAccountFactory accountFactory,
+                              @Assisted final RestoreCommitLogsOperationRequest request) throws URISyntaxException {
+        this.cloudStorageAccount = accountFactory.build(request);
+        this.cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+    }
+
     @Override
-    public boolean doesExist(final String bucketName) {
+    public boolean doesExist(final String bucketName) throws BucketServiceException {
         try {
             return cloudBlobClient.getContainerReference(bucketName).exists();
         } catch (URISyntaxException | StorageException ex) {
-            throw new AzureModuleException(format("Unable to determine if bucket %s exists!", bucketName), ex);
+            throw new BucketServiceException(format("Unable to determine if the bucket %s exists.", bucketName), ex);
         }
     }
 
     @Override
-    public void create(final String bucketName) {
+    public void create(final String bucketName) throws BucketServiceException {
 
         while (true) {
             try {
@@ -65,7 +80,7 @@ public class AzureBucketService implements BucketService {
 
                 break;
             } catch (URISyntaxException ex) {
-                throw new AzureModuleException(format("Unable to create a bucket %s", bucketName), ex);
+                throw new BucketServiceException(format("Unable to create a bucket %s", bucketName), ex);
             } catch (StorageException ex) {
                 if (ex.getHttpStatusCode() == 409
                     && ex.getExtendedErrorInformation().getErrorMessage().contains("The specified container is being deleted. Try operation later.")) {
@@ -76,15 +91,16 @@ public class AzureBucketService implements BucketService {
                         ex2.printStackTrace();
                     }
                 } else {
-                    throw new AzureModuleException(format("Unable to create a bucket %s", bucketName), ex);
+                    throw new BucketServiceException(format("Unable to create a bucket %s", bucketName), ex);
                 }
             }
         }
     }
 
     @Override
-    public void delete(final String bucketName) {
+    public void delete(final String bucketName) throws BucketServiceException {
         try {
+            logger.info("Deleting bucket {}", bucketName);
             cloudBlobClient.getContainerReference(bucketName).deleteIfExists();
 
             // waiting until it is really deleted
@@ -103,8 +119,8 @@ public class AzureBucketService implements BucketService {
                     e.printStackTrace();
                 }
             }
-        } catch (URISyntaxException | StorageException ex) {
-            throw new AzureModuleException(format("Unable to delete bucket %s", bucketName), ex);
+        } catch (final Exception ex) {
+            throw new BucketServiceException(format("Unable to delete the bucket %s", bucketName), ex);
         }
     }
 

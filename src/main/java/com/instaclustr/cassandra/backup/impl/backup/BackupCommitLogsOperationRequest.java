@@ -36,7 +36,6 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
                                             @JsonProperty("duration") final Time duration,
                                             @JsonProperty("bandwidth") final DataRate bandwidth,
                                             @JsonProperty("concurrentConnections") final Integer concurrentConnections,
-                                            @JsonProperty("lockFile") final Path lockFile,
                                             @JsonProperty("metadataDirective") final MetadataDirective metadataDirective,
                                             @JsonProperty("cassandraDirectory") final Path cassandraDirectory,
                                             @JsonProperty("commitLogRestoreDirectory") final Path commitLogArchiveOverride,
@@ -44,7 +43,7 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
                                             @JsonProperty("k8sSecretName") final String k8sSecretName,
                                             @JsonProperty("insecure") final boolean insecure,
                                             @JsonProperty("createMissingBucket") final boolean createMissingBucket) {
-        super(storageLocation, duration, bandwidth, concurrentConnections, cassandraDirectory, lockFile, metadataDirective, k8sNamespace, k8sSecretName, insecure, createMissingBucket);
+        super(storageLocation, duration, bandwidth, concurrentConnections, cassandraDirectory, metadataDirective, k8sNamespace, k8sSecretName, insecure, createMissingBucket);
         this.commitLogArchiveOverride = commitLogArchiveOverride;
         this.type = "commitlog-backup";
     }
@@ -56,7 +55,6 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
             .add("duration", duration)
             .add("bandwidth", bandwidth)
             .add("concurrentConnections", concurrentConnections)
-            .add("lockFile", lockFile)
             .add("metadataDirective", metadataDirective)
             .add("cassandraDirectory", cassandraDirectory)
             .add("commitLogRestoreDirectory", commitLogArchiveOverride)

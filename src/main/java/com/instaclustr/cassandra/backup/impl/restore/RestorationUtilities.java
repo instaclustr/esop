@@ -10,12 +10,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities;
 import com.instaclustr.cassandra.backup.impl.Manifest;
 import com.instaclustr.cassandra.backup.impl._import.ImportOperationRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class RestorationUtilities {
-
-    private static final Logger logger = LoggerFactory.getLogger(RestorationUtilities.class);
 
     public static Manifest downloadManifest(final RestoreOperationRequest request,
                                             final Restorer restorer,
@@ -32,12 +28,12 @@ public class RestorationUtilities {
         return entities.getKeyspacesAndTables().entries().stream().map(entry -> request.importing.copy(entry.getKey(), entry.getValue())).collect(toList());
     }
 
-    // predicates
-
     public static abstract class AbstractFilteringPredicate implements Predicate<String> {
 
         protected final RestoreOperationRequest request;
         protected final String currentSchemaVersion;
+
+        protected String path;
 
         public AbstractFilteringPredicate(final RestoreOperationRequest request, final String currentSchemaVersion) {
             this.request = request;
@@ -45,23 +41,20 @@ public class RestorationUtilities {
         }
 
         protected boolean filter(String toFilterOn) {
+
+            if (!toFilterOn.contains(path)) {
+                return false;
+            }
+
             if (request.exactSchemaVersion) {
                 if (request.schemaVersion != null) {
-                    return toFilterOn.contains(request.schemaVersion.toString());
+                    return toFilterOn.contains(path + "-" + request.schemaVersion);
                 } else if (currentSchemaVersion != null) {
-                    return toFilterOn.contains(currentSchemaVersion);
-                }
-
-                throw new IllegalStateException("exactSchemaVersion is required but there is not schemaVersion is request nor runtime Cassandra version!");
-            } else {
-                if (request.schemaVersion != null) {
-                    return toFilterOn.contains(request.schemaVersion.toString());
-                } else if (currentSchemaVersion != null) {
-                    return toFilterOn.contains(currentSchemaVersion);
-                } else {
-                    return true;
+                    return toFilterOn.contains(path + "-" + currentSchemaVersion);
                 }
             }
+
+            return true;
         }
     }
 
@@ -73,8 +66,8 @@ public class RestorationUtilities {
 
         @Override
         public boolean test(final String s) {
-            String path = request.storageLocation.nodePath() + "/manifests/" + request.snapshotTag;
-            return (s.contains(path) || s.startsWith(request.snapshotTag)) && filter(s);
+            path = request.storageLocation.nodePath() + "/manifests/" + request.snapshotTag;
+            return filter(s);
         }
     }
 }

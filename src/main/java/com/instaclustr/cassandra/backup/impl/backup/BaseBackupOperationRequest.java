@@ -45,10 +45,6 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
         defaultValue = "10")
     public Integer concurrentConnections;
 
-    @Option(names = {"--lock-file"},
-        description = "Directory which will be used for locking purposes for backups")
-    public Path lockFile;
-
     @Option(names = {"--create-missing-bucket"},
         description = "Automatically creates a bucket if it does not exist. If a bucket does not exist, backup operation will fail.")
     public boolean createMissingBucket;
@@ -78,7 +74,6 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
                                       final DataRate bandwidth,
                                       final Integer concurrentConnections,
                                       final Path cassandraDirectory,
-                                      final Path lockFile,
                                       final MetadataDirective metadataDirective,
                                       final String k8sNamespace,
                                       final String k8sBackupSecretName,
@@ -90,7 +85,6 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
         this.bandwidth = bandwidth;
         this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/")) ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.concurrentConnections = concurrentConnections == null ? 10 : concurrentConnections;
-        this.lockFile = lockFile;
         this.metadataDirective = metadataDirective == null ? MetadataDirective.COPY : metadataDirective;
         this.k8sNamespace = k8sNamespace;
         this.k8sSecretName = k8sBackupSecretName;

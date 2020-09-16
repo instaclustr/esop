@@ -30,12 +30,6 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
     @JsonProperty("snapshotTag")
     public String snapshotTag = format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis()));
 
-    @Option(names = {"--keep-existing-snapshot-tag"},
-        description = "If snapshotTag represents existing snapshot and this flag is not set, that snapshot will be deleted. "
-            + "If snapshot exists and this flag is specified, whole request will fail because it can not take a snapshot with same name.")
-    @JsonProperty("keepExistingSnapshot")
-    public boolean keepExistingSnapshot;
-
     @Option(names = "--entities",
         description = "entities to backup, if not specified, all keyspaces will be backed up, form 'ks1,ks2,ks2' or 'ks1.cf1,ks2.cf2'",
         converter = DatabaseEntitiesConverter.class)
@@ -62,6 +56,10 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
         description = "If set, a node this tool will connect to will coordinate cluster-wide backup.")
     public boolean globalRequest;
 
+    // this field is not "settable", it will be rewritten by backup logic if it is set
+    @JsonProperty("schemaVersion")
+    public String schemaVersion;
+
     public BackupOperationRequest() {
         // for picocli
     }
@@ -72,7 +70,6 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonProperty("duration") final Time duration,
                                   @JsonProperty("bandwidth") final DataRate bandwidth,
                                   @JsonProperty("concurrentConnections") final Integer concurrentConnections,
-                                  @JsonProperty("lockFile") final Path lockFile,
                                   @JsonProperty("metadataDirective") final MetadataDirective metadataDirective,
                                   @JsonProperty("cassandraDirectory") final Path cassandraDirectory,
                                   @JsonProperty("entities")
@@ -83,18 +80,18 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonProperty("k8sSecretName") final String k8sSecretName,
                                   @JsonProperty("globalRequest") final boolean globalRequest,
                                   @JsonProperty("dc") final String dc,
-                                  @JsonProperty("keepExistingSnapshot") final boolean keepExistingSnapshot,
                                   @JsonProperty("timeout") @Min(1) final Integer timeout,
                                   @JsonProperty("insecure") final boolean insecure,
-                                  @JsonProperty("createMissingBucket") final boolean createMissingBucket) {
-        super(storageLocation, duration, bandwidth, concurrentConnections, cassandraDirectory, lockFile, metadataDirective, k8sNamespace, k8sSecretName, insecure, createMissingBucket);
+                                  @JsonProperty("createMissingBucket") final boolean createMissingBucket,
+                                  @JsonProperty("schemaVersion") final String schemaVersion) {
+        super(storageLocation, duration, bandwidth, concurrentConnections, cassandraDirectory, metadataDirective, k8sNamespace, k8sSecretName, insecure, createMissingBucket);
         this.entities = entities == null ? DatabaseEntities.empty() : entities;
         this.snapshotTag = snapshotTag == null ? format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis())) : snapshotTag;
         this.globalRequest = globalRequest;
         this.type = type;
         this.dc = dc;
-        this.keepExistingSnapshot = keepExistingSnapshot;
         this.timeout = timeout == null ? 5 : timeout;
+        this.schemaVersion = schemaVersion;
     }
 
     @Override
@@ -104,7 +101,6 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
             .add("duration", duration)
             .add("bandwidth", bandwidth)
             .add("concurrentConnections", concurrentConnections)
-            .add("lockFile", lockFile)
             .add("cassandraDirectory", cassandraDirectory)
             .add("entities", entities)
             .add("snapshotTag", snapshotTag)
@@ -112,10 +108,10 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
             .add("k8sSecretName", k8sSecretName)
             .add("globalRequest", globalRequest)
             .add("dc", dc)
-            .add("keepExistingSnapshot", keepExistingSnapshot)
             .add("timeout", timeout)
             .add("metadataDirective", metadataDirective)
             .add("insecure", insecure)
+            .add("schemaVersion", schemaVersion)
             .toString();
     }
 }

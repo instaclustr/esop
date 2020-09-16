@@ -62,7 +62,7 @@ public class BackupApplication implements Runnable {
         await().forever().until(() -> operation.state.isTerminalState());
 
         if (operation.state == Operation.State.FAILED) {
-            throw new IllegalStateException("Backup operation was not successful.");
+            throw new IllegalStateException("Backup operation was not successful: ", operation.failureCause);
         }
     }
 }

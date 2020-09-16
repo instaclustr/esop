@@ -7,24 +7,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.google.inject.Guice;
 import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.Module;
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
+import com.instaclustr.cassandra.backup.s3.aws.S3Backuper;
 import com.instaclustr.cassandra.backup.s3.aws.S3BucketService;
-import com.instaclustr.cassandra.backup.s3.aws.S3Module;
 import com.instaclustr.cassandra.backup.s3.aws.S3Module.S3TransferManagerFactory;
 import com.instaclustr.cassandra.backup.s3.aws.S3Restorer;
-import com.instaclustr.kubernetes.KubernetesApiModule;
-import com.instaclustr.threading.Executors.FixedTasksExecutorSupplier;
-import com.instaclustr.threading.ExecutorsModule;
 import io.kubernetes.client.ApiException;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -42,16 +34,7 @@ public class S3BackupRestoreTest extends BaseS3BackupRestoreTest {
 
     @BeforeMethod
     public void setup() throws ApiException, IOException {
-
-        final List<Module> modules = new ArrayList<Module>() {{
-            add(new KubernetesApiModule());
-            add(new S3Module());
-            add(new ExecutorsModule());
-        }};
-
-        final Injector injector = Guice.createInjector(modules);
-        injector.injectMembers(this);
-
+        inject();
         init();
     }
 
@@ -76,22 +59,25 @@ public class S3BackupRestoreTest extends BaseS3BackupRestoreTest {
 
     @Test
     public void testImportingBackupAndRestore() throws Exception {
-        liveCassandraTest(importArguments());
+        liveCassandraTest(importArguments(), CASSANDRA_4_VERSION);
     }
 
     @Test
     public void testHardlinkingBackupAndRestore() throws Exception {
-        liveCassandraTest(hardlinkingArguments());
+        liveCassandraTest(hardlinkingArguments(), CASSANDRA_VERSION);
     }
 
     @Test
     public void testDownload() throws Exception {
-        S3BucketService s3BucketService = new S3BucketService(getTransferManagerFactory(), getBackupOperationRequest());
+
+        S3TransferManagerFactory factory = getTransferManagerFactory();
+
+        S3BucketService s3BucketService = new S3BucketService(factory, getBackupOperationRequest());
 
         try {
             s3BucketService.create(BUCKET_NAME);
 
-            AmazonS3 amazonS3Client = getTransferManagerFactory().build(getBackupOperationRequest()).getAmazonS3Client();
+            AmazonS3 amazonS3Client = factory.build(getBackupOperationRequest()).getAmazonS3Client();
 
             amazonS3Client.putObject(BUCKET_NAME, "cluster/dc/node/manifests/snapshot-name-" + BUCKET_NAME, "hello");
             amazonS3Client.putObject(BUCKET_NAME, "snapshot/in/dir/my-name-" + BUCKET_NAME, "hello world");
@@ -101,7 +87,11 @@ public class S3BackupRestoreTest extends BaseS3BackupRestoreTest {
             final RestoreOperationRequest restoreOperationRequest = new RestoreOperationRequest();
             restoreOperationRequest.storageLocation = new StorageLocation("s3://" + BUCKET_NAME + "/cluster/dc/node");
 
-            final S3Restorer s3Restorer = new S3Restorer(getTransferManagerFactory(), new FixedTasksExecutorSupplier(), restoreOperationRequest);
+            final BackupOperationRequest backupOperationRequest = new BackupOperationRequest();
+            backupOperationRequest.storageLocation = new StorageLocation("s3://" + BUCKET_NAME + "/cluster/dc/node");
+
+            final S3Restorer s3Restorer = new S3Restorer(factory, restoreOperationRequest);
+            final S3Backuper s3Backuper = new S3Backuper(factory, backupOperationRequest);
 
             // 1
 
@@ -124,6 +114,13 @@ public class S3BackupRestoreTest extends BaseS3BackupRestoreTest {
 
             Assert.assertTrue(Files.exists(Paths.get("/tmp/some-file")));
             Assert.assertEquals("hello world", new String(Files.readAllBytes(Paths.get("/tmp/some-file"))));
+
+            // backup
+
+            s3Backuper.uploadText("hello world", s3Backuper.objectKeyToRemoteReference(Paths.get("topology/some-file-in-here.txt")));
+            String text = s3Restorer.downloadFileToString(s3Restorer.objectKeyToRemoteReference(Paths.get("topology/some-file-in-here.txt")));
+
+            Assert.assertEquals("hello world", text);
         } finally {
             s3BucketService.delete(BUCKET_NAME);
             deleteDirectory(Paths.get(target("commitlog_download_dir")));

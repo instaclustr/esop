@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BackupRestoreTestUtils {
+
     private static final Logger log = LoggerFactory.getLogger(BackupRestoreTestUtils.class);
 
     public static final ImmutableList<String> SSTABLE_FILES = ImmutableList.of("TOC.txt",
@@ -70,16 +71,18 @@ public class BackupRestoreTestUtils {
             try (final Writer writer = Files.newBufferedWriter(digest)) {
                 writer.write(testFileConfig.getChecksum(keyspace, table));
             }
-            if (tag != null)
+            if (tag != null) {
                 Files.copy(digest, ssTableSnapshotPath.resolve(digest.getFileName()));
+            }
         }
 
         for (String name : SSTABLE_FILES) {
             final Path path = ssTablePath.resolve(String.format("%s-%s-big-%s", testFileConfig.getSstablePrefix(keyspace, table), sequence, name));
             Files.createFile(path);
             Files.write(path, testData);
-            if (tag != null)
+            if (tag != null) {
                 Files.copy(path, ssTableSnapshotPath.resolve(path.getFileName()));
+            }
         }
     }
 

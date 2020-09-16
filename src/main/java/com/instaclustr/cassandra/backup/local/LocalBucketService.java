@@ -2,11 +2,11 @@ package com.instaclustr.cassandra.backup.local;
 
 import com.instaclustr.cassandra.backup.impl.BucketService;
 
-public class LocalBucketService implements BucketService {
+public class LocalBucketService extends BucketService {
 
     @Override
     public boolean doesExist(final String bucketName) {
-        return false;
+        return true;
     }
 
     @Override
@@ -25,7 +25,7 @@ public class LocalBucketService implements BucketService {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
 
     }
 }

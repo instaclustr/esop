@@ -1,19 +1,11 @@
 package com.instaclustr.cassandra.backup.embedded.s3;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
-import com.google.inject.Guice;
 import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.Module;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
-import com.instaclustr.cassandra.backup.s3.aws.S3Module;
 import com.instaclustr.cassandra.backup.s3.aws.S3Module.S3TransferManagerFactory;
-import com.instaclustr.kubernetes.KubernetesApiModule;
 import com.instaclustr.kubernetes.KubernetesService;
-import com.instaclustr.threading.ExecutorsModule;
 import io.kubernetes.client.ApiException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -34,16 +26,7 @@ public class KubernetesS3BackupRestoreTest extends BaseS3BackupRestoreTest {
 
     @BeforeMethod
     public void setup() throws ApiException {
-
-        final List<Module> modules = new ArrayList<Module>() {{
-            add(new KubernetesApiModule());
-            add(new S3Module());
-            add(new ExecutorsModule());
-        }};
-
-        final Injector injector = Guice.createInjector(modules);
-        injector.injectMembers(this);
-
+        inject();
         init();
     }
 
@@ -57,8 +40,18 @@ public class KubernetesS3BackupRestoreTest extends BaseS3BackupRestoreTest {
         System.setProperty("kubernetes.client", "true");
 
         kubernetesService.createSecret(SIDECAR_SECRET_NAME, new HashMap<String, String>() {{
-            put("awssecretaccesskey", System.getProperty("awssecretaccesskey"));
-            put("awsaccesskeyid", System.getProperty("awsaccesskeyid"));
+
+            String keyProp = System.getProperty("awssecretaccesskey");
+            String idProp = System.getProperty("awsaccesskeyid");
+
+            String keyEnv = System.getenv("AWS_SECRET_KEY");
+            String idEnv = System.getenv("AWS_ACCESS_KEY_ID");
+
+            String key = keyProp != null ? keyProp : keyEnv;
+            String id = idProp != null ? idProp : idEnv;
+
+            put("awssecretaccesskey", key);
+            put("awsaccesskeyid", id);
         }});
     }
 
@@ -87,12 +80,12 @@ public class KubernetesS3BackupRestoreTest extends BaseS3BackupRestoreTest {
 
     @Test
     public void testImportingBackupAndRestore() throws Exception {
-        liveCassandraTest(importArguments());
+        liveCassandraTest(importArguments(), CASSANDRA_4_VERSION);
     }
 
     @Test
     @Ignore
     public void testHardlinkingBackupAndRestore() throws Exception {
-        liveCassandraTest(hardlinkingArguments());
+        liveCassandraTest(hardlinkingArguments(), CASSANDRA_4_VERSION);
     }
 }

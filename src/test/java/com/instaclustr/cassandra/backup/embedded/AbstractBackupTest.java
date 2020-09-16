@@ -6,8 +6,6 @@ import static com.datastax.oss.driver.api.core.uuid.Uuids.timeBased;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createKeyspace;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createTable;
 import static com.google.common.collect.ImmutableMap.of;
 import static com.instaclustr.cassandra.backup.embedded.TestEntity.DATE;
 import static com.instaclustr.cassandra.backup.embedded.TestEntity.ID;
@@ -16,13 +14,18 @@ import static com.instaclustr.cassandra.backup.embedded.TestEntity.NAME;
 import static com.instaclustr.cassandra.backup.embedded.TestEntity.TABLE;
 import static com.instaclustr.cassandra.backup.embedded.TestEntity2.KEYSPACE_2;
 import static com.instaclustr.cassandra.backup.embedded.TestEntity2.TABLE_2;
+import static com.instaclustr.cassandra.backup.embedded.TestEntity3.KEYSPACE_3;
+import static com.instaclustr.cassandra.backup.embedded.TestEntity3.TABLE_3;
 import static com.instaclustr.io.FileUtils.cleanDirectory;
 import static com.instaclustr.io.FileUtils.deleteDirectory;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
+import static org.apache.commons.io.FileUtils.copyDirectory;
 import static org.awaitility.Awaitility.await;
 import static org.testng.Assert.assertEquals;
 
@@ -38,41 +41,70 @@ import java.util.UUID;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.type.DataType;
+import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import com.github.nosan.embedded.cassandra.EmbeddedCassandraFactory;
 import com.github.nosan.embedded.cassandra.api.Cassandra;
 import com.github.nosan.embedded.cassandra.api.Version;
 import com.github.nosan.embedded.cassandra.artifact.Artifact;
 import com.github.nosan.embedded.cassandra.artifact.DefaultArtifact;
+import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.inject.AbstractModule;
+import com.instaclustr.cassandra.CassandraModule;
 import com.instaclustr.cassandra.backup.cli.BackupRestoreCLI;
+import com.instaclustr.cassandra.backup.impl.backup.BackupModules.BackupModule;
+import com.instaclustr.cassandra.backup.impl.backup.BackupModules.UploadingModule;
+import com.instaclustr.cassandra.backup.impl.interaction.CassandraSchemaVersion;
+import com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy.RestorationStrategyType;
+import com.instaclustr.cassandra.backup.impl.restore.RestoreModules.DownloadingModule;
+import com.instaclustr.cassandra.backup.impl.restore.RestoreModules.RestorationStrategyModule;
+import com.instaclustr.cassandra.backup.impl.restore.RestoreModules.RestoreModule;
+import com.instaclustr.io.FileUtils;
+import com.instaclustr.operations.OperationsModule;
+import com.instaclustr.threading.ExecutorsModule;
 import io.kubernetes.client.ApiException;
+import jmx.org.apache.cassandra.CassandraJMXConnectionInfo;
+import jmx.org.apache.cassandra.service.CassandraJMXServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class AbstractBackupTest {
 
+    public List<AbstractModule> defaultModules = new ArrayList<AbstractModule>() {{
+        add(new ExecutorsModule());
+        add(new BackupModule());
+        add(new RestoreModule());
+        add(new UploadingModule());
+        add(new DownloadingModule());
+        add(new RestorationStrategyModule());
+
+        try {
+            add(new CassandraModule());
+        } catch (final Exception ignored) {
+
+        }
+        add(new OperationsModule());
+    }};
+
     protected static final Logger logger = LoggerFactory.getLogger(AbstractBackupTest.class);
 
-    private static final String CASSANDRA_VERSION = System.getProperty("backup.tests.cassandra.version", "3.11.8");
+    public static final String CASSANDRA_VERSION = System.getProperty("backup.tests.cassandra.version", "3.11.8");
 
-    private static final String CASSANDRA_4_VERSION = System.getProperty("backup.tests.cassandra4.version", "4.0-beta2");
+    public static final String CASSANDRA_4_VERSION = System.getProperty("backup.tests.cassandra4.version", "4.0-beta2");
 
     // This is number of rows we inserted into Cassandra DB in total
     // we backed up first 6 rows. For the last two rows, they are stored in commit logs.
     // The backup procedure backs up also commit logs including remaining 2 rows
     // so commit log restoration procedure restores them too
-    static int NUMBER_OF_INSERTED_ROWS = 8;
+    protected static int NUMBER_OF_INSERTED_ROWS = 8;
 
     // This is number of rows we expect to see in database after commitlog restoration
     // We omitted one row here, on purpose, to demonstrate point in time restoration
-    static int NUMBER_OF_ROWS_AFTER_RESTORATION = 7;
-
-    // inserted rows without these in commitlogs
-    static int NUMBER_OF_FLUSHED_ROWS = 6;
-
-    static Artifact CASSANDRA_ARTIFACT = Artifact.ofVersion(Version.of(CASSANDRA_VERSION));
+    protected static int NUMBER_OF_ROWS_AFTER_RESTORATION = 7;
 
     protected final Path target = new File("target").toPath().toAbsolutePath();
     protected final Path cassandraDir = new File("target/cassandra").toPath().toAbsolutePath();
+    protected final Path cassandraDataDir = new File("target/cassandra/data/data").toPath().toAbsolutePath();
     protected final Path cassandraRestoredDir = new File("target/cassandra-restored").toPath().toAbsolutePath();
     protected final Path cassandraRestoredConfigDir = new File("target/cassandra-restored/conf").toPath().toAbsolutePath();
 
@@ -109,6 +141,15 @@ public abstract class AbstractBackupTest {
             "--create-missing-bucket"
         };
 
+        // COMMIT LOGS BACKUP
+
+        final String[] commitlogBackupArgs = new String[]{
+            "commitlog-backup",
+            "--storage-location=" + getStorageLocation(),
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
         // RESTORE
 
         final String[] restoreArgs = new String[]{
@@ -123,14 +164,7 @@ public abstract class AbstractBackupTest {
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
-        // COMMIT LOGS
-
-        final String[] commitlogBackupArgs = new String[]{
-            "commitlog-backup",
-            "--storage-location=" + getStorageLocation(),
-            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
-        };
+        // COMMIT LOG RESTORE
 
         final String[] commitlogRestoreArgs = new String[]{
             "commitlog-restore",
@@ -152,7 +186,8 @@ public abstract class AbstractBackupTest {
 
     protected String[][] importArguments() {
 
-        final String snapshotName = UUID.randomUUID().toString();
+        final String snapshotName1 = "snapshot1";
+        final String snapshotName2 = "snapshot2";
 
         // BACKUP
 
@@ -160,6 +195,7 @@ public abstract class AbstractBackupTest {
             "backup",
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
+            "--snapshot-tag=" + snapshotName1,
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--entities=system_schema,test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
@@ -170,7 +206,7 @@ public abstract class AbstractBackupTest {
             "backup",
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
-            "--snapshot-tag=" + snapshotName,
+            "--snapshot-tag=" + snapshotName2,
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--entities=system_schema,test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
@@ -182,7 +218,7 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase1 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--snapshot-tag=" + snapshotName,
+            "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
             "--entities=system_schema,test,test2",
@@ -195,7 +231,7 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase2 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--snapshot-tag=" + snapshotName,
+            "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
             "--entities=system_schema,test,test2",
@@ -208,7 +244,7 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase3 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--snapshot-tag=" + snapshotName,
+            "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
             "--entities=system_schema,test,test2",
@@ -221,7 +257,7 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase4 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--snapshot-tag=" + snapshotName,
+            "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
             "--entities=system_schema,test,test2",
@@ -270,7 +306,7 @@ public abstract class AbstractBackupTest {
 
         // RESTORE
 
-        final String[] restoreArgsPhase1 = new String[]{
+        final String[] downloadPhase = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--snapshot-tag=" + snapshotName,
@@ -283,7 +319,7 @@ public abstract class AbstractBackupTest {
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
-        final String[] restoreArgsPhase2 = new String[]{
+        final String[] truncatePhase = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--snapshot-tag=" + snapshotName,
@@ -296,7 +332,7 @@ public abstract class AbstractBackupTest {
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
-        final String[] restoreArgsPhase3 = new String[]{
+        final String[] importPhase = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--snapshot-tag=" + snapshotName,
@@ -309,7 +345,7 @@ public abstract class AbstractBackupTest {
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
-        final String[] restoreArgsPhase4 = new String[]{
+        final String[] cleanupPhase = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--snapshot-tag=" + snapshotName,
@@ -325,70 +361,169 @@ public abstract class AbstractBackupTest {
         return new String[][]{
             backupArgs,
             backupArgsWithSnapshotName,
+            downloadPhase,
+            truncatePhase,
+            importPhase,
+            cleanupPhase,
+        };
+    }
+
+    protected String[][] restoreByImportingIntoDifferentSchemaArguments(final RestorationStrategyType type) {
+
+        String snapshotName1 = "snapshot1";
+        String snapshotName2 = "snapshot2";
+
+        // BACKUP 1
+
+        // test,test2
+        final String[] backupArgs1 = new String[]{
+            "backup",
+            "--jmx-service", "127.0.0.1:7199",
+            "--storage-location=" + getStorageLocation(),
+            "--snapshot-tag=" + snapshotName1,
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--entities=system_schema,test,test2", // keyspaces
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
+            "--create-missing-bucket"
+        };
+
+        // adding third table into backup, test3 in addition to test and test2
+        final String[] backupArgs2 = new String[]{
+            "backup",
+            "--jmx-service", "127.0.0.1:7199",
+            "--storage-location=" + getStorageLocation(),
+            "--snapshot-tag=" + snapshotName2,
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--entities=system_schema,test,test2,test3", // keyspaces
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
+            "--create-missing-bucket"
+        };
+
+        // RESTORE
+
+        // specifying system_schema in entities does nothing as restore logic will filter out system keyspaces in import and hardlink strategy
+        // it is here just for testing purposes
+
+        final String[] restoreArgsPhase1 = new String[]{
+            "restore",
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--snapshot-tag=" + snapshotName1, // !!! important, we are restoring into the FIRST snapshot
+            "--storage-location=" + getStorageLocation(),
+            "--update-cassandra-yaml=true",
+            "--entities=system_schema,test,test2", // here we want to restore only to test and test2
+            "--restoration-strategy-type=" + type.toString(),
+            "--restoration-phase-type=download", /// DOWNLOAD
+            "--import-source-dir=" + target("downloaded"),
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        final String[] restoreArgsPhase2 = new String[]{
+            "restore",
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--snapshot-tag=" + snapshotName1, // !!! important, we are restoring into the FIRST snapshot
+            "--storage-location=" + getStorageLocation(),
+            "--update-cassandra-yaml=true",
+            "--entities=system_schema,test,test2", // here we want to restore only to test and test2 which were not altered (test3 was)
+            "--restoration-strategy-type=" + type.toString(),
+            "--restoration-phase-type=truncate", // TRUNCATE
+            "--import-source-dir=" + target("downloaded"),
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        final String[] restoreArgsPhase3 = new String[]{
+            "restore",
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--snapshot-tag=" + snapshotName1, // !!! important, we are restoring into the FIRST snapshot
+            "--storage-location=" + getStorageLocation(),
+            "--update-cassandra-yaml=true",
+            "--entities=system_schema,test,test2", // here we want to restore only to test and test2
+            "--restoration-strategy-type=" + type.toString(),
+            "--restoration-phase-type=import", // IMPORT
+            "--import-source-dir=" + target("downloaded"),
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        final String[] restoreArgsPhase4 = new String[]{
+            "restore",
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--snapshot-tag=" + snapshotName1, // !!! important, we are restoring into the FIRST snapshot
+            "--storage-location=" + getStorageLocation(),
+            "--update-cassandra-yaml=true",
+            "--entities=system_schema,test,test2", // here we want to restore only to test and test2
+            "--restoration-strategy-type=" + type.toString(),
+            "--restoration-phase-type=cleanup", // CLEANUP
+            "--import-source-dir=" + target("downloaded"),
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
+        };
+
+        return new String[][]{
+            backupArgs1,
+            backupArgs2,
             restoreArgsPhase1,
             restoreArgsPhase2,
             restoreArgsPhase3,
-            restoreArgsPhase4,
+            restoreArgsPhase4
         };
-
     }
 
     protected abstract String getStorageLocation();
 
     public void inPlaceBackupRestoreTest(final String[][] arguments) throws Exception {
+
+        Cassandra cassandra = null;
+
         try {
-            List<Long> insertionTimes = backup(arguments);
+            cassandra = getCassandra(cassandraDir, CASSANDRA_VERSION, false);
+            cassandra.start();
+
+            List<Long> insertionTimes;
+
+            try (CqlSession session = CqlSession.builder().build()) {
+                insertionTimes = populateDatabaseWithBackup(session, arguments);
+                assertEquals(insertionTimes.size(), NUMBER_OF_INSERTED_ROWS);
+            }
+
+            logger.info("Executing backup of commit logs {}", asList(arguments[2]));
+            BackupRestoreCLI.mainWithoutExit(arguments[2]);
+
+            copyCassandra(cassandraDir, cassandraRestoredDir);
+            cassandra.stop();
+
             restoreOnStoppedNode(insertionTimes, arguments);
-        } catch (final Exception ex) {
+
+            // RESTORE VERIFICATION
+
+            cassandra = getCassandra(cassandraRestoredDir, CASSANDRA_VERSION, true);
+            cassandra.start();
+
+            waitForCql();
+
+            try (CqlSession session = CqlSession.builder().build()) {
+                dumpTable(session, KEYSPACE, TABLE, NUMBER_OF_ROWS_AFTER_RESTORATION);
+            }
+        } finally {
+            if (cassandra != null) {
+                cassandra.stop();
+            }
             deleteDirectory(Paths.get(target("commitlog_download_dir")));
+            FileUtils.deleteDirectory(cassandraDir);
+            FileUtils.deleteDirectory(cassandraRestoredDir);
         }
     }
 
-    public void liveBackupRestoreTest(final String[][] arguments) throws Exception {
-        EmbeddedCassandraFactory cassandraFactory = new EmbeddedCassandraFactory();
-        cassandraFactory.setWorkingDirectory(cassandraDir);
-        cassandraFactory.setArtifact(Artifact.ofVersion(Version.of(CASSANDRA_4_VERSION)));
-        cassandraFactory.getJvmOptions().add("-Xmx2g");
-        cassandraFactory.getJvmOptions().add("-Xms2g");
-
-        Cassandra cassandra = cassandraFactory.create();
-
+    public void liveBackupRestoreTest(final String[][] arguments, final String cassandraVersion) throws Exception {
+        Cassandra cassandra = getCassandra(cassandraDir, cassandraVersion, false);
         cassandra.start();
+
+        waitForCql();
 
         try (CqlSession session = CqlSession.builder().build()) {
 
-            // keyspace, table
+            createTable(session, KEYSPACE, TABLE);
+            createTable(session, KEYSPACE_2, TABLE_2);
 
-            session.execute(createKeyspace(KEYSPACE)
-                                .ifNotExists()
-                                .withNetworkTopologyStrategy(of("datacenter1", 1))
-                                .build());
-
-            Thread.sleep(5000);
-
-            session.execute(createTable(KEYSPACE, TABLE)
-                                .ifNotExists()
-                                .withPartitionKey(ID, TEXT)
-                                .withClusteringColumn(DATE, TIMEUUID)
-                                .withColumn(NAME, TEXT)
-                                .build());
-
-            // keyspace2, table2
-
-            session.execute(createKeyspace(KEYSPACE_2)
-                                .ifNotExists()
-                                .withNetworkTopologyStrategy(of("datacenter1", 1))
-                                .build());
-
-            session.execute(createTable(KEYSPACE_2, TABLE_2)
-                                .ifNotExists()
-                                .withPartitionKey(ID, TEXT)
-                                .withClusteringColumn(DATE, TIMEUUID)
-                                .withColumn(NAME, TEXT)
-                                .build());
-
-            insertAndBackup(2, session, arguments[0]); // stefansnapshot-1
-            insertAndBackup(2, session, arguments[1]); // stefansnapshot-2
+            insertAndCallBackupCLI(2, session, arguments[0]); // stefansnapshot-1
+            insertAndCallBackupCLI(2, session, arguments[1]); // stefansnapshot-2
 
             logger.info("Executing the first restoration phase - download {}", asList(arguments[2]));
             BackupRestoreCLI.mainWithoutExit(arguments[2]);
@@ -403,94 +538,314 @@ public abstract class AbstractBackupTest {
             BackupRestoreCLI.mainWithoutExit(arguments[5]);
 
             // we expect 4 records to be there as 2 were there before the first backup and the second 2 before the second backup
-            dumpTable(KEYSPACE, TABLE, 4);
-            dumpTable(KEYSPACE_2, TABLE_2, 4);
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            dumpTable(session, KEYSPACE, TABLE, 4);
+            dumpTable(session, KEYSPACE_2, TABLE_2, 4);
         } finally {
             cassandra.stop();
+            FileUtils.deleteDirectory(cassandraDir);
             deleteDirectory(Paths.get(target("backup1")));
-            deleteDirectory(Paths.get(target("commitlog_download_dir")));
         }
     }
 
-    public List<Long> backup(final String[][] arguments) throws Exception {
-        // BACKUP
+    private void waitUntilSchemaChanged(final String firstSchemaVersion) {
+        await().pollInterval(3, SECONDS).timeout(1, MINUTES).until(() -> {
+            String secondSchemaVersion = new CassandraSchemaVersion(new CassandraJMXServiceImpl(new CassandraJMXConnectionInfo())).act();
+            // wait until schemas are NOT same
+            return !firstSchemaVersion.equals(secondSchemaVersion);
+        });
+    }
 
-        EmbeddedCassandraFactory cassandraToBackupFactory = new EmbeddedCassandraFactory();
-        cassandraToBackupFactory.setWorkingDirectory(cassandraDir);
-        cassandraToBackupFactory.setArtifact(CASSANDRA_ARTIFACT);
-        cassandraToBackupFactory.getJvmOptions().add("-Xmx2g");
-        cassandraToBackupFactory.getJvmOptions().add("-Xms2g");
-        Cassandra cassandraToBackup = cassandraToBackupFactory.create();
+    /**
+     *
+     * @param arguments
+     * @param cassandraVersion
+     * @param tableAddition if true, column will be added, otherwise it will be removed
+     * @throws Exception
+     */
+    public void liveBackupWithRestoreOnDifferentTableSchema(final String[][] arguments,
+                                                            final String cassandraVersion,
+                                                            final boolean tableAddition) throws Exception {
+        Cassandra cassandra = getCassandra(cassandraDir, cassandraVersion, false);
+        cassandra.start();
 
-        cassandraToBackup.start();
-
-        List<Long> insertionTimes = new ArrayList<>();
+        waitForCql();
 
         try (CqlSession session = CqlSession.builder().build()) {
+            createTable(session, KEYSPACE, TABLE);
+            createTable(session, KEYSPACE_2, TABLE_2);
 
-            // keyspace, table
+            // after this, table and table2 will contain 2 rows each
+            insert(2, session, new ArrayList<String[]>() {{
+                add(new String[]{KEYSPACE, TABLE});
+                add(new String[]{KEYSPACE_2, TABLE_2});
+            }});
 
-            session.execute(createKeyspace(KEYSPACE)
-                                .ifNotExists()
-                                .withNetworkTopologyStrategy(of("datacenter1", 1))
-                                .build());
+            // first backup
+            BackupRestoreCLI.mainWithoutExit(arguments[0]);
 
-            session.execute(createTable(KEYSPACE, TABLE)
-                                .ifNotExists()
-                                .withPartitionKey(ID, TEXT)
-                                .withClusteringColumn(DATE, TIMEUUID)
-                                .withColumn(NAME, TEXT)
-                                .build());
+            String firstSchemaVersion = new CassandraSchemaVersion(new CassandraJMXServiceImpl(new CassandraJMXConnectionInfo())).act();
 
-            // keyspace2, table2
+            // create third schema, by this way, Cassandra schema will change
+            createTable(session, KEYSPACE_3, TABLE_3);
+            waitUntilSchemaChanged(firstSchemaVersion);
 
-            session.execute(createKeyspace(TestEntity2.KEYSPACE_2)
-                                .ifNotExists()
-                                .withNetworkTopologyStrategy(of("datacenter1", 1))
-                                .build());
+            // after this, table and table2 will contain 4 rows each
+            // and table3 just 2
+            insert(2, session, new ArrayList<String[]>() {{
+                add(new String[]{KEYSPACE, TABLE});
+                add(new String[]{KEYSPACE_2, TABLE_2});
+                add(new String[]{KEYSPACE_3, TABLE_3});
+            }});
 
-            session.execute(createTable(TestEntity2.KEYSPACE_2, TestEntity2.TABLE_2)
-                                .ifNotExists()
-                                .withPartitionKey(ID, TEXT)
-                                .withClusteringColumn(DATE, TIMEUUID)
-                                .withColumn(NAME, TEXT)
-                                .build());
+            // second backup
+            BackupRestoreCLI.mainWithoutExit(arguments[1]);
 
-            // this will invoke backup 2 times, each time generating 2 records and taking a snapshot and backup
-            List<Long> times = range(0, 2)
-                .mapToObj(i -> insertAndBackup(2, session, arguments[0]))
-                .flatMap(Collection::stream).collect(toList());
+            if (tableAddition) {
+                addColumnToTable(session, KEYSPACE, TABLE, "newColumn", TEXT);
+            } else {
+                removeColumnFromTable(session, KEYSPACE, TABLE, TestEntity.NAME);
+            }
 
-            // insert two more records, snapshot with predefined name and back it up too
-            List<Long> times2 = insertAndBackup(2, session, arguments[1]);
+            // restore into the first snapshot where table1 was without newly added column
+            // we effectively restored SSTables on different schema so we expect that values in the new column will be "null"
 
-            // insert two more rows but do not back them up, this simulates that they are written in commit logs
-            // so even we have not backed it up, once they are replayed, they will all be there
-            List<Long> times3 = insert(2, session);
-
-            insertionTimes.addAll(times);
-            insertionTimes.addAll(times2);
-            insertionTimes.addAll(times3);
-
-            assertEquals(insertionTimes.size(), NUMBER_OF_INSERTED_ROWS);
-
-            logger.info("Executing backup of commit logs {}", asList(arguments[2]));
-
+            // download
             BackupRestoreCLI.mainWithoutExit(arguments[2]);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        } finally {
-            copyCassandra(cassandraDir, cassandraRestoredDir);
-            cassandraToBackup.stop();
-        }
 
-        return insertionTimes;
+            // truncate
+            BackupRestoreCLI.mainWithoutExit(arguments[3]);
+
+            // after truncating, we see that we have truncated just two tables which were
+            // in snapshot from snapshot1, not the third one
+            dumpTable(session, KEYSPACE, TABLE, 0);
+            dumpTable(session, KEYSPACE_2, TABLE_2, 0);
+            dumpTable(session, KEYSPACE_3, TABLE_3, 2);
+
+            // import
+            BackupRestoreCLI.mainWithoutExit(arguments[4]);
+
+            // cleanup
+            BackupRestoreCLI.mainWithoutExit(arguments[5]);
+
+            // verify
+
+            // here we check that table1 and table2 contains 2 rows each (as we restored it from the first snapshot) and table 3 will contain still 2
+
+            dumpTable(session, KEYSPACE, TABLE, 2);
+            dumpTable(session, KEYSPACE_2, TABLE_2, 2);
+            dumpTable(session, KEYSPACE_3, TABLE_3, 2);
+        } finally {
+            cassandra.stop();
+            FileUtils.deleteDirectory(cassandraDir);
+            deleteDirectory(Paths.get(target("backup1")));
+        }
     }
 
-    public void restoreOnStoppedNode(List<Long> insertionTimes, String[][] arguments) {
+    public void liveBackupWithRestoreOnDifferentSchema(final String[][] arguments, final String cassandraVersion) throws Exception {
+        Cassandra cassandra = getCassandra(cassandraDir, cassandraVersion, false);
+        cassandra.start();
+
+        waitForCql();
+
+        try (CqlSession session = CqlSession.builder().build()) {
+            createTable(session, KEYSPACE, TABLE);
+            createTable(session, KEYSPACE_2, TABLE_2);
+
+            // after this, table and table2 will contain 2 rows each
+            insert(2, session, new ArrayList<String[]>() {{
+                add(new String[]{KEYSPACE, TABLE});
+                add(new String[]{KEYSPACE_2, TABLE_2});
+            }});
+
+            // first backup
+            BackupRestoreCLI.mainWithoutExit(arguments[0]);
+
+            String firstSchemaVersion = new CassandraSchemaVersion(new CassandraJMXServiceImpl(new CassandraJMXConnectionInfo())).act();
+
+            // create third schema, by this way, Cassandra schema will change
+            createTable(session, KEYSPACE_3, TABLE_3);
+
+            waitUntilSchemaChanged(firstSchemaVersion);
+
+            // after this, table and table2 will contain 4 rows each
+            // and table3 just 2
+            insert(2, session, new ArrayList<String[]>() {{
+                add(new String[]{KEYSPACE, TABLE});
+                add(new String[]{KEYSPACE_2, TABLE_2});
+                add(new String[]{KEYSPACE_3, TABLE_3});
+            }});
+
+            // second backup
+            BackupRestoreCLI.mainWithoutExit(arguments[1]);
+
+            // here we want to restore into first snapshot even though schema has changed, because we added the third table
+            // (keep in mind we have not changed schema of any table, we changed Cassandra schema as such)
+
+            // restore into the first backup
+
+            // download
+            BackupRestoreCLI.mainWithoutExit(arguments[2]);
+
+            // truncate
+            BackupRestoreCLI.mainWithoutExit(arguments[3]);
+
+            // after truncating, we see that we have truncated just two tables which were
+            // in snapshot from snapshot1, not the third one
+            dumpTable(session, KEYSPACE, TABLE, 0);
+            dumpTable(session, KEYSPACE_2, TABLE_2, 0);
+            dumpTable(session, KEYSPACE_3, TABLE_3, 2);
+
+            // import
+            BackupRestoreCLI.mainWithoutExit(arguments[4]);
+
+            // cleanup
+            BackupRestoreCLI.mainWithoutExit(arguments[5]);
+
+            // verify
+
+            // here we check that table1 and table2 contains 2 rows each (as we restored it from the first snapshot) and table 3 will contain still 2
+
+            dumpTable(session, KEYSPACE, TABLE, 2);
+            dumpTable(session, KEYSPACE_2, TABLE_2, 2);
+            dumpTable(session, KEYSPACE_3, TABLE_3, 2);
+        } finally {
+            cassandra.stop();
+            FileUtils.deleteDirectory(cassandraDir);
+            deleteDirectory(Paths.get(target("backup1")));
+        }
+    }
+
+    protected List<Long> populateDatabaseWithBackup(final CqlSession session, final String[][] arguments) {
+
+        assert arguments != null;
+
+        createTable(session, KEYSPACE, TABLE);
+        createTable(session, KEYSPACE_2, TABLE_2);
+
+        // this will invoke backup 2 times, each time generating 2 records and taking a snapshot and backup
+        List<Long> times = range(0, 2)
+            .mapToObj(i -> insertAndCallBackupCLI(2, session, arguments[0]))
+            .flatMap(Collection::stream).collect(toList());
+
+        // insert two more records, snapshot with predefined name and back it up too
+        List<Long> times2 = insertAndCallBackupCLI(2, session, arguments[1]);
+
+        // insert two more rows but do not back them up, this simulates that they are written in commit logs
+        // so even we have not backed it up, once they are replayed, they will all be there
+        List<Long> times3 = insert(2, session);
+
+        return new ArrayList<Long>() {{
+            addAll(times);
+            addAll(times2);
+            addAll(times3);
+        }};
+    }
+
+    protected List<Long> populateDatabase(final CqlSession session) {
+        createTable(session, KEYSPACE, TABLE);
+        createTable(session, KEYSPACE_2, TABLE_2);
+
+        // this will invoke backup 2 times, each time generating 2 records and taking a snapshot and backup
+        List<Long> times = range(0, 2)
+            .mapToObj(i -> insert(2, session))
+            .flatMap(Collection::stream).collect(toList());
+
+        List<Long> times2 = insert(2, session);
+
+        // insert two more rows but do not back them up, this simulates that they are written in commit logs
+        // so even we have not backed it up, once they are replayed, they will all be there
+        List<Long> times3 = insert(2, session);
+
+        return new ArrayList<Long>() {{
+            addAll(times);
+            addAll(times2);
+            addAll(times3);
+        }};
+    }
+
+    protected Cassandra getCassandra(final Path cassandraHome, final String version, boolean reuse) throws Exception {
+        FileUtils.createDirectory(cassandraHome);
+        EmbeddedCassandraFactory cassandraFactory = new EmbeddedCassandraFactory();
+        cassandraFactory.setWorkingDirectory(cassandraHome);
+        cassandraFactory.getJvmOptions().add("-Xmx1g");
+        cassandraFactory.getJvmOptions().add("-Xms1g");
+        if (reuse) {
+            cassandraFactory.setArtifact(new DefaultArtifact(Version.of(version), cassandraHome));
+        } else {
+            cassandraFactory.setArtifact(Artifact.ofVersion(Version.of(version)));
+        }
+        return cassandraFactory.create();
+    }
+
+    protected void init() throws ApiException, IOException {
+
+    }
+
+    protected void destroy() throws ApiException {
+
+    }
+
+    protected List<Long> insertAndCallBackupCLI(int records, CqlSession cqlSession, String[] backupArgs) {
+        List<Long> executionTimes = insert(records, cqlSession);
+
+        logger.info("Executing backup with arguments {}", asList(backupArgs));
+        BackupRestoreCLI.main(backupArgs, false);
+
+        return executionTimes;
+    }
+
+    protected List<Long> insert(int records, CqlSession cqlSession, List<String[]> entities) {
+        return range(0, records).mapToObj(i -> {
+            for (String[] keyspaceTable : entities) {
+                cqlSession.execute(insertInto(keyspaceTable[0], keyspaceTable[1])
+                                       .value(ID, literal("1"))
+                                       .value(DATE, literal(timeBased()))
+                                       .value(NAME, literal("stefan1"))
+                                       .build());
+            }
+
+            Uninterruptibles.sleepUninterruptibly(2, SECONDS);
+
+            return System.currentTimeMillis();
+        }).collect(toList());
+    }
+
+    protected List<Long> insert(int records, CqlSession cqlSession) {
+        return insert(records, cqlSession, new ArrayList<String[]>() {{
+            add(new String[]{KEYSPACE, TABLE});
+            add(new String[]{KEYSPACE_2, TABLE_2});
+        }});
+    }
+
+    private void addColumnToTable(CqlSession session, String keyspace, String table, String column, DataType dataType) {
+        session.execute(SchemaBuilder.alterTable(keyspace, table).addColumn(column, dataType).build());
+    }
+
+    private void removeColumnFromTable(CqlSession session, String keyspace, String table, String column) {
+        session.execute(SchemaBuilder.alterTable(keyspace, table).dropColumn(column).build());
+    }
+
+    private void createTable(CqlSession session, String keyspace, String table) {
+        session.execute(SchemaBuilder.createKeyspace(keyspace)
+                            .ifNotExists()
+                            .withNetworkTopologyStrategy(of("datacenter1", 1))
+                            .build());
+
+        Uninterruptibles.sleepUninterruptibly(2, SECONDS);
+
+        session.execute(SchemaBuilder.createTable(keyspace, table)
+                            .ifNotExists()
+                            .withPartitionKey(ID, TEXT)
+                            .withClusteringColumn(DATE, TIMEUUID)
+                            .withColumn(NAME, TEXT)
+                            .build());
+    }
+
+    protected String target(final String path) {
+        return target.resolve(path).toAbsolutePath().toString();
+    }
+
+    private void restoreOnStoppedNode(List<Long> insertionTimes, String[][] arguments) {
 
         // RESTORE
 
@@ -516,105 +871,51 @@ public abstract class AbstractBackupTest {
         logger.info("Executing restore of commit logs with arguments {}", asList(commitlogRestoreArgsAsList));
 
         BackupRestoreCLI.main(commitlogRestoreArgsAsList.toArray(new String[0]), false);
-
-        // RESTORE VERIFICATION
-
-        EmbeddedCassandraFactory cassandraToRestoreFactory = new EmbeddedCassandraFactory();
-        cassandraToRestoreFactory.setWorkingDirectory(cassandraRestoredDir);
-        cassandraToRestoreFactory.getJvmOptions().add("-Xmx2g");
-        cassandraToRestoreFactory.getJvmOptions().add("-Xms2g");
-        cassandraToRestoreFactory.setArtifact(new DefaultArtifact(Version.of(CASSANDRA_VERSION), cassandraRestoredDir));
-        Cassandra cassandraToRestore = cassandraToRestoreFactory.create();
-
-        cassandraToRestore.start();
-
-        waitForCql();
-
-        try {
-            dumpTable(KEYSPACE, TABLE, NUMBER_OF_ROWS_AFTER_RESTORATION);
-        } finally {
-            cassandraToRestore.stop();
-        }
-    }
-
-    // helpers
-
-    protected List<Long> insertAndBackup(int records, CqlSession cqlSession, String[] backupArgs) {
-        List<Long> executionTimes = insert(records, cqlSession);
-
-        logger.info("Executing backup with arguments {}", asList(backupArgs));
-        BackupRestoreCLI.main(backupArgs, false);
-
-        return executionTimes;
-    }
-
-    protected List<Long> insert(int records, CqlSession cqlSession) {
-        return range(0, records).mapToObj(i -> insert(cqlSession)).collect(toList());
-    }
-
-    protected long insert(CqlSession session) {
-
-        try {
-            session.execute(insertInto(KEYSPACE, TABLE)
-                                .value(ID, literal("1"))
-                                .value(DATE, literal(timeBased()))
-                                .value(NAME, literal("stefan1"))
-                                .build());
-
-            session.execute(insertInto(TestEntity2.KEYSPACE_2, TestEntity2.TABLE_2)
-                                .value(ID, literal("1"))
-                                .value(DATE, literal(timeBased()))
-                                .value(NAME, literal("stefan1"))
-                                .build());
-
-            Thread.sleep(2000);
-        } catch (InterruptedException ex) {
-            logger.error("Exception while sleeping!");
-        }
-
-        return System.currentTimeMillis();
-    }
-
-    protected String target(final String path) {
-        return target.resolve(path).toAbsolutePath().toString();
-    }
-
-    private Date uuidToDate(final UUID uuid) {
-        return new Date(uuid.timestamp() / 10000L - 12219292800000L);
     }
 
     private void copyCassandra(Path source, Path target) throws IOException {
-        org.apache.commons.io.FileUtils.copyDirectory(source.toFile(), target.toFile());
+        copyDirectory(source.toFile(), target.toFile());
         cleanDirectory(target.resolve("data"));
     }
 
-    protected void init() throws ApiException, IOException {
-
+    private void waitForCql() {
+        await()
+            .pollInterval(10, SECONDS)
+            .pollInSameThread()
+            .timeout(1, MINUTES)
+            .until(() -> {
+                try (final CqlSession ignored = CqlSession.builder().build()) {
+                    return true;
+                } catch (Exception ex) {
+                    return false;
+                }
+            });
     }
 
-    protected void destroy() throws ApiException {
 
-    }
+    private void dumpTable(final CqlSession session,
+                           final String keyspace,
+                           final String table,
+                           int expectedLength) {
+        List<Row> rows = session.execute(selectFrom(keyspace, table).all().build()).all();
 
-    protected void waitForCql() {
-        await().until(() -> {
-            try (CqlSession cqlSession = CqlSession.builder().build()) {
-                return true;
-            } catch (Exception ex) {
-                return false;
+        logger.info(format("Dumping %s.%s", keyspace, table));
+
+        for (Row row : rows) {
+
+            Date date = new Date(requireNonNull(row.getUuid(DATE)).timestamp() / 10000L - 12219292800000L);
+
+            if (row.getColumnDefinitions().contains(NAME)) {
+                logger.info(format("id: %s, date: %s, name: %s", row.getString(ID), date, row.getString(NAME)));
+            } else {
+                logger.info(format("id: %s, date: %s, name: not present in table", row.getString(ID), date));
             }
-        });
-    }
-
-    protected void dumpTable(final String keyspace, final String table, int expectedLength) {
-        try (CqlSession session = CqlSession.builder().build()) {
-            List<Row> rows = session.execute(selectFrom(keyspace, table).all().build()).all();
-
-            for (Row row : rows) {
-                logger.info(format("id: %s, date: %s, name: %s", row.getString(ID), uuidToDate(requireNonNull(row.getUuid(DATE))), row.getString(NAME)));
-            }
-
-            assertEquals(rows.size(), expectedLength);
         }
+
+        if (rows.isEmpty()) {
+            logger.info(format("Table %s.%s is empty.", keyspace, table));
+        }
+
+        assertEquals(rows.size(), expectedLength);
     }
 }

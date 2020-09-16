@@ -212,8 +212,8 @@ public class Manifest implements Cloneable {
         return objectMapper.readValue(manifest, Manifest.class);
     }
 
-    public static Path getLocalManifestPath(final Path cassandraDir, final String snapshotTag, final String schemaVersion) {
-        return cassandraDir.resolve("manifests").resolve(snapshotTag + "-" + schemaVersion);
+    public static Path getLocalManifestPath(final Path cassandraDir, final String snapshotTag) {
+        return cassandraDir.resolve("manifests").resolve(snapshotTag + ".json");
     }
 
     public static Set<Path> getLocalExistingEntries(final Path dataDir) {

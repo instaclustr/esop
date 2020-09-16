@@ -2,6 +2,7 @@ package com.instaclustr.cassandra.backup.impl.restore.strategy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.instaclustr.cassandra.CassandraVersion;
+import com.instaclustr.cassandra.backup.impl.restore.DownloadTracker;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.RestorationPhaseType;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.Restorer;
@@ -17,4 +18,5 @@ public class RestorationContext {
     public CassandraVersion cassandraVersion;
     public String schemaVersion;
     public RestorationPhaseType phaseType;
+    public DownloadTracker downloadTracker;
 }

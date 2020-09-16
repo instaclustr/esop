@@ -20,7 +20,6 @@ import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.Restorer;
-import com.instaclustr.threading.Executors.ExecutorServiceSupplier;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.BlobListingDetails;
@@ -36,16 +35,13 @@ public class AzureRestorer extends Restorer {
     private static final Logger logger = LoggerFactory.getLogger(AzureRestorer.class);
 
     private final CloudBlobContainer blobContainer;
-
     private final CloudBlobClient cloudBlobClient;
-
     private final CloudStorageAccount cloudStorageAccount;
 
     @AssistedInject
     public AzureRestorer(final CloudStorageAccountFactory cloudStorageAccountFactory,
-                         final ExecutorServiceSupplier executorServiceSupplier,
                          @Assisted final RestoreOperationRequest request) throws Exception {
-        super(request, executorServiceSupplier);
+        super(request);
 
         cloudStorageAccount = cloudStorageAccountFactory.build(request);
         cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
@@ -55,9 +51,8 @@ public class AzureRestorer extends Restorer {
 
     @AssistedInject
     public AzureRestorer(final CloudStorageAccountFactory cloudStorageAccountFactory,
-                         final ExecutorServiceSupplier executorServiceSupplier,
                          @Assisted final RestoreCommitLogsOperationRequest request) throws Exception {
-        super(request, executorServiceSupplier);
+        super(request);
 
         cloudStorageAccount = cloudStorageAccountFactory.build(request);
         cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
@@ -97,8 +92,7 @@ public class AzureRestorer extends Restorer {
     @Override
     public String downloadFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
         final String blobItemPath = getBlobItemPath(globalList(remotePrefix), keyFilter);
-        final String fileName = blobItemPath.split("/")[blobItemPath.split("/").length - 1];
-        return downloadFileToString(objectKeyToRemoteReference(remotePrefix.resolve(fileName)));
+        return downloadFileToString(objectKeyToRemoteReference(Paths.get(blobItemPath)));
     }
 
     @Override

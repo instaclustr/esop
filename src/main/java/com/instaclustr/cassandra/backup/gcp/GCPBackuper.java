@@ -20,7 +20,6 @@ import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.Backuper;
-import com.instaclustr.threading.Executors.ExecutorServiceSupplier;
 
 public class GCPBackuper extends Backuper {
 
@@ -28,17 +27,15 @@ public class GCPBackuper extends Backuper {
 
     @AssistedInject
     public GCPBackuper(final GoogleStorageFactory storageFactory,
-                       final ExecutorServiceSupplier executorServiceSupplier,
                        @Assisted final BackupOperationRequest backupOperationRequest) {
-        super(backupOperationRequest, executorServiceSupplier);
+        super(backupOperationRequest);
         this.storage = storageFactory.build(backupOperationRequest);
     }
 
     @AssistedInject
     public GCPBackuper(final GoogleStorageFactory storageFactory,
-                       final ExecutorServiceSupplier executorServiceSupplier,
                        @Assisted final BackupCommitLogsOperationRequest backupOperationRequest) {
-        super(backupOperationRequest, executorServiceSupplier);
+        super(backupOperationRequest);
         this.storage = storageFactory.build(backupOperationRequest);
     }
 

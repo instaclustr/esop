@@ -1,17 +1,33 @@
 package com.instaclustr.cassandra.backup.embedded.s3;
 
-import static com.instaclustr.io.FileUtils.deleteDirectory;
+import java.util.ArrayList;
+import java.util.List;
 
-import java.nio.file.Paths;
-
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
 import com.instaclustr.cassandra.backup.embedded.AbstractBackupTest;
 import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
 import com.instaclustr.cassandra.backup.s3.aws.S3BucketService;
+import com.instaclustr.cassandra.backup.s3.aws.S3Module;
 import com.instaclustr.cassandra.backup.s3.aws.S3Module.S3TransferManagerFactory;
+import com.instaclustr.kubernetes.KubernetesApiModule;
 
 public abstract class BaseS3BackupRestoreTest extends AbstractBackupTest {
 
     protected abstract BackupOperationRequest getBackupOperationRequest();
+
+    public void inject() {
+        final List<Module> modules = new ArrayList<Module>() {{
+            add(new KubernetesApiModule());
+            add(new S3Module());
+        }};
+
+        modules.addAll(defaultModules);
+
+        final Injector injector = Guice.createInjector(modules);
+        injector.injectMembers(this);
+    }
 
     @Override
     protected String getStorageLocation() {
@@ -23,16 +39,14 @@ public abstract class BaseS3BackupRestoreTest extends AbstractBackupTest {
             inPlaceBackupRestoreTest(programArguments);
         } finally {
             new S3BucketService(getTransferManagerFactory(), getBackupOperationRequest()).delete(BUCKET_NAME);
-            deleteDirectory(Paths.get(target("commitlog_download_dir")));
         }
     }
 
-    public void liveCassandraTest(final String[][] programArguments) throws Exception {
+    public void liveCassandraTest(final String[][] programArguments, final String cassandraVersion) throws Exception {
         try {
-            liveBackupRestoreTest(programArguments);
+            liveBackupRestoreTest(programArguments, cassandraVersion);
         } finally {
             new S3BucketService(getTransferManagerFactory(), getBackupOperationRequest()).delete(BUCKET_NAME);
-            deleteDirectory(Paths.get(target("commitlog_download_dir")));
         }
     }
 

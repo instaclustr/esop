@@ -68,10 +68,6 @@ public @interface ValidBackupOperationRequest {
                 value.entities = DatabaseEntities.empty();
             }
 
-            if (value.lockFile == null || value.lockFile.toFile().getAbsolutePath().equals("/")) {
-                value.lockFile = Paths.get(System.getProperty("java.io.tmpdir"));
-            }
-
             return true;
         }
     }
