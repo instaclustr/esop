@@ -32,7 +32,11 @@ public class BaseS3BucketService implements BucketService {
 
     @Override
     public boolean doesExist(final String bucketName) {
-        return transferManager.getAmazonS3Client().listBuckets().stream().anyMatch(bucket -> bucket.getName().equals(bucketName));
+
+//        Remove depenency on ListBuckets by replacing it with doesBucketExistV2
+//        return transferManager.getAmazonS3Client().listBuckets().stream().anyMatch(bucket -> bucket.getName().equals(bucketName));
+
+          return transferManager.getAmazonS3Client().doesBucketExistV2(bucketName);
     }
 
     @Override
