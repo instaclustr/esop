@@ -6,7 +6,6 @@ import java.util.Set;
 import com.instaclustr.operations.OperationRequest;
 import com.instaclustr.operations.ResultGatherer.ResultEntry;
 
-// TODO - should extend OperationCoordinatorException which is final
 public final class GatheringOperationCoordinatorException extends RuntimeException {
 
     private final Set<ResultEntry<?>> results = new HashSet<>();

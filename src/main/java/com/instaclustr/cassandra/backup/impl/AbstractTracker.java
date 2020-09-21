@@ -101,7 +101,7 @@ public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session
 
         // we have executor service per request in order to specify maximal
         // concurrent uploads, if we had one global executor, we could not "cap it".
-        final ListeningExecutorService executorService = new FixedTasksExecutorSupplier().get(1000);
+        final ListeningExecutorService executorService = new FixedTasksExecutorSupplier().get(concurrentConnections);
 
         final Map<ListenableFuture<Void>, Unit> futures = new HashMap<>();
 

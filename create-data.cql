@@ -1,5 +1,5 @@
-CREATE KEYSPACE IF NOT EXISTS test1 WITH replication = {'class': 'NetworkTopologyStrategy', 'dc1': 1};
-CREATE KEYSPACE IF NOT EXISTS test2 WITH replication = {'class': 'NetworkTopologyStrategy', 'dc1': 1};
+CREATE KEYSPACE IF NOT EXISTS test1 WITH replication = {'class': 'NetworkTopologyStrategy', 'dc1': 3};
+CREATE KEYSPACE IF NOT EXISTS test2 WITH replication = {'class': 'NetworkTopologyStrategy', 'dc1': 3};
 
 CREATE TABLE IF NOT EXISTS test1.testtable1 ( id uuid primary key);
 CREATE TABLE IF NOT EXISTS test1.testtable2 ( id uuid primary key);

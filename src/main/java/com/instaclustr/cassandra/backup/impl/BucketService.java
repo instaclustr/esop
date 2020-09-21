@@ -33,7 +33,8 @@ public abstract class BucketService implements AutoCloseable {
         bucketExists = doesExist(bucket);
 
         if (!bucketExists && !createMissingBucket) {
-            throw new BucketServiceException(format("Bucket %s does not exist and createMissingBucket is false! Can not continue!", bucket));
+            throw new BucketServiceException(format("Bucket %s does not exist and createMissingBucket in JSON or "
+                                                        + "--create-missing-bucket from console is false! Can not continue!", bucket));
         }
 
         if (!bucketExists) {

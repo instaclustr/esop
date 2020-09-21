@@ -200,10 +200,23 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
                 }
 
                 if (shouldAppend) {
-                    FileUtils.createFile(fileToAppendTo);
-                    FileUtils.appendToFile(fileToAppendTo, manifest.getInitialTokensCassandraYamlFragment());
-                    // TODO - cover case for vanilla Cassandra
-                    FileUtils.appendToFile(fileToAppendTo, "auto_bootstrap: false");
+                    FileUtils.replaceOrAppend(fileToAppendTo,
+                                              content -> content.contains("auto_bootstrap: true"),
+                                              content -> !content.contains("auto_bootstrap"),
+                                              "auto_bootstrap: true",
+                                              "auto_bootstrap: false");
+
+                    if (FileUtils.contains(fileToAppendTo, "initial_token")) {
+                        logger.warn(String.format("%s file does already contain 'initial_token' property, this is unexpected and "
+                                                      + "backup tooling is not going to update it for you, please proceed manually, new setting should be: %s",
+                                                  fileToAppendTo,
+                                                  manifest.getInitialTokensCassandraYamlFragment()));
+                    } else {
+                        FileUtils.appendToFile(fileToAppendTo, manifest.getInitialTokensCassandraYamlFragment());
+                    }
+
+                    logger.info(String.format("Content of file %s to which necessary changes for restore were applied: ", fileToAppendTo));
+                    logger.info(new String(Files.readAllBytes(fileToAppendTo)));
                 }
             } else {
                 logger.info("Update of cassandra.yaml was turned off by --update-cassandra-yaml=false (or not specifying that flag at all.");
