@@ -21,6 +21,7 @@ import org.testng.annotations.Test;
     "k8sTest",
     "googleTest",
 })
+@Ignore
 public class KubernetesGoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupRestoreTest {
 
     @Inject

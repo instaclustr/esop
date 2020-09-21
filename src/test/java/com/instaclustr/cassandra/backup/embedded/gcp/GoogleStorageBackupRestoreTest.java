@@ -20,12 +20,14 @@ import com.instaclustr.cassandra.backup.impl.restore.RestoreOperationRequest;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 @Test(groups = {
     "googleTest",
     "cloudTest",
 })
+@Ignore
 public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupRestoreTest {
 
     @Inject
