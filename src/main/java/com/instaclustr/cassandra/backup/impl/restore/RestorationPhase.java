@@ -242,7 +242,8 @@ public abstract class RestorationPhase {
                 // looking into downloaded manifest, download only these sstables for keyspaces / tables
                 // which were specified in request in "entities"
                 final List<ManifestEntry> manifestFiles = manifest.getManifestFiles(ctxt.operation.request.entities,
-                                                                                    false /* not possible to restore system keyspace on a live cluster */);
+                                                                                    false,  // not possible to restore system keyspace on a live cluster
+                                                                                    false); // no new cluster
 
                 Session<DownloadUnit> session = null;
 

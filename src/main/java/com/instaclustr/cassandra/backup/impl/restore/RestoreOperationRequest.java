@@ -56,7 +56,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
     public Path cassandraConfigDirectory;
 
     @Option(names = {"--rs", "--restore-system-keyspace"},
-        description = "Restore system keyspace. Use this to prevent bootstrapping, when restoring on only a single node.")
+        description = "Restore system keyspaces too, consult option '--restore-into-new-cluster' as well.")
     public boolean restoreSystemKeyspace;
 
     @Option(names = {"-s", "--st", "--snapshot-tag"},
@@ -130,6 +130,10 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             + "based on snapshot name and schema version.")
     public boolean resolveHostIdFromTopology;
 
+    @Option(names = "--restore-into-new-cluster",
+        description = "If set to true, IN_PLACE restoration will pick only keyspaces necessary for bootstrapping, e.g. system_schema, while all other system keyspaces will be re-generated.")
+    public boolean newCluster;
+
     public RestoreOperationRequest() {
         // for picocli
     }
@@ -161,8 +165,9 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonProperty("k8sSecretName") final String k8sSecretName,
                                    @JsonProperty("globalRequest") final boolean globalRequest,
                                    @JsonProperty("timeout") @Min(1) final Integer timeout,
-                                   @JsonProperty("resolveHostIdFromTopology") final Boolean resolveHostIdFromTopology,
-                                   @JsonProperty("insecure") final boolean insecure) {
+                                   @JsonProperty("resolveHostIdFromTopology") final boolean resolveHostIdFromTopology,
+                                   @JsonProperty("insecure") final boolean insecure,
+                                   @JsonProperty("newCluster") final boolean newCluster) {
         super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure);
         this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/")) ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
@@ -181,7 +186,8 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
         this.globalRequest = globalRequest;
         this.type = type;
         this.timeout = timeout == null ? 5 : timeout;
-        this.resolveHostIdFromTopology = resolveHostIdFromTopology == null ? false : resolveHostIdFromTopology;
+        this.resolveHostIdFromTopology = resolveHostIdFromTopology;
+        this.newCluster = newCluster;
     }
 
     @Override
@@ -208,6 +214,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             .add("timeout", timeout)
             .add("resolveHostId", resolveHostIdFromTopology)
             .add("insecure", insecure)
+            .add("newCluster", newCluster)
             .toString();
     }
 }

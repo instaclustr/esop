@@ -13,8 +13,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -235,13 +233,27 @@ public class Manifest implements Cloneable {
 
     @JsonIgnore
     public List<ManifestEntry> getManifestFiles(final DatabaseEntities entities,
-                                                final boolean restoreSystemKeyspace) {
-        return getManifestFiles(entities, restoreSystemKeyspace, true);
+                                                final boolean restoreSystemKeyspace,
+                                                final boolean newCluster) {
+        return getManifestFiles(entities, restoreSystemKeyspace, newCluster, true);
+    }
+
+    private boolean filterSystemKeyspace(String ks, boolean restoreSystemKeyspace, boolean newCluster) {
+        if (KeyspaceTable.isSystemKeyspace(ks)) {
+            if (KeyspaceTable.isBootstrappingKeyspace(ks)) {
+                return !newCluster && !restoreSystemKeyspace;
+            } else {
+                return !restoreSystemKeyspace;
+            }
+        }
+
+        return false;
     }
 
     @JsonIgnore
     public List<ManifestEntry> getManifestFiles(final DatabaseEntities entities,
                                                 final boolean restoreSystemKeyspace,
+                                                final boolean newCluster,
                                                 final boolean withSchemas) {
 
         final List<ManifestEntry> manifestEntries = new ArrayList<>();
@@ -263,7 +275,7 @@ public class Manifest implements Cloneable {
                     continue;
                 }
 
-                if (KeyspaceTable.isSystemKeyspace(entry.getKey()) && !restoreSystemKeyspace) {
+                if (filterSystemKeyspace(entry.getKey(), restoreSystemKeyspace, newCluster)) {
                     continue;
                 }
 
@@ -279,7 +291,7 @@ public class Manifest implements Cloneable {
                     continue;
                 }
 
-                if (KeyspaceTable.isSystemKeyspace(ks) && !restoreSystemKeyspace) {
+                if (filterSystemKeyspace(ks, restoreSystemKeyspace, newCluster)) {
                     continue;
                 }
 

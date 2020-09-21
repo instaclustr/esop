@@ -105,9 +105,11 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
 
             final Manifest manifest = downloadManifest(operation.request, restorer, null, objectMapper);
             manifest.enrichManifestEntries(request.cassandraDirectory);
-            final DatabaseEntities filteredManifestDatabaseEntities = manifest.getDatabaseEntities(true).filter(request.entities, request.restoreSystemKeyspace);
+            final DatabaseEntities filteredManifestDatabaseEntities = manifest.getDatabaseEntities(true).filter(request.entities,
+                                                                                                                request.restoreSystemKeyspace,
+                                                                                                                request.newCluster);
 
-            final List<ManifestEntry> manifestFiles = manifest.getManifestFiles(filteredManifestDatabaseEntities, request.restoreSystemKeyspace);
+            final List<ManifestEntry> manifestFiles = manifest.getManifestFiles(filteredManifestDatabaseEntities, request.restoreSystemKeyspace, request.newCluster);
 
             // 4. Clean out old data
             cleanDirectory(request.dirs.hints());

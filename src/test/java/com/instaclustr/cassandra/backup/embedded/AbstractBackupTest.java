@@ -160,7 +160,10 @@ public abstract class AbstractBackupTest {
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
             "--entities=system_schema,test,test2",
-            "--restore-system-keyspace",
+            // this will import systema_schema, normally, it wont happen without setting --restore-system-keyspace
+            // that would import all of them which is not always what we really want as other system tables
+            // would be regenerated, only schema should be as it was.
+            "--restore-into-new-cluster",
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 

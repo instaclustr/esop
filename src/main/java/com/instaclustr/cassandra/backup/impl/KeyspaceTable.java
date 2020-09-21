@@ -1,6 +1,8 @@
 package com.instaclustr.cassandra.backup.impl;
 
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -40,6 +42,12 @@ public class KeyspaceTable implements Cloneable {
 
     public static boolean isSystemKeyspace(final String keyspace) {
         return keyspace.equals("system") || keyspace.equals("system_schema");
+    }
+
+    private static final List<String> bootstrappingKeyspaces = Arrays.asList("system_schema");
+
+    public static boolean isBootstrappingKeyspace(final String keyspace) {
+        return bootstrappingKeyspaces.contains(keyspace);
     }
 
     public TableType classifyTable(final String keyspace, final String table) {

@@ -79,7 +79,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                              @JsonProperty("globalRequest") final boolean globalRequest,
                              @JsonProperty("timeout") @Min(1) final Integer timeout,
                              @JsonProperty("resolveHostIdFromTopology") final Boolean resolveHostIdFromTopology,
-                             @JsonProperty("insecure") final boolean insecure) {
+                             @JsonProperty("insecure") final boolean insecure,
+                             @JsonProperty("newCluster") final boolean newCluster) {
         super(type, id, creationTime, state, failureCause, progress, startTime, new RestoreOperationRequest(type,
                                                                                                             storageLocation,
                                                                                                             concurrentConnections,
@@ -103,7 +104,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                                                                                                             globalRequest,
                                                                                                             timeout,
                                                                                                             resolveHostIdFromTopology,
-                                                                                                            insecure));
+                                                                                                            insecure,
+                                                                                                            newCluster));
         this.coordinator = null;
     }
 

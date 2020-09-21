@@ -132,8 +132,10 @@ public class DatabaseEntities {
         return new DatabaseEntities();
     }
 
+    // only used in InPlace strategy
     public DatabaseEntities filter(final DatabaseEntities entitiesFromRequest,
-                                   final boolean systemEntities) {
+                                   final boolean systemEntities,
+                                   final boolean newCluster) {
         if (entitiesFromRequest.areEmpty()) {
             return this;
         }
@@ -145,15 +147,20 @@ public class DatabaseEntities {
                 .stream()
                 .filter(ks -> getKeyspaces().contains(ks))
                 .filter(ks -> {
-                    if (!systemEntities) {
-                        return !KeyspaceTable.isSystemKeyspace(ks);
+                    if (KeyspaceTable.isSystemKeyspace(ks)) {
+                        if (newCluster && KeyspaceTable.isBootstrappingKeyspace(ks)) {
+                            return true;
+                        } else {
+                            return systemEntities;
+                        }
                     }
+
                     return true;
                 })
                 .collect(toList());
 
             final HashMultimap<String, String> keyspacesAndTables = HashMultimap.create();
-            
+
             getKeyspacesAndTables()
                 .entries()
                 .stream()
@@ -183,6 +190,11 @@ public class DatabaseEntities {
         }
 
         throw new IllegalStateException("Unable to filter entities!");
+    }
+
+    public DatabaseEntities filter(final DatabaseEntities entitiesFromRequest,
+                                   final boolean systemEntities) {
+        return filter(entitiesFromRequest, systemEntities, false);
     }
 
     public static class DatabaseEntitiesConverter implements CommandLine.ITypeConverter<DatabaseEntities> {
