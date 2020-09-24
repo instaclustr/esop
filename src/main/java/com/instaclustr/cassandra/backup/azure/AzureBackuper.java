@@ -3,9 +3,6 @@ package com.instaclustr.cassandra.backup.azure;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.Date;
-import java.util.EnumSet;
 
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
@@ -16,14 +13,9 @@ import com.instaclustr.cassandra.backup.impl.backup.BackupOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.Backuper;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.blob.BlobListingDetails;
-import com.microsoft.azure.storage.blob.BlobProperties;
-import com.microsoft.azure.storage.blob.CloudBlob;
 import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
-import com.microsoft.azure.storage.blob.CloudBlobDirectory;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
-import com.microsoft.azure.storage.blob.ListBlobItem;
 
 public class AzureBackuper extends Backuper {
 
@@ -70,6 +62,11 @@ public class AzureBackuper extends Backuper {
     }
 
     @Override
+    protected void cleanup() throws Exception {
+
+    }
+
+    @Override
     public FreshenResult freshenRemoteObject(final RemoteObjectReference object) throws Exception {
         final CloudBlockBlob blob = ((AzureRemoteObjectReference) object).blob;
 
@@ -102,31 +99,5 @@ public class AzureBackuper extends Backuper {
     public void uploadText(final String text, final RemoteObjectReference objectReference) throws Exception {
         final CloudBlockBlob blob = ((AzureRemoteObjectReference) objectReference).blob;
         blob.uploadText(text);
-    }
-
-    @Override
-    public void cleanup() throws Exception {
-        deleteStaleBlobs();
-    }
-
-    private void deleteStaleBlobs() throws Exception {
-        final Date expiryDate = Date.from(ZonedDateTime.now().minusWeeks(1).toInstant());
-
-        final CloudBlobDirectory directoryReference = blobContainer.getDirectoryReference(request.storageLocation.clusterId + "/" + request.storageLocation.datacenterId);
-
-        for (final ListBlobItem blob : directoryReference.listBlobs(null, true, EnumSet.noneOf(BlobListingDetails.class), null, null)) {
-            if (!(blob instanceof CloudBlob)) {
-                continue;
-            }
-
-            final BlobProperties properties = ((CloudBlob) blob).getProperties();
-            if (properties == null || properties.getLastModified() == null) {
-                continue;
-            }
-
-            if (properties.getLastModified().before(expiryDate)) {
-                ((CloudBlob) blob).delete();
-            }
-        }
     }
 }

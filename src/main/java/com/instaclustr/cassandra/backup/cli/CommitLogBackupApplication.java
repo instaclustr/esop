@@ -11,6 +11,7 @@ import com.instaclustr.cassandra.backup.impl.backup.BackupCommitLogsOperationReq
 import com.instaclustr.cassandra.backup.impl.backup.BackupModules.CommitlogBackupModule;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
+import com.instaclustr.picocli.CassandraJMXSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -32,6 +33,9 @@ public class CommitLogBackupApplication implements Runnable {
     private CommandSpec spec;
 
     @Mixin
+    private CassandraJMXSpec jmxSpec;
+
+    @Mixin
     private BackupCommitLogsOperationRequest request;
 
     @Inject
@@ -45,7 +49,7 @@ public class CommitLogBackupApplication implements Runnable {
     public void run() {
         logCommandVersionInformation(spec);
 
-        init(this, null, request, logger, singletonList(new CommitlogBackupModule()));
+        init(this, jmxSpec, request, logger, singletonList(new CommitlogBackupModule()));
 
         final Operation<?> operation = operationsService.submitOperationRequest(request);
 

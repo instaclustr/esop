@@ -27,8 +27,9 @@ public class BaseRestoreOperationRequest extends AbstractOperationRequest {
                                        final Path lockFile,
                                        final String k8sNamespace,
                                        final String k8sSecretName,
-                                       final boolean insecure) {
-        super(storageLocation, k8sNamespace, k8sSecretName, insecure);
+                                       final boolean insecure,
+                                       final boolean skipBucketVerification) {
+        super(storageLocation, k8sNamespace, k8sSecretName, insecure, skipBucketVerification);
         this.storageLocation = storageLocation;
         this.concurrentConnections = concurrentConnections == null ? 10 : concurrentConnections;
         this.lockFile = lockFile;

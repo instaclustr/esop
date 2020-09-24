@@ -78,8 +78,9 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
                                       final String k8sNamespace,
                                       final String k8sBackupSecretName,
                                       final boolean insecure,
-                                      final boolean createMissingBucket) {
-        super(storageLocation, k8sNamespace, k8sBackupSecretName, insecure);
+                                      final boolean createMissingBucket,
+                                      final boolean skipBucketVerification) {
+        super(storageLocation, k8sNamespace, k8sBackupSecretName, insecure, skipBucketVerification);
         this.storageLocation = storageLocation;
         this.duration = duration;
         this.bandwidth = bandwidth;

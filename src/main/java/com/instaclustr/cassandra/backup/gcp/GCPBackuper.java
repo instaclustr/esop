@@ -82,12 +82,12 @@ public class GCPBackuper extends Backuper {
     }
 
     @Override
-    public void uploadText(final String text, final RemoteObjectReference objectReference) throws Exception {
+    public void uploadText(final String text, final RemoteObjectReference objectReference) {
         final BlobId blobId = ((GCPRemoteObjectReference) objectReference).blobId;
         storage.create(BlobInfo.newBuilder(blobId).build(), text.getBytes(), Storage.BlobTargetOption.predefinedAcl(BUCKET_OWNER_FULL_CONTROL));
     }
 
     @Override
-    public void cleanup() throws Exception {
+    public void cleanup() {
     }
 }

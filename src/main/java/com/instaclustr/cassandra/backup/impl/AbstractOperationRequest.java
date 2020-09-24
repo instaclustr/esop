@@ -39,7 +39,7 @@ public abstract class AbstractOperationRequest extends OperationRequest {
     public String k8sNamespace;
 
     @Option(names = {"--k8s-secret-name"},
-        description = "Name of Kubernetes secret used for credential retrieval for backup / restores when talking to cloud storages.")
+        description = "Name of Kubernetes secret used for credential retrieval for backup / restores when talking to a cloud storage.")
     @JsonProperty("k8sSecretName")
     public String k8sSecretName;
 
@@ -48,6 +48,12 @@ public abstract class AbstractOperationRequest extends OperationRequest {
     @JsonProperty("insecure")
     public boolean insecure;
 
+    @Option(names = {"--skip-bucket-verification"},
+        description = "Do not check the existence of a bucket. Some storage providers (e.g. S3) requires a special permissions to "
+            + "be able to list buckets or query their existence which might not be allowed. This flag will skip that check. Keep in mind "
+            + "that if that bucket does not exist, the whole backup operation will fail.")
+    public boolean skipBucketVerification;
+
     public AbstractOperationRequest() {
         // for picocli
     }
@@ -55,11 +61,13 @@ public abstract class AbstractOperationRequest extends OperationRequest {
     public AbstractOperationRequest(@NotNull final StorageLocation storageLocation,
                                     final String k8sNamespace,
                                     final String k8sSecretName,
-                                    final boolean insecure) {
+                                    final boolean insecure,
+                                    final boolean skipBucketVerification) {
         this.storageLocation = storageLocation;
         this.k8sNamespace = k8sNamespace;
         this.k8sSecretName = k8sSecretName;
         this.insecure = insecure;
+        this.skipBucketVerification = skipBucketVerification;
     }
 
     @JsonIgnore

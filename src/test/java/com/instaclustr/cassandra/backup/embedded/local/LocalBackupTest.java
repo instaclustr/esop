@@ -3,6 +3,7 @@ package com.instaclustr.cassandra.backup.embedded.local;
 import static com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy.RestorationStrategyType.HARDLINKS;
 import static com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy.RestorationStrategyType.IMPORT;
 import static com.instaclustr.io.FileUtils.deleteDirectory;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.github.nosan.embedded.cassandra.api.Cassandra;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -186,8 +188,9 @@ public class LocalBackupTest extends AbstractBackupTest {
 
             final AtomicBoolean wait = new AtomicBoolean(true);
 
-            uploadTracker = new UploadTracker(new Executors.FixedTasksExecutorSupplier().get(10),
-                                              operationsService) {
+            final ListeningExecutorService finisher = new Executors.FixedTasksExecutorSupplier().get(10);
+
+            uploadTracker = new UploadTracker(finisher, operationsService) {
                 // override for testing purposes
                 @Override
                 public UploadUnit constructUnitToSubmit(final Backuper backuper,
@@ -270,6 +273,14 @@ public class LocalBackupTest extends AbstractBackupTest {
             for (final UploadUnit uploadUnit : session2.getUnits()) {
                 Assert.assertTrue(session.getUnits().contains(uploadUnit));
             }
+
+            Assert.assertTrue(uploadTracker.getUnits().isEmpty());
+
+            uploadTracker.removeSession(session);
+            uploadTracker.removeSession(session2);
+
+            Assert.assertTrue(session.getUnits().isEmpty());
+            Assert.assertTrue(session2.getUnits().isEmpty());
         } catch (final Exception ex) {
             ex.printStackTrace();
             throw ex;
@@ -279,9 +290,9 @@ public class LocalBackupTest extends AbstractBackupTest {
                 cassandra.stop();
             }
             uploadTracker.stopAsync();
-            uploadTracker.awaitTerminated(1, TimeUnit.MINUTES);
+            uploadTracker.awaitTerminated(1, MINUTES);
             uploadTracker.stopAsync();
-            uploadTracker.awaitTerminated(1, TimeUnit.MINUTES);
+            uploadTracker.awaitTerminated(1, MINUTES);
             FileUtils.deleteDirectory(Paths.get(target(backupOperationRequest.storageLocation.bucket)));
         }
     }
@@ -305,7 +316,9 @@ public class LocalBackupTest extends AbstractBackupTest {
             null, // timeout
             false,
             false,
-            null
+            false,
+            null,
+            false
         );
     }
 

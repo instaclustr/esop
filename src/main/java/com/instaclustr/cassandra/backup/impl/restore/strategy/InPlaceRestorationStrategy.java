@@ -83,8 +83,10 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
 
             // 0. check that bucket is there
 
-            try (final BucketService bucketService = bucketServiceFactoryMap.get(request.storageLocation.storageProvider).createBucketService(request)) {
-                bucketService.checkBucket(request.storageLocation.bucket, false);
+            if (!request.skipBucketVerification) {
+                try (final BucketService bucketService = bucketServiceFactoryMap.get(request.storageLocation.storageProvider).createBucketService(request)) {
+                    bucketService.checkBucket(request.storageLocation.bucket, false);
+                }
             }
 
             // 1. Resolve node to restore to
@@ -97,10 +99,7 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
                 logger.info(format("Updated storage location to %s", operation.request.storageLocation));
             }
 
-            // 2. Determine if just restoring a subset of tables
-            //final boolean isTableSubsetOnly = request.entities.tableSubsetOnly();
-
-            // 3. Download the manifest & tokens, chance to error out soon before we actually pull big files if something goes wrong here
+            // 2. Download the manifest & tokens, chance to error out soon before we actually pull big files if something goes wrong here
             logger.info("Retrieving manifest for snapshot: {}", request.snapshotTag);
 
             final Manifest manifest = downloadManifest(operation.request, restorer, null, objectMapper);
@@ -111,12 +110,7 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
 
             final List<ManifestEntry> manifestFiles = manifest.getManifestFiles(filteredManifestDatabaseEntities, request.restoreSystemKeyspace, request.newCluster);
 
-            // 4. Clean out old data
-            cleanDirectory(request.dirs.hints());
-            cleanDirectory(request.dirs.savedCaches());
-            cleanDirectory(request.dirs.commitLogs());
-
-            // 5. Build a list of all SSTables currently present, that are candidates for deleting
+            // 3. Build a list of all SSTables currently present, that are candidates for deleting
             final Set<Path> existingFiles = Manifest.getLocalExistingEntries(request.dirs.data());
 
             final List<ManifestEntry> entriesToDownload = new ArrayList<>();
@@ -160,15 +154,7 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
                 }
             }
 
-            // 6. Delete any entries left in existingSstableList
-            filesToDelete.forEach(sstablePath -> {
-                logger.info("Deleting existing sstable {}", sstablePath);
-                if (!sstablePath.toFile().delete()) {
-                    logger.warn("Failed to delete {}", sstablePath);
-                }
-            });
-
-            // 7. Download files in the manifest
+            // 4. Download files in the manifest
 
             Session<DownloadUnit> downloadSession = null;
 
@@ -179,6 +165,21 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
             } finally {
                 downloadTracker.removeSession(downloadSession);
             }
+
+            // 5. Delete any entries left in existingSstableList
+            filesToDelete.forEach(sstablePath -> {
+                logger.info("Deleting existing sstable {}", sstablePath);
+                if (!sstablePath.toFile().delete()) {
+                    logger.warn("Failed to delete {}", sstablePath);
+                }
+            });
+
+            // 6. Clean out old data
+            cleanDirectory(request.dirs.hints());
+            cleanDirectory(request.dirs.savedCaches());
+            cleanDirectory(request.dirs.commitLogs());
+
+            // 7.
 
             // K8S will handle copying over tokens.yaml fragment and disabling bootstrap fragment to right directory to be picked up by Cassandra
             // "standalone / vanilla" Cassandra installations has to cover this manually for now.
@@ -206,7 +207,7 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
                                               "auto_bootstrap: true",
                                               "auto_bootstrap: false");
 
-                    if (FileUtils.contains(fileToAppendTo, "initial_token")) {
+                    if (FileUtils.contains(fileToAppendTo, "initial_token") && !FileUtils.contains(fileToAppendTo, "# initial_token")) {
                         logger.warn(String.format("%s file does already contain 'initial_token' property, this is unexpected and "
                                                       + "backup tooling is not going to update it for you, please proceed manually, new setting should be: %s",
                                                   fileToAppendTo,
@@ -215,8 +216,8 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
                         FileUtils.appendToFile(fileToAppendTo, manifest.getInitialTokensCassandraYamlFragment());
                     }
 
-                    logger.info(String.format("Content of file %s to which necessary changes for restore were applied: ", fileToAppendTo));
-                    logger.info(new String(Files.readAllBytes(fileToAppendTo)));
+                    logger.debug(String.format("Content of file %s to which necessary changes for restore were applied: ", fileToAppendTo));
+                    logger.debug(new String(Files.readAllBytes(fileToAppendTo)));
                 }
             } else {
                 logger.info("Update of cassandra.yaml was turned off by --update-cassandra-yaml=false (or not specifying that flag at all.");
@@ -224,9 +225,6 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
                 logger.info("1) add tokens in Cassandra installation dir to cassandra.yaml file");
                 logger.info("2) change 'auto_bootstrap: true' to 'auto_bootstrap: false' in cassandra.yaml");
             }
-        } catch (final Throwable t) {
-            t.printStackTrace();
-            throw t;
         } finally {
             fileLock.release();
         }

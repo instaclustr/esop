@@ -80,7 +80,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                              @JsonProperty("timeout") @Min(1) final Integer timeout,
                              @JsonProperty("resolveHostIdFromTopology") final Boolean resolveHostIdFromTopology,
                              @JsonProperty("insecure") final boolean insecure,
-                             @JsonProperty("newCluster") final boolean newCluster) {
+                             @JsonProperty("newCluster") final boolean newCluster,
+                             @JsonProperty("skipBucketVerification") final boolean skipBucketVerification) {
         super(type, id, creationTime, state, failureCause, progress, startTime, new RestoreOperationRequest(type,
                                                                                                             storageLocation,
                                                                                                             concurrentConnections,
@@ -105,7 +106,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                                                                                                             timeout,
                                                                                                             resolveHostIdFromTopology,
                                                                                                             insecure,
-                                                                                                            newCluster));
+                                                                                                            newCluster,
+                                                                                                            skipBucketVerification));
         this.coordinator = null;
     }
 

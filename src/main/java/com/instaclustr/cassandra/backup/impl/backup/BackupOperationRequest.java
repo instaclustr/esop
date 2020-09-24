@@ -60,6 +60,12 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
     @JsonProperty("schemaVersion")
     public String schemaVersion;
 
+    @JsonProperty("uploadClusterTopology")
+    @Option(names = "--uploadClusterTopology",
+        description = "If set, a cluster topology file will be uploaded alongside a backup, defaults to false. This flag is "
+            + "implicitly set to true if a request is global - coordinator node will upload this file every time.")
+    public boolean uploadClusterTopology;
+
     public BackupOperationRequest() {
         // for picocli
     }
@@ -83,8 +89,20 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonProperty("timeout") @Min(1) final Integer timeout,
                                   @JsonProperty("insecure") final boolean insecure,
                                   @JsonProperty("createMissingBucket") final boolean createMissingBucket,
-                                  @JsonProperty("schemaVersion") final String schemaVersion) {
-        super(storageLocation, duration, bandwidth, concurrentConnections, cassandraDirectory, metadataDirective, k8sNamespace, k8sSecretName, insecure, createMissingBucket);
+                                  @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
+                                  @JsonProperty("schemaVersion") final String schemaVersion,
+                                  @JsonProperty("uploadClusterTopology") final boolean uploadClusterTopology) {
+        super(storageLocation,
+              duration,
+              bandwidth,
+              concurrentConnections,
+              cassandraDirectory,
+              metadataDirective,
+              k8sNamespace,
+              k8sSecretName,
+              insecure,
+              createMissingBucket,
+              skipBucketVerification);
         this.entities = entities == null ? DatabaseEntities.empty() : entities;
         this.snapshotTag = snapshotTag == null ? format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis())) : snapshotTag;
         this.globalRequest = globalRequest;
@@ -92,6 +110,7 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
         this.dc = dc;
         this.timeout = timeout == null ? 5 : timeout;
         this.schemaVersion = schemaVersion;
+        this.uploadClusterTopology = uploadClusterTopology;
     }
 
     @Override
@@ -112,6 +131,9 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
             .add("metadataDirective", metadataDirective)
             .add("insecure", insecure)
             .add("schemaVersion", schemaVersion)
+            .add("uploadClusterTopology", uploadClusterTopology)
+            .add("createMissingBucket", createMissingBucket)
+            .add("skipBucketVerification", skipBucketVerification)
             .toString();
     }
 }

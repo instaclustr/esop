@@ -27,8 +27,10 @@ import java.util.stream.Stream;
 import com.google.common.base.Joiner;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import com.instaclustr.cassandra.backup.guice.BucketServiceFactory;
 import com.instaclustr.cassandra.backup.guice.RestorerFactory;
 import com.instaclustr.cassandra.backup.impl.AbstractTracker.Session;
+import com.instaclustr.cassandra.backup.impl.BucketService;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
 import com.instaclustr.cassandra.backup.impl.RemoteObjectReference;
 import com.instaclustr.cassandra.backup.impl.restore.DownloadTracker.DownloadUnit;
@@ -44,18 +46,18 @@ public class RestoreCommitLogsOperation extends Operation<RestoreCommitLogsOpera
     private final static String CASSANDRA_COMMIT_LOGS = "commitlog";
 
     private final Map<String, RestorerFactory> restorerFactoryMap;
+    final Map<String, BucketServiceFactory> bucketServiceFactoryMap;
     private final DownloadTracker downloadTracker;
-
-    private final Path commitlogsPath;
 
     @Inject
     public RestoreCommitLogsOperation(final Map<String, RestorerFactory> restorerFactoryMap,
+                                      final Map<String, BucketServiceFactory> bucketServiceFactoryMap,
                                       final DownloadTracker downloadTracker,
                                       @Assisted final RestoreCommitLogsOperationRequest request) {
         super(request);
         this.restorerFactoryMap = restorerFactoryMap;
         this.downloadTracker = downloadTracker;
-        commitlogsPath = request.cassandraDirectory.resolve(CASSANDRA_COMMIT_LOGS);
+        this.bucketServiceFactoryMap = bucketServiceFactoryMap;
     }
 
     @Override
@@ -64,6 +66,7 @@ public class RestoreCommitLogsOperation extends Operation<RestoreCommitLogsOpera
         final FileLock fileLock = new GlobalLock(request.lockFile).waitForLock();
 
         try (final Restorer restorer = restorerFactoryMap.get(request.storageLocation.storageProvider).createCommitLogRestorer(request)) {
+            checkBucket();
             backupCurrentCommitLogs();
             downloadCommitLogs(restorer);
             updateCommitLogArchivingProperties();
@@ -74,8 +77,18 @@ public class RestoreCommitLogsOperation extends Operation<RestoreCommitLogsOpera
         }
     }
 
+    private void checkBucket() throws Exception {
+        if (!request.skipBucketVerification) {
+            try (final BucketService bucketService = bucketServiceFactoryMap.get(request.storageLocation.storageProvider).createBucketService(request)) {
+                bucketService.checkBucket(request.storageLocation.bucket, false);
+            }
+        }
+    }
+
     private void backupCurrentCommitLogs() throws Exception {
         final Set<Path> existingCommitlogsList = new HashSet<>();
+
+        final Path commitlogsPath = request.cassandraDirectory.resolve(CASSANDRA_COMMIT_LOGS);
 
         if (commitlogsPath.toFile().exists()) {
             try (Stream<Path> paths = Files.list(commitlogsPath)) {

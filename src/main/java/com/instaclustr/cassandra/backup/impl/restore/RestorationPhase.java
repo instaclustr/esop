@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.instaclustr.cassandra.backup.impl.AbstractTracker.Session;
+import com.instaclustr.cassandra.backup.impl.BucketService;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities;
 import com.instaclustr.cassandra.backup.impl.Manifest;
 import com.instaclustr.cassandra.backup.impl.ManifestEntry;
@@ -230,18 +231,26 @@ public abstract class RestorationPhase {
 
                 logger.info("Downloading phase has started.");
 
+                final RestoreOperationRequest request = ctxt.operation.request;
+
+                if (!ctxt.operation.request.skipBucketVerification) {
+                    try (final BucketService bucketService = ctxt.bucketServiceFactoryMap.get(request.storageLocation.storageProvider).createBucketService(request)) {
+                        bucketService.checkBucket(request.storageLocation.bucket, false);
+                    }
+                }
+
                 createOrCleanDirectory(ctxt.operation.request.importing.sourceDir);
 
                 final String schemaVersion = new CassandraSchemaVersion(ctxt.jmx).act();
 
-                final Manifest manifest = downloadManifest(ctxt.operation.request, ctxt.restorer, schemaVersion, ctxt.objectMapper);
-                manifest.enrichManifestEntries(ctxt.operation.request.importing.sourceDir);
+                final Manifest manifest = downloadManifest(request, ctxt.restorer, schemaVersion, ctxt.objectMapper);
+                manifest.enrichManifestEntries(request.importing.sourceDir);
 
                 new CassandraSameTokens(ctxt.jmx, manifest.getTokens()).act();
 
                 // looking into downloaded manifest, download only these sstables for keyspaces / tables
                 // which were specified in request in "entities"
-                final List<ManifestEntry> manifestFiles = manifest.getManifestFiles(ctxt.operation.request.entities,
+                final List<ManifestEntry> manifestFiles = manifest.getManifestFiles(request.entities,
                                                                                     false,  // not possible to restore system keyspace on a live cluster
                                                                                     false); // no new cluster
 
@@ -251,15 +260,15 @@ public abstract class RestorationPhase {
                     session = ctxt.downloadTracker.submit(ctxt.restorer,
                                                           ctxt.operation,
                                                           manifestFiles,
-                                                          ctxt.operation.request.snapshotTag,
-                                                          ctxt.operation.request.concurrentConnections);
+                                                          request.snapshotTag,
+                                                          request.concurrentConnections);
 
                     session.waitUntilConsideredFinished();
                     ctxt.downloadTracker.cancelIfNecessary(session);
                 } finally {
                     ctxt.downloadTracker.removeSession(session);
+                    session = null;
                 }
-
                 logger.info("Downloading phase was successfully completed.");
             } catch (final Exception ex) {
                 logger.error("Downloading phase has failed: {}", ex.getMessage());

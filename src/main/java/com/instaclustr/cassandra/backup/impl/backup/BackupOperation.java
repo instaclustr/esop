@@ -77,7 +77,9 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonProperty("timeout") @Min(1) final Integer timeout,
                             @JsonProperty("insecure") final boolean insecure,
                             @JsonProperty("createMissingBucket") final boolean createMissingBucket,
-                            @JsonProperty("schemaVersion") final String schemaVersion) {
+                            @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
+                            @JsonProperty("schemaVersion") final String schemaVersion,
+                            @JsonProperty("uploadClusterTopology") final boolean uploadClusterTopology) {
         super(type, id, creationTime, state, failureCause, progress, startTime, new BackupOperationRequest(type,
                                                                                                            storageLocation,
                                                                                                            duration,
@@ -94,7 +96,9 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                                                                                                            timeout,
                                                                                                            insecure,
                                                                                                            createMissingBucket,
-                                                                                                           schemaVersion));
+                                                                                                           skipBucketVerification,
+                                                                                                           schemaVersion,
+                                                                                                           uploadClusterTopology));
         coordinator = null;
     }
 

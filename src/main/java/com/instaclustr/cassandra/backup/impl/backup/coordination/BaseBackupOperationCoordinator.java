@@ -26,6 +26,8 @@ import com.instaclustr.cassandra.backup.impl.backup.UploadTracker.UploadUnit;
 import com.instaclustr.cassandra.backup.impl.backup.coordination.ClearSnapshotOperation.ClearSnapshotOperationRequest;
 import com.instaclustr.cassandra.backup.impl.backup.coordination.TakeSnapshotOperation.TakeSnapshotOperationRequest;
 import com.instaclustr.cassandra.backup.impl.interaction.CassandraTokens;
+import com.instaclustr.cassandra.topology.CassandraClusterTopology;
+import com.instaclustr.cassandra.topology.CassandraClusterTopology.ClusterTopology;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationCoordinator;
 import com.instaclustr.operations.ResultGatherer;
@@ -76,8 +78,10 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
             assert bucketServiceFactoryMap != null;
             assert objectMapper != null;
 
-            try (final BucketService bucketService = bucketServiceFactoryMap.get(request.storageLocation.storageProvider).createBucketService(request)) {
-                bucketService.checkBucket(request.storageLocation.bucket, request.createMissingBucket);
+            if (!request.skipBucketVerification) {
+                try (final BucketService bucketService = bucketServiceFactoryMap.get(request.storageLocation.storageProvider).createBucketService(request)) {
+                    bucketService.checkBucket(request.storageLocation.bucket, request.createMissingBucket);
+                }
             }
 
             final List<String> tokens = new CassandraTokens(cassandraJMXService).act();
@@ -106,7 +110,7 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
             Manifest.write(manifest, localManifestPath, objectMapper);
             manifest.setManifest(getManifestAsManifestEntry(localManifestPath));
 
-            try (Backuper backuper = backuperFactoryMap.get(request.storageLocation.storageProvider).createBackuper(request)) {
+            try (final Backuper backuper = backuperFactoryMap.get(request.storageLocation.storageProvider).createBackuper(request)) {
 
                 final List<ManifestEntry> manifestEntries = manifest.getManifestEntries();
 
@@ -119,6 +123,12 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
                     uploadTracker.cancelIfNecessary(uploadSession);
                 } finally {
                     uploadTracker.removeSession(uploadSession);
+                    uploadSession = null;
+                }
+
+                if (operation.request.uploadClusterTopology) {
+                    final ClusterTopology topology = new CassandraClusterTopology(cassandraJMXService, operation.request.dc).act();
+                    ClusterTopology.upload(backuper, topology, objectMapper, operation.request.snapshotTag);
                 }
             } finally {
                 manifest.cleanup();

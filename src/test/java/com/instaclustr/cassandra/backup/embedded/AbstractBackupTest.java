@@ -148,6 +148,7 @@ public abstract class AbstractBackupTest {
             "--storage-location=" + getStorageLocation(),
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
+            //"--online"
         };
 
         // RESTORE

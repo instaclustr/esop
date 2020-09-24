@@ -83,8 +83,9 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
                                              @JsonProperty("keyspaceTables") final Multimap<String, String> keyspaceTables,
                                              @JsonProperty("k8sNamespace") final String k8sNamespace,
                                              @JsonProperty("k8sSecretName") final String k8sSecretName,
-                                             @JsonProperty("insecure") final boolean insecure) {
-        super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure);
+                                             @JsonProperty("insecure") final boolean insecure,
+                                             @JsonProperty("skipBucketVerification") final boolean skipBucketVerification) {
+        super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure, skipBucketVerification);
         this.cassandraDirectory = cassandraDirectory == null ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.sharedContainerPath = sharedContainerPath == null ? Paths.get("/") : sharedContainerPath;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
@@ -111,6 +112,7 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
             .add("k8sNamespace", k8sNamespace)
             .add("k8sSecretName", k8sSecretName)
             .add("insecure", insecure)
+            .add("skipBucketVerification", skipBucketVerification)
             .toString();
     }
 }

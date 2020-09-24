@@ -61,7 +61,7 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
                                       final String snapshotTag,
                                       final int concurrentConnections) {
         final long filesSizeSum = getFilesSizeSum(entries);
-        computeBPS(backuper.request, filesSizeSum);
+        computeBPS(backuper.request, filesSizeSum, concurrentConnections);
         return super.submit(backuper,
                             operation,
                             entries,
@@ -148,7 +148,7 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
         return manifestEntries.stream().map(e -> e.size).reduce(0L, Long::sum);
     }
 
-    private void computeBPS(final BaseBackupOperationRequest request, final long filesSizeSum) {
+    private void computeBPS(final BaseBackupOperationRequest request, final long filesSizeSum, final int concurrentConnections) {
 
         long bpsFromBandwidth = 0;
         long bpsFromDuration = 0;
@@ -162,7 +162,7 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
         }
 
         if (bpsFromBandwidth != 0 || bpsFromDuration != 0) {
-            long bps = Math.max(bpsFromBandwidth, bpsFromDuration);
+            long bps = Math.max(bpsFromBandwidth, bpsFromDuration) / concurrentConnections;
             request.bandwidth = new DataRate(bps, DataRateUnit.BPS);
         }
     }

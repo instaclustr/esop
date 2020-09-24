@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Objects;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -64,12 +65,13 @@ public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session
 
     @Override
     protected void shutDown() throws Exception {
-        logger.info("Executor service terminating, shutting down finished executor service ...");
+        logger.info("Executor service terminating, shutting down finisher executor service ...");
 
         finisherExecutorService.shutdown();
 
         while (true) {
-            if (finisherExecutorService.awaitTermination(1, MINUTES)) {
+            logger.info("Waiting until all submitted tasks were terminated ...");
+            if (finisherExecutorService.awaitTermination(5, MINUTES)) {
                 break;
             }
         }
@@ -163,6 +165,7 @@ public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session
 
     public void removeSession(final Session<?> session) {
         if (session != null) {
+            session.clear();
             sessions.remove(session);
         }
     }
@@ -265,6 +268,23 @@ public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session
         public AtomicBoolean getShouldCancel() {
             return shouldCancel;
         }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final Unit unit = (Unit) o;
+            return Objects.equal(manifestEntry, unit.manifestEntry);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(manifestEntry);
+        }
     }
 
     public static abstract class Session<U extends Unit> {
@@ -352,6 +372,10 @@ public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session
         public void addUnit(final U unit) {
             units.add(unit);
             submittedUnits.incrementAndGet();
+        }
+
+        public void clear() {
+            units.clear();
         }
     }
 }

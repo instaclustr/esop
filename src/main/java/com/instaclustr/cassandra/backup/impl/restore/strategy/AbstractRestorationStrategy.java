@@ -7,11 +7,13 @@ import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.of;
 
 import java.nio.channels.FileLock;
+import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Provider;
 import com.instaclustr.cassandra.CassandraVersion;
+import com.instaclustr.cassandra.backup.guice.BucketServiceFactory;
 import com.instaclustr.cassandra.backup.impl.restore.DownloadTracker;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.ClusterHealthCheckPhase;
@@ -29,24 +31,28 @@ public abstract class AbstractRestorationStrategy implements RestorationStrategy
     protected final Provider<CassandraVersion> cassandraVersion;
     protected final ObjectMapper objectMapper;
     protected final DownloadTracker downloadTracker;
+    protected final Map<String, BucketServiceFactory> bucketServiceFactoryMap;
 
     public AbstractRestorationStrategy(final CassandraJMXService cassandraJMXService,
                                        final Provider<CassandraVersion> cassandraVersion,
                                        final ObjectMapper objectMapper,
-                                       final DownloadTracker downloadTracker) {
+                                       final DownloadTracker downloadTracker,
+                                       final Map<String, BucketServiceFactory> bucketServiceFactoryMap) {
         this.cassandraJMXService = cassandraJMXService;
         this.cassandraVersion = cassandraVersion;
         this.objectMapper = objectMapper;
         this.downloadTracker = downloadTracker;
+        this.bucketServiceFactoryMap = bucketServiceFactoryMap;
     }
 
     public abstract RestorationPhase resolveRestorationPhase(Operation<RestoreOperationRequest> operation, Restorer restorer);
 
-    public RestorationContext initialiseRestorationContext(final Operation<RestoreOperationRequest> operation,
-                                                           final Restorer restorer,
-                                                           final ObjectMapper objectMapper,
-                                                           final Provider<CassandraVersion> cassandraVersion,
-                                                           final DownloadTracker downloadTracker) {
+    protected RestorationContext initialiseRestorationContext(final Operation<RestoreOperationRequest> operation,
+                                                              final Restorer restorer,
+                                                              final ObjectMapper objectMapper,
+                                                              final Provider<CassandraVersion> cassandraVersion,
+                                                              final DownloadTracker downloadTracker,
+                                                              final Map<String, BucketServiceFactory> bucketServiceFactoryMap) {
         final RestorationPhaseType phaseType = operation.request.restorationPhase;
 
         final RestorationContext ctxt = new RestorationContext();
@@ -57,6 +63,7 @@ public abstract class AbstractRestorationStrategy implements RestorationStrategy
         ctxt.objectMapper = objectMapper;
         ctxt.phaseType = phaseType;
         ctxt.downloadTracker = downloadTracker;
+        ctxt.bucketServiceFactoryMap = bucketServiceFactoryMap;
 
         if (phaseType == DOWNLOAD || phaseType == TRUNCATE || phaseType == RestorationPhaseType.IMPORT) {
             ctxt.cassandraVersion = cassandraVersion.get();

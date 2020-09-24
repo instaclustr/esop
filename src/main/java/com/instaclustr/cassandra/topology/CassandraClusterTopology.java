@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.MoreObjects;
 import com.instaclustr.cassandra.CassandraInteraction;
+import com.instaclustr.cassandra.backup.impl.backup.Backuper;
 import com.instaclustr.cassandra.backup.impl.interaction.CassandraSchemaVersion;
 import com.instaclustr.cassandra.topology.CassandraClusterTopology.ClusterTopology;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
@@ -26,6 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CassandraClusterTopology implements CassandraInteraction<ClusterTopology> {
+
+    private static final Logger logger = LoggerFactory.getLogger(CassandraClusterTopology.class);
 
     private final CassandraJMXService cassandraJMXService;
     private final String dc;
@@ -57,6 +61,10 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
         final Map<InetAddress, String> endpointRacks = new CassandraEndpointRack(cassandraJMXService, endpoints.keySet()).act();
 
         final String schemaVersion = new CassandraSchemaVersion(cassandraJMXService).act();
+
+        logger.info("Resolved endpoints: {}", endpoints.toString());
+        logger.info("Resolved endpoints and their dc: {}", endpointDcs.toString());
+        logger.info("Resolved cluster name: {}", clusterName);
 
         return constructTopology(clusterName, endpoints, endpointDcs, hostnames, endpointRacks, schemaVersion);
     }
@@ -214,6 +222,20 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
 
         public static void write(final ObjectMapper objectMapper, final ClusterTopology clusterTopology, final File file) throws IOException {
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, clusterTopology);
+        }
+
+        public static void upload(final Backuper backuper,
+                                  final ClusterTopology clusterTopology,
+                                  final ObjectMapper objectMapper,
+                                  final String snapshotTag) throws Exception {
+            final String clusterTopologyString = ClusterTopology.writeToString(objectMapper, clusterTopology);
+
+            final Path topologyPath = Paths.get(format("topology/%s-%s-topology.json", clusterTopology.clusterName, snapshotTag));
+
+            logger.info("Uploading cluster topology under {}", topologyPath);
+            logger.info("\n" + clusterTopologyString);
+
+            backuper.uploadText(clusterTopologyString, backuper.objectKeyToRemoteReference(topologyPath));
         }
 
         @Override

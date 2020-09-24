@@ -7,10 +7,13 @@ import static com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.Res
 import static com.instaclustr.cassandra.backup.impl.restore.RestorationStrategy.RestorationStrategyType.IMPORT;
 import static java.lang.String.format;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.instaclustr.cassandra.CassandraVersion;
+import com.instaclustr.cassandra.backup.guice.BucketServiceFactory;
 import com.instaclustr.cassandra.backup.impl.restore.DownloadTracker;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.CleaningPhase;
@@ -43,8 +46,9 @@ public class ImportingRestorationStrategy extends AbstractRestorationStrategy {
     public ImportingRestorationStrategy(final CassandraJMXService cassandraJMXService,
                                         final Provider<CassandraVersion> cassandraVersion,
                                         final ObjectMapper objectMapper,
-                                        final DownloadTracker downloadTracker) {
-        super(cassandraJMXService, cassandraVersion, objectMapper, downloadTracker);
+                                        final DownloadTracker downloadTracker,
+                                        final Map<String, BucketServiceFactory> bucketServiceFactoryMap) {
+        super(cassandraJMXService, cassandraVersion, objectMapper, downloadTracker, bucketServiceFactoryMap);
     }
 
     @Override
@@ -65,7 +69,7 @@ public class ImportingRestorationStrategy extends AbstractRestorationStrategy {
     @Override
     public RestorationPhase resolveRestorationPhase(final Operation<RestoreOperationRequest> operation, final Restorer restorer) {
 
-        final RestorationContext ctxt = initialiseRestorationContext(operation, restorer, objectMapper, cassandraVersion, downloadTracker);
+        final RestorationContext ctxt = initialiseRestorationContext(operation, restorer, objectMapper, cassandraVersion, downloadTracker, bucketServiceFactoryMap);
         final RestorationPhaseType phaseType = ctxt.operation.request.restorationPhase;
 
         if (phaseType == INIT) {

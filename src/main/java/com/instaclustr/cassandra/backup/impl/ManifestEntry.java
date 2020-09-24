@@ -110,7 +110,7 @@ public class ManifestEntry implements Cloneable {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(objectKey, localFile, size, type, keyspaceTable);
+        return Objects.hashCode(objectKey, localFile, type, keyspaceTable);
     }
 
     @Override

@@ -78,7 +78,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
     public boolean updateCassandraYaml;
 
     @Option(names = {"--restoration-strategy-type"},
-        description = "Strategy type to use, either IN_PLACE, IMPORTING or TRUNCATING",
+        description = "Strategy type to use, either IN_PLACE, IMPORT or HARDLINKS",
         converter = RestorationStrategyTypeConverter.class)
     public RestorationStrategyType restorationStrategyType = IN_PLACE;
 
@@ -105,7 +105,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
         description = "version of schema in case there are multiple snapshots of same name")
     public UUID schemaVersion;
 
-    @Option(names = "--exactSchemaVersion",
+    @Option(names = "--exact-schema-version",
         description = "Expect exactly same schema version of a node(s) to restore into and schema version of taken backup to restore from. Defaults to false.")
     public boolean exactSchemaVersion;
 
@@ -167,8 +167,9 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonProperty("timeout") @Min(1) final Integer timeout,
                                    @JsonProperty("resolveHostIdFromTopology") final boolean resolveHostIdFromTopology,
                                    @JsonProperty("insecure") final boolean insecure,
-                                   @JsonProperty("newCluster") final boolean newCluster) {
-        super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure);
+                                   @JsonProperty("newCluster") final boolean newCluster,
+                                   @JsonProperty("skipBucketVerification") final boolean skipBucketVerification) {
+        super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure, skipBucketVerification);
         this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/")) ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
         this.restoreSystemKeyspace = restoreSystemKeyspace;
@@ -215,6 +216,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             .add("resolveHostId", resolveHostIdFromTopology)
             .add("insecure", insecure)
             .add("newCluster", newCluster)
+            .add("skipBucketVerification", skipBucketVerification)
             .toString();
     }
 }

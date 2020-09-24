@@ -7,19 +7,13 @@ import static java.util.Optional.ofNullable;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.event.ProgressEvent;
 import com.amazonaws.event.ProgressEventType;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AbortMultipartUploadRequest;
 import com.amazonaws.services.s3.model.CopyObjectRequest;
-import com.amazonaws.services.s3.model.ListMultipartUploadsRequest;
-import com.amazonaws.services.s3.model.MultipartUploadListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.StorageClass;
@@ -162,52 +156,9 @@ public class BaseS3Backuper extends Backuper {
     @Override
     public void cleanup() {
         try {
-            // TODO cleanupMultipartUploads gets access denied, INS-2326 is meant to fix this
-            cleanupMultipartUploads();
-        } catch (final Exception e) {
-            logger.warn("Failed to cleanup multipart uploads.", e);
-        }
-
-        try {
             transferManager.shutdownNow(true);
         } catch (final Exception ex) {
             logger.warn("Exception occurred while shutting down transfer manager for S3Backuper", ex);
-        }
-    }
-
-    private void cleanupMultipartUploads() {
-        final AmazonS3 s3Client = transferManager.getAmazonS3Client();
-
-        final Instant yesterdayInstant = ZonedDateTime.now().minusDays(1).toInstant();
-
-        logger.info("Cleaning up multipart uploads older than {}.", yesterdayInstant);
-
-        final ListMultipartUploadsRequest listMultipartUploadsRequest = new ListMultipartUploadsRequest(request.storageLocation.bucket)
-            .withPrefix(request.storageLocation.clusterId + "/" + request.storageLocation.datacenterId);
-
-        while (true) {
-            final MultipartUploadListing multipartUploadListing = s3Client.listMultipartUploads(listMultipartUploadsRequest);
-
-            multipartUploadListing.getMultipartUploads().stream()
-                .filter(u -> u.getInitiated().toInstant().isBefore(yesterdayInstant))
-                .forEach(u -> {
-                    logger.info("Aborting multi-part upload for key \"{}\" initiated on {}", u.getKey(), u.getInitiated().toInstant());
-
-                    try {
-                        s3Client.abortMultipartUpload(new AbortMultipartUploadRequest(request.storageLocation.bucket, u.getKey(), u.getUploadId()));
-
-                    } catch (final AmazonClientException e) {
-                        logger.error("Failed to abort multipart upload for key \"{}\".", u.getKey(), e);
-                    }
-                });
-
-            if (!multipartUploadListing.isTruncated()) {
-                break;
-            }
-
-            listMultipartUploadsRequest
-                .withKeyMarker(multipartUploadListing.getKeyMarker())
-                .withUploadIdMarker(multipartUploadListing.getUploadIdMarker());
         }
     }
 }
