@@ -138,7 +138,6 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
         private Function<InputStream, InputStream> getUploadingInputStreamFunction(final BaseBackupOperationRequest request) {
             return request.bandwidth == null ? identity() : inputStream -> {
                 final RateLimiter rateLimiter = RateLimiter.create(request.bandwidth.asBytesPerSecond().value);
-                logger.debug("Upload bandwidth capped at {}.", request.bandwidth);
                 return new RateLimitedInputStream(inputStream, rateLimiter, shouldCancel);
             };
         }
@@ -163,6 +162,7 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
 
         if (bpsFromBandwidth != 0 || bpsFromDuration != 0) {
             long bps = Math.max(bpsFromBandwidth, bpsFromDuration) / concurrentConnections;
+            logger.info("BPS computed to be {}", bps);
             request.bandwidth = new DataRate(bps, DataRateUnit.BPS);
         }
     }

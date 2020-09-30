@@ -8,7 +8,6 @@ import static java.lang.String.format;
 import java.net.URISyntaxException;
 import java.util.Map;
 
-import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
@@ -50,7 +49,7 @@ public class AzureModule extends AbstractModule {
         }
 
         public CloudStorageAccount build(final AbstractOperationRequest operationRequest) throws AzureModuleException, URISyntaxException {
-            return new CloudStorageAccount(provideStorageCredentialsAccountAndKey(coreV1ApiProvider, operationRequest), true);
+            return new CloudStorageAccount(provideStorageCredentialsAccountAndKey(coreV1ApiProvider, operationRequest), !operationRequest.insecure);
         }
 
         public boolean isRunningInKubernetes() {
