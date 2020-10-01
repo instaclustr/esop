@@ -923,6 +923,18 @@ restore_point_in_time=2020\:01\:13 11\:32\:51
 restore_command=cp -f %from %to
 ----
 
+## Logging
+
+We are using logback. There is already embedded `logback.xml` in the built JAR however if you
+want to configure it, feel free to provide your own `logback.xml` and configure it like:
+
+----
+java -Dlogback.configurationFile=my-custom-logback.xml \
+    -jar instaclustr-backup-restore.jar backup
+----
+
+You find the original file in `src/main/resources/logback.xml`.
+
 ## Build and tests
 
 There are end-to-end tests which are testing all GCP, Azure and S3 integration as well

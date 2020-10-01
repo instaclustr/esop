@@ -19,8 +19,18 @@
   <logger name="com.instaclustr.cassandra.backup.azure" level="INFO"/>
   <logger name="com.instaclustr.cassandra.backup.gcp" level="INFO"/>
   <logger name="com.instaclustr.cassandra.backup.local" level="INFO"/>
+  <logger name="com.instaclustr" level="INFO"/>
   
-  <root level="info">
+  <!-- consult https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/java-dg-logging.html -->
+  
+  <logger name="com.amazonaws.request" level="INFO"/>
+  <logger name="com.amazonaws.latency" level="INFO"/>
+  <logger name="org.apache.http.wire" level="INFO"/>
+  <logger name="com.amazonaws" level="INFO"/>
+  
+  <!-- end -->
+  
+  <root level="INFO">
     <appender-ref ref="STDOUT"/>
   </root>
 </configuration>

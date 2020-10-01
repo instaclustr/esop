@@ -1,5 +1,7 @@
 <configuration>
   
+  <!-- -Dlogback.configurationFile -->
+  
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
       <pattern>%d{HH:mm:ss.SSS} %-5level %logger - %msg%n</pattern>
@@ -12,15 +14,25 @@
   
   <!-- disable / enable as you wish -->
   
-  <logger name="com.instaclustr.cassandra.backup.impl.backup.Backuper" level="INFO"/>
+  <!--logger name="com.instaclustr.cassandra.backup.impl.backup.Backuper" level="INFO"/>
   <logger name="com.instaclustr.cassandra.backup.impl.restore.Restorer" level="INFO"/>
   <logger name="com.instaclustr.cassandra.backup" level="INFO"/>
   <logger name="com.instaclustr.cassandra.backup.s3" level="INFO"/>
   <logger name="com.instaclustr.cassandra.backup.azure" level="INFO"/>
   <logger name="com.instaclustr.cassandra.backup.gcp" level="INFO"/>
-  <logger name="com.instaclustr.cassandra.backup.local" level="INFO"/>
+  <logger name="com.instaclustr.cassandra.backup.local" level="INFO"/-->
+  <logger name="com.instaclustr" level="INFO"/>
   
-  <root level="info">
+  <!-- consult https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/java-dg-logging.html -->
+  
+  <!--logger name="com.amazonaws.request" level="DEBUG"/>
+  <logger name="com.amazonaws.latency" level="DEBUG"/>
+  <logger name="org.apache.http.wire" level="DEBUG"/>
+  <logger name="com.amazonaws" level="DEBUG"/-->
+  
+  <!-- end -->
+  
+  <root level="INFO">
     <appender-ref ref="STDOUT"/>
   </root>
 </configuration>
