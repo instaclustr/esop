@@ -8,6 +8,7 @@ import com.amazonaws.services.s3.model.MetadataDirective;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.instaclustr.cassandra.backup.impl.AbstractOperationRequest;
+import com.instaclustr.cassandra.backup.impl.ProxySettings;
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.jackson.PathSerializer;
@@ -79,8 +80,9 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
                                       final String k8sBackupSecretName,
                                       final boolean insecure,
                                       final boolean createMissingBucket,
-                                      final boolean skipBucketVerification) {
-        super(storageLocation, k8sNamespace, k8sBackupSecretName, insecure, skipBucketVerification);
+                                      final boolean skipBucketVerification,
+                                      final ProxySettings proxySettings) {
+        super(storageLocation, k8sNamespace, k8sBackupSecretName, insecure, skipBucketVerification, proxySettings);
         this.storageLocation = storageLocation;
         this.duration = duration;
         this.bandwidth = bandwidth;

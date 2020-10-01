@@ -146,6 +146,8 @@ If `AWS_ENDPOINT` is set, `AWS_REGION` has to be set too.
 The communication with S3 might be insecure, this is controlled by `--insecure-http` flag on the command line. By default,
 it uses HTTPS.
 
+It is possible to connect to S3 via proxy, please consult "--use-proxy" flag and "--proxy-*" family of settings on command line.
+
 #### Azure
 
 Azure module expects `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` environment variables to be set.

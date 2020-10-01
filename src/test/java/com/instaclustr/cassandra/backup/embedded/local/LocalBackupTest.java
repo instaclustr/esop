@@ -318,7 +318,8 @@ public class LocalBackupTest extends AbstractBackupTest {
             false,
             false,
             null,
-            false
+            false,
+            null // proxy settings
         );
     }
 

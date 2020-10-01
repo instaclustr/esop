@@ -17,6 +17,7 @@ import com.instaclustr.cassandra.backup.impl.DatabaseEntities;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities.DatabaseEntitiesConverter;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities.DatabaseEntitiesDeserializer;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities.DatabaseEntitiesSerializer;
+import com.instaclustr.cassandra.backup.impl.ProxySettings;
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import com.instaclustr.measure.DataRate;
 import com.instaclustr.measure.Time;
@@ -91,7 +92,8 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonProperty("createMissingBucket") final boolean createMissingBucket,
                                   @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
                                   @JsonProperty("schemaVersion") final String schemaVersion,
-                                  @JsonProperty("uploadClusterTopology") final boolean uploadClusterTopology) {
+                                  @JsonProperty("uploadClusterTopology") final boolean uploadClusterTopology,
+                                  @JsonProperty("proxySettings") final ProxySettings proxySettings) {
         super(storageLocation,
               duration,
               bandwidth,
@@ -102,7 +104,8 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
               k8sSecretName,
               insecure,
               createMissingBucket,
-              skipBucketVerification);
+              skipBucketVerification,
+              proxySettings);
         this.entities = entities == null ? DatabaseEntities.empty() : entities;
         this.snapshotTag = snapshotTag == null ? format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis())) : snapshotTag;
         this.globalRequest = globalRequest;
@@ -134,6 +137,7 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
             .add("uploadClusterTopology", uploadClusterTopology)
             .add("createMissingBucket", createMissingBucket)
             .add("skipBucketVerification", skipBucketVerification)
+            .add("proxySettings", proxySettings)
             .toString();
     }
 }

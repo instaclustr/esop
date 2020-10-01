@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.instaclustr.cassandra.backup.impl.ProxySettings;
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.jackson.PathSerializer;
@@ -84,8 +85,9 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
                                              @JsonProperty("k8sNamespace") final String k8sNamespace,
                                              @JsonProperty("k8sSecretName") final String k8sSecretName,
                                              @JsonProperty("insecure") final boolean insecure,
-                                             @JsonProperty("skipBucketVerification") final boolean skipBucketVerification) {
-        super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure, skipBucketVerification);
+                                             @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
+                                             @JsonProperty("proxySettings") final ProxySettings proxySettings) {
+        super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings);
         this.cassandraDirectory = cassandraDirectory == null ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.sharedContainerPath = sharedContainerPath == null ? Paths.get("/") : sharedContainerPath;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
@@ -113,6 +115,7 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
             .add("k8sSecretName", k8sSecretName)
             .add("insecure", insecure)
             .add("skipBucketVerification", skipBucketVerification)
+            .add("proxySettings", proxySettings)
             .toString();
     }
 }

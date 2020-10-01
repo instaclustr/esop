@@ -3,6 +3,7 @@ package com.instaclustr.cassandra.backup.impl.restore;
 import java.nio.file.Path;
 
 import com.instaclustr.cassandra.backup.impl.AbstractOperationRequest;
+import com.instaclustr.cassandra.backup.impl.ProxySettings;
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import picocli.CommandLine.Option;
 
@@ -28,8 +29,9 @@ public class BaseRestoreOperationRequest extends AbstractOperationRequest {
                                        final String k8sNamespace,
                                        final String k8sSecretName,
                                        final boolean insecure,
-                                       final boolean skipBucketVerification) {
-        super(storageLocation, k8sNamespace, k8sSecretName, insecure, skipBucketVerification);
+                                       final boolean skipBucketVerification,
+                                       final ProxySettings proxySettings) {
+        super(storageLocation, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings);
         this.storageLocation = storageLocation;
         this.concurrentConnections = concurrentConnections == null ? 10 : concurrentConnections;
         this.lockFile = lockFile;

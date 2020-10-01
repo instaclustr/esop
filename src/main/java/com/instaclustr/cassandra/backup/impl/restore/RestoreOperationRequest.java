@@ -22,6 +22,7 @@ import com.instaclustr.cassandra.backup.impl.DatabaseEntities.DatabaseEntitiesCo
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities.DatabaseEntitiesDeserializer;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities.DatabaseEntitiesSerializer;
 import com.instaclustr.cassandra.backup.impl.Directories;
+import com.instaclustr.cassandra.backup.impl.ProxySettings;
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import com.instaclustr.cassandra.backup.impl._import.ImportOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.RestorationPhaseType;
@@ -168,8 +169,9 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonProperty("resolveHostIdFromTopology") final boolean resolveHostIdFromTopology,
                                    @JsonProperty("insecure") final boolean insecure,
                                    @JsonProperty("newCluster") final boolean newCluster,
-                                   @JsonProperty("skipBucketVerification") final boolean skipBucketVerification) {
-        super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure, skipBucketVerification);
+                                   @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
+                                   @JsonProperty("proxySettings") final ProxySettings proxySettings) {
+        super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings);
         this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/")) ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
         this.restoreSystemKeyspace = restoreSystemKeyspace;
@@ -217,6 +219,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             .add("insecure", insecure)
             .add("newCluster", newCluster)
             .add("skipBucketVerification", skipBucketVerification)
+            .add("proxySettings", proxySettings)
             .toString();
     }
 }

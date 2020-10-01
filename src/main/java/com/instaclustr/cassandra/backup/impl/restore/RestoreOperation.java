@@ -16,6 +16,7 @@ import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities;
 import com.instaclustr.cassandra.backup.impl.GatheringOperationCoordinatorException;
+import com.instaclustr.cassandra.backup.impl.ProxySettings;
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import com.instaclustr.cassandra.backup.impl._import.ImportOperationRequest;
 import com.instaclustr.cassandra.backup.impl.restore.RestorationPhase.RestorationPhaseType;
@@ -81,7 +82,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                              @JsonProperty("resolveHostIdFromTopology") final Boolean resolveHostIdFromTopology,
                              @JsonProperty("insecure") final boolean insecure,
                              @JsonProperty("newCluster") final boolean newCluster,
-                             @JsonProperty("skipBucketVerification") final boolean skipBucketVerification) {
+                             @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
+                             @JsonProperty("proxySettings") final ProxySettings proxySettings) {
         super(type, id, creationTime, state, failureCause, progress, startTime, new RestoreOperationRequest(type,
                                                                                                             storageLocation,
                                                                                                             concurrentConnections,
@@ -107,7 +109,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                                                                                                             resolveHostIdFromTopology,
                                                                                                             insecure,
                                                                                                             newCluster,
-                                                                                                            skipBucketVerification));
+                                                                                                            skipBucketVerification,
+                                                                                                            proxySettings));
         this.coordinator = null;
     }
 

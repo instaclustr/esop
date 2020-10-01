@@ -68,6 +68,10 @@ public @interface ValidBackupOperationRequest {
                 value.entities = DatabaseEntities.empty();
             }
 
+            if (value.proxySettings != null) {
+
+            }
+
             return true;
         }
     }

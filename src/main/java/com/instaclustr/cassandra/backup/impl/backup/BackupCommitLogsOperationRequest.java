@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.MoreObjects;
+import com.instaclustr.cassandra.backup.impl.ProxySettings;
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.jackson.PathSerializer;
@@ -58,7 +59,8 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
                                             @JsonProperty("createMissingBucket") final boolean createMissingBucket,
                                             @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
                                             @JsonProperty("commitLog") final Path commitLog,
-                                            @JsonProperty("online") boolean online) {
+                                            @JsonProperty("online") boolean online,
+                                            @JsonProperty("proxySettings") final ProxySettings proxySettings) {
         super(storageLocation,
               duration,
               bandwidth,
@@ -69,7 +71,8 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
               k8sSecretName,
               insecure,
               createMissingBucket,
-              skipBucketVerification);
+              skipBucketVerification,
+              proxySettings);
         this.type = "commitlog-backup";
         this.commitLogArchiveOverride = commitLogArchiveOverride;
         this.commitLog = commitLog;
@@ -93,6 +96,7 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
             .add("createMissingBucket", createMissingBucket)
             .add("skipBucketVerification", skipBucketVerification)
             .add("insecure", insecure)
+            .add("proxySettings", proxySettings)
             .toString();
     }
 }

@@ -14,6 +14,7 @@ import com.instaclustr.kubernetes.KubernetesSecretsReader;
 import com.instaclustr.operations.OperationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 public abstract class AbstractOperationRequest extends OperationRequest {
@@ -44,7 +45,7 @@ public abstract class AbstractOperationRequest extends OperationRequest {
     public String k8sSecretName;
 
     @Option(names = {"--insecure-http"},
-        description = "If specified, the connection to remote bucket will be insecure, instead HTTPS, HTTP will be used, currently relevant only for s3.")
+        description = "If specified, the connection to remote bucket will be insecure, instead HTTPS, HTTP will be used, currently relevant only for S3 and Azure.")
     @JsonProperty("insecure")
     public boolean insecure;
 
@@ -54,6 +55,10 @@ public abstract class AbstractOperationRequest extends OperationRequest {
             + "that if that bucket does not exist, the whole backup operation will fail.")
     public boolean skipBucketVerification;
 
+    @Mixin
+    @JsonProperty("proxySettings")
+    public ProxySettings proxySettings;
+
     public AbstractOperationRequest() {
         // for picocli
     }
@@ -62,12 +67,14 @@ public abstract class AbstractOperationRequest extends OperationRequest {
                                     final String k8sNamespace,
                                     final String k8sSecretName,
                                     final boolean insecure,
-                                    final boolean skipBucketVerification) {
+                                    final boolean skipBucketVerification,
+                                    final ProxySettings proxySettings) {
         this.storageLocation = storageLocation;
         this.k8sNamespace = k8sNamespace;
         this.k8sSecretName = k8sSecretName;
         this.insecure = insecure;
         this.skipBucketVerification = skipBucketVerification;
+        this.proxySettings = proxySettings;
     }
 
     @JsonIgnore

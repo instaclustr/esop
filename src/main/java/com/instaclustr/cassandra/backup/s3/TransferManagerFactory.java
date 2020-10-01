@@ -72,8 +72,37 @@ public class TransferManagerFactory {
             builder.enablePathStyleAccess();
         }
 
-        if (operationRequest.insecure) {
-            builder.withClientConfiguration(new ClientConfiguration().withProtocol(Protocol.HTTP));
+        if (operationRequest.insecure || (operationRequest.proxySettings != null && operationRequest.proxySettings.useProxy)) {
+            final ClientConfiguration clientConfiguration = new ClientConfiguration();
+
+            if (operationRequest.insecure) {
+                clientConfiguration.withProtocol(Protocol.HTTP);
+            }
+
+            if (operationRequest.proxySettings != null && operationRequest.proxySettings.useProxy) {
+
+                if (operationRequest.proxySettings.proxyProtocol != null) {
+                    clientConfiguration.setProxyProtocol(operationRequest.proxySettings.proxyProtocol);
+                }
+
+                if (operationRequest.proxySettings.proxyHost != null) {
+                    clientConfiguration.setProxyHost(operationRequest.proxySettings.proxyHost);
+                }
+
+                if (operationRequest.proxySettings.proxyPort != null) {
+                    clientConfiguration.setProxyPort(operationRequest.proxySettings.proxyPort);
+                }
+
+                if (operationRequest.proxySettings.proxyPassword != null) {
+                    clientConfiguration.setProxyPassword(operationRequest.proxySettings.proxyPassword);
+                }
+
+                if (operationRequest.proxySettings.proxyUsername != null) {
+                    clientConfiguration.setProxyUsername(operationRequest.proxySettings.proxyUsername);
+                }
+            }
+
+            builder.withClientConfiguration(clientConfiguration);
         }
 
         // if we are not running against Kubernetes, credentials should be fetched from ~/.aws/...

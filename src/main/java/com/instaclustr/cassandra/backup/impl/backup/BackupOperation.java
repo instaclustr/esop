@@ -18,6 +18,7 @@ import com.instaclustr.cassandra.backup.impl.DatabaseEntities;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities.DatabaseEntitiesDeserializer;
 import com.instaclustr.cassandra.backup.impl.DatabaseEntities.DatabaseEntitiesSerializer;
 import com.instaclustr.cassandra.backup.impl.GatheringOperationCoordinatorException;
+import com.instaclustr.cassandra.backup.impl.ProxySettings;
 import com.instaclustr.cassandra.backup.impl.StorageLocation;
 import com.instaclustr.measure.DataRate;
 import com.instaclustr.measure.Time;
@@ -79,7 +80,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonProperty("createMissingBucket") final boolean createMissingBucket,
                             @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
                             @JsonProperty("schemaVersion") final String schemaVersion,
-                            @JsonProperty("uploadClusterTopology") final boolean uploadClusterTopology) {
+                            @JsonProperty("uploadClusterTopology") final boolean uploadClusterTopology,
+                            @JsonProperty("proxySettings") final ProxySettings proxySettings) {
         super(type, id, creationTime, state, failureCause, progress, startTime, new BackupOperationRequest(type,
                                                                                                            storageLocation,
                                                                                                            duration,
@@ -98,7 +100,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                                                                                                            createMissingBucket,
                                                                                                            skipBucketVerification,
                                                                                                            schemaVersion,
-                                                                                                           uploadClusterTopology));
+                                                                                                           uploadClusterTopology,
+                                                                                                           proxySettings));
         coordinator = null;
     }
 
