@@ -321,7 +321,7 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
                     .add("cluster", cluster)
                     .add("dc", dc)
                     .add("rack", rack)
-                    .add("hostId", nodeId)
+                    .add("nodeId", nodeId)
                     .add("ipAddress", ipAddress)
                     .toString();
             }
