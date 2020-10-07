@@ -665,11 +665,11 @@ The flag `--entities` commands what database tables / keyspaces should be backed
 |tables `t1` in `ks1` and table `t2` in `ks2`
 |===
 
-More to it, if `--restoreSystemKeyspace` is set upon restore, it is possible to restore system
+More to it, if `--restore-system-keyspace` is set upon restore, it is possible to restore system
 keyspaces only in case `--restoration-strategy-type` is `IN_PLACE`. Logically, we can not restore system
 keyspaces on a running cluster in case we use hardlinking or importing strategy. System keyspaces are
 filtered out from entities automatically for these strategy types. However, if `IN_PLACE` strategy is used
-and flag `--newCluster` is specified, such strategy will pick only system keyspaces necessary for
+and flag `--restore-into-new-cluster` is specified, such strategy will pick only system keyspaces necessary for
 the successful bootstrapping, it restores `system_schema` only from all system schemas. `system_schema` needs to
 already contain keyspaces and tables we are restoring, if we started a completely new node without restoring `system_schema`,
 it would not detect these imported keyspaces.
