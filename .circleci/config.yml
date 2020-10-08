@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
 
-    working_directory: ~/cassandra-backup
+    working_directory: ~/instaclustr-esop
 
     docker:
       - image: circleci/openjdk:8-jdk-stretch
@@ -12,19 +12,19 @@ jobs:
       - checkout
 
       - restore_cache:
-          key: cassandra-backup-{{ checksum "pom.xml" }}
+          key: instaclustr-esop-{{ checksum "pom.xml" }}
 
       - run: mvn dependency:go-offline # gets the project dependencies
 
       - save_cache:
           paths:
             - ~/.m2
-          key: cassandra-backup-{{ checksum "pom.xml" }}
+          key: instaclustr-esop-{{ checksum "pom.xml" }}
 
       - run: (echo "${google_application_credentials}" > /tmp/gcp.json) && mvn clean install -PcloudTests
 
       - store_test_results:
-          path: ~/cassandra-backup/target/instaclustr-backup-restore.jar
+          path: ~/instaclustr-esop/target/instaclustr-esop.jar
 
 workflows:
   version: 2
