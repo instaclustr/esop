@@ -1,12 +1,12 @@
-# Instaclustr backup-restore
+# Instaclustr Esop
 
-image:https://img.shields.io/maven-central/v/com.instaclustr/instaclustr-backup-restore.svg?label=Maven%20Central[link=https://search.maven.org/search?q=g:%22com.instaclustr%22%20AND%20a:%22instaclustr-backup-restore%22]
+image:https://img.shields.io/maven-central/v/com.instaclustr/esop.svg?label=Maven%20Central[link=https://search.maven.org/search?q=g:%22com.instaclustr%22%20AND%20a:%22esop%22]
 
-image:https://circleci.com/gh/instaclustr/cassandra-backup.svg?style=svg["Instaclustr",link="https://circleci.com/gh/instaclustr/cassandra-backup"]
+image:https://circleci.com/gh/instaclustr/instaclustr-esop.svg?style=svg["Instaclustr",link="https://circleci.com/gh/instaclustr/instaclustr-esop"]
 
-This repository is home of backup and restoration tool from Instaclustr for Cassandra.
+This repository is home of backup and restoration tool from Instaclustr for Cassandra called https://en.wikipedia.org/wiki/Aesop[Esop]
 
-The tool is able to perform these operations:
+Esop is able to perform these operations:
 
 * backup and restores of SSTables
 * backup and restores of commit logs
@@ -39,14 +39,14 @@ restore and backup remotely, use Cassandra Sidecar which embeds this project.
 
 ## Usage
 
-Released artifact is on https://search.maven.org/artifact/com.instaclustr/instaclustr-backup-restore[Maven Central].
+Released artifact is on https://search.maven.org/artifact/com.instaclustr/esop[Maven Central].
 You may want to build it on your own. After this project is built by `mvn clean install`
 (refer to <<Build and tests>> for more details), the binary is in `target` and it is called `instaclustr-backup-restore.jar`.
 This binary is all you need to backup / restore. It is the command line application, invoke it without any arguments to
 see help. You can invoke `help backup` for `backup` command, for example.
 
 ----
-$ java -jar target/instaclustr-backup-restore.jar
+$ java -jar target/instaclustr-esop.jar
 Missing required subcommand.
 Usage: <main class> [-V] COMMAND
   -V, --version   print version information and exit
@@ -918,7 +918,7 @@ After a node is restored in this manner, one has to *delete* `commitlog_archivin
 in order to prevent commitlog replay by accident again if a node is restarted.
 
 ----
-restore_directories=/home/smiklosovic/dev/instaclustr-backup-restore/target/commitlog_download_dir
+restore_directories=/home/smiklosovic/dev/instaclustr-esop/target/commitlog_download_dir
 restore_point_in_time=2020\:01\:13 11\:32\:51
 restore_command=cp -f %from %to
 ----
