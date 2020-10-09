@@ -12,13 +12,15 @@
   
   <!-- disable / enable as you wish -->
   
+  <!--logger name="com.instaclustr.esop.impl" level="INFO"/>
   <logger name="com.instaclustr.esop.impl.backup.Backuper" level="INFO"/>
   <logger name="com.instaclustr.esop.impl.restore.Restorer" level="INFO"/>
-  <logger name="com.instaclustr.esop.backup" level="INFO"/>
   <logger name="com.instaclustr.esop.s3" level="INFO"/>
   <logger name="com.instaclustr.esop.azure" level="INFO"/>
   <logger name="com.instaclustr.esop.gcp" level="INFO"/>
   <logger name="com.instaclustr.esop.local" level="INFO"/>
+  <logger name="com.instaclustr.esop.cli" level="INFO"/-->
+  
   <logger name="com.instaclustr" level="INFO"/>
   
   <!-- consult https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/java-dg-logging.html -->
