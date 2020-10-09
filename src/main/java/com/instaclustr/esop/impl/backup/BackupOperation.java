@@ -14,10 +14,10 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
-import com.instaclustr.esop.impl.GatheringOperationCoordinatorException;
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesDeserializer;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesSerializer;
+import com.instaclustr.esop.impl.GatheringOperationCoordinatorException;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.measure.DataRate;
@@ -26,8 +26,12 @@ import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationCoordinator;
 import com.instaclustr.operations.OperationFailureException;
 import com.instaclustr.operations.ResultGatherer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BackupOperation extends Operation<BackupOperationRequest> implements Cloneable {
+
+    private static final Logger logger = LoggerFactory.getLogger(BackupOperation.class);
 
     private final OperationCoordinator<BackupOperationRequest> coordinator;
 
@@ -115,6 +119,9 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
         assert coordinator != null;
 
         final ResultGatherer<BackupOperationRequest> coordinatorResult = coordinator.coordinate(this);
+
+        coordinatorResult.getFailedOperations().forEach(e -> logger.error(e.exceptionMessage));
+        coordinatorResult.getErrorneousOperations().forEach(e -> logger.error(e.exceptionMessage));
 
         if (coordinatorResult.hasErrors()) {
             throw new GatheringOperationCoordinatorException(coordinatorResult.getErrorneousOperations());

@@ -197,7 +197,7 @@ public class StorageLocation {
     @Constraint(validatedBy = ValidStorageLocation.StorageLocationValidator.class)
     public @interface ValidStorageLocation {
 
-        String message() default "{com.instaclustr.aesop.impl.StorageLocation.StorageLocationValidator.message}";
+        String message() default "{com.instaclustr.esop.impl.StorageLocation.StorageLocationValidator.message}";
 
         Class<?>[] groups() default {};
 

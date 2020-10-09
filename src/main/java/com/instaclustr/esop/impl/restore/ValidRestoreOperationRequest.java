@@ -25,7 +25,7 @@ import com.instaclustr.kubernetes.KubernetesHelper;
 })
 public @interface ValidRestoreOperationRequest {
 
-    String message() default "{com.instaclustr.aesop.impl.backup.ValidRestoreOperationRequest.RestoreOperationRequestValidator.message}";
+    String message() default "{com.instaclustr.esop.impl.restore.ValidRestoreOperationRequest.RestoreOperationRequestValidator.message}";
 
     Class<?>[] groups() default {};
 

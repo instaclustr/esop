@@ -25,7 +25,7 @@ import com.instaclustr.esop.impl.DatabaseEntities;
 })
 public @interface ValidBackupOperationRequest {
 
-    String message() default "{com.instaclustr.aesop.impl.backup.ValidBackupOperationRequest.BackupOperationRequestValidator.message}";
+    String message() default "{com.instaclustr.esop.impl.backup.ValidBackupOperationRequest.BackupOperationRequestValidator.message}";
 
     Class<?>[] groups() default {};
 

@@ -41,7 +41,7 @@ import picocli.CommandLine.Spec;
     CommitLogRestoreApplication.class
 },
     versionProvider = Esop.class,
-    name = "aesop",
+    name = "esop",
     usageHelpWidth = 128,
     description = "Application for backup and restore of a Cassandra node.",
     mixinStandardHelpOptions = true

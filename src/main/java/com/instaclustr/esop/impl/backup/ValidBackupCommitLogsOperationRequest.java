@@ -22,7 +22,7 @@ import com.instaclustr.kubernetes.KubernetesHelper;
 })
 public @interface ValidBackupCommitLogsOperationRequest {
 
-    String message() default "{com.instaclustr.aesop.impl.backup.ValidBackupCommitLogsOperationRequest.BackupCommitLogsOperationRequestValidator.message}";
+    String message() default "{com.instaclustr.esop.impl.backup.ValidBackupCommitLogsOperationRequest.BackupCommitLogsOperationRequestValidator.message}";
 
     Class<?>[] groups() default {};
 
