@@ -8,40 +8,40 @@ This repository is home of backup and restoration tool from Instaclustr for Cass
 
 Esop is able to perform these operations:
 
-* backup and restores of SSTables
+* backup and restore of SSTables
 * backup and restores of commit logs
-* backuping to and restoring from S3 (Oracle S3 too), Azure or GCP or into any local destination, other storage
+* restoration of data into a Cassandra schema or diffrent table schema
+* backuping to and restoring from S3 (Oracle "S3" too), Azure or GCP or into any local destination, other storage
 provides are easily implementable
 * effective upload and download - it will upload only SSTables which are not present remotely so
 any subsequent backups will upload and restores will download only the difference
-* when used in connection with https://github.com/instaclustr/cassandra-sidecar[Instaclustr Cassandra Sidecar], it is possible to backup _simultaneously_ so there
+* when used in connection with https://github.com/instaclustr/instaclustr-icarus[Instaclustr Icarus], it is possible to backup **simultaneously** so there
 might be more concurrent backups which may overlap what they backup
-* used as backup / restore solution in Instaclustr Cassandra operator for Kubernetes
-* Possible to restore whole node _from scratch_
-* In connection with Instaclustr Sidecar, it is possible to restore _on a running cluster_ so no
+* used as backup / restore solution in https://github.com/instaclustr/cassandra-operator[Instaclustr Cassandra operator] for Kubernetes
+* Possible to restore whole node _from scratch_ (or whole cluster from scratch in case one uses Kubernetes operator)
+* In connection with Icarus, it is possible to **restore on a running cluster** so no
 downtime is necessary
 * It is taking care of details as initial tokens, auto bootstrapping and so on ...
-* Ability to throttle the bandwidth used for backup / restore when it comes to uploading / downloading
-of files from remote storage
+* Ability to throttle the bandwidth used for backup
 * point-in-time restoration of commit logs
 
 This tool is used as a command line utility and it is meant to be executed from a shell
-or from scripts. However, this tooling is also embedded seamlessly into Instaclustr
-Cassandra Sidecar. The advantage of using Cassandra Sidecar from Instaclustr is that
-you may backup and restore your node (or whole cluster) remotely by calling a respective
-REST endpoint so Sidecar can execute respective backup or restore _operation_. Cassandra
-Sidecar is meant to be run alongside a node and it talks to Cassandra via JMX (no need to expose JMX publicly).
+or from scripts. However, this tooling is also embedded seamlessly into Instaclustr Icarus.
+The advantage of using Icarus is that you may backup and restore your node (or whole cluster)
+remotely by calling a respective REST endpoint so Icarus can execute respective backup or
+restore _operation_. Icarus is meant to be run alongside a node and it talks to Cassandra via
+JMX (no need to expose JMX publicly).
 
 In addition, this tool has to be run in the very same context / environment as a Cassandra
 node runs in - it needs to see the whole directory structure of a node (data dir etc) as it will
 upload these files upon a backup and download them upon a restore. If you want to be able to
-restore and backup remotely, use Cassandra Sidecar which embeds this project.
+restore and backup remotely, use Icarus which embeds this project.
 
 ## Usage
 
 Released artifact is on https://search.maven.org/artifact/com.instaclustr/esop[Maven Central].
-You may want to build it on your own. After this project is built by `mvn clean install`
-(refer to <<Build and tests>> for more details), the binary is in `target` and it is called `instaclustr-backup-restore.jar`.
+You may want to build it on your own by standard Maven targets. After this project is built by `mvn clean install`
+(refer to <<Build and tests>> for more details), the binary is in `target` and it is called `instaclustr-esop.jar`.
 This binary is all you need to backup / restore. It is the command line application, invoke it without any arguments to
 see help. You can invoke `help backup` for `backup` command, for example.
 
@@ -76,7 +76,7 @@ Not all sub-commands require the connection to Cassandra to exist. As of now, a 
 necessary for:
 
 . backup of tables / keyspaces
-. restore of tables / keyspace (hard linking and importing)
+. restore of tables / keyspace (hard linking and importing strategies)
 
 The next releases of this tool might relax these requirements so it would be possible to
 backup and restore a node which is offline.
@@ -460,11 +460,11 @@ and tokens are somehow provided externally however the current version of the to
 
 ### Restore
 
-This tool is seamlessly integrated into Instaclustr's https://github.com/instaclustr/cassandra-sidecar[Cassandra Sidecar project]
-which is able to do backup and restore in a distributed manner - cluster wide. Please refer to documentation of Sidecar
+This tool is seamlessly integrated into https://github.com/instaclustr/instaclustr-icarus[Icarus]
+which is able to do backup and restore in a distributed manner - cluster wide. Please refer to documentation of Icarus
 to understand what restoration phases are and what restoration strategies one might use. The very same
-restoration flow might be executed from CLI, Sidecar just accepts a JSON payload which is a different representation
-of the very same data structure as the one used from command like but the functionality as completely same.
+restoration flow might be executed from CLI, Icarus just accepts a JSON payload which is a different representation
+of the very same data structure as the one used from command like but the functionality is completely same.
 
 CLI tool is not responsive to `globalRequest` flag in restoration / backup requests, only Sidecar can coordinate
 cluster-wide restoration and backup.
@@ -501,7 +501,7 @@ operator offering so one can restore whole clusters very conveniently.
 In more details, in-place strategy does the following:
 
 . checks that a remote bucket to download data from exists and errors out if it does not
-. in case `--resolveHostIdFromTopology` flag is used, it will resolve a host to restore from topology file,
+. in case `--resolve-host-id-from-topology` flag is used, it will resolve a host to restore from topology file,
 this is handy for cases we want to restore e.g. in the context of Kubernetes by our operator.
 . downloads a manifest - manifest contains the list of files which are logically related to a snapshot
 . filters out the files which need to be downloaded as some files which are present locally might be
@@ -512,7 +512,7 @@ also a part of a taken snapshot so we would download the unnecessarily
 . updates `cassandra.yaml` if present with `auto_bootstrap: false` and `initial_token` with tokens from
 manifest
 
-It is possible to restore not only user keyspaces and table but system keyspaces too. This is necessary for
+It is possible to restore not only user keyspaces and tables but system keyspaces too. This is necessary for
 the successful restoration of a cluster / node exactly as it was before as all system tables would be same.
 Normally, system keyspaces are not restored and one has to set this explicitly by `--restore-system-keyspace` flag.
 
@@ -686,7 +686,7 @@ does not derive the storage path on its own out of the box as commit logs might 
 if a node is offline so there might be no mean how to retrieve its host id via JMX, for example, but this
 might be turned on on demand.
 
-The example of backup:
+The example of backup (for brevity, we are showing just the sub-command)
 
 ----
 $ commitlog-backup \
@@ -718,7 +718,7 @@ store, if they are refreshed, it means they are already uploaded, if refreshing 
 there so it will be uploaded.
 
 You might as well script this in such a way that a commit log would be automatically uploaded as part of
-Cassandra archiving procedude, like this:
+Cassandra archiving procedure, like this:
 
 ----
 archive_command=/bin/bash /path/to/my/backup-script.sh %path %name
@@ -729,7 +729,7 @@ The content of `backup-script.sh` might look like:
 ----
 $!/bin/bash
 
-java -jar instaclustr-backup-restore.jar commitlog-backup \
+java -jar instaclustr-esop.jar commitlog-backup \
     --storage-location=s3://myBucket/mycluster/dc1/node1 \
     --commit-log=$1
 ----
@@ -751,6 +751,9 @@ java -jar instaclustr-backup-restore.jar commitlog-backup \
 ----
 
 ### Examples of command line invocation
+
+Each example shown here should be prepended with `java -jar instaclustr-esop.jar`. We are showing here
+just respective commands.
 
 This command will copy over all SSTables to remote location. It is possible to choose also location
 in a cloud. For backup, a node has to be up to back it up.
@@ -962,7 +965,7 @@ without restarting a pod to re-read them because they will be read dynamically u
 Cloud tests are executed like:
 
 ----
-$ mvn clean install -PcloudTest
+$ mvn clean install -PcloudTests
 ----
 
 Kubernetes tests are executed like:

@@ -123,7 +123,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
     public boolean globalRequest;
 
     @JsonProperty("resolveHostIdFromTopology")
-    @Option(names = "--resolveHostIdFromTopology",
+    @Option(names = "--resolve-host-id-from-topology",
         description = "If set, restoration process will translate nodeId in storage location to hostname in topology file uploaded to remote bucket upon backup "
             + "based on snapshot name and schema version.")
     public boolean resolveHostIdFromTopology;
@@ -212,7 +212,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             .add("k8sSecretName", k8sSecretName)
             .add("globalRequest", globalRequest)
             .add("timeout", timeout)
-            .add("resolveHostId", resolveHostIdFromTopology)
+            .add("resolveHostIdFromTopology", resolveHostIdFromTopology)
             .add("insecure", insecure)
             .add("newCluster", newCluster)
             .add("skipBucketVerification", skipBucketVerification)
