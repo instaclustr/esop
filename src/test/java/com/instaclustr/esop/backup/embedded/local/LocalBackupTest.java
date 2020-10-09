@@ -59,6 +59,9 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+@Test(groups = {
+    "localTest",
+})
 public class LocalBackupTest extends AbstractBackupTest {
 
     @Inject
@@ -97,12 +100,12 @@ public class LocalBackupTest extends AbstractBackupTest {
 
     @Test
     public void testImportingBackupAndRestore() throws Exception {
-        liveBackupRestoreTest(importArguments(), CASSANDRA_4_VERSION);
+        liveBackupRestoreTest(importArguments(), CASSANDRA_4_VERSION, 2);
     }
 
     @Test
     public void testHardlinksBackupAndRestore() throws Exception {
-        liveBackupRestoreTest(hardlinkingArguments(), CASSANDRA_VERSION);
+        liveBackupRestoreTest(hardlinkingArguments(), CASSANDRA_VERSION, 2);
     }
 
     @Test

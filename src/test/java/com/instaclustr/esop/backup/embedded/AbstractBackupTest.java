@@ -515,7 +515,7 @@ public abstract class AbstractBackupTest {
         }
     }
 
-    public void liveBackupRestoreTest(final String[][] arguments, final String cassandraVersion) throws Exception {
+    public void liveBackupRestoreTest(final String[][] arguments, final String cassandraVersion, int rounds) throws Exception {
         Cassandra cassandra = getCassandra(cassandraDir, cassandraVersion, false);
         cassandra.start();
 
@@ -529,26 +529,34 @@ public abstract class AbstractBackupTest {
             insertAndCallBackupCLI(2, session, arguments[0]); // stefansnapshot-1
             insertAndCallBackupCLI(2, session, arguments[1]); // stefansnapshot-2
 
-            logger.info("Executing the first restoration phase - download {}", asList(arguments[2]));
-            Esop.mainWithoutExit(arguments[2]);
+            // first round
 
-            logger.info("Executing the second restoration phase - truncate {}", asList(arguments[3]));
-            Esop.mainWithoutExit(arguments[3]);
+            for (int i = 1; i < rounds + 1; ++i) {
+                logger.info("Round " + i + " - Executing the first restoration phase - download {}", asList(arguments[2]));
+                Esop.mainWithoutExit(arguments[2]);
 
-            logger.info("Executing the third restoration phase - import {}", asList(arguments[4]));
-            Esop.mainWithoutExit(arguments[4]);
+                logger.info("Round " + i + " - Executing the second restoration phase - truncate {}", asList(arguments[3]));
+                Esop.mainWithoutExit(arguments[3]);
 
-            logger.info("Executing the fourth restoration phase - cleanup {}", asList(arguments[5]));
-            Esop.mainWithoutExit(arguments[5]);
+                logger.info("Round " + i + " - Executing the third restoration phase - import {}", asList(arguments[4]));
+                Esop.mainWithoutExit(arguments[4]);
 
-            // we expect 4 records to be there as 2 were there before the first backup and the second 2 before the second backup
-            dumpTable(session, KEYSPACE, TABLE, 4);
-            dumpTable(session, KEYSPACE_2, TABLE_2, 4);
+                logger.info("Round " + i + " - Executing the fourth restoration phase - cleanup {}", asList(arguments[5]));
+                Esop.mainWithoutExit(arguments[5]);
+
+                // we expect 4 records to be there as 2 were there before the first backup and the second 2 before the second backup
+                dumpTable(session, KEYSPACE, TABLE, 4);
+                dumpTable(session, KEYSPACE_2, TABLE_2, 4);
+            }
         } finally {
             cassandra.stop();
             FileUtils.deleteDirectory(cassandraDir);
             deleteDirectory(Paths.get(target("backup1")));
         }
+    }
+
+    public void liveBackupRestoreTest(final String[][] arguments, final String cassandraVersion) throws Exception {
+        liveBackupRestoreTest(arguments, cassandraVersion, 1);
     }
 
     private void waitUntilSchemaChanged(final String firstSchemaVersion) {

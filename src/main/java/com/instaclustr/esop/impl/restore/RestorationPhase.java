@@ -397,6 +397,7 @@ public abstract class RestorationPhase {
 
                 final List<ManifestEntry> manifestEntries = manifest.getManifestFiles(filteredEntities,
                                                                                       false /* not possible to restore system keyspace on a live cluster */,
+                                                                                      false, // not restoring to new cluster
                                                                                       false); // without schema.cql's
 
                 // make links
