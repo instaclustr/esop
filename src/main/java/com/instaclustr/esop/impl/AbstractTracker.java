@@ -359,9 +359,10 @@ public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session
         public void waitUntilConsideredFinished() {
             await().pollInSameThread().forever().pollInterval(5, SECONDS).until(this::isConsideredFinished);
 
-            executorService.shutdown();
-
-            await().pollInSameThread().forever().pollInterval(5, SECONDS).until(() -> executorService.isTerminated());
+            if (executorService != null) {
+                executorService.shutdown();
+                await().pollInSameThread().forever().pollInterval(5, SECONDS).until(() -> executorService.isTerminated());
+            }
 
             logger.info(format("%sSession %s has finished %s",
                                snapshotTag != null ? "Snapshot " + snapshotTag + " - " : "",

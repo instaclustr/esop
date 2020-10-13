@@ -114,7 +114,15 @@ public abstract class AbstractBackupTest {
 
     protected static final String SIDECAR_SECRET_NAME = "test-sidecar-secret";
 
-    protected String[][] inPlaceArguments() {
+    private String systemKeyspace(final String cassandraVersion) {
+        if (cassandraVersion.startsWith("2")) {
+            return "system";
+        } else {
+            return "system_schema";
+        }
+    }
+
+    protected String[][] inPlaceArguments(final String cassandraVersion) {
 
         final String snapshotName = UUID.randomUUID().toString();
 
@@ -125,7 +133,7 @@ public abstract class AbstractBackupTest {
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--entities=system_schema,test,test2", // keyspaces
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -136,7 +144,7 @@ public abstract class AbstractBackupTest {
             "--storage-location=" + getStorageLocation(),
             "--snapshot-tag=" + snapshotName,
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--entities=system_schema,test,test2", // keyspaces
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -160,12 +168,14 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=system_schema,test,test2",
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
             // this will import systema_schema, normally, it wont happen without setting --restore-system-keyspace
             // that would import all of them which is not always what we really want as other system tables
             // would be regenerated, only schema should be as it was.
             "--restore-into-new-cluster",
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
+            // restoring specifically for Cassandra 2 (maybe)
+            "--cassandra-version=" + cassandraVersion
         };
 
         // COMMIT LOG RESTORE
@@ -188,7 +198,7 @@ public abstract class AbstractBackupTest {
         };
     }
 
-    protected String[][] importArguments() {
+    protected String[][] importArguments(final String cassandraVersion) {
 
         final String snapshotName1 = "snapshot1";
         final String snapshotName2 = "snapshot2";
@@ -201,7 +211,7 @@ public abstract class AbstractBackupTest {
             "--storage-location=" + getStorageLocation(),
             "--snapshot-tag=" + snapshotName1,
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--entities=system_schema,test,test2", // keyspaces
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -212,7 +222,7 @@ public abstract class AbstractBackupTest {
             "--storage-location=" + getStorageLocation(),
             "--snapshot-tag=" + snapshotName2,
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--entities=system_schema,test,test2", // keyspaces
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -225,7 +235,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=system_schema,test,test2",
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
             "--restoration-strategy-type=import",
             "--restoration-phase-type=download", /// DOWNLOAD
             "--import-source-dir=" + target("downloaded"),
@@ -238,7 +248,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=system_schema,test,test2",
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
             "--restoration-strategy-type=import",
             "--restoration-phase-type=truncate", // TRUNCATE
             "--import-source-dir=" + target("downloaded"),
@@ -251,7 +261,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=system_schema,test,test2",
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
             "--restoration-strategy-type=import",
             "--restoration-phase-type=import", // IMPORT
             "--import-source-dir=" + target("downloaded"),
@@ -264,7 +274,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=system_schema,test,test2",
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
             "--restoration-strategy-type=import",
             "--restoration-phase-type=cleanup", // CLEANUP
             "--import-source-dir=" + target("downloaded"),
@@ -281,7 +291,7 @@ public abstract class AbstractBackupTest {
         };
     }
 
-    protected String[][] hardlinkingArguments() {
+    protected String[][] hardlinkingArguments(final String cassandraVersion) {
 
         final String snapshotName = UUID.randomUUID().toString();
 
@@ -292,7 +302,7 @@ public abstract class AbstractBackupTest {
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--entities=system_schema,test,test2", // keyspaces
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -303,7 +313,7 @@ public abstract class AbstractBackupTest {
             "--storage-location=" + getStorageLocation(),
             "--snapshot-tag=" + snapshotName,
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--entities=system_schema,test,test2", // keyspaces
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -372,7 +382,8 @@ public abstract class AbstractBackupTest {
         };
     }
 
-    protected String[][] restoreByImportingIntoDifferentSchemaArguments(final RestorationStrategyType type) {
+    protected String[][] restoreByImportingIntoDifferentSchemaArguments(final String cassandraVersion,
+                                                                        final RestorationStrategyType type) {
 
         String snapshotName1 = "snapshot1";
         String snapshotName2 = "snapshot2";
@@ -386,7 +397,7 @@ public abstract class AbstractBackupTest {
             "--storage-location=" + getStorageLocation(),
             "--snapshot-tag=" + snapshotName1,
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--entities=system_schema,test,test2", // keyspaces
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -398,7 +409,7 @@ public abstract class AbstractBackupTest {
             "--storage-location=" + getStorageLocation(),
             "--snapshot-tag=" + snapshotName2,
             "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
-            "--entities=system_schema,test,test2,test3", // keyspaces
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2,test3", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -414,7 +425,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName1, // !!! important, we are restoring into the FIRST snapshot
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=system_schema,test,test2", // here we want to restore only to test and test2
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // here we want to restore only to test and test2
             "--restoration-strategy-type=" + type.toString(),
             "--restoration-phase-type=download", /// DOWNLOAD
             "--import-source-dir=" + target("downloaded"),
@@ -427,7 +438,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName1, // !!! important, we are restoring into the FIRST snapshot
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=system_schema,test,test2", // here we want to restore only to test and test2 which were not altered (test3 was)
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // here we want to restore only to test and test2 which were not altered (test3 was)
             "--restoration-strategy-type=" + type.toString(),
             "--restoration-phase-type=truncate", // TRUNCATE
             "--import-source-dir=" + target("downloaded"),
@@ -440,7 +451,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName1, // !!! important, we are restoring into the FIRST snapshot
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=system_schema,test,test2", // here we want to restore only to test and test2
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // here we want to restore only to test and test2
             "--restoration-strategy-type=" + type.toString(),
             "--restoration-phase-type=import", // IMPORT
             "--import-source-dir=" + target("downloaded"),
@@ -453,7 +464,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName1, // !!! important, we are restoring into the FIRST snapshot
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=system_schema,test,test2", // here we want to restore only to test and test2
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // here we want to restore only to test and test2
             "--restoration-strategy-type=" + type.toString(),
             "--restoration-phase-type=cleanup", // CLEANUP
             "--import-source-dir=" + target("downloaded"),
@@ -486,7 +497,6 @@ public abstract class AbstractBackupTest {
                 insertionTimes = populateDatabaseWithBackup(session, arguments);
                 assertEquals(insertionTimes.size(), NUMBER_OF_INSERTED_ROWS);
             }
-
             logger.info("Executing backup of commit logs {}", asList(arguments[2]));
             Esop.mainWithoutExit(arguments[2]);
 
@@ -786,6 +796,16 @@ public abstract class AbstractBackupTest {
         } else {
             cassandraFactory.setArtifact(Artifact.ofVersion(Version.of(version)));
         }
+
+        if (version.startsWith("2")) {
+
+            FileUtils.createDirectory(cassandraHome.resolve("data").resolve("data"));
+
+            cassandraFactory.getConfigProperties().put("data_file_directories", new String[]{
+                cassandraHome.resolve("data").resolve("data").toAbsolutePath().toString()
+            });
+        }
+
         return cassandraFactory.create();
     }
 

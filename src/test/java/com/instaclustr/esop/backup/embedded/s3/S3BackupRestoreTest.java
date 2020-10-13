@@ -54,17 +54,17 @@ public class S3BackupRestoreTest extends BaseS3BackupRestoreTest {
 
     @Test
     public void testInPlaceBackupRestore() throws Exception {
-        inPlaceTest(inPlaceArguments());
+        inPlaceTest(inPlaceArguments(CASSANDRA_VERSION));
     }
 
     @Test
     public void testImportingBackupAndRestore() throws Exception {
-        liveCassandraTest(importArguments(), CASSANDRA_4_VERSION);
+        liveCassandraTest(importArguments(CASSANDRA_4_VERSION), CASSANDRA_4_VERSION);
     }
 
     @Test
     public void testHardlinkingBackupAndRestore() throws Exception {
-        liveCassandraTest(hardlinkingArguments(), CASSANDRA_VERSION);
+        liveCassandraTest(hardlinkingArguments(CASSANDRA_VERSION), CASSANDRA_VERSION);
     }
 
     @Test

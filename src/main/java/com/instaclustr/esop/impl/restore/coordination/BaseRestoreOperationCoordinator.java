@@ -5,12 +5,13 @@ import static java.lang.String.format;
 import java.util.Map;
 
 import com.instaclustr.esop.guice.RestorerFactory;
+import com.instaclustr.esop.impl.KeyspaceTable;
 import com.instaclustr.esop.impl.restore.RestorationPhaseResultGatherer;
 import com.instaclustr.esop.impl.restore.RestorationStrategy;
 import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType;
 import com.instaclustr.esop.impl.restore.RestorationStrategyResolver;
-import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
+import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationCoordinator;
 import com.instaclustr.operations.ResultGatherer;
@@ -53,6 +54,16 @@ public abstract class BaseRestoreOperationCoordinator extends OperationCoordinat
         }
 
         final RestorationPhaseResultGatherer gatherer = new RestorationPhaseResultGatherer();
+
+        if (operation.request.restorationStrategyType != RestorationStrategyType.IN_PLACE) {
+            // in-place might restore tables which are not in fact present in db yet
+            try {
+                KeyspaceTable.checkEntitiesToProcess(request.cassandraDirectory.resolve("data"), request.entities);
+            } catch (final Exception ex) {
+                logger.error(ex.getMessage());
+                return gatherer.gather(operation, ex);
+            }
+        }
 
         Throwable cause = null;
 

@@ -4,30 +4,33 @@ import static com.instaclustr.esop.impl.Manifest.getLocalManifestPath;
 import static com.instaclustr.esop.impl.Manifest.getManifestAsManifestEntry;
 import static java.lang.String.format;
 
+import javax.inject.Provider;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.guice.BackuperFactory;
 import com.instaclustr.esop.guice.BucketServiceFactory;
 import com.instaclustr.esop.impl.AbstractTracker.Session;
 import com.instaclustr.esop.impl.BucketService;
+import com.instaclustr.esop.impl.KeyspaceTable;
+import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.ManifestEntry;
+import com.instaclustr.esop.impl.Snapshots;
+import com.instaclustr.esop.impl.Snapshots.Snapshot;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupPhaseResultGatherer;
 import com.instaclustr.esop.impl.backup.Backuper;
 import com.instaclustr.esop.impl.backup.UploadTracker;
 import com.instaclustr.esop.impl.backup.UploadTracker.UploadUnit;
-import com.instaclustr.esop.topology.CassandraClusterTopology;
-import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology;
-import com.instaclustr.esop.impl.Manifest;
-import com.instaclustr.esop.impl.Snapshots;
-import com.instaclustr.esop.impl.Snapshots.Snapshot;
 import com.instaclustr.esop.impl.backup.coordination.ClearSnapshotOperation.ClearSnapshotOperationRequest;
 import com.instaclustr.esop.impl.backup.coordination.TakeSnapshotOperation.TakeSnapshotOperationRequest;
 import com.instaclustr.esop.impl.interaction.CassandraTokens;
+import com.instaclustr.esop.topology.CassandraClusterTopology;
+import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationCoordinator;
 import com.instaclustr.operations.ResultGatherer;
@@ -44,8 +47,10 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
     protected final Map<String, BucketServiceFactory> bucketServiceFactoryMap;
     protected final ObjectMapper objectMapper;
     protected final UploadTracker uploadTracker;
+    protected final Provider<CassandraVersion> cassandraVersionProvider;
 
     public BaseBackupOperationCoordinator(final CassandraJMXService cassandraJMXService,
+                                          final Provider<CassandraVersion> cassandraVersionProvider,
                                           final Map<String, BackuperFactory> backuperFactoryMap,
                                           final Map<String, BucketServiceFactory> bucketServiceFactoryMap,
                                           final ObjectMapper objectMapper,
@@ -55,6 +60,7 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
         this.bucketServiceFactoryMap = bucketServiceFactoryMap;
         this.objectMapper = objectMapper;
         this.uploadTracker = uploadTracker;
+        this.cassandraVersionProvider = cassandraVersionProvider;
     }
 
     protected String resolveSnapshotTag(final BackupOperationRequest request, final long timestamp) {
@@ -84,13 +90,22 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
                 }
             }
 
+            try {
+                KeyspaceTable.checkEntitiesToProcess(request.cassandraDirectory.resolve("data"), request.entities);
+            } catch (final Exception ex) {
+                logger.error(ex.getMessage());
+                return gatherer.gather(operation, ex);
+            }
+
             final List<String> tokens = new CassandraTokens(cassandraJMXService).act();
 
             logger.info("Tokens {}", tokens);
 
             logger.info("Taking snapshot with name {}", request.snapshotTag);
 
-            new TakeSnapshotOperation(cassandraJMXService, new TakeSnapshotOperationRequest(request.entities, request.snapshotTag)).run0();
+            new TakeSnapshotOperation(cassandraJMXService,
+                                      new TakeSnapshotOperationRequest(request.entities, request.snapshotTag),
+                                      cassandraVersionProvider).run0();
 
             final Snapshots snapshots = Snapshots.parse(request.cassandraDirectory.resolve("data"));
 

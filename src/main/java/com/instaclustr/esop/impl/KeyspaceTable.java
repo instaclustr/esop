@@ -1,14 +1,24 @@
 package com.instaclustr.esop.impl;
 
+import static java.lang.String.format;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class KeyspaceTable implements Cloneable {
 
@@ -44,7 +54,7 @@ public class KeyspaceTable implements Cloneable {
         return keyspace.equals("system") || keyspace.equals("system_schema");
     }
 
-    private static final List<String> bootstrappingKeyspaces = Arrays.asList("system_schema");
+    private static final List<String> bootstrappingKeyspaces = Arrays.asList("system", "system_schema");
 
     public static boolean isBootstrappingKeyspace(final String keyspace) {
         return bootstrappingKeyspaces.contains(keyspace);
@@ -75,5 +85,88 @@ public class KeyspaceTable implements Cloneable {
     @Override
     public KeyspaceTable clone() throws CloneNotSupportedException {
         return new KeyspaceTable(this.keyspace, this.table);
+    }
+
+    public static void checkEntitiesToProcess(final Path cassandraDataDir,
+                                              final DatabaseEntities databaseEntities) throws Exception {
+        final KeyspaceTables keyspaceTables = KeyspaceTable.parseFileSystem(cassandraDataDir);
+
+        final Optional<Pair<List<String>, Multimap<String, String>>> missingEntities = keyspaceTables.filterNotPresent(databaseEntities);
+
+        if (missingEntities.isPresent()) {
+            if (!missingEntities.get().getLeft().isEmpty()) {
+                throw new IllegalStateException(format("Unable to process these keyspaces as they are not present in the database: %s",
+                                                       missingEntities.get().getLeft()));
+            } else if (!missingEntities.get().getRight().isEmpty()) {
+                throw new IllegalStateException(format("Unable to process these tables as they are not present in the database: %s",
+                                                       missingEntities.get().getRight().entries().stream().map(e -> e.getKey() + "." + e.getValue()).collect(joining(","))));
+            }
+        }
+    }
+
+    public static class KeyspaceTables {
+
+        List<KeyspaceTable> keyspaceTables = new ArrayList<>();
+
+        public boolean contains(String keyspace, String table) {
+            return keyspaceTables.stream().anyMatch(kt -> kt.keyspace.equals(keyspace) && kt.table.equals(table));
+        }
+
+        public boolean contains(String keyspace) {
+            return keyspaceTables.stream().anyMatch(kt -> kt.keyspace.equals(keyspace));
+        }
+
+        public void add(final String keyspace, final String table) {
+            this.keyspaceTables.add(new KeyspaceTable(keyspace, table));
+        }
+
+        public Optional<Pair<List<String>, Multimap<String, String>>> filterNotPresent(final DatabaseEntities dbEntities) {
+            if (dbEntities.areEmpty()) {
+                return Optional.empty();
+            }
+
+            final List<String> missingKeyspaces = new ArrayList<>();
+            final Multimap<String, String> missingTables = ArrayListMultimap.create();
+
+            if (dbEntities.tableSubsetOnly()) {
+                for (final Entry<String, String> entry : dbEntities.getKeyspacesAndTables().entries()) {
+                    if (!contains(entry.getKey(), entry.getValue())) {
+                        missingTables.put(entry.getKey(), entry.getValue());
+                    }
+                }
+            } else if (dbEntities.keyspacesOnly()) {
+                for (final String keyspace : dbEntities.getKeyspaces()) {
+                    if (!contains(keyspace)) {
+                        missingKeyspaces.add(keyspace);
+                    }
+                }
+            }
+
+            return Optional.of(Pair.of(missingKeyspaces, missingTables));
+        }
+    }
+
+    public static KeyspaceTables parseFileSystem(final Path cassandraDataDir) throws Exception {
+
+        final KeyspaceTables keyspaceTables = new KeyspaceTables();
+
+        final List<Path> keyspaces = Files.find(cassandraDataDir,
+                                                1,
+                                                (path, basicFileAttributes) -> !cassandraDataDir.equals(path) && basicFileAttributes.isDirectory()).collect(toList());
+
+        for (final Path ks : keyspaces) {
+            Files.find(ks,
+                       1,
+                       (path, basicFileAttributes) -> !ks.equals(path) && basicFileAttributes.isDirectory())
+                .collect(toList()).forEach(path -> {
+
+                final String tableNameFull = path.toFile().getName();
+                final String tableNameSimple = tableNameFull.substring(0, tableNameFull.lastIndexOf("-"));
+
+                keyspaceTables.add(ks.getFileName().toString(), tableNameSimple);
+            });
+        }
+
+        return keyspaceTables;
     }
 }

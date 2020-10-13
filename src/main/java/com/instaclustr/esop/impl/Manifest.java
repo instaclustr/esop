@@ -102,6 +102,7 @@ public class Manifest implements Cloneable {
                     final Path objectKey = entry.objectKey;
                     final int hashPathPart = SSTableUtils.isSecondaryIndexManifest(objectKey) ? 4 : 3;
                     entry.localFile = localPathRoot.resolve(objectKey.subpath(0, hashPathPart)).resolve(objectKey.getFileName());
+                    entry.keyspaceTable = new KeyspaceTable(ksName, tableName);
                 });
             });
         });
@@ -254,8 +255,8 @@ public class Manifest implements Cloneable {
     public List<ManifestEntry> getManifestFiles(final DatabaseEntities entities,
                                                 final boolean restoreSystemKeyspace,
                                                 final boolean newCluster,
-                                                final boolean withSchemas) {
-
+                                                final boolean withSchemas,
+                                                final String cassandraVersion) {
         final List<ManifestEntry> manifestEntries = new ArrayList<>();
 
         if (entities.areEmpty()) {
@@ -299,10 +300,36 @@ public class Manifest implements Cloneable {
             }
         }
 
+        Stream<ManifestEntry> manifestEntryStream = manifestEntries.stream();
+
         if (!withSchemas) {
-            return manifestEntries.stream().filter(entry -> entry.type != Type.CQL_SCHEMA).collect(toList());
+            manifestEntryStream = manifestEntryStream.filter(entry -> entry.type != Type.CQL_SCHEMA);
         }
 
-        return manifestEntries;
+        // we filter out system tables in case we are on Cassandra 2 in case we are restoring into a new cluster
+        // so we have only system.schema_ tables
+        if (newCluster && cassandraVersion != null) {
+            manifestEntryStream = manifestEntryStream.filter(entry -> {
+                if (cassandraVersion.startsWith("2")) {
+                    if (KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace)) {
+                        return entry.keyspaceTable.table.startsWith("schema_");
+                    }
+
+                    return true;
+                } else {
+                    return true;
+                }
+            });
+        }
+
+        return manifestEntryStream.collect(toList());
+    }
+
+    @JsonIgnore
+    public List<ManifestEntry> getManifestFiles(final DatabaseEntities entities,
+                                                final boolean restoreSystemKeyspace,
+                                                final boolean newCluster,
+                                                final boolean withSchemas) {
+        return getManifestFiles(entities, restoreSystemKeyspace, newCluster, withSchemas, null);
     }
 }

@@ -37,6 +37,11 @@ node runs in - it needs to see the whole directory structure of a node (data dir
 upload these files upon a backup and download them upon a restore. If you want to be able to
 restore and backup remotely, use Icarus which embeds this project.
 
+## Supporter Cassandra versions
+
+Since we are talking to Cassandra via JMX, almost any Cassandra version is supported.
+We are testing this tool with Cassandra 3.11.8, 4.0-beta2 and 2.2.18.
+
 ## Usage
 
 Released artifact is on https://search.maven.org/artifact/com.instaclustr/esop[Maven Central].

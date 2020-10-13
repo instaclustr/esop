@@ -18,14 +18,14 @@ import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesConverter;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesDeserializer;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesSerializer;
+import com.instaclustr.esop.impl.Directories;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
+import com.instaclustr.esop.impl._import.ImportOperationRequest;
 import com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType;
 import com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseTypeConverter;
 import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType;
 import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyTypeConverter;
-import com.instaclustr.esop.impl.Directories;
-import com.instaclustr.esop.impl._import.ImportOperationRequest;
 import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.jackson.PathSerializer;
 import com.instaclustr.picocli.typeconverter.PathTypeConverter;
@@ -132,6 +132,11 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
         description = "If set to true, IN_PLACE restoration will pick only keyspaces necessary for bootstrapping, e.g. system_schema, while all other system keyspaces will be re-generated.")
     public boolean newCluster;
 
+    @Option(names = "--cassandra-version",
+        description = "Version of Cassandra version to restore into. It is important to specify it only in case we are restoring to Cassandra 2 and "
+            + "--restoration-strategy-type is IN_PLACE")
+    public String cassandraVersion;
+
     public RestoreOperationRequest() {
         // for picocli
     }
@@ -217,6 +222,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             .add("newCluster", newCluster)
             .add("skipBucketVerification", skipBucketVerification)
             .add("proxySettings", proxySettings)
+            .add("cassandraVersion", cassandraVersion)
             .toString();
     }
 }

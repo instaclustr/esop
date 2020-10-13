@@ -23,9 +23,6 @@ import java.util.Map.Entry;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.instaclustr.esop.impl.AbstractTracker.Session;
-import com.instaclustr.esop.impl.interaction.CassandraSchemaVersion;
-import com.instaclustr.esop.impl.interaction.ClusterSchemaVersions;
-import com.instaclustr.esop.impl.restore.DownloadTracker.DownloadUnit;
 import com.instaclustr.esop.impl.BucketService;
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.Manifest;
@@ -33,11 +30,14 @@ import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl._import.ImportOperation;
 import com.instaclustr.esop.impl._import.ImportOperationRequest;
 import com.instaclustr.esop.impl.interaction.CassandraSameTokens;
+import com.instaclustr.esop.impl.interaction.CassandraSchemaVersion;
 import com.instaclustr.esop.impl.interaction.CassandraState;
+import com.instaclustr.esop.impl.interaction.ClusterSchemaVersions;
 import com.instaclustr.esop.impl.interaction.ClusterState;
 import com.instaclustr.esop.impl.interaction.FailureDetector;
 import com.instaclustr.esop.impl.refresh.RefreshOperation;
 import com.instaclustr.esop.impl.refresh.RefreshOperationRequest;
+import com.instaclustr.esop.impl.restore.DownloadTracker.DownloadUnit;
 import com.instaclustr.esop.impl.restore.strategy.RestorationContext;
 import com.instaclustr.esop.impl.truncate.TruncateOperation;
 import com.instaclustr.esop.impl.truncate.TruncateOperationRequest;
@@ -398,7 +398,8 @@ public abstract class RestorationPhase {
                 final List<ManifestEntry> manifestEntries = manifest.getManifestFiles(filteredEntities,
                                                                                       false /* not possible to restore system keyspace on a live cluster */,
                                                                                       false, // not restoring to new cluster
-                                                                                      false); // without schema.cql's
+                                                                                      false, // without schema.cql's
+                                                                                      null); // cassandra version
 
                 // make links
 

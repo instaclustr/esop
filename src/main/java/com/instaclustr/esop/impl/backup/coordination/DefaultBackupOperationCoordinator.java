@@ -1,9 +1,11 @@
 package com.instaclustr.esop.impl.backup.coordination;
 
+import javax.inject.Provider;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.guice.BackuperFactory;
 import com.instaclustr.esop.guice.BucketServiceFactory;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
@@ -18,11 +20,13 @@ public class DefaultBackupOperationCoordinator extends BaseBackupOperationCoordi
 
     @Inject
     public DefaultBackupOperationCoordinator(final CassandraJMXService cassandraJMXService,
+                                             final Provider<CassandraVersion> cassandraVersionProvider,
                                              final Map<String, BackuperFactory> backuperFactoryMap,
                                              final Map<String, BucketServiceFactory> bucketServiceFactoryMap,
                                              final ObjectMapper objectMapper,
                                              final UploadTracker uploadTracker) {
         super(cassandraJMXService,
+              cassandraVersionProvider,
               backuperFactoryMap,
               bucketServiceFactoryMap,
               objectMapper,

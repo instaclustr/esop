@@ -39,7 +39,9 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Provider;
 import com.instaclustr.cassandra.CassandraModule;
+import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.ManifestEntry;
@@ -79,6 +81,10 @@ public class ManifestTest {
 
     private Cassandra cassandra;
     private CqlSession session;
+
+
+    @Inject
+    private Provider<CassandraVersion> cassandraVersionProvider;
 
     @Inject
     private CassandraJMXService jmx;
@@ -168,7 +174,7 @@ public class ManifestTest {
     }
 
     private Manifest getManifest(String snapshotName) throws Exception {
-        waitForOperation(new TakeSnapshotOperation(jmx, new TakeSnapshotOperationRequest(DatabaseEntities.empty(), snapshotName)));
+        waitForOperation(new TakeSnapshotOperation(jmx, new TakeSnapshotOperationRequest(DatabaseEntities.empty(), snapshotName), cassandraVersionProvider));
 
         Snapshots snapshot = Snapshots.parse(cassandraDataDir);
         Manifest manifest = new Manifest(snapshot.get(snapshotName).get());
@@ -246,7 +252,7 @@ public class ManifestTest {
             insertDataIntoTable("ks1", "ks1t1");
             flush("ks1");
 
-            waitForOperation(new TakeSnapshotOperation(jmx, new TakeSnapshotOperationRequest(databaseEntities, "snapshot1")));
+            waitForOperation(new TakeSnapshotOperation(jmx, new TakeSnapshotOperationRequest(databaseEntities, "snapshot1"), cassandraVersionProvider));
 
             // #2 insert and flush & take snapshot
 
@@ -255,7 +261,7 @@ public class ManifestTest {
             insertDataIntoTable("ks1", "ks1t1");
             flush("ks1");
 
-            waitForOperation(new TakeSnapshotOperation(jmx, new TakeSnapshotOperationRequest(databaseEntities, "snapshot2")));
+            waitForOperation(new TakeSnapshotOperation(jmx, new TakeSnapshotOperationRequest(databaseEntities, "snapshot2"), cassandraVersionProvider));
 
             // second table
 
@@ -269,7 +275,7 @@ public class ManifestTest {
             insertDataIntoTable("ks2", "ks2t1");
             flush("ks2");
 
-            waitForOperation(new TakeSnapshotOperation(jmx, new TakeSnapshotOperationRequest(databaseEntities, "snapshot3")));
+            waitForOperation(new TakeSnapshotOperation(jmx, new TakeSnapshotOperationRequest(databaseEntities, "snapshot3"), cassandraVersionProvider));
 
             // parse
 

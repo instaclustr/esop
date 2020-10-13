@@ -18,20 +18,20 @@ import com.google.inject.Inject;
 import com.instaclustr.esop.guice.BucketServiceFactory;
 import com.instaclustr.esop.impl.AbstractTracker.Session;
 import com.instaclustr.esop.impl.BucketService;
+import com.instaclustr.esop.impl.DatabaseEntities;
+import com.instaclustr.esop.impl.Manifest;
+import com.instaclustr.esop.impl.ManifestEntry;
+import com.instaclustr.esop.impl.ManifestEntry.Type;
 import com.instaclustr.esop.impl.SSTableUtils;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.restore.DownloadTracker;
 import com.instaclustr.esop.impl.restore.DownloadTracker.DownloadUnit;
 import com.instaclustr.esop.impl.restore.RestorationStrategy;
 import com.instaclustr.esop.impl.restore.RestorationUtilities;
+import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology;
 import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology.NodeTopology;
-import com.instaclustr.esop.impl.DatabaseEntities;
-import com.instaclustr.esop.impl.Manifest;
-import com.instaclustr.esop.impl.ManifestEntry;
-import com.instaclustr.esop.impl.ManifestEntry.Type;
-import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.io.GlobalLock;
 import com.instaclustr.kubernetes.KubernetesHelper;
@@ -106,7 +106,11 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
                                                                                                                 request.restoreSystemKeyspace,
                                                                                                                 request.newCluster);
 
-            final List<ManifestEntry> manifestFiles = manifest.getManifestFiles(filteredManifestDatabaseEntities, request.restoreSystemKeyspace, request.newCluster);
+            final List<ManifestEntry> manifestFiles = manifest.getManifestFiles(filteredManifestDatabaseEntities,
+                                                                                request.restoreSystemKeyspace,
+                                                                                request.newCluster,
+                                                                                true,
+                                                                                operation.request.cassandraVersion);
 
             // 3. Build a list of all SSTables currently present, that are candidates for deleting
             final Set<Path> existingFiles = Manifest.getLocalExistingEntries(request.dirs.data());

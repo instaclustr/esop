@@ -1,5 +1,9 @@
 package com.instaclustr.esop.impl.restore.strategy;
 
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.CLEANUP;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.DOWNLOAD;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.IMPORT;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.TRUNCATE;
 import static java.lang.String.format;
 
 import java.util.Map;
@@ -7,6 +11,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.guice.BucketServiceFactory;
 import com.instaclustr.esop.impl.restore.DownloadTracker;
 import com.instaclustr.esop.impl.restore.RestorationPhase;
@@ -16,9 +21,8 @@ import com.instaclustr.esop.impl.restore.RestorationPhase.HardlinkingPhase;
 import com.instaclustr.esop.impl.restore.RestorationPhase.InitPhase;
 import com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType;
 import com.instaclustr.esop.impl.restore.RestorationPhase.TruncatingPhase;
-import com.instaclustr.esop.impl.restore.Restorer;
-import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
+import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.operations.Operation;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 
@@ -60,13 +64,13 @@ public class HardlinkingRestorationStrategy extends AbstractRestorationStrategy 
 
         if (phaseType == RestorationPhaseType.INIT) {
             return new InitPhase(ctxt);
-        } else if (phaseType == RestorationPhaseType.DOWNLOAD) {
+        } else if (phaseType == DOWNLOAD) {
             return new DownloadingPhase(ctxt);
-        } else if (phaseType == RestorationPhaseType.TRUNCATE) {
+        } else if (phaseType == TRUNCATE) {
             return new TruncatingPhase(ctxt);
-        } else if (phaseType == RestorationPhaseType.IMPORT) {
+        } else if (phaseType == IMPORT) {
             return new HardlinkingPhase(ctxt);
-        } else if (phaseType == RestorationPhaseType.CLEANUP) {
+        } else if (phaseType == CLEANUP) {
             return new CleaningPhase(ctxt);
         }
 

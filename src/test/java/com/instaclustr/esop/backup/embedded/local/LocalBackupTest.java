@@ -27,6 +27,8 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Provider;
+import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.backup.embedded.AbstractBackupTest;
 import com.instaclustr.esop.impl.AbstractTracker.Session;
 import com.instaclustr.esop.impl.DatabaseEntities;
@@ -68,6 +70,9 @@ public class LocalBackupTest extends AbstractBackupTest {
     private Optional<OperationCoordinator<BackupOperationRequest>> operationCoordinator;
 
     @Inject
+    private Provider<CassandraVersion> cassandraVersionProvider;
+
+    @Inject
     private CassandraJMXService jmxService;
 
     @Inject
@@ -95,47 +100,47 @@ public class LocalBackupTest extends AbstractBackupTest {
 
     @Test
     public void testInPlaceBackupRestore() throws Exception {
-        inPlaceBackupRestoreTest(inPlaceArguments());
+        inPlaceBackupRestoreTest(inPlaceArguments(CASSANDRA_VERSION));
     }
 
     @Test
     public void testImportingBackupAndRestore() throws Exception {
-        liveBackupRestoreTest(importArguments(), CASSANDRA_4_VERSION, 2);
+        liveBackupRestoreTest(importArguments(CASSANDRA_4_VERSION), CASSANDRA_4_VERSION, 2);
     }
 
     @Test
     public void testHardlinksBackupAndRestore() throws Exception {
-        liveBackupRestoreTest(hardlinkingArguments(), CASSANDRA_VERSION, 2);
+        liveBackupRestoreTest(hardlinkingArguments(CASSANDRA_VERSION), CASSANDRA_VERSION, 2);
     }
 
     @Test
     public void testImportingOnDifferentSchema() throws Exception {
-        liveBackupWithRestoreOnDifferentSchema(restoreByImportingIntoDifferentSchemaArguments(IMPORT), CASSANDRA_4_VERSION);
+        liveBackupWithRestoreOnDifferentSchema(restoreByImportingIntoDifferentSchemaArguments(CASSANDRA_4_VERSION, IMPORT), CASSANDRA_4_VERSION);
     }
 
     @Test
     public void testHardlinksOnDifferentSchema() throws Exception {
-        liveBackupWithRestoreOnDifferentSchema(restoreByImportingIntoDifferentSchemaArguments(HARDLINKS), CASSANDRA_VERSION);
+        liveBackupWithRestoreOnDifferentSchema(restoreByImportingIntoDifferentSchemaArguments(CASSANDRA_VERSION, HARDLINKS), CASSANDRA_VERSION);
     }
 
     @Test
     public void testImportingOnDifferentTableSchemaAddColumn() throws Exception {
-        liveBackupWithRestoreOnDifferentTableSchema(restoreByImportingIntoDifferentSchemaArguments(IMPORT), CASSANDRA_4_VERSION, true);
+        liveBackupWithRestoreOnDifferentTableSchema(restoreByImportingIntoDifferentSchemaArguments(CASSANDRA_4_VERSION, IMPORT), CASSANDRA_4_VERSION, true);
     }
 
     @Test
     public void testHardlinksOnDifferentTableSchemaAddColumn() throws Exception {
-        liveBackupWithRestoreOnDifferentTableSchema(restoreByImportingIntoDifferentSchemaArguments(HARDLINKS), CASSANDRA_VERSION, true);
+        liveBackupWithRestoreOnDifferentTableSchema(restoreByImportingIntoDifferentSchemaArguments(CASSANDRA_VERSION, HARDLINKS), CASSANDRA_VERSION, true);
     }
 
     @Test
     public void testImportingOnDifferentTableSchemaDropColumn() throws Exception {
-        liveBackupWithRestoreOnDifferentTableSchema(restoreByImportingIntoDifferentSchemaArguments(IMPORT), CASSANDRA_4_VERSION, false);
+        liveBackupWithRestoreOnDifferentTableSchema(restoreByImportingIntoDifferentSchemaArguments(CASSANDRA_4_VERSION, IMPORT), CASSANDRA_4_VERSION, false);
     }
 
     @Test
     public void testHardlinksOnDifferentTableSchemaDropColumn() throws Exception {
-        liveBackupWithRestoreOnDifferentTableSchema(restoreByImportingIntoDifferentSchemaArguments(HARDLINKS), CASSANDRA_VERSION, false);
+        liveBackupWithRestoreOnDifferentTableSchema(restoreByImportingIntoDifferentSchemaArguments(CASSANDRA_VERSION, HARDLINKS), CASSANDRA_VERSION, false);
     }
 
     @Test
@@ -208,11 +213,13 @@ public class LocalBackupTest extends AbstractBackupTest {
 
             new TakeSnapshotOperation(jmxService,
                                       new TakeSnapshotOperationRequest(backupOperationRequest.entities,
-                                                                       backupOperationRequest.snapshotTag)).run();
+                                                                       backupOperationRequest.snapshotTag),
+                                      cassandraVersionProvider).run();
 
             new TakeSnapshotOperation(jmxService,
                                       new TakeSnapshotOperationRequest(backupOperationRequest2.entities,
-                                                                       backupOperationRequest2.snapshotTag)).run();
+                                                                       backupOperationRequest2.snapshotTag),
+                                      cassandraVersionProvider).run();
 
             final Snapshots snapshots = Snapshots.parse(cassandraDataDir);
             final Optional<Snapshot> snapshot = snapshots.get(backupOperationRequest.snapshotTag);
