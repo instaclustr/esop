@@ -18,7 +18,7 @@ public class RestorationUtilities {
                                             final String schemaVersion,
                                             final ObjectMapper objectMapper) throws Exception {
 
-        final String manifestAsString = restorer.downloadNodeFileToString(Paths.get("manifests"),
+        final String manifestAsString = restorer.downloadManifestToString(Paths.get("manifests"),
                                                                           new ManifestFilteringPredicate(request, schemaVersion));
 
         return Manifest.read(manifestAsString, objectMapper);

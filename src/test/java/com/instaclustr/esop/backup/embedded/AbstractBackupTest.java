@@ -149,6 +149,18 @@ public abstract class AbstractBackupTest {
             "--create-missing-bucket"
         };
 
+        // one more backup to have there manifests with same snapshot name so the latest wins
+        final String[] backupArgsWithSnapshotName2 = new String[]{
+            "backup",
+            "--jmx-service", "127.0.0.1:7199",
+            "--storage-location=" + getStorageLocation(),
+            "--snapshot-tag=" + snapshotName,
+            "--data-directory=" + cassandraDir.toAbsolutePath().toString() + "/data",
+            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
+            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
+            "--create-missing-bucket"
+        };
+
         // COMMIT LOGS BACKUP
 
         final String[] commitlogBackupArgs = new String[]{
@@ -192,6 +204,7 @@ public abstract class AbstractBackupTest {
         return new String[][]{
             backupArgs,
             backupArgsWithSnapshotName,
+            backupArgsWithSnapshotName2,
             commitlogBackupArgs,
             restoreArgs,
             commitlogRestoreArgs
@@ -497,8 +510,13 @@ public abstract class AbstractBackupTest {
                 insertionTimes = populateDatabaseWithBackup(session, arguments);
                 assertEquals(insertionTimes.size(), NUMBER_OF_INSERTED_ROWS);
             }
-            logger.info("Executing backup of commit logs {}", asList(arguments[2]));
-            Esop.mainWithoutExit(arguments[2]);
+
+            // just backup, same snapshot but the latest wins
+
+            Esop.main(arguments[2], false);
+
+            logger.info("Executing backup of commit logs {}", asList(arguments[3]));
+            Esop.mainWithoutExit(arguments[3]);
 
             copyCassandra(cassandraDir, cassandraRestoredDir);
             cassandra.stop();
@@ -881,13 +899,13 @@ public abstract class AbstractBackupTest {
 
         // RESTORE
 
-        logger.info("Executing restore on stopped node with arguments {}", asList(arguments[3]));
+        logger.info("Executing restore on stopped node with arguments {}", asList(arguments[4]));
 
-        Esop.mainWithoutExit(arguments[3]);
+        Esop.mainWithoutExit(arguments[4]);
 
         // restore of commit logs on top of done restore
 
-        List<String> commitlogRestoreArgsAsList = new ArrayList<>(asList(arguments[4]));
+        List<String> commitlogRestoreArgsAsList = new ArrayList<>(asList(arguments[5]));
 
         // here we want to point-in-time restoration, so out of 8 records in total, (2x2 + 2 + 2) where last two
         // were not backed up, we take into account all first and second set of records (6 in total)

@@ -1,6 +1,7 @@
 package com.instaclustr.esop.gcp;
 
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 
 import java.io.InputStreamReader;
 import java.nio.channels.Channels;
@@ -13,21 +14,25 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import com.google.api.gax.paging.Page;
 import com.google.cloud.ReadChannel;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.Storage.BlobListOption;
 import com.google.common.io.CharStreams;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.esop.gcp.GCPModule.GoogleStorageFactory;
+import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
+import com.microsoft.azure.storage.blob.ListBlobItem;
 
 public class GCPRestorer extends Restorer {
 
@@ -97,6 +102,13 @@ public class GCPRestorer extends Restorer {
     }
 
     @Override
+    public String downloadManifestToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+        final String blobItemPath = getManifest(nodeList(request.storageLocation.bucket, remotePrefix), keyFilter);
+        final String fileName = blobItemPath.split("/")[blobItemPath.split("/").length - 1];
+        return downloadFileToString(objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
+    }
+
+    @Override
     public String downloadNodeFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
         final String blobItemPath = getBlobItemPath(nodeList(request.storageLocation.bucket, remotePrefix), keyFilter);
         final String fileName = blobItemPath.split("/")[blobItemPath.split("/").length - 1];
@@ -113,6 +125,23 @@ public class GCPRestorer extends Restorer {
         downloadFile(destination, objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
 
         return destination;
+    }
+
+    private String getManifest(final Page<Blob> blobItemsIterable, final Predicate<String> keyFilter) {
+
+        final List<Blob> manifests = new ArrayList<>();
+
+        for (final Blob blob : blobItemsIterable.iterateAll()) {
+            if (keyFilter.test(blob.getName())) {
+                manifests.add(blob);
+            }
+        }
+
+        if (manifests.isEmpty()) {
+            throw new IllegalStateException("There is no manifest requested found.");
+        }
+
+        return Manifest.parseLatestManifest(manifests.stream().map(BlobInfo::getName).collect(toList()));
     }
 
     private String getBlobItemPath(final Page<Blob> blobs, final Predicate<String> keyFilter) {
