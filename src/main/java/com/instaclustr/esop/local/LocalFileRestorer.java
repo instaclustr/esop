@@ -14,10 +14,11 @@ import java.util.function.Predicate;
 
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
+import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.RemoteObjectReference;
-import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
+import com.instaclustr.esop.impl.restore.Restorer;
 
 public class LocalFileRestorer extends Restorer {
 
@@ -79,6 +80,13 @@ public class LocalFileRestorer extends Restorer {
     }
 
     @Override
+    public String downloadManifestToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+        final Path pathToList = Paths.get(request.storageLocation.rawLocation.replaceAll("file://", "")).resolve(remotePrefix);
+        final String blobItem = getManifest(pathToList, keyFilter, remotePrefix);
+        return new String(Files.readAllBytes(Paths.get(blobItem)));
+    }
+
+    @Override
     public String downloadNodeFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
         final Path pathToList = Paths.get(request.storageLocation.rawLocation.replaceAll("file://", "")).resolve(remotePrefix);
         final String blobItem = getFileToDownload(pathToList, keyFilter, remotePrefix);
@@ -92,6 +100,18 @@ public class LocalFileRestorer extends Restorer {
         final Path destination = destinationDir.resolve(fileName);
         downloadFile(destination, objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
         return destination;
+    }
+
+    private String getManifest(final Path pathToList, final Predicate<String> keyFilter, final Path remotePrefix) throws Exception {
+        final List<Path> manifests = Files.list(pathToList)
+            .filter(path -> !Files.isDirectory(path) && keyFilter.test(path.toString()))
+            .collect(toList());
+
+        if (manifests.isEmpty()) {
+            throw new IllegalStateException("There is no manifest requested found.");
+        }
+
+        return Manifest.parseLatestManifest(manifests.stream().map(m -> m.toAbsolutePath().toString()).collect(toList()));
     }
 
     private String getFileToDownload(final Path pathToList, final Predicate<String> keyFilter, final Path remotePrefix) throws Exception {

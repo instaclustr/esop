@@ -609,4 +609,18 @@ public class Snapshots implements Cloneable {
 
         return snapshots;
     }
+
+    public static boolean snapshotContainsTimestamp(String snapshotTag) {
+        // most probably it is of form "snapshot-uuid-timestamp"
+        if (snapshotTag.contains("-") && !snapshotTag.startsWith("-") && !snapshotTag.endsWith("-")) {
+            try {
+                Long.parseLong(snapshotTag.substring(snapshotTag.lastIndexOf("-")));
+                return true;
+            } catch (final Exception ex) {
+                return false;
+            }
+        }
+
+        return false;
+    }
 }

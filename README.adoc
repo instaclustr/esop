@@ -401,7 +401,7 @@ and schema version was same too, for some cases, we will have these manifests in
             └── manifests (5)
                 ├─ snapshot1-f1159959-593d-33d1-9ade-712ea55b31ef-1600645216000.json
                 ├─ snapshot1-f1159959-593d-33d1-9ade-712ea55b31ef-1600645217000.json
-                ├─ snapshot1-b555c56d-a89f-4002-9f9c-0d4c78d3eca9-1600645217000.json
+                ├─ snapshot1-b555c56d-a89f-4002-9f9c-0d4c78d3eca9-1600645217800.json
                 ├─ snapshot2-f1159959-593d-33d1-9ade-712ea55b31ef-1600645218000.json
                 ├─ snapshot3-f1159959-593d-33d1-9ade-712ea55b31ef-1600645219000.json
                 └─ snapshot4-f1159959-593d-33d1-9ade-712ea55b31ef-1600645220000.json
@@ -409,13 +409,11 @@ and schema version was same too, for some cases, we will have these manifests in
 
 What manifest will be resolved when we use `snapshot1` as `--snapshot-tag`?
 
-Firstly, the answer is that such request will fail because we have two manifests _starting_ on `snapshot1` which
-were done on a same schema version so it does not know which one to use. The manifest resolution works in a such way
-that it looks for the longest common prefix of all manifest files and it fails if it filters anything else but one manifest.
+If there are multiple manifests starting with same snapshot tag and having same schema version,
+in this particular case, it will pick the one with timestamp `1600645217800` as the latest manifest wins.
 
-To resolve the above issue, we need to specify `--snapshot-tag` as `snapshot1-f1159959-593d-33d1-9ade-712ea55b31ef`.
-However, in this case, it fails again, because there are two manifests but they differ on a timestamp. So we need to
-specify snapshot tag as `snapshot1-f1159959-593d-33d1-9ade-712ea55b31ef-1600645216000` - providing timestamp too.
+You may specify `--snapshot-tag` as `snapshot1-f1159959-593d-33d1-9ade-712ea55b31ef` or even full version with timestamp.
+The longest prefix wins and when there are multiple manifests resolved, the latest wins.
 
 In case we had same snapshot but different schema, only snapshot name and schema version is enough, but not snapshot name alone.
 

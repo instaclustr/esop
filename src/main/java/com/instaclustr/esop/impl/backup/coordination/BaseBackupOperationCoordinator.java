@@ -28,6 +28,7 @@ import com.instaclustr.esop.impl.backup.UploadTracker;
 import com.instaclustr.esop.impl.backup.UploadTracker.UploadUnit;
 import com.instaclustr.esop.impl.backup.coordination.ClearSnapshotOperation.ClearSnapshotOperationRequest;
 import com.instaclustr.esop.impl.backup.coordination.TakeSnapshotOperation.TakeSnapshotOperationRequest;
+import com.instaclustr.esop.impl.interaction.CassandraSchemaVersion;
 import com.instaclustr.esop.impl.interaction.CassandraTokens;
 import com.instaclustr.esop.topology.CassandraClusterTopology;
 import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology;
@@ -100,6 +101,11 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
             final List<String> tokens = new CassandraTokens(cassandraJMXService).act();
 
             logger.info("Tokens {}", tokens);
+
+            if (!Snapshots.snapshotContainsTimestamp(operation.request.snapshotTag)) {
+                operation.request.schemaVersion = new CassandraSchemaVersion(cassandraJMXService).act();
+                operation.request.snapshotTag = resolveSnapshotTag(operation.request, System.currentTimeMillis());
+            }
 
             logger.info("Taking snapshot with name {}", request.snapshotTag);
 

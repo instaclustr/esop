@@ -1,5 +1,6 @@
 package com.instaclustr.esop.impl;
 
+import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
@@ -23,12 +24,12 @@ import com.instaclustr.esop.impl.ManifestEntry.Type;
 import com.instaclustr.esop.impl.Snapshots.Snapshot;
 import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace;
 import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace.Table;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Manifest implements Cloneable {
 
-    public void filter(final DatabaseEntities entities) {
-
-    }
+    private static final Logger logger = LoggerFactory.getLogger(Manifest.class);
 
     private Snapshot snapshot;
 
@@ -223,11 +224,42 @@ public class Manifest implements Cloneable {
             try (Stream<Path> paths = Files.walk(dataDir, skipBackupsAndSnapshotsFolders)) {
                 paths.filter(Files::isRegularFile).forEach(existingEntries::add);
             } catch (final IOException ex) {
-                throw new IllegalStateException(String.format("Unable to walk through Cassandra data dir %s", dataDir), ex);
+                throw new IllegalStateException(format("Unable to walk through Cassandra data dir %s", dataDir), ex);
             }
         }
 
         return existingEntries;
+    }
+
+    public static synchronized String parseLatestManifest(final List<String> manifestsPaths) {
+        // manifests/snapshot-uuid-timestamp
+
+        String latestManifest = null;
+        long latestTimestamp = 0;
+
+        for (final String manifestPath : manifestsPaths) {
+            try  {
+
+                final String timestampWithFileSuffix = manifestPath.substring(manifestPath.lastIndexOf("-") + 1);
+                final String timestamp =  timestampWithFileSuffix.substring(0, timestampWithFileSuffix.lastIndexOf("."));
+
+                final long currentTimestamp = Long.parseLong(timestamp);
+                if (currentTimestamp > latestTimestamp) {
+                    latestTimestamp = currentTimestamp;
+                    latestManifest = manifestPath;
+                }
+            } catch (final NumberFormatException ex) {
+                logger.warn(format("Could not parse timestamp from manifest path %s", manifestPath), ex);
+            }
+        }
+
+        if (latestManifest == null) {
+            throw new IllegalStateException(format("Could not parse latest manifest from %s", manifestsPaths));
+        }
+
+        logger.info("Resolved manifest: {}", latestManifest);
+
+        return latestManifest;
     }
 
     // helpers
