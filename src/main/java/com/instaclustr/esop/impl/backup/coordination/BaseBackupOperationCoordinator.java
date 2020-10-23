@@ -22,7 +22,6 @@ import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.Snapshots;
 import com.instaclustr.esop.impl.Snapshots.Snapshot;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
-import com.instaclustr.esop.impl.backup.BackupPhaseResultGatherer;
 import com.instaclustr.esop.impl.backup.Backuper;
 import com.instaclustr.esop.impl.backup.UploadTracker;
 import com.instaclustr.esop.impl.backup.UploadTracker.UploadUnit;
@@ -33,8 +32,8 @@ import com.instaclustr.esop.impl.interaction.CassandraTokens;
 import com.instaclustr.esop.topology.CassandraClusterTopology;
 import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology;
 import com.instaclustr.operations.Operation;
+import com.instaclustr.operations.Operation.Error;
 import com.instaclustr.operations.OperationCoordinator;
-import com.instaclustr.operations.ResultGatherer;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,15 +68,11 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
     }
 
     @Override
-    public ResultGatherer<BackupOperationRequest> coordinate(final Operation<BackupOperationRequest> operation) {
+    public void coordinate(final Operation<BackupOperationRequest> operation) {
 
         final BackupOperationRequest request = operation.request;
 
         logger.info(request.toString());
-
-        final BackupPhaseResultGatherer gatherer = new BackupPhaseResultGatherer();
-
-        Throwable cause = null;
 
         try {
             assert cassandraJMXService != null;
@@ -91,12 +86,7 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
                 }
             }
 
-            try {
-                KeyspaceTable.checkEntitiesToProcess(request.cassandraDirectory.resolve("data"), request.entities);
-            } catch (final Exception ex) {
-                logger.error(ex.getMessage());
-                return gatherer.gather(operation, ex);
-            }
+            KeyspaceTable.checkEntitiesToProcess(request.cassandraDirectory.resolve("data"), request.entities);
 
             final List<String> tokens = new CassandraTokens(cassandraJMXService).act();
 
@@ -155,19 +145,14 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
                 manifest.cleanup();
             }
         } catch (final Exception ex) {
-            logger.error("Unable to perform backup! - " + ex.getMessage(), ex);
-            cause = ex;
+            operation.addError(Error.from(ex));
         } finally {
+            final ClearSnapshotOperation cso = new ClearSnapshotOperation(cassandraJMXService, new ClearSnapshotOperationRequest(request.snapshotTag));
             try {
-                new ClearSnapshotOperation(cassandraJMXService, new ClearSnapshotOperationRequest(request.snapshotTag)).run0();
+                cso.run0();
             } catch (final Exception ex) {
-                logger.error(format("Unable to clear snapshot '%s' after backup!", request.snapshotTag), ex);
-                if (cause == null) {
-                    cause = ex;
-                }
+                operation.addErrors(cso.errors);
             }
         }
-
-        return gatherer.gather(operation, cause);
     }
 }

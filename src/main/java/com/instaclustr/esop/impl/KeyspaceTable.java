@@ -88,19 +88,23 @@ public class KeyspaceTable implements Cloneable {
     }
 
     public static void checkEntitiesToProcess(final Path cassandraDataDir,
-                                              final DatabaseEntities databaseEntities) throws Exception {
-        final KeyspaceTables keyspaceTables = KeyspaceTable.parseFileSystem(cassandraDataDir);
+                                              final DatabaseEntities databaseEntities) {
+        try {
+            final KeyspaceTables keyspaceTables = KeyspaceTable.parseFileSystem(cassandraDataDir);
 
-        final Optional<Pair<List<String>, Multimap<String, String>>> missingEntities = keyspaceTables.filterNotPresent(databaseEntities);
+            final Optional<Pair<List<String>, Multimap<String, String>>> missingEntities = keyspaceTables.filterNotPresent(databaseEntities);
 
-        if (missingEntities.isPresent()) {
-            if (!missingEntities.get().getLeft().isEmpty()) {
-                throw new IllegalStateException(format("Unable to process these keyspaces as they are not present in the database: %s",
-                                                       missingEntities.get().getLeft()));
-            } else if (!missingEntities.get().getRight().isEmpty()) {
-                throw new IllegalStateException(format("Unable to process these tables as they are not present in the database: %s",
-                                                       missingEntities.get().getRight().entries().stream().map(e -> e.getKey() + "." + e.getValue()).collect(joining(","))));
+            if (missingEntities.isPresent()) {
+                if (!missingEntities.get().getLeft().isEmpty()) {
+                    throw new IllegalStateException(format("Unable to process these keyspaces as they are not present in the database: %s",
+                                                           missingEntities.get().getLeft()));
+                } else if (!missingEntities.get().getRight().isEmpty()) {
+                    throw new IllegalStateException(format("Unable to process these tables as they are not present in the database: %s",
+                                                           missingEntities.get().getRight().entries().stream().map(e -> e.getKey() + "." + e.getValue()).collect(joining(","))));
+                }
             }
+        } catch (final Exception ex) {
+            throw new RuntimeException("Unable to check SSTables on disk!", ex);
         }
     }
 

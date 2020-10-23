@@ -3,6 +3,7 @@ package com.instaclustr.esop.impl.backup;
 import javax.validation.constraints.Min;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -17,7 +18,6 @@ import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesDeserializer;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesSerializer;
-import com.instaclustr.esop.impl.GatheringOperationCoordinatorException;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.measure.DataRate;
@@ -25,7 +25,6 @@ import com.instaclustr.measure.Time;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationCoordinator;
 import com.instaclustr.operations.OperationFailureException;
-import com.instaclustr.operations.ResultGatherer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +61,7 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonProperty("id") final UUID id,
                             @JsonProperty("creationTime") final Instant creationTime,
                             @JsonProperty("state") final State state,
-                            @JsonProperty("failureCause") final Throwable failureCause,
+                            @JsonProperty("errors") final List<Error> errors,
                             @JsonProperty("progress") final float progress,
                             @JsonProperty("startTime") final Instant startTime,
                             @JsonProperty("storageLocation") final StorageLocation storageLocation,
@@ -86,26 +85,26 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonProperty("schemaVersion") final String schemaVersion,
                             @JsonProperty("uploadClusterTopology") final boolean uploadClusterTopology,
                             @JsonProperty("proxySettings") final ProxySettings proxySettings) {
-        super(type, id, creationTime, state, failureCause, progress, startTime, new BackupOperationRequest(type,
-                                                                                                           storageLocation,
-                                                                                                           duration,
-                                                                                                           bandwidth,
-                                                                                                           concurrentConnections,
-                                                                                                           metadataDirective,
-                                                                                                           cassandraDirectory,
-                                                                                                           entities,
-                                                                                                           snapshotTag,
-                                                                                                           k8sNamespace,
-                                                                                                           k8sBackupSecretName,
-                                                                                                           globalRequest,
-                                                                                                           dc,
-                                                                                                           timeout,
-                                                                                                           insecure,
-                                                                                                           createMissingBucket,
-                                                                                                           skipBucketVerification,
-                                                                                                           schemaVersion,
-                                                                                                           uploadClusterTopology,
-                                                                                                           proxySettings));
+        super(type, id, creationTime, state, errors, progress, startTime, new BackupOperationRequest(type,
+                                                                                                     storageLocation,
+                                                                                                     duration,
+                                                                                                     bandwidth,
+                                                                                                     concurrentConnections,
+                                                                                                     metadataDirective,
+                                                                                                     cassandraDirectory,
+                                                                                                     entities,
+                                                                                                     snapshotTag,
+                                                                                                     k8sNamespace,
+                                                                                                     k8sBackupSecretName,
+                                                                                                     globalRequest,
+                                                                                                     dc,
+                                                                                                     timeout,
+                                                                                                     insecure,
+                                                                                                     createMissingBucket,
+                                                                                                     skipBucketVerification,
+                                                                                                     schemaVersion,
+                                                                                                     uploadClusterTopology,
+                                                                                                     proxySettings));
         coordinator = null;
     }
 
@@ -117,14 +116,6 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
     @Override
     protected void run0() throws Exception {
         assert coordinator != null;
-
-        final ResultGatherer<BackupOperationRequest> coordinatorResult = coordinator.coordinate(this);
-
-        coordinatorResult.getFailedOperations().forEach(e -> logger.error(e.exceptionMessage));
-        coordinatorResult.getErrorneousOperations().forEach(e -> logger.error(e.exceptionMessage));
-
-        if (coordinatorResult.hasErrors()) {
-            throw new GatheringOperationCoordinatorException(coordinatorResult.getErrorneousOperations());
-        }
+        coordinator.coordinate(this);
     }
 }

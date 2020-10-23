@@ -6,15 +6,14 @@ import java.util.Map;
 
 import com.instaclustr.esop.guice.RestorerFactory;
 import com.instaclustr.esop.impl.KeyspaceTable;
-import com.instaclustr.esop.impl.restore.RestorationPhaseResultGatherer;
 import com.instaclustr.esop.impl.restore.RestorationStrategy;
 import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType;
 import com.instaclustr.esop.impl.restore.RestorationStrategyResolver;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.operations.Operation;
+import com.instaclustr.operations.Operation.Error;
 import com.instaclustr.operations.OperationCoordinator;
-import com.instaclustr.operations.ResultGatherer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +31,7 @@ public abstract class BaseRestoreOperationCoordinator extends OperationCoordinat
     }
 
     @Override
-    public ResultGatherer<RestoreOperationRequest> coordinate(final Operation<RestoreOperationRequest> operation) throws OperationCoordinatorException {
+    public void coordinate(final Operation<RestoreOperationRequest> operation) throws OperationCoordinatorException {
 
         final RestoreOperationRequest request = operation.request;
 
@@ -53,32 +52,18 @@ public abstract class BaseRestoreOperationCoordinator extends OperationCoordinat
                                                 + "it is not possible to restore system keyspace on a running node");
         }
 
-        final RestorationPhaseResultGatherer gatherer = new RestorationPhaseResultGatherer();
-
-        if (operation.request.restorationStrategyType != RestorationStrategyType.IN_PLACE) {
-            // in-place might restore tables which are not in fact present in db yet
-            try {
-                KeyspaceTable.checkEntitiesToProcess(request.cassandraDirectory.resolve("data"), request.entities);
-            } catch (final Exception ex) {
-                logger.error(ex.getMessage());
-                return gatherer.gather(operation, ex);
-            }
-        }
-
-        Throwable cause = null;
-
         try (final Restorer restorer = restorerFactoryMap.get(request.storageLocation.storageProvider).createRestorer(request)) {
+
+            if (operation.request.restorationStrategyType != RestorationStrategyType.IN_PLACE) {
+                KeyspaceTable.checkEntitiesToProcess(request.cassandraDirectory.resolve("data"), request.entities);
+            }
 
             final RestorationStrategy restorationStrategy = restorationStrategyResolver.resolve(request);
 
             restorationStrategy.restore(restorer, operation);
-
-            gatherer.gather(operation, null);
         } catch (final Exception ex) {
             logger.error("Unable to perform restore! - " + ex.getMessage(), ex);
-            cause = ex;
+            operation.addError(Error.from(ex));
         }
-
-        return gatherer.gather(operation, cause);
     }
 }

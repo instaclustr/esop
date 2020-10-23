@@ -36,6 +36,7 @@ import com.instaclustr.io.FileUtils;
 import com.instaclustr.io.GlobalLock;
 import com.instaclustr.kubernetes.KubernetesHelper;
 import com.instaclustr.operations.Operation;
+import com.instaclustr.operations.Operation.Error;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -227,6 +228,8 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
                 logger.info("1) add tokens in Cassandra installation dir to cassandra.yaml file");
                 logger.info("2) change 'auto_bootstrap: true' to 'auto_bootstrap: false' in cassandra.yaml");
             }
+        } catch (final Exception ex) {
+            operation.addError(Error.from(ex));
         } finally {
             fileLock.release();
         }

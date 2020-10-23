@@ -1,6 +1,8 @@
 package com.instaclustr.esop.cli;
 
+import static com.instaclustr.operations.Operation.State.FAILED;
 import static com.instaclustr.picocli.CLIApplication.execute;
+import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static org.awaitility.Awaitility.await;
 
@@ -60,8 +62,8 @@ public class BackupApplication implements Runnable {
 
         await().forever().until(() -> operation.state.isTerminalState());
 
-        if (operation.state == Operation.State.FAILED) {
-            throw new IllegalStateException("Backup operation was not successful: ", operation.failureCause);
+        if (operation.state == FAILED) {
+            throw new IllegalStateException(format("Backup operation %s was not successful.", operation.id));
         }
     }
 }

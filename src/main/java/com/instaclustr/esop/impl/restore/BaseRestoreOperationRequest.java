@@ -16,7 +16,7 @@ public class BaseRestoreOperationRequest extends AbstractOperationRequest {
     public Integer concurrentConnections = 10;
 
     @Option(names = {"--lock-file"},
-        description = "Directory which will be used for locking purposes for backups and restores")
+        description = "Directory which will be used for locking purposes for restores")
     public Path lockFile;
 
     public BaseRestoreOperationRequest() {

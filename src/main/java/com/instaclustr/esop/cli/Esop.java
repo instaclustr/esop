@@ -76,14 +76,7 @@ public class Esop extends CLIApplication implements Runnable {
         final List<Module> modules = new ArrayList<>();
 
         if (jmxSpec != null) {
-            modules.add(new CassandraModule(new CassandraJMXConnectionInfo(jmxSpec.jmxPassword,
-                                                                           jmxSpec.jmxUser,
-                                                                           jmxSpec.jmxServiceURL,
-                                                                           jmxSpec.trustStore,
-                                                                           jmxSpec.trustStorePassword,
-                                                                           jmxSpec.keyStore,
-                                                                           jmxSpec.keyStorePassword,
-                                                                           jmxSpec.jmxClientAuth)));
+            modules.add(new CassandraModule(new CassandraJMXConnectionInfo(jmxSpec)));
         } else {
             modules.add(new AbstractModule() {
                 @Override

@@ -1,7 +1,9 @@
 package com.instaclustr.esop.cli;
 
+import static com.instaclustr.operations.Operation.State.FAILED;
 import static com.instaclustr.picocli.CLIApplication.execute;
 import static com.instaclustr.picocli.JarManifestVersionProvider.logCommandVersionInformation;
+import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static org.awaitility.Awaitility.await;
 
@@ -50,8 +52,8 @@ public class CommitLogRestoreApplication implements Runnable {
 
         await().forever().until(() -> operation.state.isTerminalState());
 
-        if (operation.state == Operation.State.FAILED) {
-            throw new IllegalStateException("Commitlog restore operation was not successful.");
+        if (operation.state == FAILED) {
+            throw new IllegalStateException(format("Commitog restore operation %s was not successful.", operation.id));
         }
     }
 }

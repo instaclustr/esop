@@ -3,6 +3,7 @@ package com.instaclustr.esop.impl.truncate;
 import static java.lang.String.format;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -37,12 +38,12 @@ public class TruncateOperation extends Operation<TruncateOperationRequest> {
                               @JsonProperty("id") final UUID id,
                               @JsonProperty("creationTime") final Instant creationTime,
                               @JsonProperty("state") final State state,
-                              @JsonProperty("failureCause") final Throwable failureCause,
+                              @JsonProperty("errors") final List<Error> errors,
                               @JsonProperty("progress") final float progress,
                               @JsonProperty("startTime") final Instant startTime,
                               @JsonProperty("keyspace") final String keyspace,
                               @JsonProperty("table") final String table) {
-        super(type, id, creationTime, state, failureCause, progress, startTime, new TruncateOperationRequest(type, keyspace, table));
+        super(type, id, creationTime, state, errors, progress, startTime, new TruncateOperationRequest(type, keyspace, table));
         this.cassandraJMXService = null;
     }
 

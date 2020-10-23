@@ -4,11 +4,10 @@ import java.util.Map;
 
 import com.google.inject.Inject;
 import com.instaclustr.esop.guice.RestorerFactory;
-import com.instaclustr.esop.impl.restore.RestorationPhaseResultGatherer;
 import com.instaclustr.esop.impl.restore.RestorationStrategyResolver;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.operations.Operation;
-import com.instaclustr.operations.ResultGatherer;
+import com.instaclustr.operations.Operation.Error;
 
 public class DefaultRestoreOperationCoordinator extends BaseRestoreOperationCoordinator {
 
@@ -19,13 +18,11 @@ public class DefaultRestoreOperationCoordinator extends BaseRestoreOperationCoor
     }
 
     @Override
-    public ResultGatherer<RestoreOperationRequest> coordinate(final Operation<RestoreOperationRequest> operation) throws OperationCoordinatorException {
+    public void coordinate(final Operation<RestoreOperationRequest> operation) throws OperationCoordinatorException {
         if (operation.request.globalRequest) {
-            final RestorationPhaseResultGatherer gatherer = new RestorationPhaseResultGatherer();
-            gatherer.gather(operation, new OperationCoordinatorException("This coordinator can not handle global operations."));
-            return gatherer;
+            operation.addError(Error.from(new OperationCoordinatorException("This coordinator can not handle global operations.")));
         }
 
-        return super.coordinate(operation);
+        super.coordinate(operation);
     }
 }

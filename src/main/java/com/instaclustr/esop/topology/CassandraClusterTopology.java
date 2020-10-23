@@ -228,14 +228,18 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
                                   final ClusterTopology clusterTopology,
                                   final ObjectMapper objectMapper,
                                   final String snapshotTag) throws Exception {
-            final String clusterTopologyString = ClusterTopology.writeToString(objectMapper, clusterTopology);
+            try {
+                final String clusterTopologyString = ClusterTopology.writeToString(objectMapper, clusterTopology);
 
-            final Path topologyPath = Paths.get(format("topology/%s-%s-topology.json", clusterTopology.clusterName, snapshotTag));
+                final Path topologyPath = Paths.get(format("topology/%s-%s-topology.json", clusterTopology.clusterName, snapshotTag));
 
-            logger.info("Uploading cluster topology under {}", topologyPath);
-            logger.info("\n" + clusterTopologyString);
+                logger.info("Uploading cluster topology under {}", topologyPath);
+                logger.info("\n" + clusterTopologyString);
 
-            backuper.uploadText(clusterTopologyString, backuper.objectKeyToRemoteReference(topologyPath));
+                backuper.uploadText(clusterTopologyString, backuper.objectKeyToRemoteReference(topologyPath));
+            } catch (final Exception ex) {
+                throw new Exception("Unable to upload cluster topology!", ex);
+            }
         }
 
         @Override

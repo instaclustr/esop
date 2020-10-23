@@ -1,5 +1,8 @@
 package com.instaclustr.esop.impl.restore.strategy;
 
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.DOWNLOAD;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.IMPORT;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.TRUNCATE;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.of;
 
@@ -9,17 +12,18 @@ import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Provider;
+import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.guice.BucketServiceFactory;
 import com.instaclustr.esop.impl.restore.DownloadTracker;
 import com.instaclustr.esop.impl.restore.RestorationPhase;
 import com.instaclustr.esop.impl.restore.RestorationPhase.ClusterHealthCheckPhase;
 import com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType;
 import com.instaclustr.esop.impl.restore.RestorationStrategy;
-import com.instaclustr.esop.impl.restore.Restorer;
-import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
+import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.io.GlobalLock;
 import com.instaclustr.operations.Operation;
+import com.instaclustr.operations.Operation.Error;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 
 public abstract class AbstractRestorationStrategy implements RestorationStrategy {
@@ -62,7 +66,7 @@ public abstract class AbstractRestorationStrategy implements RestorationStrategy
         ctxt.downloadTracker = downloadTracker;
         ctxt.bucketServiceFactoryMap = bucketServiceFactoryMap;
 
-        if (phaseType == RestorationPhaseType.DOWNLOAD || phaseType == RestorationPhaseType.TRUNCATE || phaseType == RestorationPhaseType.IMPORT) {
+        if (phaseType == DOWNLOAD || phaseType == TRUNCATE || phaseType == IMPORT) {
             ctxt.cassandraVersion = cassandraVersion.get();
         }
 
@@ -77,7 +81,7 @@ public abstract class AbstractRestorationStrategy implements RestorationStrategy
         try {
             final RestorationPhase restorationPhase = resolveRestorationPhase(operation, restorer);
 
-            final Set<RestorationPhaseType> restorationPhaseTypes = of(RestorationPhaseType.DOWNLOAD, RestorationPhaseType.TRUNCATE, RestorationPhaseType.IMPORT).collect(toSet());
+            final Set<RestorationPhaseType> restorationPhaseTypes = of(DOWNLOAD, TRUNCATE, IMPORT).collect(toSet());
 
             if (restorationPhaseTypes.contains(restorationPhase.getRestorationPhaseType())) {
                 final RestorationContext ctxt = new RestorationContext();
@@ -87,6 +91,8 @@ public abstract class AbstractRestorationStrategy implements RestorationStrategy
             }
 
             restorationPhase.execute();
+        } catch (final Exception ex) {
+            operation.addError(Error.from(ex));
         } finally {
             fileLock.release();
         }

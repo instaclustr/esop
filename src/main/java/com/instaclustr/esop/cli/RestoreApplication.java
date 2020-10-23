@@ -1,7 +1,9 @@
 package com.instaclustr.esop.cli;
 
+import static com.instaclustr.operations.Operation.State.FAILED;
 import static com.instaclustr.picocli.CLIApplication.execute;
 import static com.instaclustr.picocli.JarManifestVersionProvider.logCommandVersionInformation;
+import static java.lang.String.format;
 import static org.awaitility.Awaitility.await;
 
 import java.util.Arrays;
@@ -63,8 +65,8 @@ public class RestoreApplication implements Runnable {
 
         await().forever().until(() -> operation.state.isTerminalState());
 
-        if (operation.state == Operation.State.FAILED) {
-            throw new IllegalStateException("Restore operation was not successful.", operation.failureCause);
+        if (operation.state == FAILED) {
+            throw new IllegalStateException(format("Restore operation %s was not successful.", operation.id));
         }
     }
 }

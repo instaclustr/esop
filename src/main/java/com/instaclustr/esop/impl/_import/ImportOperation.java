@@ -54,7 +54,7 @@ public class ImportOperation extends Operation<ImportOperationRequest> {
                             @JsonProperty("id") final UUID id,
                             @JsonProperty("creationTime") final Instant creationTime,
                             @JsonProperty("state") final State state,
-                            @JsonProperty("failureCause") final Throwable failureCause,
+                            @JsonProperty("errors") final List<Error> errors,
                             @JsonProperty("progress") final float progress,
                             @JsonProperty("startTime") final Instant startTime,
                             @JsonProperty("keyspace") final String keyspace,
@@ -73,7 +73,7 @@ public class ImportOperation extends Operation<ImportOperationRequest> {
               id,
               creationTime,
               state,
-              failureCause,
+              errors,
               progress,
               startTime,
               new ImportOperationRequest(type,
@@ -145,7 +145,7 @@ public class ImportOperation extends Operation<ImportOperationRequest> {
         } else if (CassandraVersion.isThree(cassandraVersion)) {
             cassandraJMXService.doWithStorageServiceMBean(new FunctionWithEx<StorageServiceMBean, Object>() {
                 @Override
-                public Object apply(final StorageServiceMBean storageServiceMBean) throws Exception {
+                public Object apply(final StorageServiceMBean storageServiceMBean) {
 
                     logger.info(format("Loading SSTables of %s.%s", request.keyspace, request.table));
 

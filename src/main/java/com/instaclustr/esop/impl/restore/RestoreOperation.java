@@ -3,6 +3,7 @@ package com.instaclustr.esop.impl.restore;
 import javax.validation.constraints.Min;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -14,7 +15,6 @@ import com.fasterxml.jackson.databind.deser.std.UUIDDeserializer;
 import com.fasterxml.jackson.databind.ser.std.UUIDSerializer;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
-import com.instaclustr.esop.impl.GatheringOperationCoordinatorException;
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
@@ -24,7 +24,6 @@ import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategy
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationCoordinator;
 import com.instaclustr.operations.OperationFailureException;
-import com.instaclustr.operations.ResultGatherer;
 
 public class RestoreOperation extends Operation<RestoreOperationRequest> implements Cloneable {
 
@@ -53,7 +52,7 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                              @JsonProperty("id") final UUID id,
                              @JsonProperty("creationTime") final Instant creationTime,
                              @JsonProperty("state") final State state,
-                             @JsonProperty("failureCause") final Throwable failureCause,
+                             @JsonProperty("errors") final List<Error> errors,
                              @JsonProperty("progress") final float progress,
                              @JsonProperty("startTime") final Instant startTime,
                              @JsonProperty("storageLocation") final StorageLocation storageLocation,
@@ -84,33 +83,33 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                              @JsonProperty("newCluster") final boolean newCluster,
                              @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
                              @JsonProperty("proxySettings") final ProxySettings proxySettings) {
-        super(type, id, creationTime, state, failureCause, progress, startTime, new RestoreOperationRequest(type,
-                                                                                                            storageLocation,
-                                                                                                            concurrentConnections,
-                                                                                                            lockFile,
-                                                                                                            cassandraDirectory,
-                                                                                                            cassandraConfigDirectory,
-                                                                                                            restoreSystemKeyspace,
-                                                                                                            snapshotTag,
-                                                                                                            entities,
-                                                                                                            updateCassandraYaml,
-                                                                                                            restorationStrategyType,
-                                                                                                            restorationPhase,
-                                                                                                            importing,
-                                                                                                            noDeleteTruncates,
-                                                                                                            noDeleteDownloads,
-                                                                                                            noDownloadData,
-                                                                                                            exactSchemaVersion,
-                                                                                                            schemaVersion,
-                                                                                                            k8sNamespace,
-                                                                                                            k8sSecretName,
-                                                                                                            globalRequest,
-                                                                                                            timeout,
-                                                                                                            resolveHostIdFromTopology,
-                                                                                                            insecure,
-                                                                                                            newCluster,
-                                                                                                            skipBucketVerification,
-                                                                                                            proxySettings));
+        super(type, id, creationTime, state, errors, progress, startTime, new RestoreOperationRequest(type,
+                                                                                                      storageLocation,
+                                                                                                      concurrentConnections,
+                                                                                                      lockFile,
+                                                                                                      cassandraDirectory,
+                                                                                                      cassandraConfigDirectory,
+                                                                                                      restoreSystemKeyspace,
+                                                                                                      snapshotTag,
+                                                                                                      entities,
+                                                                                                      updateCassandraYaml,
+                                                                                                      restorationStrategyType,
+                                                                                                      restorationPhase,
+                                                                                                      importing,
+                                                                                                      noDeleteTruncates,
+                                                                                                      noDeleteDownloads,
+                                                                                                      noDownloadData,
+                                                                                                      exactSchemaVersion,
+                                                                                                      schemaVersion,
+                                                                                                      k8sNamespace,
+                                                                                                      k8sSecretName,
+                                                                                                      globalRequest,
+                                                                                                      timeout,
+                                                                                                      resolveHostIdFromTopology,
+                                                                                                      insecure,
+                                                                                                      newCluster,
+                                                                                                      skipBucketVerification,
+                                                                                                      proxySettings));
         this.coordinator = null;
     }
 
@@ -122,11 +121,6 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
     @Override
     protected void run0() throws Exception {
         assert coordinator != null;
-
-        final ResultGatherer<RestoreOperationRequest> coordinatorResult = coordinator.coordinate(this);
-
-        if (coordinatorResult.hasErrors()) {
-            throw new GatheringOperationCoordinatorException(coordinatorResult.getErrorneousOperations());
-        }
+        coordinator.coordinate(this);
     }
 }

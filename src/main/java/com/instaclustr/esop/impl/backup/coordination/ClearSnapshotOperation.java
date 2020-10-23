@@ -46,6 +46,7 @@ public class ClearSnapshotOperation extends Operation<ClearSnapshotOperationRequ
             logger.info("Cleared snapshot {}.", request.snapshotTag);
         } catch (final Exception ex) {
             logger.error("Failed to cleanup snapshot {}.", request.snapshotTag, ex);
+            throw new RuntimeException(String.format("Failed to cleanup snapshot %s", request.snapshotTag), ex);
         }
     }
 
