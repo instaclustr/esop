@@ -144,7 +144,7 @@ The resolution of credentials for S3 uses the same resolution mechanism as the o
 The most notable fact is that if no credentials are set explicitly, it will try to resolve them from environment
 properties of a node it runs on. If that node runs in AWS EC2, it will resolve them by help of that instance itself.
 
-S3 connector will expect to find environment properties `AWS_SECRET_KEY_ID` and `AWS_SECRET_KEY`.
+S3 connector will expect to find environment properties `AWS_ACCESS_KEY_ID` and `AWS_SECRET_KEY`.
 It will also accept `AWS_REGION` and `AWS_ENDPOINT` environment properties - however they are not required.
 If `AWS_ENDPOINT` is set, `AWS_REGION` has to be set too.
 
