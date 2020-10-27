@@ -11,6 +11,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -19,8 +22,12 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class KeyspaceTable implements Cloneable {
+
+    private static final Logger logger = LoggerFactory.getLogger(KeyspaceTable.class);
 
     public enum TableType {
         SYSTEM,
@@ -148,28 +155,43 @@ public class KeyspaceTable implements Cloneable {
 
             return Optional.of(Pair.of(missingKeyspaces, missingTables));
         }
+
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this)
+                .add("keyspaceTables", keyspaceTables)
+                .toString();
+        }
     }
 
     public static KeyspaceTables parseFileSystem(final Path cassandraDataDir) throws Exception {
 
+        final Set<String> excludedDirs = Stream.of("hints", "commitlog", "cdc_raw", "saved_caches").collect(Collectors.toSet());
+
         final KeyspaceTables keyspaceTables = new KeyspaceTables();
 
-        final List<Path> keyspaces = Files.find(cassandraDataDir,
-                                                1,
-                                                (path, basicFileAttributes) -> !cassandraDataDir.equals(path) && basicFileAttributes.isDirectory()).collect(toList());
+        final List<Path> keyspaces = Files.find(
+            cassandraDataDir,
+            1,
+            (path, basicFileAttributes) -> !cassandraDataDir.equals(path) && basicFileAttributes.isDirectory())
+            .filter(path -> !excludedDirs.contains(path.getFileName().toString())).collect(toList());
 
         for (final Path ks : keyspaces) {
-            Files.find(ks,
-                       1,
-                       (path, basicFileAttributes) -> !ks.equals(path) && basicFileAttributes.isDirectory())
-                .collect(toList()).forEach(path -> {
+
+            Files.find(ks, 1, (path, basicFileAttributes) -> !ks.equals(path) && basicFileAttributes.isDirectory()).collect(toList()).forEach(path -> {
 
                 final String tableNameFull = path.toFile().getName();
-                final String tableNameSimple = tableNameFull.substring(0, tableNameFull.lastIndexOf("-"));
 
-                keyspaceTables.add(ks.getFileName().toString(), tableNameSimple);
+                if (tableNameFull.contains("-") && tableNameFull.split("-").length == 2) {
+                    final String tableNameSimple = tableNameFull.split("-")[0];
+                    keyspaceTables.add(ks.getFileName().toString(), tableNameSimple);
+                } else {
+                    logger.info(String.format("Skipping directory %s in %s, it does not look like table dir!", tableNameFull, path.toAbsolutePath().toString()));
+                }
             });
         }
+
+        logger.info("Found keyspaces and tables: {}", keyspaceTables);
 
         return keyspaceTables;
     }
