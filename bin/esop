@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Use JAVA_HOME if set, otherwise look for java in PATH
+if [ -x "$JAVA_HOME/bin/java" ]; then
+    JAVA="$JAVA_HOME/bin/java"
+else
+    JAVA="`which java`"
+fi
+
+"$JAVA" -jar "/usr/share/java/esop.jar" $@
