@@ -5,14 +5,14 @@
     
     <groupId>com.instaclustr</groupId>
     <artifactId>esop</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     
     <name>instaclustr-esop</name>
     <description>Backup and restoration tooling for Cassandra</description>
     <url>https://github.com/instaclustr/instaclustr-esop</url>
     
     <properties>
-        <instaclustr.commons.version>1.4.0-SNAPSHOT</instaclustr.commons.version>
+        <instaclustr.commons.version>1.4.1</instaclustr.commons.version>
         <azure-storage.version>8.6.4</azure-storage.version>
         <google-cloud-libraries.version>3.4.0</google-cloud-libraries.version>
         <aws-java-sdk.version>1.11.782</aws-java-sdk.version>
