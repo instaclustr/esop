@@ -1,8 +1,9 @@
 # Instaclustr Esop
 
 image:https://img.shields.io/maven-central/v/com.instaclustr/esop.svg?label=Maven%20Central[link=https://search.maven.org/search?q=g:%22com.instaclustr%22%20AND%20a:%22esop%22]
-
 image:https://circleci.com/gh/instaclustr/instaclustr-esop.svg?style=svg["Instaclustr",link="https://circleci.com/gh/instaclustr/instaclustr-esop"]
+
+image::Esop.png[Esop,width=50%]
 
 This repository is home of backup and restoration tool from Instaclustr for Cassandra called https://en.wikipedia.org/wiki/Aesop[Esop]
 
