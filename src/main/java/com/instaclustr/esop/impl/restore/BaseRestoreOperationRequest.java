@@ -2,9 +2,9 @@ package com.instaclustr.esop.impl.restore;
 
 import java.nio.file.Path;
 
+import com.instaclustr.esop.impl.AbstractOperationRequest;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
-import com.instaclustr.esop.impl.AbstractOperationRequest;
 import picocli.CommandLine.Option;
 
 public class BaseRestoreOperationRequest extends AbstractOperationRequest {

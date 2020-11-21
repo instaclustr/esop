@@ -5,7 +5,7 @@
     
     <groupId>com.instaclustr</groupId>
     <artifactId>esop</artifactId>
-    <version>1.0.4</version>
+    <version>1.0.5-SNAPSHOT</version>
     
     <name>instaclustr-esop</name>
     <description>Backup and restoration tooling for Cassandra</description>
@@ -449,7 +449,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>${maven.surefire.plugin.version}</version>
                         <configuration>
-                            <excludedGroups>cloudTest,k8sTest,azureTest,googleTest,s3Test</excludedGroups>
+                            <excludedGroups>cloudTest,k8sTest,azureTest,googleTest,s3Test,cephTest</excludedGroups>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -564,6 +564,25 @@
                         <version>${maven.surefire.plugin.version}</version>
                         <configuration>
                             <groups>s3Test</groups>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    
+        <profile>
+            <id>cephTests</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>${maven.surefire.plugin.version}</version>
+                        <configuration>
+                            <groups>cephTest</groups>
                         </configuration>
                     </plugin>
                 </plugins>

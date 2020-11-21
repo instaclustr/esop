@@ -13,8 +13,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.nio.file.Files;
 
-import com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType;
 import com.instaclustr.esop.impl.DatabaseEntities;
+import com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType;
 import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType;
 import com.instaclustr.kubernetes.KubernetesHelper;
 
