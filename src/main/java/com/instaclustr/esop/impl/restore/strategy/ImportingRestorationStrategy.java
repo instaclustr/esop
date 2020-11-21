@@ -7,6 +7,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.guice.BucketServiceFactory;
 import com.instaclustr.esop.impl.restore.DownloadTracker;
 import com.instaclustr.esop.impl.restore.RestorationPhase;
@@ -16,9 +17,8 @@ import com.instaclustr.esop.impl.restore.RestorationPhase.ImportingPhase;
 import com.instaclustr.esop.impl.restore.RestorationPhase.InitPhase;
 import com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType;
 import com.instaclustr.esop.impl.restore.RestorationPhase.TruncatingPhase;
-import com.instaclustr.esop.impl.restore.Restorer;
-import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
+import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.operations.Operation;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 

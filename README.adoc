@@ -18,7 +18,7 @@ Esop is able to perform these operations:
 * Backup and restore of SSTables
 * Backup and restore of commit logs
 * Restoration of data into a Cassandra schema or diffrent table schema
-* Backing-up to and restoring from S3 (Oracle "S3" too), Azure, or GCP, or into any local destination or other storage
+* Backing-up to and restoring from S3 (Oracle and Ceph via Object Gateway  too), Azure, or GCP, or into any local destination or other storage
 providing they are easily implementable
 * Effective upload and download—it will upload only SSTables which are not present remotely so
 any subsequent backups will upload and restores will download only the difference
@@ -101,7 +101,7 @@ _from scratch_ or if you use <<In-place restoration strategy>>.
 Data to backup and restore from, are located in a remote storage. This setting is controlled by flag
 `--storage-location`. The storage location flag has very specific structure which also indicates where data will be
 uploaded. Locations consist of a storage _protocol_ and path. Please keep in mind that the protocol we are using is not a
-_real_ protocol. It is merely a mnemonic. Use either `s3`, `gcp`, `azure` or `file`.
+_real_ protocol. It is merely a mnemonic. Use either `s3`, `gcp`, `azure`, `oracle`, `ceph` or `file`.
 
 The format is:
 
@@ -166,6 +166,21 @@ Azure module expects `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` environment
 #### GCP
 
 GCP module expects `GOOGLE_APPLICATION_CREDENTIALS` environment property or `google.application.credentials` to be set with the path to service account credentials.
+
+#### Oracle
+
+Oracle module behaves same way as S3 when it comes to credentials.
+
+#### Ceph
+
+CEPH module uses https://docs.ceph.com/en/latest/radosgw/s3/java/[Amazon S3 driver] for
+https://docs.ceph.com/en/latest/radosgw/[Ceph Object Gateway]. Credentials-wise,
+it behaves same way as "normal" S3. **You are required to set endpoint to AmazonS3 client.**
+In that case, be sure `AWS_ENDPOINT` environment property is set or `awsendpoint` property in Kubernetes
+secret is specified. You need to provide typical access key and secret key too.
+Please consult the following section to know more about Kubernetes-related
+authentication properties resolution. Setting protocol to HTTP might be achieved similarly as for normal
+S3 module, by specifying `--insecure-http` flag.
 
 #### Authentication in Kubernetes
 
@@ -782,6 +797,8 @@ cloud, just change the protocol respectively.
 
 We also support https://docs.cloud.oracle.com/en-us/iaas/Content/Object/Tasks/s3compatibleapi.htm[Oracle cloud];
 use `oracle://` protocol for your backup and restores.
+
+We also support CEPH S3 Gateway, use `ceph://` protocol for your backup and restores.
 
 If a bucket does not exist, it will be created only when `--create-missing-bucket` is specified.
 The verification of a bucket might be skipped by flag `--skip-bucket-verification`.

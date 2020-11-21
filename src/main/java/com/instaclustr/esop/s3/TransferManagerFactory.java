@@ -50,7 +50,7 @@ public class TransferManagerFactory {
         return KubernetesHelper.isRunningInKubernetes() || isRunningAsClient();
     }
 
-    private AmazonS3 provideAmazonS3(final Provider<CoreV1Api> coreV1ApiProvider, final AbstractOperationRequest operationRequest) {
+    protected AmazonS3 provideAmazonS3(final Provider<CoreV1Api> coreV1ApiProvider, final AbstractOperationRequest operationRequest) {
 
         final S3Configuration s3Conf = resolveS3Configuration(coreV1ApiProvider, operationRequest);
 
@@ -136,7 +136,7 @@ public class TransferManagerFactory {
         return builder.build();
     }
 
-    private S3Configuration resolveS3Configuration(final Provider<CoreV1Api> coreV1ApiProvider, final AbstractOperationRequest operationRequest) {
+    protected S3Configuration resolveS3Configuration(final Provider<CoreV1Api> coreV1ApiProvider, final AbstractOperationRequest operationRequest) {
         if (isRunningInKubernetes()) {
             if (isNullOrEmpty(operationRequest.resolveKubernetesSecretName())) {
                 logger.warn("Kubernetes secret name for resolving S3 credentials was not specified, going to resolve them from env. properties. "
@@ -203,6 +203,8 @@ public class TransferManagerFactory {
 
         s3Configuration.awsRegion = System.getenv("AWS_REGION");
         s3Configuration.awsEndpoint = System.getenv("AWS_ENDPOINT");
+        s3Configuration.awsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
+        s3Configuration.awsSecretKey = System.getenv("AWS_SECRET_KEY");
 
         // accesskeyid and awssecretkey will be taken from normal configuration mechanism in ~/.aws/ ...
         // s3Configuration.awsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
@@ -219,7 +221,7 @@ public class TransferManagerFactory {
         }
     }
 
-    private static final class S3Configuration {
+    public static final class S3Configuration {
 
         public String awsRegion;
         public String awsEndpoint;

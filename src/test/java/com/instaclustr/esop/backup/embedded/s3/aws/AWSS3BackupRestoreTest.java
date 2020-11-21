@@ -1,4 +1,4 @@
-package com.instaclustr.esop.backup.embedded.s3;
+package com.instaclustr.esop.backup.embedded.s3.aws;
 
 import static com.instaclustr.io.FileUtils.deleteDirectory;
 import static org.testng.Assert.assertTrue;
@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
     "s3Test",
     "cloudTest",
 })
-public class S3BackupRestoreTest extends BaseS3BackupRestoreTest {
+public class AWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
 
     @Inject
     public S3TransferManagerFactory transferManagerFactory;
@@ -41,6 +41,11 @@ public class S3BackupRestoreTest extends BaseS3BackupRestoreTest {
     @AfterMethod
     public void teardown() throws ApiException {
         destroy();
+    }
+
+    @Override
+    protected String getStorageLocation() {
+        return "s3://" + BUCKET_NAME + "/cluster/datacenter1/node1";
     }
 
     @Override

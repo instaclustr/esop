@@ -1,4 +1,4 @@
-package com.instaclustr.esop.backup.embedded.s3;
+package com.instaclustr.esop.backup.embedded.s3.aws;
 
 import java.util.HashMap;
 
@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
     "s3Test",
     "k8sTest"
 })
-public class KubernetesS3BackupRestoreTest extends BaseS3BackupRestoreTest {
+public class KubernetesAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
 
     @Inject
     public KubernetesService kubernetesService;
@@ -33,6 +33,11 @@ public class KubernetesS3BackupRestoreTest extends BaseS3BackupRestoreTest {
     @AfterMethod
     public void teardown() throws ApiException {
         destroy();
+    }
+
+    @Override
+    protected String getStorageLocation() {
+        return "s3://" + BUCKET_NAME + "/cluster/datacenter1/node1";
     }
 
     @Override
