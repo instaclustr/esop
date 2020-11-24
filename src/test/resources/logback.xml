@@ -9,6 +9,7 @@
   <logger name="org.hibernate.validator.internal" level="WARN"/>
   <logger name="org.glassfish.jersey.internal" level="ERROR"/>
   <logger name="com.datastax" level="WARN"/>
+  <logger name="io.netty" level="INFO"/>
   
   <!-- disable / enable as you wish -->
   
@@ -21,7 +22,7 @@
   <logger name="com.instaclustr.esop.local" level="INFO"/>
   <logger name="com.instaclustr.esop.cli" level="INFO"/-->
   
-  <logger name="com.instaclustr" level="INFO"/>
+  <logger name="com.instaclustr" level="DEBUG"/>
   
   <!-- consult https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/java-dg-logging.html -->
   
@@ -32,7 +33,7 @@
   
   <!-- end -->
   
-  <root level="INFO">
+  <root level="DEBUG">
     <appender-ref ref="STDOUT"/>
   </root>
 </configuration>
