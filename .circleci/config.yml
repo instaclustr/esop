@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
 
-    working_directory: ~/instaclustr-esop
+    working_directory: ~/esop
 
     docker:
       - image: circleci/openjdk:8-jdk-stretch
@@ -24,7 +24,7 @@ jobs:
           key: m2-{{ checksum "pom.xml" }}
 
       - store_test_results:
-          path: ~/instaclustr-esop/target/surefire-reports
+          path: ~/esop/target/surefire-reports
 
       - store_artifacts:
           path: /tmp/artifacts

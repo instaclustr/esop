@@ -22,7 +22,7 @@ Esop is able to perform these operations:
 providing they are easily implementable
 * Effective upload and download—it will upload only SSTables which are not present remotely so
 any subsequent backups will upload and restores will download only the difference
-* When used in connection with https://github.com/instaclustr/instaclustr-icarus[Instaclustr Icarus] it is possible to backup **simultaneously** so there
+* When used in connection with https://github.com/instaclustr/icarus[Instaclustr Icarus] it is possible to backup **simultaneously** so there
 might be more concurrent backups which may overlap what they backup
 * Used as backup/restore solution in https://github.com/instaclustr/cassandra-operator[Instaclustr Cassandra Operator] for Kubernetes
 * Possible to restore whole node _from scratch_ (or whole cluster from scratch in cases where Kubernetes Operator is used)
@@ -483,7 +483,7 @@ and tokens are somehow provided externally, however the current version of the t
 
 #### Restore
 
-This tool is seamlessly integrated into https://github.com/instaclustr/instaclustr-icarus[Icarus]
+This tool is seamlessly integrated into https://github.com/instaclustr/icarus[Icarus]
 which is able to do backup and restore in a distributed manner—cluster wide. Please refer to documentation of Icarus
 to understand what restoration phases are and what restoration strategies one might use. The very same
 restoration flow might be executed from CLI, Icarus just accepts a JSON payload which is a different representation
