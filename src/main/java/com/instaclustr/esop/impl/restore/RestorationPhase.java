@@ -416,6 +416,7 @@ public abstract class RestorationPhase {
                     final Path existing = entry.localFile;
 
                     try {
+                        logger.debug(String.format("linking from %s to %s", existing, link));
                         Files.createLink(link, existing);
                         successfulLinks.add(link);
                     } catch (final Exception ex) {
