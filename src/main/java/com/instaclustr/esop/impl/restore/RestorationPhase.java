@@ -8,22 +8,23 @@ import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhas
 import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.TRUNCATE;
 import static com.instaclustr.io.FileUtils.createOrCleanDirectory;
 import static java.lang.String.format;
-import static org.apache.commons.io.FileUtils.listFilesAndDirs;
+import static java.util.stream.Collectors.toList;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.instaclustr.esop.ManifestEnricher;
 import com.instaclustr.esop.impl.AbstractTracker.Session;
 import com.instaclustr.esop.impl.BucketService;
+import com.instaclustr.esop.impl.CassandraData;
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.ManifestEntry;
@@ -43,8 +44,6 @@ import com.instaclustr.esop.impl.truncate.TruncateOperation;
 import com.instaclustr.esop.impl.truncate.TruncateOperationRequest;
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.operations.Operation;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
-import org.apache.commons.io.filefilter.FileFileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -61,8 +60,19 @@ public abstract class RestorationPhase {
 
     protected RestorationContext ctxt;
 
-    public RestorationPhase(RestorationContext ctxt) {
+    public RestorationPhase(RestorationContext ctxt, boolean parseCassandraData) throws Exception {
         this.ctxt = ctxt;
+
+        if (parseCassandraData) {
+            final CassandraData cassandraData = CassandraData.parse(ctxt.operation.request.cassandraDirectory.resolve("data"));
+            cassandraData.setDatabaseEntitiesFromRequest(ctxt.operation.request.entities);
+            cassandraData.setRenamedEntitiesFromRequest(ctxt.operation.request.rename);
+            this.ctxt.cassandraData = cassandraData;
+        }
+    }
+
+    public RestorationPhase(RestorationContext ctxt) throws Exception {
+        this(ctxt, false);
     }
 
     public abstract RestorationPhaseType getRestorationPhaseType();
@@ -135,8 +145,8 @@ public abstract class RestorationPhase {
 
     public static class InitPhase extends RestorationPhase {
 
-        public InitPhase(final RestorationContext ctxt) {
-            super(ctxt);
+        public InitPhase(final RestorationContext ctxt) throws Exception {
+            super(ctxt, false);
         }
 
         @Override
@@ -145,8 +155,7 @@ public abstract class RestorationPhase {
         }
 
         @Override
-        public void execute() throws RestorationPhaseException {
-
+        public void execute() {
         }
     }
 
@@ -154,7 +163,7 @@ public abstract class RestorationPhase {
 
         private static final Logger logger = LoggerFactory.getLogger(ClusterHealthCheckPhase.class);
 
-        public ClusterHealthCheckPhase(final RestorationContext ctxt) {
+        public ClusterHealthCheckPhase(final RestorationContext ctxt) throws Exception {
             super(ctxt);
         }
 
@@ -208,10 +217,8 @@ public abstract class RestorationPhase {
 
         private static final Logger logger = LoggerFactory.getLogger(DownloadingPhase.class);
 
-
-        public DownloadingPhase(final RestorationContext ctxt) {
-            super(ctxt);
-
+        public DownloadingPhase(final RestorationContext ctxt) throws Exception {
+            super(ctxt, true);
         }
 
         @Override
@@ -237,20 +244,24 @@ public abstract class RestorationPhase {
                     }
                 }
 
-                createOrCleanDirectory(ctxt.operation.request.importing.sourceDir);
-
                 final String schemaVersion = new CassandraSchemaVersion(ctxt.jmx).act();
 
                 final Manifest manifest = RestorationUtilities.downloadManifest(request, ctxt.restorer, schemaVersion, ctxt.objectMapper);
-                manifest.enrichManifestEntries(request.importing.sourceDir);
 
+                // verify that we are downloading data for same token so data fit a node
                 new CassandraSameTokens(ctxt.jmx, manifest.getTokens()).act();
+
+                createOrCleanDirectory(ctxt.operation.request.importing.sourceDir);
+
+                new ManifestEnricher().enrich(ctxt.cassandraData, manifest, ctxt.operation.request.importing.sourceDir);
 
                 // looking into downloaded manifest, download only these sstables for keyspaces / tables
                 // which were specified in request in "entities"
+                // there will be only entries in this list which are backed by existing keyspace on disk
                 final List<ManifestEntry> manifestFiles = manifest.getManifestFiles(request.entities,
                                                                                     false,  // not possible to restore system keyspace on a live cluster
-                                                                                    false); // no new cluster
+                                                                                    false,  // no new cluster
+                                                                                    false); // with schemas
 
                 Session<DownloadUnit> session = null;
 
@@ -284,8 +295,8 @@ public abstract class RestorationPhase {
 
         private static final Logger logger = LoggerFactory.getLogger(TruncatingPhase.class);
 
-        public TruncatingPhase(final RestorationContext ctxt) {
-            super(ctxt);
+        public TruncatingPhase(final RestorationContext ctxt) throws Exception {
+            super(ctxt, true);
         }
 
         @Override
@@ -299,18 +310,29 @@ public abstract class RestorationPhase {
                 logger.info("Truncating phase has started.");
 
                 final String schemaVersion = new CassandraSchemaVersion(ctxt.jmx).act();
-                final Manifest manifest = RestorationUtilities.downloadManifest(ctxt.operation.request, ctxt.restorer, schemaVersion, ctxt.objectMapper);
-                manifest.enrichManifestEntries(ctxt.operation.request.importing.sourceDir);
-                final DatabaseEntities filteredEntities = manifest.getDatabaseEntities(false).filter(ctxt.operation.request.entities, false);
-                final List<ImportOperationRequest> importOperationRequests = RestorationUtilities.buildImportRequests(ctxt.operation.request, filteredEntities);
+                final Manifest manifest = RestorationUtilities.downloadManifest(ctxt.operation.request,
+                                                                                ctxt.restorer,
+                                                                                schemaVersion,
+                                                                                ctxt.objectMapper);
+
+                new ManifestEnricher().enrich(ctxt.cassandraData, manifest, ctxt.operation.request.importing.sourceDir);
+
+                final DatabaseEntities toTruncate = ctxt.cassandraData.getDatabaseEntitiesToProcessForRestore(manifest);
+
+                if (toTruncate.getKeyspacesAndTables().isEmpty()) {
+                    logger.info("It is not necessary to truncate any table.");
+                    return;
+                } else {
+                    logger.info(String.format("Going to truncate these tables: %s", toTruncate.getKeyspacesAndTables().toString()));
+                }
 
                 final Map<String, String> truncateFailuresMap = new HashMap<>();
 
-                for (final ImportOperationRequest request : importOperationRequests) {
+                for (final Map.Entry<String, String> request : toTruncate.getKeyspacesAndTables().entries()) {
                     try {
-                        new TruncateOperation(ctxt.jmx, new TruncateOperationRequest("truncate", request.keyspace, request.table)).run();
+                        new TruncateOperation(ctxt.jmx, new TruncateOperationRequest(request.getKey(), request.getValue())).run();
                     } catch (Exception ex) {
-                        truncateFailuresMap.put(format("%s.%s", request.keyspace, request.table), ex.getMessage());
+                        truncateFailuresMap.put(format("%s.%s", request.getKey(), request.getValue()), ex.getMessage());
                     }
                 }
 
@@ -336,8 +358,8 @@ public abstract class RestorationPhase {
 
         private static final Logger logger = LoggerFactory.getLogger(ImportingPhase.class);
 
-        public ImportingPhase(final RestorationContext ctxt) {
-            super(ctxt);
+        public ImportingPhase(final RestorationContext ctxt) throws Exception {
+            super(ctxt, true);
         }
 
         @Override
@@ -352,11 +374,26 @@ public abstract class RestorationPhase {
 
                 final String schemaVersion = new CassandraSchemaVersion(ctxt.jmx).act();
                 final Manifest manifest = RestorationUtilities.downloadManifest(ctxt.operation.request, ctxt.restorer, schemaVersion, ctxt.objectMapper);
-                manifest.enrichManifestEntries(ctxt.operation.request.importing.sourceDir);
-                final DatabaseEntities filteredEntities = manifest.getDatabaseEntities(false).filter(ctxt.operation.request.entities, false);
-                final List<ImportOperationRequest> importOperationRequests = RestorationUtilities.buildImportRequests(ctxt.operation.request, filteredEntities);
+                new ManifestEnricher().enrich(ctxt.cassandraData, manifest, ctxt.operation.request.importing.sourceDir);
+                final DatabaseEntities databaseEntitiesToProcess = ctxt.cassandraData.getDatabaseEntitiesToProcessForRestore(manifest);
 
-                for (final ImportOperationRequest request : importOperationRequests) {
+                final List<ImportOperationRequest> imports = databaseEntitiesToProcess
+                    .getKeyspacesAndTables()
+                    .entries()
+                    .stream()
+                    // it has table in cassandra
+                    .filter(entry -> ctxt.cassandraData.getTablePath(entry.getKey(), entry.getValue()).isPresent())
+                    .filter(entry -> ctxt.cassandraData.getTableId(entry.getKey(), entry.getValue()).isPresent())
+                    .map(entry -> {
+                        final String keyspace = entry.getKey();
+                        final String table = entry.getValue();
+                        final String tableWithId = format("%s-%s", table, ctxt.cassandraData.getTableId(entry.getKey(), entry.getValue()).get());
+                        final Path tablePath = ctxt.operation.request.importing.sourceDir.resolve(keyspace).resolve(tableWithId);
+                        return ctxt.operation.request.importing.copy(keyspace, table, tablePath);
+                    })
+                    .filter(request -> Files.isDirectory(request.tablePath)).collect(toList());
+
+                for (final ImportOperationRequest request : imports) {
                     new ImportOperation(ctxt.jmx, ctxt.cassandraVersion, request).run();
                 }
 
@@ -376,8 +413,8 @@ public abstract class RestorationPhase {
 
         private static final Logger logger = LoggerFactory.getLogger(HardlinkingPhase.class);
 
-        public HardlinkingPhase(final RestorationContext ctxt) {
-            super(ctxt);
+        public HardlinkingPhase(final RestorationContext ctxt) throws Exception {
+            super(ctxt, true);
         }
 
         @Override
@@ -392,28 +429,23 @@ public abstract class RestorationPhase {
 
                 final String schemaVersion = new CassandraSchemaVersion(ctxt.jmx).act();
                 final Manifest manifest = RestorationUtilities.downloadManifest(ctxt.operation.request, ctxt.restorer, schemaVersion, ctxt.objectMapper);
-                manifest.enrichManifestEntries(ctxt.operation.request.importing.sourceDir);
-                final DatabaseEntities filteredEntities = manifest.getDatabaseEntities(false).filter(ctxt.operation.request.entities, false);
+                new ManifestEnricher().enrich(ctxt.cassandraData, manifest, ctxt.operation.request.importing.sourceDir);
+                final DatabaseEntities databaseEntitiesToProcess = ctxt.cassandraData.getDatabaseEntitiesToProcessForRestore(manifest);
 
-                final List<ManifestEntry> manifestEntries = manifest.getManifestFiles(filteredEntities,
-                                                                                      false /* not possible to restore system keyspace on a live cluster */,
-                                                                                      false, // not restoring to new cluster
-                                                                                      false, // without schema.cql's
-                                                                                      null); // cassandra version
+                final List<Path> downloadedFiles = CassandraData.list(ctxt.operation.request.importing.sourceDir);
 
                 // make links
 
                 boolean failedLinkage = false;
                 final List<Path> successfulLinks = new ArrayList<>();
 
-                for (final ManifestEntry entry : manifestEntries) {
+                for (final Path existing : downloadedFiles) {
 
                     if (failedLinkage) {
                         break;
                     }
 
-                    final Path link = ctxt.operation.request.cassandraDirectory.resolve(ctxt.operation.request.importing.sourceDir.relativize(entry.localFile));
-                    final Path existing = entry.localFile;
+                    final Path link = ctxt.operation.request.cassandraDirectory.resolve("data").resolve(ctxt.operation.request.importing.sourceDir.relativize(existing));
 
                     try {
                         logger.debug(String.format("linking from %s to %s", existing, link));
@@ -442,7 +474,7 @@ public abstract class RestorationPhase {
                 } else {
                     final Map<String, String> failedRefreshes = new HashMap<>();
 
-                    for (final Entry<String, String> entry : filteredEntities.getKeyspacesAndTables().entries()) {
+                    for (final Entry<String, String> entry : databaseEntitiesToProcess.getKeyspacesAndTables().entries()) {
                         try {
                             new RefreshOperation(ctxt.jmx, new RefreshOperationRequest(entry.getKey(), entry.getValue())).run();
                         } catch (final Exception ex) {
@@ -466,8 +498,8 @@ public abstract class RestorationPhase {
 
     public static class CleaningPhase extends RestorationPhase {
 
-        public CleaningPhase(final RestorationContext ctxt) {
-            super(ctxt);
+        public CleaningPhase(final RestorationContext ctxt) throws Exception {
+            super(ctxt, false);
         }
 
         @Override
@@ -478,11 +510,23 @@ public abstract class RestorationPhase {
         @Override
         public void execute() throws RestorationPhaseException {
             if (!ctxt.operation.request.noDeleteTruncates) {
-                new TruncateDirCleaningPhase(ctxt).execute();
+                try {
+                    new TruncateDirCleaningPhase(ctxt).execute();
+                } catch (final RestorationPhaseException ex) {
+                    throw ex;
+                } catch (final Exception ex) {
+                    throw new RestorationPhaseException("Unable to clean trucate dirs!", ex);
+                }
             }
 
             if (!ctxt.operation.request.noDeleteDownloads) {
-                new DownloadDirCleaningPhase(ctxt).execute();
+                try {
+                    new DownloadDirCleaningPhase(ctxt).execute();
+                } catch (final RestorationPhaseException ex) {
+                    throw ex;
+                } catch (final Exception ex) {
+                    throw new RestorationPhaseException("Unable to clean download dir!", ex);
+                }
             }
         }
     }
@@ -491,8 +535,8 @@ public abstract class RestorationPhase {
 
         private static final Logger logger = LoggerFactory.getLogger(DownloadDirCleaningPhase.class);
 
-        public DownloadDirCleaningPhase(final RestorationContext ctxt) {
-            super(ctxt);
+        public DownloadDirCleaningPhase(final RestorationContext ctxt) throws Exception {
+            super(ctxt, false);
         }
 
         @Override
@@ -522,8 +566,8 @@ public abstract class RestorationPhase {
 
         private static final Logger logger = LoggerFactory.getLogger(TruncateDirCleaningPhase.class);
 
-        public TruncateDirCleaningPhase(final RestorationContext ctxt) {
-            super(ctxt);
+        public TruncateDirCleaningPhase(final RestorationContext ctxt) throws Exception {
+            super(ctxt, false);
         }
 
         @Override
@@ -539,41 +583,24 @@ public abstract class RestorationPhase {
                 return;
             }
 
-            final File cassandraDataDir = ctxt.operation.request.cassandraDirectory.resolve("data").toFile();
+            final Path cassandraDataDir = ctxt.operation.request.cassandraDirectory.resolve("data");
 
-            final Collection<File> truncateDirs = listFilesAndDirs(cassandraDataDir,
-                                                                   new FileFileFilter() {
-                                                                       @Override
-                                                                       public boolean accept(final File file) {
-                                                                           return false;
-                                                                       }
-                                                                   },
-                                                                   new DirectoryFileFilter() {
-                                                                       @Override
-                                                                       public boolean accept(final File file) {
-                                                                           return file.getName().startsWith("truncated");
-                                                                       }
-                                                                   });
+            try {
+                final List<Path> truncateDirs = CassandraData.listDirs(cassandraDataDir, new Predicate<Path>() {
+                    @Override
+                    public boolean test(final Path dir) {
+                        return dir.getFileName().toString().startsWith("truncated-")
+                            && dir.getParent().getFileName().toString().equals("snapshots");
+                    }
+                });
 
-            truncateDirs.remove(cassandraDataDir);
-
-            // double check
-            for (final File truncateDir : truncateDirs) {
-                if (!truncateDir.getName().startsWith("truncated")) {
-                    throw new IllegalStateException(format("A truncated directory to delete do not start on \"truncated\": %s",
-                                                           truncateDir.getAbsolutePath()));
-                }
-                logger.info("Going to delete directory {}", truncateDir.getAbsolutePath());
-            }
-
-            for (final File truncateDir : truncateDirs) {
-                try {
-                    logger.info("Deleting {}", truncateDir.getAbsolutePath());
+                for (final Path truncateDir : truncateDirs) {
+                    logger.info("Deleting {}", truncateDir.toAbsolutePath().toString());
                     FileUtils.deleteDirectory(truncateDir);
-                } catch (final Exception ex) {
-                    logger.info("Deleting truncated directories has failed: {}", ex.getMessage());
-                    throw RestorationPhaseException.construct(ex, getRestorationPhaseType());
                 }
+            } catch (final Exception ex) {
+                logger.info("Deleting truncated directories has failed: {}", ex.getMessage());
+                throw RestorationPhaseException.construct(ex, getRestorationPhaseType());
             }
 
             logger.info("Deleting truncated directories has finished successfully.");

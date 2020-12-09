@@ -68,8 +68,11 @@ public @interface ValidBackupOperationRequest {
                 value.entities = DatabaseEntities.empty();
             }
 
-            if (value.proxySettings != null) {
-
+            try {
+                DatabaseEntities.validateForRequest(value.entities);
+            } catch (final Exception ex) {
+                context.buildConstraintViolationWithTemplate(ex.getMessage());
+                return false;
             }
 
             return true;

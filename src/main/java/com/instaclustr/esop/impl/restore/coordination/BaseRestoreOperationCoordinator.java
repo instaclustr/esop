@@ -5,7 +5,6 @@ import static java.lang.String.format;
 import java.util.Map;
 
 import com.instaclustr.esop.guice.RestorerFactory;
-import com.instaclustr.esop.impl.KeyspaceTable;
 import com.instaclustr.esop.impl.restore.RestorationStrategy;
 import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType;
 import com.instaclustr.esop.impl.restore.RestorationStrategyResolver;
@@ -53,11 +52,6 @@ public abstract class BaseRestoreOperationCoordinator extends OperationCoordinat
         }
 
         try (final Restorer restorer = restorerFactoryMap.get(request.storageLocation.storageProvider).createRestorer(request)) {
-
-            if (operation.request.restorationStrategyType != RestorationStrategyType.IN_PLACE) {
-                KeyspaceTable.checkEntitiesToProcess(request.cassandraDirectory.resolve("data"), request.entities);
-            }
-
             final RestorationStrategy restorationStrategy = restorationStrategyResolver.resolve(request);
 
             restorationStrategy.restore(restorer, operation);

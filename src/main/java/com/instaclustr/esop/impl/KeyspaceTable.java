@@ -1,7 +1,5 @@
 package com.instaclustr.esop.impl;
 
-import static java.lang.String.format;
-import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 import java.nio.file.Files;
@@ -29,16 +27,21 @@ public class KeyspaceTable implements Cloneable {
 
     private static final Logger logger = LoggerFactory.getLogger(KeyspaceTable.class);
 
-    public enum TableType {
+    public enum EntityType {
         SYSTEM,
         SYSTEM_AUTH,
         SCHEMA,
         OTHER
     }
 
+    public enum KeyspaceType {
+        SYSTEM,
+        OTHER
+    }
+
     public final String keyspace;
     public final String table;
-    public final TableType tableType;
+    public final EntityType entityType;
 
     public static Optional<KeyspaceTable> parse(final Path relativePath) {
         if (!relativePath.getName(0).toString().equals("data")) {
@@ -54,7 +57,7 @@ public class KeyspaceTable implements Cloneable {
                          final @JsonProperty("table") String table) {
         this.keyspace = keyspace;
         this.table = table;
-        this.tableType = classifyTable(keyspace, table);
+        this.entityType = KeyspaceTable.classifyTable(keyspace, table);
     }
 
     public static boolean isSystemKeyspace(final String keyspace) {
@@ -67,16 +70,26 @@ public class KeyspaceTable implements Cloneable {
         return bootstrappingKeyspaces.contains(keyspace);
     }
 
-    public TableType classifyTable(final String keyspace, final String table) {
-        if (keyspace.equals("system") && !table.startsWith("schema_")) {
-            return TableType.SYSTEM;
+    public static KeyspaceType classifyKeyspace(final String keyspace) {
+        return Arrays.asList("system",
+                             "system_distributed",
+                             "system_traces",
+                             "system_auth",
+                             "system_schema").contains(keyspace) ? KeyspaceType.SYSTEM : KeyspaceType.OTHER;
+    }
+
+    public static EntityType classifyTable(final String keyspace, final String table) {
+        if ((keyspace.equals("system") && !table.startsWith("schema_")) ||
+            keyspace.equals("system_distributed") ||
+            keyspace.equals("system_traces")) {
+            return EntityType.SYSTEM;
         } else if (keyspace.equals("system_schema") ||
             (keyspace.equals("system") && table.startsWith("schema_"))) {
-            return TableType.SCHEMA;
+            return EntityType.SCHEMA;
         } else if (keyspace.equals("system_auth")) {
-            return TableType.SYSTEM_AUTH;
+            return EntityType.SYSTEM_AUTH;
         } else {
-            return TableType.OTHER;
+            return EntityType.OTHER;
         }
     }
 
@@ -85,34 +98,13 @@ public class KeyspaceTable implements Cloneable {
         return MoreObjects.toStringHelper(KeyspaceTable.this)
             .add("keyspace", keyspace)
             .add("table", table)
-            .add("tableType", tableType)
+            .add("tableType", entityType)
             .toString();
     }
 
     @Override
     public KeyspaceTable clone() throws CloneNotSupportedException {
         return new KeyspaceTable(this.keyspace, this.table);
-    }
-
-    public static void checkEntitiesToProcess(final Path cassandraDataDir,
-                                              final DatabaseEntities databaseEntities) {
-        try {
-            final KeyspaceTables keyspaceTables = KeyspaceTable.parseFileSystem(cassandraDataDir);
-
-            final Optional<Pair<List<String>, Multimap<String, String>>> missingEntities = keyspaceTables.filterNotPresent(databaseEntities);
-
-            if (missingEntities.isPresent()) {
-                if (!missingEntities.get().getLeft().isEmpty()) {
-                    throw new IllegalStateException(format("Unable to process these keyspaces as they are not present in the database: %s",
-                                                           missingEntities.get().getLeft()));
-                } else if (!missingEntities.get().getRight().isEmpty()) {
-                    throw new IllegalStateException(format("Unable to process these tables as they are not present in the database: %s",
-                                                           missingEntities.get().getRight().entries().stream().map(e -> e.getKey() + "." + e.getValue()).collect(joining(","))));
-                }
-            }
-        } catch (final Exception ex) {
-            throw new RuntimeException("Unable to check SSTables on disk!", ex);
-        }
     }
 
     public static class KeyspaceTables {

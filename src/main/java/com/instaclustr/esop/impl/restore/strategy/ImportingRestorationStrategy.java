@@ -1,5 +1,10 @@
 package com.instaclustr.esop.impl.restore.strategy;
 
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.CLEANUP;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.DOWNLOAD;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.IMPORT;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.INIT;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.TRUNCATE;
 import static java.lang.String.format;
 
 import java.util.Map;
@@ -64,19 +69,29 @@ public class ImportingRestorationStrategy extends AbstractRestorationStrategy {
     @Override
     public RestorationPhase resolveRestorationPhase(final Operation<RestoreOperationRequest> operation, final Restorer restorer) {
 
-        final RestorationContext ctxt = initialiseRestorationContext(operation, restorer, objectMapper, cassandraVersion, downloadTracker, bucketServiceFactoryMap);
+        final RestorationContext ctxt = initialiseRestorationContext(operation,
+                                                                     restorer,
+                                                                     objectMapper,
+                                                                     cassandraVersion,
+                                                                     downloadTracker,
+                                                                     bucketServiceFactoryMap);
+
         final RestorationPhaseType phaseType = ctxt.operation.request.restorationPhase;
 
-        if (phaseType == RestorationPhaseType.INIT) {
-            return new InitPhase(ctxt);
-        } else if (phaseType == RestorationPhaseType.DOWNLOAD) {
-            return new DownloadingPhase(ctxt);
-        } else if (phaseType == RestorationPhaseType.TRUNCATE) {
-            return new TruncatingPhase(ctxt);
-        } else if (phaseType == RestorationPhaseType.IMPORT) {
-            return new ImportingPhase(ctxt);
-        } else if (phaseType == RestorationPhaseType.CLEANUP) {
-            return new CleaningPhase(ctxt);
+        try {
+            if (phaseType == INIT) {
+                return new InitPhase(ctxt);
+            } else if (phaseType == DOWNLOAD) {
+                return new DownloadingPhase(ctxt);
+            } else if (phaseType == TRUNCATE) {
+                return new TruncatingPhase(ctxt);
+            } else if (phaseType == IMPORT) {
+                return new ImportingPhase(ctxt);
+            } else if (phaseType == CLEANUP) {
+                return new CleaningPhase(ctxt);
+            }
+        } catch (final Exception ex) {
+            throw new IllegalStateException(format("Unable to initialise phase %s", phaseType.toValue()));
         }
 
         throw new IllegalStateException(format("Unable to resolve phase for phase type %s for %s.",

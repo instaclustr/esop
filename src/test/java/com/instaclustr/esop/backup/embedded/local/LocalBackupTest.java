@@ -104,6 +104,16 @@ public class LocalBackupTest extends AbstractBackupTest {
     }
 
     @Test
+    public void testImportingBackupAndRestoreRenameEntities() throws Exception {
+        liveBackupRestoreTestRenamedEntities(importArgumentsRenamedTable(CASSANDRA_4_VERSION, IMPORT), CASSANDRA_4_VERSION, 2);
+    }
+
+    @Test
+    public void testImportingHardlinksBackupAndRestoreRenameEntities() throws Exception {
+        liveBackupRestoreTestRenamedEntities(importArgumentsRenamedTable(CASSANDRA_VERSION, HARDLINKS), CASSANDRA_VERSION, 2);
+    }
+
+    @Test
     public void testImportingBackupAndRestore() throws Exception {
         liveBackupRestoreTest(importArguments(CASSANDRA_4_VERSION), CASSANDRA_4_VERSION, 2);
     }

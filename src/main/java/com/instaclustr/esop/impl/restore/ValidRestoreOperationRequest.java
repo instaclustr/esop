@@ -14,6 +14,7 @@ import java.lang.annotation.Target;
 import java.nio.file.Files;
 
 import com.instaclustr.esop.impl.DatabaseEntities;
+import com.instaclustr.esop.impl.RenamedEntities;
 import com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType;
 import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType;
 import com.instaclustr.kubernetes.KubernetesHelper;
@@ -81,6 +82,25 @@ public @interface ValidRestoreOperationRequest {
 
             if (value.entities == null) {
                 value.entities = DatabaseEntities.empty();
+            }
+
+            try {
+                DatabaseEntities.validateForRequest(value.entities);
+            } catch (final Exception ex) {
+                context.buildConstraintViolationWithTemplate(ex.getMessage());
+                return false;
+            }
+
+            try {
+                RenamedEntities.validate(value.rename);
+            } catch (final Exception ex) {
+                context.buildConstraintViolationWithTemplate("Invalid 'rename' parameter: " + ex.getMessage()).addConstraintViolation();
+                return false;
+            }
+
+            if (value.rename != null && !value.rename.isEmpty() && value.restorationStrategyType == RestorationStrategyType.IN_PLACE) {
+                context.buildConstraintViolationWithTemplate("rename field can not be used for in-place strategy, only for import or hardlinks");
+                return false;
             }
 
             return true;

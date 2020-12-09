@@ -1,0 +1,1143 @@
+{
+  "snapshot" : {
+    "name" : "mysnapshot",
+    "keyspaces" : {
+      "system_traces" : {
+        "tables" : {
+          "sessions" : {
+            "entries" : [ ],
+            "id" : "c5e99f1686773914b17e960613512345"
+          },
+          "events" : {
+            "entries" : [ ],
+            "id" : "8826e8e9e16a372887533bc1fc713c25"
+          }
+        }
+      },
+      "system" : {
+        "tables" : {
+          "views_builds_in_progress" : {
+            "entries" : [ ],
+            "id" : "b7f2c10878cd3c809cd5d609b2bd149c"
+          },
+          "prepared_statements" : {
+            "entries" : [ ],
+            "id" : "18a9c2576a0c3841ba718cd529849fef"
+          },
+          "peers" : {
+            "entries" : [ ],
+            "id" : "37f71aca7dc2383ba70672528af04d4f"
+          },
+          "schema_columnfamilies" : {
+            "entries" : [ ],
+            "id" : "45f5b36024bc3f83a3631034ea4fa697"
+          },
+          "IndexInfo" : {
+            "entries" : [ ],
+            "id" : "9f5c6374d48532299a0a5094af9ad1e3"
+          },
+          "schema_triggers" : {
+            "entries" : [ ],
+            "id" : "0359bc7171233ee19a4ab9dfb11fc125"
+          },
+          "local" : {
+            "entries" : [ {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/13-838306838/mc-13-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/13-838306838/mc-13-big-Data.db",
+              "type" : "FILE",
+              "size" : 5058
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/13-838306838/mc-13-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/13-838306838/mc-13-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/13-838306838/mc-13-big-Index.db",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/13-838306838/mc-13-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 5633
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/13-838306838/mc-13-big-Summary.db",
+              "type" : "FILE",
+              "size" : 59
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/13-838306838/mc-13-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/14-3336702687/mc-14-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/14-3336702687/mc-14-big-Data.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/14-3336702687/mc-14-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/14-3336702687/mc-14-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/14-3336702687/mc-14-big-Index.db",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/14-3336702687/mc-14-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4615
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/14-3336702687/mc-14-big-Summary.db",
+              "type" : "FILE",
+              "size" : 59
+            }, {
+              "objectKey" : "data/system/local-7ad54392bcdd35a684174e047860b377/14-3336702687/mc-14-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "7ad54392bcdd35a684174e047860b377"
+          },
+          "batchlog" : {
+            "entries" : [ ],
+            "id" : "0290003c977e397cac3efdfdc01d626b"
+          },
+          "batches" : {
+            "entries" : [ ],
+            "id" : "919a4bc57a333573b03e13fc3f68b465"
+          },
+          "available_ranges" : {
+            "entries" : [ ],
+            "id" : "c539fcabd65a31d18133d25605643ee3"
+          },
+          "paxos" : {
+            "entries" : [ ],
+            "id" : "b7b7f0c2fd0a34108c053ef614bb7c2d"
+          },
+          "transferred_ranges" : {
+            "entries" : [ ],
+            "id" : "6cad20f7d4f53af2b6e20da33c6c1f83"
+          },
+          "peer_events" : {
+            "entries" : [ ],
+            "id" : "59dfeaea8db2334191ef109974d81484"
+          },
+          "size_estimates" : {
+            "entries" : [ {
+              "objectKey" : "data/system/size_estimates-618f817b005f3678b8a453f3930b8e86/1-26139050/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 59
+            }, {
+              "objectKey" : "data/system/size_estimates-618f817b005f3678b8a453f3930b8e86/1-26139050/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 35702
+            }, {
+              "objectKey" : "data/system/size_estimates-618f817b005f3678b8a453f3930b8e86/1-26139050/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 8
+            }, {
+              "objectKey" : "data/system/size_estimates-618f817b005f3678b8a453f3930b8e86/1-26139050/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system/size_estimates-618f817b005f3678b8a453f3930b8e86/1-26139050/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 264
+            }, {
+              "objectKey" : "data/system/size_estimates-618f817b005f3678b8a453f3930b8e86/1-26139050/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4939
+            }, {
+              "objectKey" : "data/system/size_estimates-618f817b005f3678b8a453f3930b8e86/1-26139050/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 79
+            }, {
+              "objectKey" : "data/system/size_estimates-618f817b005f3678b8a453f3930b8e86/1-26139050/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "618f817b005f3678b8a453f3930b8e86"
+          },
+          "range_xfers" : {
+            "entries" : [ ],
+            "id" : "55d764384e553f8b9f6e676d4af3976d"
+          },
+          "built_views" : {
+            "entries" : [ ],
+            "id" : "4b3c50a9ea873d7691016dbc9c38494a"
+          },
+          "sstable_activity" : {
+            "entries" : [ {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/1-2517917003/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/1-2517917003/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 738
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/1-2517917003/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/1-2517917003/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 80
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/1-2517917003/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 1885
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/1-2517917003/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4882
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/1-2517917003/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 127
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/1-2517917003/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/2-1392571259/mc-2-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/2-1392571259/mc-2-big-Data.db",
+              "type" : "FILE",
+              "size" : 205
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/2-1392571259/mc-2-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/2-1392571259/mc-2-big-Filter.db",
+              "type" : "FILE",
+              "size" : 24
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/2-1392571259/mc-2-big-Index.db",
+              "type" : "FILE",
+              "size" : 224
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/2-1392571259/mc-2-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4846
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/2-1392571259/mc-2-big-Summary.db",
+              "type" : "FILE",
+              "size" : 101
+            }, {
+              "objectKey" : "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/2-1392571259/mc-2-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "5a1ff267ace03f128563cfae6103c65e"
+          },
+          "hints" : {
+            "entries" : [ ],
+            "id" : "2666e20573ef38b390fefecf96e8f0c7"
+          },
+          "compaction_history" : {
+            "entries" : [ {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/1-1145875001/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/1-1145875001/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 687
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/1-1145875001/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/1-1145875001/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 32
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/1-1145875001/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 271
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/1-1145875001/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 5082
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/1-1145875001/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system/compaction_history-b4dbb7b4dc493fb5b3bfce6e434832ca/1-1145875001/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "b4dbb7b4dc493fb5b3bfce6e434832ca"
+          },
+          "schema_functions" : {
+            "entries" : [ ],
+            "id" : "d1b675fe2b503ca48e49c0f81989dcad"
+          },
+          "schema_columns" : {
+            "entries" : [ ],
+            "id" : "296e9c049bec3085827dc17d3df2122a"
+          },
+          "schema_usertypes" : {
+            "entries" : [ ],
+            "id" : "3aa752254f82350b8d5c430fa221fa0a"
+          },
+          "schema_aggregates" : {
+            "entries" : [ ],
+            "id" : "a5fc57fc9d6c3bfda3fc01ad54686fea"
+          },
+          "schema_keyspaces" : {
+            "entries" : [ ],
+            "id" : "b0f2235744583cdb9631c43e59ce3676"
+          }
+        }
+      },
+      "system_distributed" : {
+        "tables" : {
+          "view_build_status" : {
+            "entries" : [ ],
+            "id" : "5582b59f8e4e35e1b9133acada51eb04"
+          },
+          "parent_repair_history" : {
+            "entries" : [ ],
+            "id" : "deabd734b99d3b9c92e5fd92eb5abf14"
+          },
+          "repair_history" : {
+            "entries" : [ ],
+            "id" : "759fffad624b318180eefa9a52d1f627"
+          }
+        }
+      },
+      "system_schema" : {
+        "tables" : {
+          "dropped_columns" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/dropped_columns-5e7583b5f3f43af19a39b7e1d6f5f11f/1-154009903/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/system_schema/dropped_columns-5e7583b5f3f43af19a39b7e1d6f5f11f/1-154009903/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system_schema/dropped_columns-5e7583b5f3f43af19a39b7e1d6f5f11f/1-154009903/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system_schema/dropped_columns-5e7583b5f3f43af19a39b7e1d6f5f11f/1-154009903/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/dropped_columns-5e7583b5f3f43af19a39b7e1d6f5f11f/1-154009903/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 27
+            }, {
+              "objectKey" : "data/system_schema/dropped_columns-5e7583b5f3f43af19a39b7e1d6f5f11f/1-154009903/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4664
+            }, {
+              "objectKey" : "data/system_schema/dropped_columns-5e7583b5f3f43af19a39b7e1d6f5f11f/1-154009903/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 76
+            }, {
+              "objectKey" : "data/system_schema/dropped_columns-5e7583b5f3f43af19a39b7e1d6f5f11f/1-154009903/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "5e7583b5f3f43af19a39b7e1d6f5f11f"
+          },
+          "tables" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/13-2200152745/mc-13-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/13-2200152745/mc-13-big-Data.db",
+              "type" : "FILE",
+              "size" : 2935
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/13-2200152745/mc-13-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/13-2200152745/mc-13-big-Filter.db",
+              "type" : "FILE",
+              "size" : 24
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/13-2200152745/mc-13-big-Index.db",
+              "type" : "FILE",
+              "size" : 103
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/13-2200152745/mc-13-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 6252
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/13-2200152745/mc-13-big-Summary.db",
+              "type" : "FILE",
+              "size" : 69
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/13-2200152745/mc-13-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/14-3141881494/mc-14-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/14-3141881494/mc-14-big-Data.db",
+              "type" : "FILE",
+              "size" : 358
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/14-3141881494/mc-14-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/14-3141881494/mc-14-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/14-3141881494/mc-14-big-Index.db",
+              "type" : "FILE",
+              "size" : 7
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/14-3141881494/mc-14-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 6181
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/14-3141881494/mc-14-big-Summary.db",
+              "type" : "FILE",
+              "size" : 53
+            }, {
+              "objectKey" : "data/system_schema/tables-afddfb9dbc1e30688056eed6c302ba09/14-3141881494/mc-14-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "afddfb9dbc1e30688056eed6c302ba09"
+          },
+          "types" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/types-5a8b1ca866023f77a0459273d308917a/1-154009903/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/system_schema/types-5a8b1ca866023f77a0459273d308917a/1-154009903/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system_schema/types-5a8b1ca866023f77a0459273d308917a/1-154009903/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system_schema/types-5a8b1ca866023f77a0459273d308917a/1-154009903/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/types-5a8b1ca866023f77a0459273d308917a/1-154009903/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 27
+            }, {
+              "objectKey" : "data/system_schema/types-5a8b1ca866023f77a0459273d308917a/1-154009903/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4623
+            }, {
+              "objectKey" : "data/system_schema/types-5a8b1ca866023f77a0459273d308917a/1-154009903/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 76
+            }, {
+              "objectKey" : "data/system_schema/types-5a8b1ca866023f77a0459273d308917a/1-154009903/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "5a8b1ca866023f77a0459273d308917a"
+          },
+          "indexes" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/indexes-0feb57ac311f382fba6d9024d305702f/1-154009903/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/system_schema/indexes-0feb57ac311f382fba6d9024d305702f/1-154009903/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system_schema/indexes-0feb57ac311f382fba6d9024d305702f/1-154009903/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system_schema/indexes-0feb57ac311f382fba6d9024d305702f/1-154009903/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/indexes-0feb57ac311f382fba6d9024d305702f/1-154009903/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 27
+            }, {
+              "objectKey" : "data/system_schema/indexes-0feb57ac311f382fba6d9024d305702f/1-154009903/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4664
+            }, {
+              "objectKey" : "data/system_schema/indexes-0feb57ac311f382fba6d9024d305702f/1-154009903/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 76
+            }, {
+              "objectKey" : "data/system_schema/indexes-0feb57ac311f382fba6d9024d305702f/1-154009903/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "0feb57ac311f382fba6d9024d305702f"
+          },
+          "keyspaces" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/17-1584286172/mc-17-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/17-1584286172/mc-17-big-Data.db",
+              "type" : "FILE",
+              "size" : 299
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/17-1584286172/mc-17-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/17-1584286172/mc-17-big-Filter.db",
+              "type" : "FILE",
+              "size" : 24
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/17-1584286172/mc-17-big-Index.db",
+              "type" : "FILE",
+              "size" : 100
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/17-1584286172/mc-17-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4842
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/17-1584286172/mc-17-big-Summary.db",
+              "type" : "FILE",
+              "size" : 69
+            }, {
+              "objectKey" : "data/system_schema/keyspaces-abac5682dea631c5b535b3d6cffd0fb6/17-1584286172/mc-17-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "abac5682dea631c5b535b3d6cffd0fb6"
+          },
+          "functions" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/functions-96489b7980be3e14a70166a0b9159450/1-154009903/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/system_schema/functions-96489b7980be3e14a70166a0b9159450/1-154009903/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system_schema/functions-96489b7980be3e14a70166a0b9159450/1-154009903/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system_schema/functions-96489b7980be3e14a70166a0b9159450/1-154009903/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/functions-96489b7980be3e14a70166a0b9159450/1-154009903/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 27
+            }, {
+              "objectKey" : "data/system_schema/functions-96489b7980be3e14a70166a0b9159450/1-154009903/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4750
+            }, {
+              "objectKey" : "data/system_schema/functions-96489b7980be3e14a70166a0b9159450/1-154009903/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 76
+            }, {
+              "objectKey" : "data/system_schema/functions-96489b7980be3e14a70166a0b9159450/1-154009903/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "96489b7980be3e14a70166a0b9159450"
+          },
+          "columns" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/13-1617099433/mc-13-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/13-1617099433/mc-13-big-Data.db",
+              "type" : "FILE",
+              "size" : 5789
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/13-1617099433/mc-13-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/13-1617099433/mc-13-big-Filter.db",
+              "type" : "FILE",
+              "size" : 24
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/13-1617099433/mc-13-big-Index.db",
+              "type" : "FILE",
+              "size" : 103
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/13-1617099433/mc-13-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 5005
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/13-1617099433/mc-13-big-Summary.db",
+              "type" : "FILE",
+              "size" : 69
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/13-1617099433/mc-13-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/14-533053834/mc-14-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/14-533053834/mc-14-big-Data.db",
+              "type" : "FILE",
+              "size" : 73
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/14-533053834/mc-14-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/14-533053834/mc-14-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/14-533053834/mc-14-big-Index.db",
+              "type" : "FILE",
+              "size" : 7
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/14-533053834/mc-14-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4920
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/14-533053834/mc-14-big-Summary.db",
+              "type" : "FILE",
+              "size" : 53
+            }, {
+              "objectKey" : "data/system_schema/columns-24101c25a2ae3af787c1b40ee1aca33f/14-533053834/mc-14-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "24101c25a2ae3af787c1b40ee1aca33f"
+          },
+          "aggregates" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/aggregates-924c55872e3a345bb10c12f37c1ba895/1-154009903/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/system_schema/aggregates-924c55872e3a345bb10c12f37c1ba895/1-154009903/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system_schema/aggregates-924c55872e3a345bb10c12f37c1ba895/1-154009903/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system_schema/aggregates-924c55872e3a345bb10c12f37c1ba895/1-154009903/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/aggregates-924c55872e3a345bb10c12f37c1ba895/1-154009903/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 27
+            }, {
+              "objectKey" : "data/system_schema/aggregates-924c55872e3a345bb10c12f37c1ba895/1-154009903/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4750
+            }, {
+              "objectKey" : "data/system_schema/aggregates-924c55872e3a345bb10c12f37c1ba895/1-154009903/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 76
+            }, {
+              "objectKey" : "data/system_schema/aggregates-924c55872e3a345bb10c12f37c1ba895/1-154009903/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "924c55872e3a345bb10c12f37c1ba895"
+          },
+          "triggers" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/triggers-4df70b666b05325195a132b54005fd48/1-154009903/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/system_schema/triggers-4df70b666b05325195a132b54005fd48/1-154009903/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system_schema/triggers-4df70b666b05325195a132b54005fd48/1-154009903/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system_schema/triggers-4df70b666b05325195a132b54005fd48/1-154009903/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/triggers-4df70b666b05325195a132b54005fd48/1-154009903/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 27
+            }, {
+              "objectKey" : "data/system_schema/triggers-4df70b666b05325195a132b54005fd48/1-154009903/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4664
+            }, {
+              "objectKey" : "data/system_schema/triggers-4df70b666b05325195a132b54005fd48/1-154009903/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 76
+            }, {
+              "objectKey" : "data/system_schema/triggers-4df70b666b05325195a132b54005fd48/1-154009903/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "4df70b666b05325195a132b54005fd48"
+          },
+          "views" : {
+            "entries" : [ {
+              "objectKey" : "data/system_schema/views-9786ac1cdd583201a7cdad556410c985/1-154009903/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/system_schema/views-9786ac1cdd583201a7cdad556410c985/1-154009903/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 51
+            }, {
+              "objectKey" : "data/system_schema/views-9786ac1cdd583201a7cdad556410c985/1-154009903/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/system_schema/views-9786ac1cdd583201a7cdad556410c985/1-154009903/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_schema/views-9786ac1cdd583201a7cdad556410c985/1-154009903/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 27
+            }, {
+              "objectKey" : "data/system_schema/views-9786ac1cdd583201a7cdad556410c985/1-154009903/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4623
+            }, {
+              "objectKey" : "data/system_schema/views-9786ac1cdd583201a7cdad556410c985/1-154009903/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 76
+            }, {
+              "objectKey" : "data/system_schema/views-9786ac1cdd583201a7cdad556410c985/1-154009903/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "9786ac1cdd583201a7cdad556410c985"
+          }
+        }
+      },
+      "ks1" : {
+        "tables" : {
+          "tb1" : {
+            "entries" : [ {
+              "objectKey" : "data/ks1/tb1-10830380537611eb94f41baf0a65c981/1-3926542702/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/ks1/tb1-10830380537611eb94f41baf0a65c981/1-3926542702/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 45
+            }, {
+              "objectKey" : "data/ks1/tb1-10830380537611eb94f41baf0a65c981/1-3926542702/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/ks1/tb1-10830380537611eb94f41baf0a65c981/1-3926542702/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks1/tb1-10830380537611eb94f41baf0a65c981/1-3926542702/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 20
+            }, {
+              "objectKey" : "data/ks1/tb1-10830380537611eb94f41baf0a65c981/1-3926542702/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4559
+            }, {
+              "objectKey" : "data/ks1/tb1-10830380537611eb94f41baf0a65c981/1-3926542702/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks1/tb1-10830380537611eb94f41baf0a65c981/1-3926542702/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks1/tb1-10830380537611eb94f41baf0a65c981/schema.cql",
+              "type" : "CQL_SCHEMA",
+              "size" : 810
+            } ],
+            "id" : "10830380537611eb94f41baf0a65c981",
+            "schemaContent" : "CREATE TABLE IF NOT EXISTS ks1.tb1 (\n\tid uuid PRIMARY KEY)\n\tWITH ID = 10830380-5376-11eb-94f4-1baf0a65c981\n\tAND bloom_filter_fp_chance = 0.01\n\tAND dclocal_read_repair_chance = 0.1\n\tAND crc_check_chance = 1.0\n\tAND default_time_to_live = 0\n\tAND gc_grace_seconds = 864000\n\tAND min_index_interval = 128\n\tAND max_index_interval = 2048\n\tAND memtable_flush_period_in_ms = 0\n\tAND read_repair_chance = 0.0\n\tAND speculative_retry = '99PERCENTILE'\n\tAND comment = ''\n\tAND caching = { 'keys': 'ALL', 'rows_per_partition': 'NONE' }\n\tAND compaction = { 'max_threshold': '32', 'min_threshold': '4', 'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy' }\n\tAND compression = { 'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor' }\n\tAND cdc = false\n\tAND extensions = {  };\n"
+          },
+          "tb3" : {
+            "entries" : [ {
+              "objectKey" : "data/ks1/tb3-14a50ee0537611eb94f41baf0a65c981/1-1849242007/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/ks1/tb3-14a50ee0537611eb94f41baf0a65c981/1-1849242007/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 45
+            }, {
+              "objectKey" : "data/ks1/tb3-14a50ee0537611eb94f41baf0a65c981/1-1849242007/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/ks1/tb3-14a50ee0537611eb94f41baf0a65c981/1-1849242007/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks1/tb3-14a50ee0537611eb94f41baf0a65c981/1-1849242007/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 20
+            }, {
+              "objectKey" : "data/ks1/tb3-14a50ee0537611eb94f41baf0a65c981/1-1849242007/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4559
+            }, {
+              "objectKey" : "data/ks1/tb3-14a50ee0537611eb94f41baf0a65c981/1-1849242007/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks1/tb3-14a50ee0537611eb94f41baf0a65c981/1-1849242007/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks1/tb3-14a50ee0537611eb94f41baf0a65c981/schema.cql",
+              "type" : "CQL_SCHEMA",
+              "size" : 810
+            } ],
+            "id" : "14a50ee0537611eb94f41baf0a65c981",
+            "schemaContent" : "CREATE TABLE IF NOT EXISTS ks1.tb3 (\n\tid uuid PRIMARY KEY)\n\tWITH ID = 14a50ee0-5376-11eb-94f4-1baf0a65c981\n\tAND bloom_filter_fp_chance = 0.01\n\tAND dclocal_read_repair_chance = 0.1\n\tAND crc_check_chance = 1.0\n\tAND default_time_to_live = 0\n\tAND gc_grace_seconds = 864000\n\tAND min_index_interval = 128\n\tAND max_index_interval = 2048\n\tAND memtable_flush_period_in_ms = 0\n\tAND read_repair_chance = 0.0\n\tAND speculative_retry = '99PERCENTILE'\n\tAND comment = ''\n\tAND caching = { 'keys': 'ALL', 'rows_per_partition': 'NONE' }\n\tAND compaction = { 'max_threshold': '32', 'min_threshold': '4', 'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy' }\n\tAND compression = { 'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor' }\n\tAND cdc = false\n\tAND extensions = {  };\n"
+          },
+          "tb2" : {
+            "entries" : [ {
+              "objectKey" : "data/ks1/tb2-12da39f0537611eb94f41baf0a65c981/1-1901156513/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/ks1/tb2-12da39f0537611eb94f41baf0a65c981/1-1901156513/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 45
+            }, {
+              "objectKey" : "data/ks1/tb2-12da39f0537611eb94f41baf0a65c981/1-1901156513/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/ks1/tb2-12da39f0537611eb94f41baf0a65c981/1-1901156513/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks1/tb2-12da39f0537611eb94f41baf0a65c981/1-1901156513/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 20
+            }, {
+              "objectKey" : "data/ks1/tb2-12da39f0537611eb94f41baf0a65c981/1-1901156513/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4559
+            }, {
+              "objectKey" : "data/ks1/tb2-12da39f0537611eb94f41baf0a65c981/1-1901156513/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks1/tb2-12da39f0537611eb94f41baf0a65c981/1-1901156513/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks1/tb2-12da39f0537611eb94f41baf0a65c981/schema.cql",
+              "type" : "CQL_SCHEMA",
+              "size" : 810
+            } ],
+            "id" : "12da39f0537611eb94f41baf0a65c981",
+            "schemaContent" : "CREATE TABLE IF NOT EXISTS ks1.tb2 (\n\tid uuid PRIMARY KEY)\n\tWITH ID = 12da39f0-5376-11eb-94f4-1baf0a65c981\n\tAND bloom_filter_fp_chance = 0.01\n\tAND dclocal_read_repair_chance = 0.1\n\tAND crc_check_chance = 1.0\n\tAND default_time_to_live = 0\n\tAND gc_grace_seconds = 864000\n\tAND min_index_interval = 128\n\tAND max_index_interval = 2048\n\tAND memtable_flush_period_in_ms = 0\n\tAND read_repair_chance = 0.0\n\tAND speculative_retry = '99PERCENTILE'\n\tAND comment = ''\n\tAND caching = { 'keys': 'ALL', 'rows_per_partition': 'NONE' }\n\tAND compaction = { 'max_threshold': '32', 'min_threshold': '4', 'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy' }\n\tAND compression = { 'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor' }\n\tAND cdc = false\n\tAND extensions = {  };\n"
+          },
+          "tb4" : {
+            "entries" : [ {
+              "objectKey" : "data/ks1/tb4-16ee1480537611eb94f41baf0a65c981/1-915465517/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/ks1/tb4-16ee1480537611eb94f41baf0a65c981/1-915465517/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 45
+            }, {
+              "objectKey" : "data/ks1/tb4-16ee1480537611eb94f41baf0a65c981/1-915465517/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/ks1/tb4-16ee1480537611eb94f41baf0a65c981/1-915465517/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks1/tb4-16ee1480537611eb94f41baf0a65c981/1-915465517/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 20
+            }, {
+              "objectKey" : "data/ks1/tb4-16ee1480537611eb94f41baf0a65c981/1-915465517/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4559
+            }, {
+              "objectKey" : "data/ks1/tb4-16ee1480537611eb94f41baf0a65c981/1-915465517/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks1/tb4-16ee1480537611eb94f41baf0a65c981/1-915465517/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks1/tb4-16ee1480537611eb94f41baf0a65c981/schema.cql",
+              "type" : "CQL_SCHEMA",
+              "size" : 810
+            } ],
+            "id" : "16ee1480537611eb94f41baf0a65c981",
+            "schemaContent" : "CREATE TABLE IF NOT EXISTS ks1.tb4 (\n\tid uuid PRIMARY KEY)\n\tWITH ID = 16ee1480-5376-11eb-94f4-1baf0a65c981\n\tAND bloom_filter_fp_chance = 0.01\n\tAND dclocal_read_repair_chance = 0.1\n\tAND crc_check_chance = 1.0\n\tAND default_time_to_live = 0\n\tAND gc_grace_seconds = 864000\n\tAND min_index_interval = 128\n\tAND max_index_interval = 2048\n\tAND memtable_flush_period_in_ms = 0\n\tAND read_repair_chance = 0.0\n\tAND speculative_retry = '99PERCENTILE'\n\tAND comment = ''\n\tAND caching = { 'keys': 'ALL', 'rows_per_partition': 'NONE' }\n\tAND compaction = { 'max_threshold': '32', 'min_threshold': '4', 'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy' }\n\tAND compression = { 'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor' }\n\tAND cdc = false\n\tAND extensions = {  };\n"
+          }
+        }
+      },
+      "ks2" : {
+        "tables" : {
+          "tb1" : {
+            "entries" : [ {
+              "objectKey" : "data/ks2/tb1-1ee7b4c0537611eb94f41baf0a65c981/1-1654487379/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/ks2/tb1-1ee7b4c0537611eb94f41baf0a65c981/1-1654487379/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 45
+            }, {
+              "objectKey" : "data/ks2/tb1-1ee7b4c0537611eb94f41baf0a65c981/1-1654487379/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/ks2/tb1-1ee7b4c0537611eb94f41baf0a65c981/1-1654487379/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks2/tb1-1ee7b4c0537611eb94f41baf0a65c981/1-1654487379/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 20
+            }, {
+              "objectKey" : "data/ks2/tb1-1ee7b4c0537611eb94f41baf0a65c981/1-1654487379/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4559
+            }, {
+              "objectKey" : "data/ks2/tb1-1ee7b4c0537611eb94f41baf0a65c981/1-1654487379/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks2/tb1-1ee7b4c0537611eb94f41baf0a65c981/1-1654487379/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks2/tb1-1ee7b4c0537611eb94f41baf0a65c981/schema.cql",
+              "type" : "CQL_SCHEMA",
+              "size" : 810
+            } ],
+            "id" : "1ee7b4c0537611eb94f41baf0a65c981",
+            "schemaContent" : "CREATE TABLE IF NOT EXISTS ks2.tb1 (\n\tid uuid PRIMARY KEY)\n\tWITH ID = 1ee7b4c0-5376-11eb-94f4-1baf0a65c981\n\tAND bloom_filter_fp_chance = 0.01\n\tAND dclocal_read_repair_chance = 0.1\n\tAND crc_check_chance = 1.0\n\tAND default_time_to_live = 0\n\tAND gc_grace_seconds = 864000\n\tAND min_index_interval = 128\n\tAND max_index_interval = 2048\n\tAND memtable_flush_period_in_ms = 0\n\tAND read_repair_chance = 0.0\n\tAND speculative_retry = '99PERCENTILE'\n\tAND comment = ''\n\tAND caching = { 'keys': 'ALL', 'rows_per_partition': 'NONE' }\n\tAND compaction = { 'max_threshold': '32', 'min_threshold': '4', 'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy' }\n\tAND compression = { 'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor' }\n\tAND cdc = false\n\tAND extensions = {  };\n"
+          },
+          "tb3" : {
+            "entries" : [ {
+              "objectKey" : "data/ks2/tb3-1b1ddb80537611eb94f41baf0a65c981/1-2971048174/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/ks2/tb3-1b1ddb80537611eb94f41baf0a65c981/1-2971048174/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 45
+            }, {
+              "objectKey" : "data/ks2/tb3-1b1ddb80537611eb94f41baf0a65c981/1-2971048174/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/ks2/tb3-1b1ddb80537611eb94f41baf0a65c981/1-2971048174/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks2/tb3-1b1ddb80537611eb94f41baf0a65c981/1-2971048174/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 20
+            }, {
+              "objectKey" : "data/ks2/tb3-1b1ddb80537611eb94f41baf0a65c981/1-2971048174/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4559
+            }, {
+              "objectKey" : "data/ks2/tb3-1b1ddb80537611eb94f41baf0a65c981/1-2971048174/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks2/tb3-1b1ddb80537611eb94f41baf0a65c981/1-2971048174/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks2/tb3-1b1ddb80537611eb94f41baf0a65c981/schema.cql",
+              "type" : "CQL_SCHEMA",
+              "size" : 810
+            } ],
+            "id" : "1b1ddb80537611eb94f41baf0a65c981",
+            "schemaContent" : "CREATE TABLE IF NOT EXISTS ks2.tb3 (\n\tid uuid PRIMARY KEY)\n\tWITH ID = 1b1ddb80-5376-11eb-94f4-1baf0a65c981\n\tAND bloom_filter_fp_chance = 0.01\n\tAND dclocal_read_repair_chance = 0.1\n\tAND crc_check_chance = 1.0\n\tAND default_time_to_live = 0\n\tAND gc_grace_seconds = 864000\n\tAND min_index_interval = 128\n\tAND max_index_interval = 2048\n\tAND memtable_flush_period_in_ms = 0\n\tAND read_repair_chance = 0.0\n\tAND speculative_retry = '99PERCENTILE'\n\tAND comment = ''\n\tAND caching = { 'keys': 'ALL', 'rows_per_partition': 'NONE' }\n\tAND compaction = { 'max_threshold': '32', 'min_threshold': '4', 'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy' }\n\tAND compression = { 'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor' }\n\tAND cdc = false\n\tAND extensions = {  };\n"
+          },
+          "tb2" : {
+            "entries" : [ {
+              "objectKey" : "data/ks2/tb2-1d06e6d0537611eb94f41baf0a65c981/1-1168695705/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/ks2/tb2-1d06e6d0537611eb94f41baf0a65c981/1-1168695705/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 45
+            }, {
+              "objectKey" : "data/ks2/tb2-1d06e6d0537611eb94f41baf0a65c981/1-1168695705/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/ks2/tb2-1d06e6d0537611eb94f41baf0a65c981/1-1168695705/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks2/tb2-1d06e6d0537611eb94f41baf0a65c981/1-1168695705/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 20
+            }, {
+              "objectKey" : "data/ks2/tb2-1d06e6d0537611eb94f41baf0a65c981/1-1168695705/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4559
+            }, {
+              "objectKey" : "data/ks2/tb2-1d06e6d0537611eb94f41baf0a65c981/1-1168695705/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks2/tb2-1d06e6d0537611eb94f41baf0a65c981/1-1168695705/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks2/tb2-1d06e6d0537611eb94f41baf0a65c981/schema.cql",
+              "type" : "CQL_SCHEMA",
+              "size" : 810
+            } ],
+            "id" : "1d06e6d0537611eb94f41baf0a65c981",
+            "schemaContent" : "CREATE TABLE IF NOT EXISTS ks2.tb2 (\n\tid uuid PRIMARY KEY)\n\tWITH ID = 1d06e6d0-5376-11eb-94f4-1baf0a65c981\n\tAND bloom_filter_fp_chance = 0.01\n\tAND dclocal_read_repair_chance = 0.1\n\tAND crc_check_chance = 1.0\n\tAND default_time_to_live = 0\n\tAND gc_grace_seconds = 864000\n\tAND min_index_interval = 128\n\tAND max_index_interval = 2048\n\tAND memtable_flush_period_in_ms = 0\n\tAND read_repair_chance = 0.0\n\tAND speculative_retry = '99PERCENTILE'\n\tAND comment = ''\n\tAND caching = { 'keys': 'ALL', 'rows_per_partition': 'NONE' }\n\tAND compaction = { 'max_threshold': '32', 'min_threshold': '4', 'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy' }\n\tAND compression = { 'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor' }\n\tAND cdc = false\n\tAND extensions = {  };\n"
+          },
+          "tb4" : {
+            "entries" : [ {
+              "objectKey" : "data/ks2/tb4-195c5560537611eb94f41baf0a65c981/1-758389406/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/ks2/tb4-195c5560537611eb94f41baf0a65c981/1-758389406/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 45
+            }, {
+              "objectKey" : "data/ks2/tb4-195c5560537611eb94f41baf0a65c981/1-758389406/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 9
+            }, {
+              "objectKey" : "data/ks2/tb4-195c5560537611eb94f41baf0a65c981/1-758389406/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/ks2/tb4-195c5560537611eb94f41baf0a65c981/1-758389406/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 20
+            }, {
+              "objectKey" : "data/ks2/tb4-195c5560537611eb94f41baf0a65c981/1-758389406/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4559
+            }, {
+              "objectKey" : "data/ks2/tb4-195c5560537611eb94f41baf0a65c981/1-758389406/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks2/tb4-195c5560537611eb94f41baf0a65c981/1-758389406/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            }, {
+              "objectKey" : "data/ks2/tb4-195c5560537611eb94f41baf0a65c981/schema.cql",
+              "type" : "CQL_SCHEMA",
+              "size" : 810
+            } ],
+            "id" : "195c5560537611eb94f41baf0a65c981",
+            "schemaContent" : "CREATE TABLE IF NOT EXISTS ks2.tb4 (\n\tid uuid PRIMARY KEY)\n\tWITH ID = 195c5560-5376-11eb-94f4-1baf0a65c981\n\tAND bloom_filter_fp_chance = 0.01\n\tAND dclocal_read_repair_chance = 0.1\n\tAND crc_check_chance = 1.0\n\tAND default_time_to_live = 0\n\tAND gc_grace_seconds = 864000\n\tAND min_index_interval = 128\n\tAND max_index_interval = 2048\n\tAND memtable_flush_period_in_ms = 0\n\tAND read_repair_chance = 0.0\n\tAND speculative_retry = '99PERCENTILE'\n\tAND comment = ''\n\tAND caching = { 'keys': 'ALL', 'rows_per_partition': 'NONE' }\n\tAND compaction = { 'max_threshold': '32', 'min_threshold': '4', 'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy' }\n\tAND compression = { 'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor' }\n\tAND cdc = false\n\tAND extensions = {  };\n"
+          }
+        }
+      },
+      "system_auth" : {
+        "tables" : {
+          "role_permissions" : {
+            "entries" : [ ],
+            "id" : "3afbe79f219431a7add7f5ab90d8ec9c"
+          },
+          "roles" : {
+            "entries" : [ {
+              "objectKey" : "data/system_auth/roles-5bc52802de2535edaeab188eecebb090/1-4177105416/mc-1-big-CompressionInfo.db",
+              "type" : "FILE",
+              "size" : 43
+            }, {
+              "objectKey" : "data/system_auth/roles-5bc52802de2535edaeab188eecebb090/1-4177105416/mc-1-big-Data.db",
+              "type" : "FILE",
+              "size" : 102
+            }, {
+              "objectKey" : "data/system_auth/roles-5bc52802de2535edaeab188eecebb090/1-4177105416/mc-1-big-Digest.crc32",
+              "type" : "FILE",
+              "size" : 10
+            }, {
+              "objectKey" : "data/system_auth/roles-5bc52802de2535edaeab188eecebb090/1-4177105416/mc-1-big-Filter.db",
+              "type" : "FILE",
+              "size" : 16
+            }, {
+              "objectKey" : "data/system_auth/roles-5bc52802de2535edaeab188eecebb090/1-4177105416/mc-1-big-Index.db",
+              "type" : "FILE",
+              "size" : 13
+            }, {
+              "objectKey" : "data/system_auth/roles-5bc52802de2535edaeab188eecebb090/1-4177105416/mc-1-big-Statistics.db",
+              "type" : "FILE",
+              "size" : 4723
+            }, {
+              "objectKey" : "data/system_auth/roles-5bc52802de2535edaeab188eecebb090/1-4177105416/mc-1-big-Summary.db",
+              "type" : "FILE",
+              "size" : 71
+            }, {
+              "objectKey" : "data/system_auth/roles-5bc52802de2535edaeab188eecebb090/1-4177105416/mc-1-big-TOC.txt",
+              "type" : "FILE",
+              "size" : 92
+            } ],
+            "id" : "5bc52802de2535edaeab188eecebb090"
+          },
+          "resource_role_permissons_index" : {
+            "entries" : [ ],
+            "id" : "5f2fbdad91f13946bd25d5da3a5c35ec"
+          },
+          "role_members" : {
+            "entries" : [ ],
+            "id" : "0ecdaa87f8fb3e6088d174fb36fe5c0d"
+          }
+        }
+      }
+    }
+  }
+}

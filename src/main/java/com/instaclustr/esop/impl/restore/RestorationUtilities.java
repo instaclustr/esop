@@ -1,15 +1,10 @@
 package com.instaclustr.esop.impl.restore;
 
-import static java.util.stream.Collectors.toList;
-
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.function.Predicate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.Manifest;
-import com.instaclustr.esop.impl._import.ImportOperationRequest;
 
 public class RestorationUtilities {
 
@@ -22,10 +17,6 @@ public class RestorationUtilities {
                                                                           new ManifestFilteringPredicate(request, schemaVersion));
 
         return Manifest.read(manifestAsString, objectMapper);
-    }
-
-    public static List<ImportOperationRequest> buildImportRequests(final RestoreOperationRequest request, final DatabaseEntities entities) {
-        return entities.getKeyspacesAndTables().entries().stream().map(entry -> request.importing.copy(entry.getKey(), entry.getValue())).collect(toList());
     }
 
     public static abstract class AbstractFilteringPredicate implements Predicate<String> {

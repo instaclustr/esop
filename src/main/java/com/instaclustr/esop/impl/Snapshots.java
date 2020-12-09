@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -114,6 +115,10 @@ public class Snapshots implements Cloneable {
             return keyspaces.entrySet().stream().anyMatch(entry -> entry.getKey().equals(keyspace));
         }
 
+        public boolean containsTable(final String keyspace, final String table) {
+            return Optional.ofNullable(keyspaces.get(keyspace)).flatMap(ks -> ks.getTable(table)).isPresent();
+        }
+
         public Optional<Keyspace> getKeyspace(final String keyspace) {
             return Optional.ofNullable(keyspaces.get(keyspace));
         }
@@ -126,9 +131,13 @@ public class Snapshots implements Cloneable {
             return Collections.unmodifiableMap(keyspaces);
         }
 
+        public void removeKeyspace(final String keyspace) {
+            keyspaces.remove(keyspace);
+        }
+
         public void removeKeyspaces(final List<String> keyspaces) {
             for (final String keyspace : keyspaces) {
-                this.keyspaces.remove(keyspace);
+                removeKeyspace(keyspace);
             }
         }
 
@@ -139,6 +148,10 @@ public class Snapshots implements Cloneable {
                     .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
                 ks.setTables(valuesToStay);
             });
+        }
+
+        public void removeTable(final String keyspace, final String table) {
+            removeTables(keyspace, Collections.singletonList(table));
         }
 
         public void add(final String name, final Keyspace keyspace) {
@@ -275,6 +288,47 @@ public class Snapshots implements Cloneable {
             return true;
         }
 
+        @FunctionalInterface
+        public interface ManifestEntryConsumer {
+
+            void consume(ManifestEntry entry, String keyspace, String table);
+        }
+
+        @FunctionalInterface
+        public interface ManifestEntryIdConsumer {
+
+            void consume(ManifestEntry entry, String keyspace, String table, String tableId);
+        }
+
+        public void forEachEntry(final ManifestEntryConsumer consumer) {
+            forEachKeyspace(keyspaceEntry -> {
+                final String keyspace = keyspaceEntry.getKey();
+
+                keyspaceEntry.getValue().forEachTable(tableEntry -> {
+                    final String tableName = tableEntry.getKey();
+
+                    tableEntry.getValue().forEachEntry(manifestEntry -> consumer.consume(manifestEntry, keyspace, tableName));
+                });
+            });
+        }
+
+        public void forEachEntry(final ManifestEntryIdConsumer consumer) {
+            forEachKeyspace(keyspaceEntry -> {
+                final String keyspace = keyspaceEntry.getKey();
+
+                keyspaceEntry.getValue().forEachTable(tableEntry -> {
+                    final String tableId = tableEntry.getValue().id;
+                    final String tableName = tableEntry.getKey();
+
+                    tableEntry.getValue().forEachEntry(manifestEntry -> consumer.consume(manifestEntry, keyspace, tableName, tableId));
+                });
+            });
+        }
+
+        public void forEachKeyspace(Consumer<Entry<String, Keyspace>> consumer) {
+            this.keyspaces.entrySet().forEach(consumer);
+        }
+
         public static class Keyspace implements Cloneable {
 
             private final Map<String, Table> tables = new HashMap<>();
@@ -300,6 +354,12 @@ public class Snapshots implements Cloneable {
                 }
 
                 return new Keyspace(tables);
+            }
+
+            public void forEachTable(Consumer<Entry<String, Table>> consumer) {
+                this.tables.forEach((name, table) -> {
+                    tables.entrySet().forEach(consumer);
+                });
             }
 
             public Map<String, Table> getTables() {
@@ -468,6 +528,10 @@ public class Snapshots implements Cloneable {
                     }
 
                     return tb;
+                }
+
+                public void forEachEntry(Consumer<ManifestEntry> entryConsumer) {
+                    getEntries().forEach(entryConsumer);
                 }
 
                 public List<ManifestEntry> getEntries() {

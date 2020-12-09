@@ -4,6 +4,9 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -137,6 +140,11 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             + "--restoration-strategy-type is IN_PLACE")
     public String cassandraVersion;
 
+    @JsonProperty
+    @Option(names = "--rename",
+        description = "[OLD_KEYSPACE.OLD_TABLE]=[OLD_KEYSPACE.NEW_TABLE], if specified upon restoration, table will be restored into new table, not into the original one")
+    public Map<String, String> rename = new HashMap<>();
+
     public RestoreOperationRequest() {
         // for picocli
     }
@@ -172,7 +180,8 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonProperty("insecure") final boolean insecure,
                                    @JsonProperty("newCluster") final boolean newCluster,
                                    @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
-                                   @JsonProperty("proxySettings") final ProxySettings proxySettings) {
+                                   @JsonProperty("proxySettings") final ProxySettings proxySettings,
+                                   @JsonProperty("rename") final Map<String, String> rename) {
         super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings);
         this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/")) ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
@@ -193,6 +202,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
         this.timeout = timeout == null ? 5 : timeout;
         this.resolveHostIdFromTopology = resolveHostIdFromTopology;
         this.newCluster = newCluster;
+        this.rename = rename == null ? Collections.emptyMap() : rename;
     }
 
     @Override
@@ -223,6 +233,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             .add("skipBucketVerification", skipBucketVerification)
             .add("proxySettings", proxySettings)
             .add("cassandraVersion", cassandraVersion)
+            .add("rename", rename)
             .toString();
     }
 }

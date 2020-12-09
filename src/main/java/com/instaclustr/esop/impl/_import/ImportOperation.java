@@ -5,7 +5,6 @@ import static java.lang.String.format;
 import static java.nio.file.Files.exists;
 
 import javax.validation.constraints.NotNull;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
@@ -59,6 +58,7 @@ public class ImportOperation extends Operation<ImportOperationRequest> {
                             @JsonProperty("startTime") final Instant startTime,
                             @JsonProperty("keyspace") final String keyspace,
                             @JsonProperty("table") final String table,
+                            @JsonProperty("tablePath") final Path tablePath,
                             @JsonProperty("keepLevel") final boolean keepLevel,
                             @JsonProperty("noVerify") final boolean noVerify,
                             @JsonProperty("noVerifyTokens") final boolean noVerifyTokens,
@@ -79,6 +79,7 @@ public class ImportOperation extends Operation<ImportOperationRequest> {
               new ImportOperationRequest(type,
                                          keyspace,
                                          table,
+                                         tablePath,
                                          keepLevel,
                                          noVerify,
                                          noVerifyTokens,
@@ -113,19 +114,21 @@ public class ImportOperation extends Operation<ImportOperationRequest> {
         }
 
         if (CassandraVersion.isFour(cassandraVersion)) {
+            if (request.tablePath == null) {
+                throw new IllegalStateException("table path is not specified!");
+            }
+
+            if (!exists(request.tablePath)) {
+                throw new IllegalStateException(String.format("table path does not exist: %s", request.tablePath));
+            }
+
             final List<String> failedImportDirs = cassandraJMXService.doWithCassandra4ColumnFamilyStoreMBean(new FunctionWithEx<Cassandra4ColumnFamilyStoreMBean, List<String>>() {
                 @Override
-                public List<String> apply(final Cassandra4ColumnFamilyStoreMBean cfProxy) throws Exception {
+                public List<String> apply(final Cassandra4ColumnFamilyStoreMBean cfProxy) {
 
-                    logger.info(format("Importing SSTables of %s.%s", request.keyspace, request.table));
+                    logger.info(format("Importing SSTables of %s.%s from %s", request.keyspace, request.table, request.tablePath.toAbsolutePath().toString()));
 
-                    final Path tablePath = Files.list(request.sourceDir.resolve("data").resolve(request.keyspace))
-                        .filter(table -> !table.getFileName().toString().endsWith(request.table) && table.getFileName().toString().startsWith(request.table))
-                        .findFirst()
-                        .orElseThrow(() -> new IllegalStateException(format("There is not any directory with SSTables belonging to %s keyspace and %s table",
-                                                                            request.keyspace, request.table)));
-
-                    final List<String> failedImportDirectories = cfProxy.importNewSSTables(Sets.newHashSet(tablePath.toAbsolutePath().toString()),
+                    final List<String> failedImportDirectories = cfProxy.importNewSSTables(Sets.newHashSet(request.tablePath.toAbsolutePath().toString()),
                                                                                            !request.keepLevel,
                                                                                            !request.keepRepaired,
                                                                                            !request.noVerify,

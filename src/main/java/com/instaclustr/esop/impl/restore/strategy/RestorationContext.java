@@ -5,6 +5,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.guice.BucketServiceFactory;
+import com.instaclustr.esop.impl.CassandraData;
 import com.instaclustr.esop.impl.restore.DownloadTracker;
 import com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
@@ -23,4 +24,5 @@ public class RestorationContext {
     public RestorationPhaseType phaseType;
     public DownloadTracker downloadTracker;
     public Map<String, BucketServiceFactory> bucketServiceFactoryMap;
+    public CassandraData cassandraData;
 }

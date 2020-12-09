@@ -920,6 +920,45 @@ and that is correct. All commands will look exactly the same but they will just 
 
 If we wanted to do a restore via Cassandra JMX _importing_, our `--restoration-strategy-type` would be `import`.
 
+### Renaming of a table to restore to
+
+It is possible to restore to a different table you backed up. This feature is very handy for cases
+when you want to examine data before you actually restore them - you might put them temporarily
+to a different table to see if all is right etc. From Esop CLI, you drive this feature by flag called `--rename`.
+This flag might repeat as many times as many times you need to rename.
+
+This feature might be used only for hardlinks or importing strategy, not for in-place.
+
+A table has to exist before a restore action is taken. Esop does **not** create this table for you automatically
+and it is left for a user to ensure such table exists before proceeding.
+
+Let's say you have backed up a table called `tb1` in a keyspace called `ks1` but you want to restore
+it into table `tb2` in the same keyspace. Hence you need to specify `--rename=ks1.tb1=ks1.tb2`.
+
+`--rename` options is meant to be used along with `--entities`. It is a valid scenario to do this:
+
+----
+--entities=ks1.tb1 --rename=ks1.tb1=ks1.tb2
+--entities=ks1 --rename=ks1.tb2=ks1.tb2
+--entities=ks1.tb1,ks1.tb2,ks1.tb3 --rename=ks1.tb2=ks1.tb3
+----
+
+* keyspace in "from" entity (ks1.tb1) has to be same in "to" entity (ks1.tb2), in case it differs, it will error out.
+In other words, you can not restore a table across a keyspace.
+* entities in "to" have to be unique across all renaming pairs, "ks1.tb1=ks1.tb2" and "ks1.tb3=ks1.tb2" is invalid
+
+From Icarus point of view, you need to add a map under "rename" field:
+
+----
+{
+    "rename": {
+        "ks1.tb1": "ks1.tb2",
+        "ks2.tb3": "ks2.tb4",
+        "ks3.tb5": "ks3.tb6"
+    }
+}
+----
+
 ### Explanation of Global Requests
 
 It looks like the phases are an unnecessary hassle to go through, but the granularity is required in case we are

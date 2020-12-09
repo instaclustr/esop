@@ -13,6 +13,8 @@ public class TestEntity2 {
 
     public static final String TABLE_2 = "test2";
 
+    public static final String TABLE_3 = "test3";
+
     public static final String ID = "id";
 
     public static final String DATE = "date";

@@ -4,6 +4,7 @@ import javax.validation.constraints.Min;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -82,7 +83,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                              @JsonProperty("insecure") final boolean insecure,
                              @JsonProperty("newCluster") final boolean newCluster,
                              @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
-                             @JsonProperty("proxySettings") final ProxySettings proxySettings) {
+                             @JsonProperty("proxySettings") final ProxySettings proxySettings,
+                             @JsonProperty("rename") final Map<String, String> rename) {
         super(type, id, creationTime, state, errors, progress, startTime, new RestoreOperationRequest(type,
                                                                                                       storageLocation,
                                                                                                       concurrentConnections,
@@ -109,7 +111,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                                                                                                       insecure,
                                                                                                       newCluster,
                                                                                                       skipBucketVerification,
-                                                                                                      proxySettings));
+                                                                                                      proxySettings,
+                                                                                                      rename));
         this.coordinator = null;
     }
 

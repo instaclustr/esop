@@ -16,7 +16,7 @@ import com.instaclustr.esop.guice.BackuperFactory;
 import com.instaclustr.esop.guice.BucketServiceFactory;
 import com.instaclustr.esop.impl.AbstractTracker.Session;
 import com.instaclustr.esop.impl.BucketService;
-import com.instaclustr.esop.impl.KeyspaceTable;
+import com.instaclustr.esop.impl.CassandraData;
 import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.Snapshots;
@@ -86,7 +86,8 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
                 }
             }
 
-            KeyspaceTable.checkEntitiesToProcess(request.cassandraDirectory.resolve("data"), request.entities);
+            CassandraData cassandraData = CassandraData.parse(request.cassandraDirectory.resolve("data"));
+            cassandraData.setDatabaseEntitiesFromRequest(request.entities);
 
             final List<String> tokens = new CassandraTokens(cassandraJMXService).act();
 
