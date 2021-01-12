@@ -69,6 +69,7 @@ public class ManifestComponentsTest {
         ManifestEntry original = new ManifestEntry(Paths.get("object/key"),
                                                    Paths.get("local/file"),
                                                    Type.FILE,
+                                                   null,
                                                    new KeyspaceTable("keyspace", "table"));
 
         ManifestEntry cloned = original.clone();
@@ -100,6 +101,7 @@ public class ManifestComponentsTest {
                                      null,
                                      Type.FILE,
                                      50,
+                                     null,
                                      null));
 
         assertNotEquals(table, cloned);

@@ -13,6 +13,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
+import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.jackson.PathSerializer;
 import com.instaclustr.picocli.typeconverter.KeyspaceTablePairsConverter;
@@ -86,8 +87,9 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
                                              @JsonProperty("k8sSecretName") final String k8sSecretName,
                                              @JsonProperty("insecure") final boolean insecure,
                                              @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
-                                             @JsonProperty("proxySettings") final ProxySettings proxySettings) {
-        super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings);
+                                             @JsonProperty("proxySettings") final ProxySettings proxySettings,
+                                             @JsonProperty("retry") final RetrySpec retry) {
+        super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
         this.cassandraDirectory = cassandraDirectory == null ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.sharedContainerPath = sharedContainerPath == null ? Paths.get("/") : sharedContainerPath;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;

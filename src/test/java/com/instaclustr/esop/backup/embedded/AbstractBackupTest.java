@@ -54,6 +54,8 @@ import com.instaclustr.cassandra.CassandraModule;
 import com.instaclustr.esop.cli.Esop;
 import com.instaclustr.esop.impl.backup.BackupModules.BackupModule;
 import com.instaclustr.esop.impl.backup.BackupModules.UploadingModule;
+import com.instaclustr.esop.impl.hash.HashModule;
+import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.interaction.CassandraSchemaVersion;
 import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType;
 import com.instaclustr.esop.impl.restore.RestoreModules.DownloadingModule;
@@ -77,6 +79,7 @@ public abstract class AbstractBackupTest {
         add(new UploadingModule());
         add(new DownloadingModule());
         add(new RestorationStrategyModule());
+        add(new HashModule(new HashSpec()));
 
         try {
             add(new CassandraModule());
@@ -90,7 +93,7 @@ public abstract class AbstractBackupTest {
 
     public static final String CASSANDRA_VERSION = System.getProperty("backup.tests.cassandra.version", "3.11.9");
 
-    public static final String CASSANDRA_4_VERSION = System.getProperty("backup.tests.cassandra4.version", "4.0-beta3");
+    public static final String CASSANDRA_4_VERSION = System.getProperty("backup.tests.cassandra4.version", "4.0-beta4");
 
     // This is number of rows we inserted into Cassandra DB in total
     // we backed up first 6 rows. For the last two rows, they are stored in commit logs.
@@ -180,6 +183,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
+            "--restore-system-keyspace",
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
             // this will import systema_schema, normally, it wont happen without setting --restore-system-keyspace
             // that would import all of them which is not always what we really want as other system tables
@@ -187,7 +191,8 @@ public abstract class AbstractBackupTest {
             "--restore-into-new-cluster",
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             // restoring specifically for Cassandra 2 (maybe)
-            "--cassandra-version=" + cassandraVersion
+            "--cassandra-version=" + cassandraVersion,
+            "--restoration-strategy-type=IN_PLACE"
         };
 
         // COMMIT LOG RESTORE
@@ -664,8 +669,17 @@ public abstract class AbstractBackupTest {
             // first round
 
             for (int i = 1; i < rounds + 1; ++i) {
+
+                // each phase is executed twice here to check that phases are idempotent / repeatable
+
                 logger.info("Round " + i + " - Executing the first restoration phase - download {}", asList(arguments[2]));
                 Esop.mainWithoutExit(arguments[2]);
+
+                logger.info("Round " + i + " - Executing the first restoration phase - download {}", asList(arguments[2]));
+                Esop.mainWithoutExit(arguments[2]);
+
+                logger.info("Round " + i + " - Executing the second restoration phase - truncate {}", asList(arguments[3]));
+                Esop.mainWithoutExit(arguments[3]);
 
                 logger.info("Round " + i + " - Executing the second restoration phase - truncate {}", asList(arguments[3]));
                 Esop.mainWithoutExit(arguments[3]);
@@ -675,6 +689,12 @@ public abstract class AbstractBackupTest {
                 //
                 logger.info("Round " + i + " - Executing the third restoration phase - import {}", asList(arguments[4]));
                 Esop.mainWithoutExit(arguments[4]);
+
+                logger.info("Round " + i + " - Executing the third restoration phase - import {}", asList(arguments[4]));
+                Esop.mainWithoutExit(arguments[4]);
+
+                logger.info("Round " + i + " - Executing the fourth restoration phase - cleanup {}", asList(arguments[5]));
+                Esop.mainWithoutExit(arguments[5]);
 
                 logger.info("Round " + i + " - Executing the fourth restoration phase - cleanup {}", asList(arguments[5]));
                 Esop.mainWithoutExit(arguments[5]);
@@ -709,16 +729,32 @@ public abstract class AbstractBackupTest {
             // first round
 
             for (int i = 1; i < rounds + 1; ++i) {
+
+                // each phase is executed twice here to check that phases are idempotent / repeatable
+
                 logger.info("Round " + i + " - Executing the first restoration phase - download {}", asList(arguments[2]));
+                Esop.mainWithoutExit(arguments[2]);
+                logger.info("Round " + i + " - Executing the first restoration phase for the second time - download {}", asList(arguments[2]));
                 Esop.mainWithoutExit(arguments[2]);
 
                 logger.info("Round " + i + " - Executing the second restoration phase - truncate {}", asList(arguments[3]));
                 Esop.mainWithoutExit(arguments[3]);
+                logger.info("Round " + i + " - Executing the second restoration phase for the second time - truncate {}", asList(arguments[3]));
+                Esop.mainWithoutExit(arguments[3]);
 
                 logger.info("Round " + i + " - Executing the third restoration phase - import {}", asList(arguments[4]));
+
                 Esop.mainWithoutExit(arguments[4]);
 
+                if (!cassandraVersion.startsWith("4")) {
+                    // second round would not pass for 4 because import deletes files in download
+                    logger.info("Round " + i + " - Executing the third restoration phase for the second time - import {}", asList(arguments[4]));
+                    Esop.mainWithoutExit(arguments[4]);
+                }
+
                 logger.info("Round " + i + " - Executing the fourth restoration phase - cleanup {}", asList(arguments[5]));
+                Esop.mainWithoutExit(arguments[5]);
+                logger.info("Round " + i + " - Executing the fourth restoration phase for the second time - cleanup {}", asList(arguments[5]));
                 Esop.mainWithoutExit(arguments[5]);
 
                 // we expect 4 records to be there as 2 were there before the first backup and the second 2 before the second backup

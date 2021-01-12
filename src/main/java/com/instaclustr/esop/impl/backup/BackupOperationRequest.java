@@ -19,6 +19,7 @@ import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesDeserializer;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesSerializer;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
+import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.measure.DataRate;
 import com.instaclustr.measure.Time;
 import picocli.CommandLine.Option;
@@ -93,7 +94,8 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
                                   @JsonProperty("schemaVersion") final String schemaVersion,
                                   @JsonProperty("uploadClusterTopology") final boolean uploadClusterTopology,
-                                  @JsonProperty("proxySettings") final ProxySettings proxySettings) {
+                                  @JsonProperty("proxySettings") final ProxySettings proxySettings,
+                                  @JsonProperty("retry") final RetrySpec retry) {
         super(storageLocation,
               duration,
               bandwidth,
@@ -105,7 +107,8 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
               insecure,
               createMissingBucket,
               skipBucketVerification,
-              proxySettings);
+              proxySettings,
+              retry);
         this.entities = entities == null ? DatabaseEntities.empty() : entities;
         this.snapshotTag = snapshotTag == null ? format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis())) : snapshotTag;
         this.globalRequest = globalRequest;
@@ -138,6 +141,7 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
             .add("createMissingBucket", createMissingBucket)
             .add("skipBucketVerification", skipBucketVerification)
             .add("proxySettings", proxySettings)
+            .add("retry", retry)
             .toString();
     }
 }

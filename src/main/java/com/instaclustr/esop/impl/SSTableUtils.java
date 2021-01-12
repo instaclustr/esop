@@ -15,9 +15,11 @@ import java.util.stream.Stream;
 import java.util.zip.Adler32;
 
 import com.google.common.collect.ImmutableList;
+import com.instaclustr.esop.impl.hash.HashServiceImpl;
 import com.instaclustr.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.instaclustr.esop.impl.hash.HashSpec;
 
 public class SSTableUtils {
 
@@ -89,7 +91,9 @@ public class SSTableUtils {
         }
     }
 
-    public static Stream<ManifestEntry> ssTableManifest(Path snapshotDirectory, Path tableBackupPath) throws IOException {
+    public static Stream<ManifestEntry> ssTableManifest(Path snapshotDirectory,
+                                                        Path tableBackupPath,
+                                                        HashSpec hashSpec) throws IOException {
         return Files.list(snapshotDirectory)
             .flatMap(path -> {
                 if (isCassandra22SecIndex(path)) {
@@ -114,9 +118,10 @@ public class SSTableUtils {
 
                     backupPath = backupPath.resolve(hash).resolve(manifestComponentFileName.getFileName());
 
-                    return new ManifestEntry(backupPath, localPath, ManifestEntry.Type.FILE);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
+                    final String hashOfFile = new HashServiceImpl(hashSpec).hash(localPath);
+                    return new ManifestEntry(backupPath, localPath, ManifestEntry.Type.FILE, hashOfFile);
+                } catch (Exception e) {
+                    throw new UncheckedIOException(new IOException(e));
                 }
             });
     }

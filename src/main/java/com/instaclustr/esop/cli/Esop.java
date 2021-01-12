@@ -16,6 +16,8 @@ import com.google.inject.Stage;
 import com.instaclustr.cassandra.CassandraModule;
 import com.instaclustr.esop.guice.StorageModules;
 import com.instaclustr.esop.impl.backup.BackupModules.UploadingModule;
+import com.instaclustr.esop.impl.hash.HashSpec;
+import com.instaclustr.esop.impl.hash.HashModule;
 import com.instaclustr.esop.impl.restore.RestoreModules.DownloadingModule;
 import com.instaclustr.guice.GuiceInjectorHolder;
 import com.instaclustr.jackson.JacksonModule;
@@ -69,6 +71,7 @@ public class Esop extends CLIApplication implements Runnable {
 
     static void init(final Runnable command,
                      final CassandraJMXSpec jmxSpec,
+                     final HashSpec hashSpec,
                      final OperationRequest operationRequest,
                      final Logger logger,
                      final List<Module> appSpecificModules) {
@@ -93,6 +96,7 @@ public class Esop extends CLIApplication implements Runnable {
         modules.add(new ExecutorsModule());
         modules.add(new UploadingModule());
         modules.add(new DownloadingModule());
+        modules.add(new HashModule(hashSpec));
         modules.addAll(appSpecificModules);
 
         final Injector injector = Guice.createInjector(

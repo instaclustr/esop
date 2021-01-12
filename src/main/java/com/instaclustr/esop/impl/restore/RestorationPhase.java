@@ -6,10 +6,10 @@ import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhas
 import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.IMPORT;
 import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.INIT;
 import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.TRUNCATE;
-import static com.instaclustr.io.FileUtils.createOrCleanDirectory;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -18,9 +18,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.common.base.MoreObjects;
+import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.ManifestEnricher;
 import com.instaclustr.esop.impl.AbstractTracker.Session;
 import com.instaclustr.esop.impl.BucketService;
@@ -44,6 +47,7 @@ import com.instaclustr.esop.impl.truncate.TruncateOperation;
 import com.instaclustr.esop.impl.truncate.TruncateOperationRequest;
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.operations.Operation;
+import com.instaclustr.operations.OperationFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -251,7 +255,7 @@ public abstract class RestorationPhase {
                 // verify that we are downloading data for same token so data fit a node
                 new CassandraSameTokens(ctxt.jmx, manifest.getTokens()).act();
 
-                createOrCleanDirectory(ctxt.operation.request.importing.sourceDir);
+                FileUtils.createDirectory(ctxt.operation.request.importing.sourceDir);
 
                 new ManifestEnricher().enrich(ctxt.cassandraData, manifest, ctxt.operation.request.importing.sourceDir);
 
@@ -274,6 +278,14 @@ public abstract class RestorationPhase {
 
                     session.waitUntilConsideredFinished();
                     ctxt.downloadTracker.cancelIfNecessary(session);
+
+                    final List<DownloadUnit> failedUnits = session.getFailedUnits();
+
+                    if (!failedUnits.isEmpty()) {
+                        final String message = failedUnits.stream().map(unit -> unit.getManifestEntry().objectKey.toString()).collect(Collectors.joining(","));
+                        logger.error(message);
+                        throw new IOException(format("Unable to download files successfully: %s", message));
+                    }
                 } finally {
                     ctxt.downloadTracker.removeSession(session);
                     session = null;
@@ -323,7 +335,7 @@ public abstract class RestorationPhase {
                     logger.info("It is not necessary to truncate any table.");
                     return;
                 } else {
-                    logger.info(String.format("Going to truncate these tables: %s", toTruncate.getKeyspacesAndTables().toString()));
+                    logger.info(format("Going to truncate these tables: %s", toTruncate.getKeyspacesAndTables().toString()));
                 }
 
                 final Map<String, String> truncateFailuresMap = new HashMap<>();
@@ -372,10 +384,21 @@ public abstract class RestorationPhase {
             try {
                 logger.info("Importing phase has started.");
 
+                if (!CassandraVersion.isFour(ctxt.cassandraVersion)) {
+                    throw new OperationFailureException(format("Underlying version of Cassandra is not supported to import SSTables: %s. Use this method "
+                                                                   + "only if you run Cassandra 4 and above", ctxt.cassandraVersion));
+                }
+
                 final String schemaVersion = new CassandraSchemaVersion(ctxt.jmx).act();
                 final Manifest manifest = RestorationUtilities.downloadManifest(ctxt.operation.request, ctxt.restorer, schemaVersion, ctxt.objectMapper);
                 new ManifestEnricher().enrich(ctxt.cassandraData, manifest, ctxt.operation.request.importing.sourceDir);
                 final DatabaseEntities databaseEntitiesToProcess = ctxt.cassandraData.getDatabaseEntitiesToProcessForRestore(manifest);
+
+                final DataVerification dataVerification = new DataVerification(ctxt).verify(manifest, databaseEntitiesToProcess);
+                if (dataVerification.hasErrors()) {
+                    throw new RestorationPhaseException("Some local files were corrupted or they are missing, "
+                                                            + "please consult the logs to see the details" + dataVerification.toString());
+                }
 
                 final List<ImportOperationRequest> imports = databaseEntitiesToProcess
                     .getKeyspacesAndTables()
@@ -432,6 +455,11 @@ public abstract class RestorationPhase {
                 new ManifestEnricher().enrich(ctxt.cassandraData, manifest, ctxt.operation.request.importing.sourceDir);
                 final DatabaseEntities databaseEntitiesToProcess = ctxt.cassandraData.getDatabaseEntitiesToProcessForRestore(manifest);
 
+                final DataVerification dataVerification = new DataVerification(ctxt).verify(manifest, databaseEntitiesToProcess);
+                if (dataVerification.hasErrors()) {
+                    throw new RestorationPhaseException("Some local files were corrupted or they are missing, please consult the logs to see the details.");
+                }
+
                 final List<Path> downloadedFiles = CassandraData.list(ctxt.operation.request.importing.sourceDir);
 
                 // make links
@@ -448,7 +476,7 @@ public abstract class RestorationPhase {
                     final Path link = ctxt.operation.request.cassandraDirectory.resolve("data").resolve(ctxt.operation.request.importing.sourceDir.relativize(existing));
 
                     try {
-                        logger.debug(String.format("linking from %s to %s", existing, link));
+                        logger.debug(format("linking from %s to %s", existing, link));
                         Files.createLink(link, existing);
                         successfulLinks.add(link);
                     } catch (final Exception ex) {
@@ -604,6 +632,54 @@ public abstract class RestorationPhase {
             }
 
             logger.info("Deleting truncated directories has finished successfully.");
+        }
+    }
+
+    public static final class DataVerification {
+
+        private static final Logger logger = LoggerFactory.getLogger(DataVerification.class);
+
+        private final RestorationContext ctxt;
+        public final List<String> nonExistingFiles = new ArrayList<>();
+        public final List<String> corruptedFiles = new ArrayList<>();
+
+        public DataVerification(final RestorationContext ctxt) {
+            this.ctxt = ctxt;
+        }
+
+        public boolean hasErrors() {
+            return !nonExistingFiles.isEmpty() || !corruptedFiles.isEmpty();
+        }
+
+        public DataVerification verify(final Manifest manifest, final DatabaseEntities entities) {
+            final List<ManifestEntry> entries = manifest.getManifestFiles(entities, false, false, false);
+
+            for (final ManifestEntry entry : entries) {
+                if (!Files.exists(entry.localFile)) {
+                    logger.error("File to import does not exist: " + entry.localFile.toAbsolutePath().toString());
+                    nonExistingFiles.add(entry.localFile.toAbsolutePath().toString());
+                    continue;
+                }
+
+                if (entry.hash != null) {
+                    try {
+                        this.ctxt.hashService.verify(entry.localFile, entry.hash);
+                    } catch (final Exception ex) {
+                        logger.error(ex.getMessage());
+                        corruptedFiles.add(entry.localFile.toString());
+                    }
+                }
+            }
+
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this)
+                .add("nonExistingFiles", nonExistingFiles)
+                .add("corruptedFiles", corruptedFiles)
+                .toString();
         }
     }
 }

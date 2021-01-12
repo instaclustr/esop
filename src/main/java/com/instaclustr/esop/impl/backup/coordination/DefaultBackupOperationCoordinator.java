@@ -10,6 +10,7 @@ import com.instaclustr.esop.guice.BackuperFactory;
 import com.instaclustr.esop.guice.BucketServiceFactory;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.backup.UploadTracker;
+import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.interaction.CassandraSchemaVersion;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.Operation.Error;
@@ -23,13 +24,15 @@ public class DefaultBackupOperationCoordinator extends BaseBackupOperationCoordi
                                              final Map<String, BackuperFactory> backuperFactoryMap,
                                              final Map<String, BucketServiceFactory> bucketServiceFactoryMap,
                                              final ObjectMapper objectMapper,
-                                             final UploadTracker uploadTracker) {
+                                             final UploadTracker uploadTracker,
+                                             final HashSpec hashSpec) {
         super(cassandraJMXService,
               cassandraVersionProvider,
               backuperFactoryMap,
               bucketServiceFactoryMap,
               objectMapper,
-              uploadTracker);
+              uploadTracker,
+              hashSpec);
     }
 
     @Override

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.MoreObjects;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
+import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.jackson.PathSerializer;
 import com.instaclustr.measure.DataRate;
@@ -60,7 +61,8 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
                                             @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
                                             @JsonProperty("commitLog") final Path commitLog,
                                             @JsonProperty("online") boolean online,
-                                            @JsonProperty("proxySettings") final ProxySettings proxySettings) {
+                                            @JsonProperty("proxySettings") final ProxySettings proxySettings,
+                                            @JsonProperty("retry") final RetrySpec retry) {
         super(storageLocation,
               duration,
               bandwidth,
@@ -72,7 +74,8 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
               insecure,
               createMissingBucket,
               skipBucketVerification,
-              proxySettings);
+              proxySettings,
+              retry);
         this.type = "commitlog-backup";
         this.commitLogArchiveOverride = commitLogArchiveOverride;
         this.commitLog = commitLog;
@@ -97,6 +100,7 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
             .add("skipBucketVerification", skipBucketVerification)
             .add("insecure", insecure)
             .add("proxySettings", proxySettings)
+            .add("retry", retry)
             .toString();
     }
 }

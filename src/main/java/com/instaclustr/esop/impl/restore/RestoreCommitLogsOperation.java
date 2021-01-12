@@ -1,5 +1,6 @@
 package com.instaclustr.esop.impl.restore;
 
+import static com.instaclustr.esop.impl.ManifestEntry.Type.COMMIT_LOG;
 import static java.lang.String.format;
 
 import java.io.BufferedReader;
@@ -112,7 +113,7 @@ public class RestoreCommitLogsOperation extends Operation<RestoreCommitLogsOpera
     private void downloadCommitLogs(final Restorer restorer) throws Exception {
         final RemoteObjectReference remoteObjectReference = restorer.objectKeyToNodeAwareRemoteReference(Paths.get("commitlog"));
         final Pattern commitlogPattern = Pattern.compile(".*(CommitLog-\\d+-\\d+\\.log)\\.(\\d+)");
-        final HashSet<ManifestEntry> parsedCommitlogList = new HashSet<>();
+        final Set<ManifestEntry> parsedCommitlogList = new HashSet<>();
 
         logger.info("Commencing processing of commit log listing");
         final AtomicReference<ManifestEntry> overhangingManifestEntry = new AtomicReference<>();
@@ -128,16 +129,18 @@ public class RestoreCommitLogsOperation extends Operation<RestoreCommitLogsOpera
                 if (commitlogTimestamp >= request.timestampStart && commitlogTimestamp <= request.timestampEnd) {
                     parsedCommitlogList.add(new ManifestEntry(commitlogFile.getObjectKey(),
                                                               request.commitlogDownloadDir.resolve(matcherCommitlog.group(1)),
-                                                              ManifestEntry.Type.FILE,
+                                                              COMMIT_LOG,
                                                               0,
+                                                              null,
                                                               null));
                 } else if (commitlogTimestamp > request.timestampEnd && commitlogTimestamp < overhangingTimestamp.get()) {
                     // Make sure we also catch the first commitlog that goes past the end of the timestamp
                     overhangingTimestamp.set(commitlogTimestamp);
                     overhangingManifestEntry.set(new ManifestEntry(commitlogFile.getObjectKey(),
                                                                    request.commitlogDownloadDir.resolve(matcherCommitlog.group(1)),
-                                                                   ManifestEntry.Type.FILE,
+                                                                   COMMIT_LOG,
                                                                    0,
+                                                                   null,
                                                                    null));
                 }
             }

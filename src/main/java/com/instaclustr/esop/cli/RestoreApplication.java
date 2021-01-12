@@ -10,6 +10,7 @@ import java.util.Arrays;
 
 import com.google.inject.Inject;
 import com.instaclustr.esop.impl._import.ImportOperationRequest;
+import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.restore.RestoreModules.RestorationStrategyModule;
 import com.instaclustr.esop.impl.restore.RestoreModules.RestoreModule;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
@@ -40,6 +41,9 @@ public class RestoreApplication implements Runnable {
     private CassandraJMXSpec jmxSpec;
 
     @Mixin
+    private HashSpec hashSpec;
+
+    @Mixin
     private RestoreOperationRequest request;
 
     @Mixin
@@ -58,8 +62,8 @@ public class RestoreApplication implements Runnable {
 
         request.importing = importRequest;
 
-        Esop.init(this, jmxSpec, request, logger, Arrays.asList(new RestoreModule(),
-                                                                new RestorationStrategyModule()));
+        Esop.init(this, jmxSpec, hashSpec, request, logger, Arrays.asList(new RestoreModule(),
+                                                                          new RestorationStrategyModule()));
 
         final Operation<?> operation = operationsService.submitOperationRequest(request);
 

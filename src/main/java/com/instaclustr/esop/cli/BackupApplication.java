@@ -12,6 +12,7 @@ import com.google.inject.Inject;
 import com.google.inject.Module;
 import com.instaclustr.esop.impl.backup.BackupModules.BackupModule;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
+import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
 import com.instaclustr.picocli.CassandraJMXSpec;
@@ -41,6 +42,9 @@ public class BackupApplication implements Runnable {
     private CassandraJMXSpec jmxSpec;
 
     @Mixin
+    private HashSpec hashSpec;
+
+    @Mixin
     private BackupOperationRequest request;
 
     @Inject
@@ -56,7 +60,7 @@ public class BackupApplication implements Runnable {
 
         final List<Module> appSpecificModules = singletonList(new BackupModule());
 
-        Esop.init(this, jmxSpec, request, logger, appSpecificModules);
+        Esop.init(this, jmxSpec, hashSpec, request, logger, appSpecificModules);
 
         final Operation<?> operation = operationsService.submitOperationRequest(request);
 

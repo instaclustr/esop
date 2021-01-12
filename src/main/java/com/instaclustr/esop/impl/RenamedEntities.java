@@ -24,7 +24,7 @@ public class RenamedEntities {
     }
 
     public static RenamedEntities parse(final Map<String, String> pairs) {
-        if (pairs.isEmpty()) {
+        if (pairs == null || pairs.isEmpty()) {
             return RenamedEntities.empty();
         }
         return new RenamedEntities(pairs.entrySet().stream().map(Renamed::new).collect(toList()));
@@ -35,6 +35,9 @@ public class RenamedEntities {
     }
 
     public static void validate(final Map<String, String> rename) throws Exception {
+        if (rename == null) {
+            return;
+        }
         final RenamedEntities parsed = RenamedEntities.parse(rename);
 
         for (final Renamed renamed : parsed.getRenamed()) {

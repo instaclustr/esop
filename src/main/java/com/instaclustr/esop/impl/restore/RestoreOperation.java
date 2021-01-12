@@ -22,6 +22,7 @@ import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl._import.ImportOperationRequest;
 import com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType;
 import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType;
+import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationCoordinator;
 import com.instaclustr.operations.OperationFailureException;
@@ -84,7 +85,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                              @JsonProperty("newCluster") final boolean newCluster,
                              @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
                              @JsonProperty("proxySettings") final ProxySettings proxySettings,
-                             @JsonProperty("rename") final Map<String, String> rename) {
+                             @JsonProperty("rename") final Map<String, String> rename,
+                             @JsonProperty("retry") final RetrySpec retry) {
         super(type, id, creationTime, state, errors, progress, startTime, new RestoreOperationRequest(type,
                                                                                                       storageLocation,
                                                                                                       concurrentConnections,
@@ -112,7 +114,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                                                                                                       newCluster,
                                                                                                       skipBucketVerification,
                                                                                                       proxySettings,
-                                                                                                      rename));
+                                                                                                      rename,
+                                                                                                      retry));
         this.coordinator = null;
     }
 

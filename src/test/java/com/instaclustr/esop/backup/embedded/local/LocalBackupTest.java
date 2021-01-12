@@ -47,6 +47,7 @@ import com.instaclustr.esop.impl.backup.coordination.ClearSnapshotOperation;
 import com.instaclustr.esop.impl.backup.coordination.ClearSnapshotOperation.ClearSnapshotOperationRequest;
 import com.instaclustr.esop.impl.backup.coordination.TakeSnapshotOperation;
 import com.instaclustr.esop.impl.backup.coordination.TakeSnapshotOperation.TakeSnapshotOperationRequest;
+import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.local.LocalFileBackuper;
 import com.instaclustr.esop.local.LocalFileModule;
@@ -208,14 +209,15 @@ public class LocalBackupTest extends AbstractBackupTest {
 
             final ListeningExecutorService finisher = new Executors.FixedTasksExecutorSupplier().get(10);
 
-            uploadTracker = new UploadTracker(finisher, operationsService) {
+            uploadTracker = new UploadTracker(finisher, operationsService, new HashSpec()) {
                 // override for testing purposes
                 @Override
                 public UploadUnit constructUnitToSubmit(final Backuper backuper,
                                                         final ManifestEntry manifestEntry,
                                                         final AtomicBoolean shouldCancel,
-                                                        final String snapshotTag) {
-                    return new TestingUploadUnit(wait, backuper, manifestEntry, shouldCancel, snapshotTag);
+                                                        final String snapshotTag,
+                                                        final HashSpec hashSpec) {
+                    return new TestingUploadUnit(wait, backuper, manifestEntry, shouldCancel, snapshotTag, hashSpec);
                 }
             };
 
@@ -339,7 +341,8 @@ public class LocalBackupTest extends AbstractBackupTest {
             false,
             null,
             false,
-            null // proxy settings
+            null, // proxy settings
+            null // retry
         );
     }
 
@@ -353,8 +356,9 @@ public class LocalBackupTest extends AbstractBackupTest {
                                  final Backuper backuper,
                                  final ManifestEntry manifestEntry,
                                  final AtomicBoolean shouldCancel,
-                                 final String snapshotTag) {
-            super(backuper, manifestEntry, shouldCancel, snapshotTag);
+                                 final String snapshotTag,
+                                 final HashSpec hashSpec) {
+            super(backuper, manifestEntry, shouldCancel, snapshotTag, hashSpec);
             this.wait = wait;
         }
 

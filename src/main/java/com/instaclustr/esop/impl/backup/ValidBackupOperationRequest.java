@@ -71,7 +71,7 @@ public @interface ValidBackupOperationRequest {
             try {
                 DatabaseEntities.validateForRequest(value.entities);
             } catch (final Exception ex) {
-                context.buildConstraintViolationWithTemplate(ex.getMessage());
+                context.buildConstraintViolationWithTemplate(ex.getMessage()).addConstraintViolation();
                 return false;
             }
 

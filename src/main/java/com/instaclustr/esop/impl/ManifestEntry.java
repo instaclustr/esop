@@ -20,7 +20,8 @@ public class ManifestEntry implements Cloneable {
     public enum Type {
         FILE,
         MANIFEST_FILE,
-        CQL_SCHEMA
+        CQL_SCHEMA,
+        COMMIT_LOG
     }
 
     private static final class ObjectKeySerializer extends JsonSerializer<Path> {
@@ -41,20 +42,24 @@ public class ManifestEntry implements Cloneable {
 
     public Type type;
 
+    public String hash;
+
     @JsonIgnore
     public KeyspaceTable keyspaceTable;
 
     public ManifestEntry(final Path objectKey,
                          final Path localFile,
-                         final Type type) {
-        this(objectKey, localFile, type, null);
+                         final Type type,
+                         final String hash) {
+        this(objectKey, localFile, type, hash, null);
     }
 
     public ManifestEntry(final Path objectKey,
                          final Path localFile,
                          final Type type,
+                         final String hash,
                          final KeyspaceTable keyspaceTable) {
-        this(objectKey, localFile, type, 0, keyspaceTable);
+        this(objectKey, localFile, type, 0, keyspaceTable, hash);
     }
 
     @JsonCreator
@@ -62,11 +67,13 @@ public class ManifestEntry implements Cloneable {
                          @JsonProperty("localFile") final Path localFile,
                          @JsonProperty("type") final Type type,
                          @JsonProperty("size") final long size,
-                         @JsonProperty("keyspaceTable") final KeyspaceTable keyspaceTable) {
+                         @JsonProperty("keyspaceTable") final KeyspaceTable keyspaceTable,
+                         @JsonProperty("hash") final String hash) {
         this.objectKey = objectKey;
         this.localFile = localFile;
         this.type = type;
         this.keyspaceTable = keyspaceTable;
+        this.hash = hash;
 
         try {
             if (size == 0) {
@@ -89,6 +96,7 @@ public class ManifestEntry implements Cloneable {
             .add("keyspaceTable", keyspaceTable)
             .add("type", type)
             .add("size", size)
+            .add("hash", hash)
             .toString();
     }
 
@@ -104,13 +112,14 @@ public class ManifestEntry implements Cloneable {
         return size == that.size &&
             Objects.equal(objectKey, that.objectKey) &&
             Objects.equal(localFile, that.localFile) &&
+            Objects.equal(hash, that.hash) &&
             type == that.type &&
             Objects.equal(keyspaceTable, that.keyspaceTable);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(objectKey, localFile, type, keyspaceTable);
+        return Objects.hashCode(objectKey, localFile, type, keyspaceTable, hash);
     }
 
     @Override
@@ -119,6 +128,7 @@ public class ManifestEntry implements Cloneable {
                                  this.localFile == null ? null : Paths.get(this.localFile.toString()),
                                  this.type,
                                  this.size,
-                                 this.keyspaceTable == null ? null : this.keyspaceTable.clone());
+                                 this.keyspaceTable == null ? null : this.keyspaceTable.clone(),
+                                 this.hash);
     }
 }

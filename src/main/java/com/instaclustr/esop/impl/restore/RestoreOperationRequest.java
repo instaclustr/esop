@@ -29,6 +29,7 @@ import com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType;
 import com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseTypeConverter;
 import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType;
 import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyTypeConverter;
+import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.jackson.PathSerializer;
 import com.instaclustr.picocli.typeconverter.PathTypeConverter;
@@ -80,8 +81,9 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
 
     @Option(names = {"--restoration-strategy-type"},
         description = "Strategy type to use, either IN_PLACE, IMPORT or HARDLINKS",
-        converter = RestorationStrategyTypeConverter.class)
-    public RestorationStrategyType restorationStrategyType = RestorationStrategyType.IN_PLACE;
+        converter = RestorationStrategyTypeConverter.class,
+        required = true)
+    public RestorationStrategyType restorationStrategyType;
 
     @Option(names = {"--restoration-phase-type"},
         description = "Restoration phase a particular restoration strategy is in during this request invocation, a must to specify upon IMPORT or HARDLINKS strategy",
@@ -181,8 +183,9 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonProperty("newCluster") final boolean newCluster,
                                    @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
                                    @JsonProperty("proxySettings") final ProxySettings proxySettings,
-                                   @JsonProperty("rename") final Map<String, String> rename) {
-        super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings);
+                                   @JsonProperty("rename") final Map<String, String> rename,
+                                   @JsonProperty("retry") final RetrySpec retry) {
+        super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
         this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/")) ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
         this.restoreSystemKeyspace = restoreSystemKeyspace;
@@ -234,6 +237,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             .add("proxySettings", proxySettings)
             .add("cassandraVersion", cassandraVersion)
             .add("rename", rename)
+            .add("retry", retry)
             .toString();
     }
 }

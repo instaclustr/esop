@@ -4,6 +4,7 @@ import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.FAILED;
 import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.FINISHED;
 import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.RUNNING;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -13,7 +14,11 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.inject.Inject;
 import com.instaclustr.esop.impl.AbstractTracker;
 import com.instaclustr.esop.impl.ManifestEntry;
+import com.instaclustr.esop.impl.ManifestEntry.Type;
 import com.instaclustr.esop.impl.RemoteObjectReference;
+import com.instaclustr.esop.impl.hash.HashService.HashVerificationException;
+import com.instaclustr.esop.impl.hash.HashServiceImpl;
+import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.restore.DownloadTracker.DownloadSession;
 import com.instaclustr.esop.impl.restore.DownloadTracker.DownloadUnit;
 import com.instaclustr.esop.impl.restore.RestoreModules.DownloadingFinisher;
@@ -28,16 +33,18 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
 
     @Inject
     public DownloadTracker(final @DownloadingFinisher ListeningExecutorService finisherExecutorService,
-                           final OperationsService operationsService) {
-        super(finisherExecutorService, operationsService);
+                           final OperationsService operationsService,
+                           final HashSpec hashSpec) {
+        super(finisherExecutorService, operationsService, hashSpec);
     }
 
     @Override
     public DownloadUnit constructUnitToSubmit(final Restorer restorer,
                                               final ManifestEntry manifestEntry,
                                               final AtomicBoolean shouldCancel,
-                                              final String snapshotTag) {
-        return new DownloadUnit(restorer, manifestEntry, shouldCancel, snapshotTag);
+                                              final String snapshotTag,
+                                              final HashSpec hashSpec) {
+        return new DownloadUnit(restorer, manifestEntry, shouldCancel, snapshotTag, hashSpec);
     }
 
     @Override
@@ -70,8 +77,9 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
         public DownloadUnit(final Restorer restorer,
                             final ManifestEntry manifestEntry,
                             final AtomicBoolean shouldCancel,
-                            final String snapshotTag) {
-            super(manifestEntry, shouldCancel);
+                            final String snapshotTag,
+                            final HashSpec hashSpec) {
+            super(manifestEntry, shouldCancel, hashSpec);
             this.restorer = restorer;
             super.snapshotTag = snapshotTag;
         }
@@ -85,26 +93,49 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
             try {
                 remoteObjectReference = restorer.objectKeyToNodeAwareRemoteReference(manifestEntry.objectKey);
 
-                logger.info(String.format("Downloading file %s to %s.", remoteObjectReference.getObjectKey(), manifestEntry.localFile));
-
                 Path localPath = manifestEntry.localFile;
 
                 if (remoteObjectReference.canonicalPath.endsWith("-schema.cql")) {
                     localPath = manifestEntry.localFile.getParent().resolve("schema.cql");
                 }
 
-                restorer.downloadFile(localPath, remoteObjectReference);
+                if (!Files.exists(localPath)) {
+                    logger.info(String.format("Downloading file %s to %s.", remoteObjectReference.getObjectKey(), manifestEntry.localFile));
 
-                logger.info(String.format("Successfully downloaded file %s to %s.", remoteObjectReference.getObjectKey(), localPath));
+                    restorer.downloadFile(localPath, remoteObjectReference);
 
-                state = FINISHED;
+                    // hash upon downloading
+                    try {
+                        if (manifestEntry.type == Type.FILE) {
+                            new HashServiceImpl(hashSpec).verify(localPath, manifestEntry.hash);
+                        }
+                    } catch (final HashVerificationException ex) {
+                        // delete it if has is wrong so on the next try, it will be missing and we will download it again
+                        Files.deleteIfExists(localPath);
+                        throw ex;
+                    }
 
-                return null;
+                    logger.info(String.format("Successfully downloaded file %s to %s.", remoteObjectReference.getObjectKey(), localPath));
+
+                    state = FINISHED;
+
+                    return null;
+                } else if (manifestEntry.hash != null) {
+                    logger.info(String.format("Skipping download of file %s to %s, file already exists locally.",
+                                              remoteObjectReference.getObjectKey(), manifestEntry.localFile));
+                    // if it exists, verify its hash to be sure it was not altered
+                    new HashServiceImpl(hashSpec).verify(localPath, manifestEntry.hash);
+                    state = FINISHED;
+                } else {
+                    // if it exists and manifest does not have hash field, consider it to be finished without any check
+                    state = FINISHED;
+                }
             } catch (final Throwable t) {
                 if (remoteObjectReference != null) {
-                    logger.error(String.format("Failed to download file %s.", remoteObjectReference.getObjectKey()), t);
+                    logger.error(String.format("Failed to process the downloading of file %s: %s", manifestEntry.localFile, t.getMessage()));
                 }
 
+                throwable = t;
                 state = FAILED;
             }
 

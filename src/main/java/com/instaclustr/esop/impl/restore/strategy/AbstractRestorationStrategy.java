@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Provider;
 import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.guice.BucketServiceFactory;
+import com.instaclustr.esop.impl.hash.HashService;
 import com.instaclustr.esop.impl.restore.DownloadTracker;
 import com.instaclustr.esop.impl.restore.RestorationPhase;
 import com.instaclustr.esop.impl.restore.RestorationPhase.ClusterHealthCheckPhase;
@@ -33,17 +34,20 @@ public abstract class AbstractRestorationStrategy implements RestorationStrategy
     protected final ObjectMapper objectMapper;
     protected final DownloadTracker downloadTracker;
     protected final Map<String, BucketServiceFactory> bucketServiceFactoryMap;
+    protected final HashService hashService;
 
     public AbstractRestorationStrategy(final CassandraJMXService cassandraJMXService,
                                        final Provider<CassandraVersion> cassandraVersion,
                                        final ObjectMapper objectMapper,
                                        final DownloadTracker downloadTracker,
-                                       final Map<String, BucketServiceFactory> bucketServiceFactoryMap) {
+                                       final Map<String, BucketServiceFactory> bucketServiceFactoryMap,
+                                       final HashService hashService) {
         this.cassandraJMXService = cassandraJMXService;
         this.cassandraVersion = cassandraVersion;
         this.objectMapper = objectMapper;
         this.downloadTracker = downloadTracker;
         this.bucketServiceFactoryMap = bucketServiceFactoryMap;
+        this.hashService = hashService;
     }
 
     public abstract RestorationPhase resolveRestorationPhase(Operation<RestoreOperationRequest> operation, Restorer restorer);
@@ -65,6 +69,7 @@ public abstract class AbstractRestorationStrategy implements RestorationStrategy
         ctxt.phaseType = phaseType;
         ctxt.downloadTracker = downloadTracker;
         ctxt.bucketServiceFactoryMap = bucketServiceFactoryMap;
+        ctxt.hashService = hashService;
 
         if (phaseType == DOWNLOAD || phaseType == TRUNCATE || phaseType == IMPORT) {
             ctxt.cassandraVersion = cassandraVersion.get();

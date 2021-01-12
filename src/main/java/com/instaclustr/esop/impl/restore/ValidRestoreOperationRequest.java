@@ -1,5 +1,9 @@
 package com.instaclustr.esop.impl.restore;
 
+import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.HARDLINKS;
+import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.IMPORT;
+import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.IN_PLACE;
+import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.UNKNOWN;
 import static java.lang.String.format;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE;
@@ -16,7 +20,6 @@ import java.nio.file.Files;
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.RenamedEntities;
 import com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType;
-import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType;
 import com.instaclustr.kubernetes.KubernetesHelper;
 
 @Target({TYPE, PARAMETER})
@@ -39,21 +42,32 @@ public @interface ValidRestoreOperationRequest {
 
             context.disableDefaultConstraintViolation();
 
-            if (value.restorationStrategyType == RestorationStrategyType.UNKNOWN) {
+            if (value.restorationPhase == null) {
+                value.restorationPhase = RestorationPhaseType.UNKNOWN;
+            }
+
+            if (value.restorationStrategyType == UNKNOWN) {
                 context.buildConstraintViolationWithTemplate("restorationStrategyType is not recognized").addConstraintViolation();
                 return false;
             }
 
-            if (value.restorationStrategyType != RestorationStrategyType.IN_PLACE) {
+            if (value.restorationStrategyType != IN_PLACE) {
                 if (value.restorationPhase == RestorationPhaseType.UNKNOWN) {
-                    context.buildConstraintViolationWithTemplate("restorationPhase is not recognized").addConstraintViolation();
+                    context.buildConstraintViolationWithTemplate("restorationPhase is not recognized, it has to be set when you use IMPORT or HARDLINKS strategy type").addConstraintViolation();
                     return false;
                 }
             }
 
-            if (value.restorationStrategyType == RestorationStrategyType.IMPORT) {
+            if (value.restorationStrategyType == IN_PLACE && value.restorationPhase != RestorationPhaseType.UNKNOWN) {
+                context.buildConstraintViolationWithTemplate(format("you can not set restorationPhase %s when your restorationStrategyType is IN_PLACE",
+                                                                    value.restorationPhase)).addConstraintViolation();
+                return false;
+            }
+
+            if (value.restorationStrategyType == IMPORT || value.restorationStrategyType == HARDLINKS) {
                 if (value.importing == null) {
-                    context.buildConstraintViolationWithTemplate("you can not specify IMPORT restorationStrategyType and have 'import' field empty!");
+                    context.buildConstraintViolationWithTemplate(format("you can not specify %s restorationStrategyType and have 'import' field empty!",
+                                                                        value.restorationStrategyType));
                     return false;
                 }
             }
@@ -87,7 +101,7 @@ public @interface ValidRestoreOperationRequest {
             try {
                 DatabaseEntities.validateForRequest(value.entities);
             } catch (final Exception ex) {
-                context.buildConstraintViolationWithTemplate(ex.getMessage());
+                context.buildConstraintViolationWithTemplate(ex.getMessage()).addConstraintViolation();
                 return false;
             }
 
@@ -98,8 +112,8 @@ public @interface ValidRestoreOperationRequest {
                 return false;
             }
 
-            if (value.rename != null && !value.rename.isEmpty() && value.restorationStrategyType == RestorationStrategyType.IN_PLACE) {
-                context.buildConstraintViolationWithTemplate("rename field can not be used for in-place strategy, only for import or hardlinks");
+            if (value.rename != null && !value.rename.isEmpty() && value.restorationStrategyType == IN_PLACE) {
+                context.buildConstraintViolationWithTemplate("rename field can not be used for in-place strategy, only for import or hardlinks").addConstraintViolation();
                 return false;
             }
 

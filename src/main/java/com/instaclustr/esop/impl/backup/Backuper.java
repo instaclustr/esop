@@ -4,14 +4,18 @@ import java.io.InputStream;
 
 import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.StorageInteractor;
+import com.instaclustr.esop.impl.retry.Retrier;
+import com.instaclustr.esop.impl.retry.RetrierFactory;
 
 public abstract class Backuper extends StorageInteractor {
 
     protected final BaseBackupOperationRequest request;
+    protected final Retrier retrier;
 
     protected Backuper(final BaseBackupOperationRequest request) {
         super(request.storageLocation);
         this.request = request;
+        this.retrier = RetrierFactory.getRetrier(request.retry);
     }
 
     public enum FreshenResult {

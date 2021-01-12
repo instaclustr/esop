@@ -10,6 +10,7 @@ import com.instaclustr.esop.impl.StorageLocation.StorageLocationDeserializer;
 import com.instaclustr.esop.impl.StorageLocation.StorageLocationSerializer;
 import com.instaclustr.esop.impl.StorageLocation.StorageLocationTypeConverter;
 import com.instaclustr.esop.impl.StorageLocation.ValidStorageLocation;
+import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.kubernetes.KubernetesSecretsReader;
 import com.instaclustr.operations.OperationRequest;
 import org.slf4j.Logger;
@@ -59,6 +60,10 @@ public abstract class AbstractOperationRequest extends OperationRequest {
     @JsonProperty("proxySettings")
     public ProxySettings proxySettings;
 
+    @Mixin
+    @JsonProperty("retry")
+    public RetrySpec retry = new RetrySpec();
+
     public AbstractOperationRequest() {
         // for picocli
     }
@@ -68,13 +73,15 @@ public abstract class AbstractOperationRequest extends OperationRequest {
                                     final String k8sSecretName,
                                     final boolean insecure,
                                     final boolean skipBucketVerification,
-                                    final ProxySettings proxySettings) {
+                                    final ProxySettings proxySettings,
+                                    final RetrySpec retry) {
         this.storageLocation = storageLocation;
         this.k8sNamespace = k8sNamespace;
         this.k8sSecretName = k8sSecretName;
         this.insecure = insecure;
         this.skipBucketVerification = skipBucketVerification;
         this.proxySettings = proxySettings;
+        this.retry = retry == null ? new RetrySpec() : retry;
     }
 
     @JsonIgnore

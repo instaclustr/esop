@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.instaclustr.esop.impl.AbstractOperationRequest;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
+import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.jackson.PathSerializer;
 import com.instaclustr.measure.DataRate;
@@ -81,8 +82,9 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
                                       final boolean insecure,
                                       final boolean createMissingBucket,
                                       final boolean skipBucketVerification,
-                                      final ProxySettings proxySettings) {
-        super(storageLocation, k8sNamespace, k8sBackupSecretName, insecure, skipBucketVerification, proxySettings);
+                                      final ProxySettings proxySettings,
+                                      final RetrySpec retrySpec) {
+        super(storageLocation, k8sNamespace, k8sBackupSecretName, insecure, skipBucketVerification, proxySettings, retrySpec);
         this.storageLocation = storageLocation;
         this.duration = duration;
         this.bandwidth = bandwidth;

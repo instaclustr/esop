@@ -1,5 +1,6 @@
 package com.instaclustr.esop.impl;
 
+import static com.instaclustr.esop.impl.ManifestEntry.Type.MANIFEST_FILE;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
@@ -177,8 +178,11 @@ public class Manifest implements Cloneable {
         return Objects.hashCode(snapshot, manifest, tokens, schemaVersion);
     }
 
-    public static ManifestEntry getManifestAsManifestEntry(final Path localManifestPath) throws Exception {
-        return new ManifestEntry(Paths.get("manifests").resolve(localManifestPath.getFileName()), localManifestPath, ManifestEntry.Type.MANIFEST_FILE);
+    public static ManifestEntry getManifestAsManifestEntry(final Path localManifestPath) {
+        return new ManifestEntry(Paths.get("manifests").resolve(localManifestPath.getFileName()),
+                                 localManifestPath,
+                                 MANIFEST_FILE,
+                                 null);
     }
 
     public static void write(final Manifest manifest, final Path localManifestPath, final ObjectMapper objectMapper) throws Exception {
@@ -287,7 +291,7 @@ public class Manifest implements Cloneable {
                 final Optional<Keyspace> keyspace = snapshot.getKeyspace(entry.getKey());
 
                 if (!keyspace.isPresent()) {
-                    continue;
+                    throw new IllegalStateException(format("Keyspace %s is not in manifest!", entry.getKey()));
                 }
 
                 if (filterSystemKeyspace(entry.getKey(), restoreSystemKeyspace, newCluster)) {
@@ -296,6 +300,10 @@ public class Manifest implements Cloneable {
 
                 final Optional<Table> table = keyspace.get().getTable(entry.getValue());
 
+                if (!table.isPresent()) {
+                    throw new IllegalStateException(format("Table %s.%s is not in manifest!", entry.getKey(), entry.getValue()));
+                }
+
                 table.ifPresent(value -> manifestEntries.addAll(value.getEntries()));
             }
         } else {
@@ -303,7 +311,7 @@ public class Manifest implements Cloneable {
                 final Optional<Keyspace> keyspace = snapshot.getKeyspace(ks);
 
                 if (!keyspace.isPresent()) {
-                    continue;
+                    throw new IllegalStateException(format("Keyspace %s is not in manifest!", ks));
                 }
 
                 if (filterSystemKeyspace(ks, restoreSystemKeyspace, newCluster)) {

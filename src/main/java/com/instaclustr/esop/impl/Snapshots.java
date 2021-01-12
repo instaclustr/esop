@@ -6,7 +6,6 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,8 +32,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.HashMultimap;
 import com.instaclustr.esop.impl.ManifestEntry.Type;
 import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace.Table;
+import com.instaclustr.esop.impl.hash.HashSpec;
 
 public class Snapshots implements Cloneable {
+
+    public static HashSpec hashSpec;
 
     private final Map<String, Snapshot> snapshots = new HashMap<>();
 
@@ -207,7 +209,7 @@ public class Snapshots implements Cloneable {
             return keyspaces.entrySet().stream().flatMap(keyspace -> keyspace.getValue().getManifestEntries().stream()).collect(toList());
         }
 
-        public static Snapshot parse(final String snapshotName, final List<Path> snapshotPaths) throws IOException {
+        public static Snapshot parse(final String snapshotName, final List<Path> snapshotPaths) throws Exception {
 
             final Snapshot snapshot = new Snapshot();
             snapshot.setName(snapshotName);
@@ -343,7 +345,7 @@ public class Snapshots implements Cloneable {
                 }
             }
 
-            public static Keyspace parse(final String keyspace, List<Path> snapshotPaths) throws IOException {
+            public static Keyspace parse(final String keyspace, List<Path> snapshotPaths) throws Exception {
                 final Map<String, List<Path>> tableSnapshotPaths = snapshotPaths.stream().collect(groupingBy(p -> p.getParent().getParent().getFileName().toString()));
 
                 final Map<String, Table> tables = new HashMap<>();
@@ -499,8 +501,7 @@ public class Snapshots implements Cloneable {
                     this.id = id;
                 }
 
-                public static Table parse(final String keyspace, final String table, final List<Path> value) throws IOException {
-
+                public static Table parse(final String keyspace, final String table, final List<Path> value) throws Exception {
                     final Table tb = new Table();
 
                     final Matcher matcher = TABLE_PATTERN.matcher(table);
@@ -515,14 +516,17 @@ public class Snapshots implements Cloneable {
                     final Path tablePath = Paths.get("data").resolve(Paths.get(keyspace, table));
 
                     for (final Path path : value) {
-                        tb.entries.addAll(SSTableUtils.ssTableManifest(path, tablePath).collect(toList()));
+                        tb.entries.addAll(SSTableUtils.ssTableManifest(path, tablePath, Snapshots.hashSpec).collect(toList()));
                     }
 
                     final Optional<Path> schemaPath = value.stream().map(p -> p.resolve("schema.cql")).filter(Files::exists).findFirst();
 
                     if (schemaPath.isPresent()) {
                         final Path schema = schemaPath.get();
-                        tb.schema = new ManifestEntry(tablePath.resolve("schema.cql"), schema, Type.CQL_SCHEMA);
+                        tb.schema = new ManifestEntry(tablePath.resolve("schema.cql"),
+                                                      schema,
+                                                      Type.CQL_SCHEMA,
+                                                      null);
                         tb.schemaContent = new String(Files.readAllBytes(schemaPath.get()));
                         tb.entries.add(tb.schema);
                     }
@@ -656,7 +660,11 @@ public class Snapshots implements Cloneable {
         }
     }
 
-    public static Snapshots parse(final Path cassandraDir) throws IOException {
+    public static Snapshots parse(final Path cassandraDir) throws Exception {
+
+        if (Snapshots.hashSpec == null) {
+            Snapshots.hashSpec = new HashSpec();
+        }
 
         final Snapshots snapshots = new Snapshots();
 

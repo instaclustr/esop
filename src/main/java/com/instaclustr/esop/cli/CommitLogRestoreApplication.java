@@ -8,6 +8,7 @@ import static java.util.Collections.singletonList;
 import static org.awaitility.Awaitility.await;
 
 import com.google.inject.Inject;
+import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreModules.RestoreCommitlogModule;
 import com.instaclustr.operations.Operation;
@@ -33,6 +34,9 @@ public class CommitLogRestoreApplication implements Runnable {
     private CommandSpec spec;
 
     @Mixin
+    private HashSpec hashSpec;
+
+    @Mixin
     private RestoreCommitLogsOperationRequest request;
 
     @Inject
@@ -46,7 +50,7 @@ public class CommitLogRestoreApplication implements Runnable {
     public void run() {
         logCommandVersionInformation(spec);
 
-        Esop.init(this, null, request, logger, singletonList(new RestoreCommitlogModule()));
+        Esop.init(this, null, hashSpec, request, logger, singletonList(new RestoreCommitlogModule()));
 
         final Operation<?> operation = operationsService.submitOperationRequest(request);
 

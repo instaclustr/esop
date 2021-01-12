@@ -959,6 +959,31 @@ From Icarus point of view, you need to add a map under "rename" field:
 }
 ----
 
+### Retry of upload / download operations
+
+Imagine there is a restore happening which is downloading 100 GB of data and your connectivity
+to the Internet is disrupted when it is almost done, on 80%. If you restart whole restoration
+process, you do not want to download all 80 GB again. Hence, we want that if a restore is stopped
+in the middle, it will not start from scratch next time we run it and it will download what is necessary.
+
+As a result of these errors, a file might be corrupted, it may be incomplete on the disk
+so its loading or hard linking into Cassandra would fail. To be sure that data are not corrupted,
+there is a hash (sha512) of that file made and it is uploaded as part of the manifest. Upon restore,
+if that file already exists locally, it computes the has and it compares it withe the one in the manifest
+and they have to match. If they do not match, such corrupted file is deleted and whole operation
+as such (download phase in case of import or hardlinks strategy) fails. On the next restore attempt,
+it will skip files which are in download directory already present and donwloads ony missing ones,
+computing their hashes etc ...
+
+On backup path, if a communication error happens, this is also detected and operation fails
+as such but some files might be already uploaded. On next upload, Esop checks if such file
+is already present remotely and it will skip it from uploading if it does.
+
+If upload of a file fails, Esop can _retry_. The mechanism how this happens is controlled by
+the family of "--retry-*" switches on the command line. In a nutshell, your retry might be
+exponential or linear. The exponential retry will execute the same operation (e.g. uploading of a file)
+every time exponentially it terms of the pause between retries. Linear retry has the retry period constant.
+
 ### Explanation of Global Requests
 
 It looks like the phases are an unnecessary hassle to go through, but the granularity is required in case we are

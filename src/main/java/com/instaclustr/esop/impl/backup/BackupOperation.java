@@ -20,6 +20,7 @@ import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesDeserializer;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesSerializer;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
+import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.measure.DataRate;
 import com.instaclustr.measure.Time;
 import com.instaclustr.operations.Operation;
@@ -84,7 +85,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
                             @JsonProperty("schemaVersion") final String schemaVersion,
                             @JsonProperty("uploadClusterTopology") final boolean uploadClusterTopology,
-                            @JsonProperty("proxySettings") final ProxySettings proxySettings) {
+                            @JsonProperty("proxySettings") final ProxySettings proxySettings,
+                            @JsonProperty("retry") final RetrySpec retry) {
         super(type, id, creationTime, state, errors, progress, startTime, new BackupOperationRequest(type,
                                                                                                      storageLocation,
                                                                                                      duration,
@@ -104,7 +106,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                                                                                                      skipBucketVerification,
                                                                                                      schemaVersion,
                                                                                                      uploadClusterTopology,
-                                                                                                     proxySettings));
+                                                                                                     proxySettings,
+                                                                                                     retry));
         coordinator = null;
     }
 

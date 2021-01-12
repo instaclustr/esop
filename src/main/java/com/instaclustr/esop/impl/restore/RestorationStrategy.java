@@ -22,10 +22,6 @@ public interface RestorationStrategy {
      */
     void restore(Restorer restorer, Operation<RestoreOperationRequest> operation) throws Exception;
 
-    default void isEligibleToRun() throws Exception {
-
-    }
-
     RestorationStrategyType getStrategyType();
 
     enum RestorationStrategyType {

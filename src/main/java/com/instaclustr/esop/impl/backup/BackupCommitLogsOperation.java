@@ -1,6 +1,6 @@
 package com.instaclustr.esop.impl.backup;
 
-import static com.instaclustr.esop.impl.ManifestEntry.Type.FILE;
+import static com.instaclustr.esop.impl.ManifestEntry.Type.COMMIT_LOG;
 
 import java.net.InetAddress;
 import java.nio.file.DirectoryStream;
@@ -83,10 +83,10 @@ public class BackupCommitLogsOperation extends Operation<BackupCommitLogsOperati
 
                 final Path bucketKey = CASSANDRA_COMMITLOG.resolve(commitLog.getFileName().toString() + "." + commitLogLastModified);
 
-                manifestEntries.add(new ManifestEntry(bucketKey, commitLog, FILE));
+                manifestEntries.add(new ManifestEntry(bucketKey, commitLog, COMMIT_LOG, null));
             }
 
-            logger.debug("{} files in manifest for commitlog backup.", manifestEntries.size());
+            logger.info("{} files in manifest for commitlog backup.", manifestEntries.size());
 
             Session<UploadUnit> uploadSession = null;
 

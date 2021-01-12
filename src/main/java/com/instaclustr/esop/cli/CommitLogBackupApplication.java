@@ -10,6 +10,7 @@ import static org.awaitility.Awaitility.await;
 import com.google.inject.Inject;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupModules.CommitlogBackupModule;
+import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
 import com.instaclustr.picocli.CassandraJMXSpec;
@@ -37,6 +38,9 @@ public class CommitLogBackupApplication implements Runnable {
     private CassandraJMXSpec jmxSpec;
 
     @Mixin
+    private HashSpec hashSpec;
+
+    @Mixin
     private BackupCommitLogsOperationRequest request;
 
     @Inject
@@ -50,7 +54,7 @@ public class CommitLogBackupApplication implements Runnable {
     public void run() {
         logCommandVersionInformation(spec);
 
-        Esop.init(this, jmxSpec, request, logger, singletonList(new CommitlogBackupModule()));
+        Esop.init(this, jmxSpec, hashSpec, request, logger, singletonList(new CommitlogBackupModule()));
 
         final Operation<?> operation = operationsService.submitOperationRequest(request);
 

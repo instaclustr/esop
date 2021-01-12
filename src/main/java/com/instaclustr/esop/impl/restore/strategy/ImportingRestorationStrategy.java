@@ -14,6 +14,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.guice.BucketServiceFactory;
+import com.instaclustr.esop.impl.hash.HashService;
 import com.instaclustr.esop.impl.restore.DownloadTracker;
 import com.instaclustr.esop.impl.restore.RestorationPhase;
 import com.instaclustr.esop.impl.restore.RestorationPhase.CleaningPhase;
@@ -47,18 +48,9 @@ public class ImportingRestorationStrategy extends AbstractRestorationStrategy {
                                         final Provider<CassandraVersion> cassandraVersion,
                                         final ObjectMapper objectMapper,
                                         final DownloadTracker downloadTracker,
-                                        final Map<String, BucketServiceFactory> bucketServiceFactoryMap) {
-        super(cassandraJMXService, cassandraVersion, objectMapper, downloadTracker, bucketServiceFactoryMap);
-    }
-
-    @Override
-    public void isEligibleToRun() {
-        final CassandraVersion cassandraVersion = this.cassandraVersion.get();
-
-        if (!CassandraVersion.isFour(this.cassandraVersion.get())) {
-            throw new IllegalStateException("This type of restoration strategy can be used only against Cassandra 4. " +
-                                                "You are running this restoration against " + cassandraVersion.toString());
-        }
+                                        final Map<String, BucketServiceFactory> bucketServiceFactoryMap,
+                                        final HashService hashService) {
+        super(cassandraJMXService, cassandraVersion, objectMapper, downloadTracker, bucketServiceFactoryMap, hashService);
     }
 
     @Override
@@ -91,7 +83,7 @@ public class ImportingRestorationStrategy extends AbstractRestorationStrategy {
                 return new CleaningPhase(ctxt);
             }
         } catch (final Exception ex) {
-            throw new IllegalStateException(format("Unable to initialise phase %s", phaseType.toValue()));
+            throw new IllegalStateException(format("Unable to initialise phase %s", phaseType.toValue()), ex);
         }
 
         throw new IllegalStateException(format("Unable to resolve phase for phase type %s for %s.",
