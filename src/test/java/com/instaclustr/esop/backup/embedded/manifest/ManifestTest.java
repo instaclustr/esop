@@ -367,7 +367,7 @@ public class ManifestTest {
 
         EmbeddedCassandraFactory cassandraFactory = new EmbeddedCassandraFactory();
         cassandraFactory.setWorkingDirectory(cassandraDir);
-        cassandraFactory.setArtifact(Artifact.ofVersion(Version.of("4.0-beta3")));
+        cassandraFactory.setArtifact(Artifact.ofVersion(Version.of("4.0-beta4")));
         cassandraFactory.getJvmOptions().add("-Xmx2g");
         cassandraFactory.getJvmOptions().add("-Xms2g");
 
