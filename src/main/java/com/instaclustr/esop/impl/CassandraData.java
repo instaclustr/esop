@@ -18,8 +18,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 import com.instaclustr.esop.impl.RenamedEntities.Renamed;
 
 public class CassandraData {
@@ -270,54 +268,66 @@ public class CassandraData {
         this.databaseEntities = entities;
     }
 
-    /**
-     * We need to truncate tables in database entities but not these which acts as "from" in renamed entities
-     *
-     * If we have ks1.tb1 in db entities and there is ks1.tb1=ks1.tb2 in renamed entities, we actually do not touch ks1.tb1 at all,
-     * we will download data for ks1.tb1, we do NOT truncate ks1.tb1 (but we have to truncate ks1.tb2), we clean truncated data after import for
-     * ks1.tb2.
-     *
-     * Lastly, we will filter out all system-related keyspaces and tables from truncation.
-     * @param manifest
-     */
-    public DatabaseEntities getDatabaseEntitiesToProcessForRestore(final Manifest manifest) {
-        // this already does not contain system entities
-        // and it contains both keyspaces and keyspaceTables
-        final DatabaseEntities dbEntitiesView = toDatabaseEntities();
 
-        final DatabaseEntities entities = new DatabaseEntities(dbEntitiesView);
-
-        if (!this.databaseEntities.getKeyspaces().isEmpty()) {
-            // remove all other keyspaces except ones we provided via --entities
-            entities.retainAll(this.databaseEntities.getKeyspaces());
+     // --entities="" --rename=whatever non empty  -> invalid
+     // --entities=ks1 --rename=whatever non empty -> invalid
+     // --entities=ks1.tb1 --rename=ks1.tb2=ks1.tb2 -> invalid as "from" is not in entities
+     // --entities=ks1.tb1 --rename=ks1.tb2=ks1.tb1 -> invalid as "to" is in entities (and from is not in entities)
+     // --entities=ks1.tb1 --rename=ks1.tb1=ks1.tb2 -> truncate ks1.tb2 and process just ks1.tb2, k1.tb1 is not touched
+    public void validate() {
+        // --entities="" --rename=whatever non empty  -> invalid
+        if (databaseEntities.areEmpty() && !renamedEntities.areEmpty()) {
+            throw new IllegalStateException("database entities are empty but renamed entities are not");
         }
 
-        if (!this.databaseEntities.getKeyspacesAndTables().isEmpty()) {
-            entities.retainAll(this.databaseEntities.getKeyspacesAndTables());
+        // --entities=ks1 --rename=whatever non empty -> invalid
+        if (databaseEntities.keyspacesOnly() && !renamedEntities.areEmpty()) {
+            throw new IllegalStateException("you can not use keyspace entities in connection with rename entities");
         }
 
-        // remove from dbEntitiesView these which are in "from" in renamed and return,
-        // it does not make sense to truncate table we are going to restore
-        // under a different name, just keep it untouched
-        renamedEntities.getRenamed().forEach(renamed -> entities.remove(renamed.from.fromKeyspace, renamed.from.fromTable));
-        renamedEntities.getRenamed().forEach(renamed -> entities.add(renamed.to.toKeyspace, renamed.to.toTable));
+        if (databaseEntities.tableSubsetOnly() && !renamedEntities.areEmpty()) {
 
-        // remove from entities to truncate these which are not in manifest
-        // because if we truncated it, we would not have any data to restore from
-
-        final Multimap<String, String> missingEntitiesInManifest = HashMultimap.create();
-
-        entities.getKeyspacesAndTables().entries().forEach(entry -> {
-            if (!manifest.getSnapshot().containsTable(entry.getKey(), entry.getValue())) {
-                missingEntitiesInManifest.put(entry.getKey(), entry.getValue());
+            for (Renamed renamed : renamedEntities.getRenamed()) {
+                // --entities=ks1.tb1 --rename=ks1.tb2=ks1.tb2 -> invalid as "from" is not in entities
+                if (!databaseEntities.contains(renamed.from.fromKeyspace, renamed.from.fromTable)) {
+                    throw new IllegalStateException(String.format("%s.%s from renamed entity's 'from' part (%s) is not in database entities %s",
+                                                                  renamed.from.fromKeyspace,
+                                                                  renamed.from.fromTable,
+                                                                  renamed.toString(),
+                                                                  databaseEntities.toString()));
+                }
+                // --entities=ks1.tb1 --rename=ks1.tb2=ks1.tb1 -> invalid as "to" is in entities (and from is not in entities)
+                if (databaseEntities.contains(renamed.to.toKeyspace, renamed.to.toTable)) {
+                    throw new IllegalStateException(String.format("%s.%s from renamed entity's 'to' part (%s) is in database entities %s",
+                                                                  renamed.to.toKeyspace,
+                                                                  renamed.to.toTable,
+                                                                  renamed.toString(),
+                                                                  databaseEntities.toString()));
+                }
             }
-        });
-
-        for (final Map.Entry<String, String> entry : missingEntitiesInManifest.entries()) {
-            entities.remove(entry.getKey(), entry.getValue());
         }
+    }
 
-        return entities;
+    public DatabaseEntities getDatabaseEntitiesToProcessForRestore() {
+        validate();
+
+        if (this.databaseEntities.keyspacesOnly()) {
+            final DatabaseEntities entities = toDatabaseEntities(false);
+            entities.retainAll(this.databaseEntities.getKeyspaces());
+            return entities;
+        } else {
+            // entities - (rename from) + (rename to)
+            //  --entities=ks1.tb1 --rename=ks1.tb1=ks1.tb2 -> ks1.tb2
+            //  --entities=ks1.tb1,ks2.tb2 --rename=ks1.tb1=ks1.tb3 -> ks2.tb2,ks1.tb3
+            final DatabaseEntities db = new DatabaseEntities(this.databaseEntities);
+            for (Renamed renamed : this.renamedEntities.getRenamed()) {
+                db.remove(renamed.from.fromKeyspace, renamed.from.fromTable);
+            }
+            for (Renamed renamed : this.renamedEntities.getRenamed()) {
+                db.add(renamed.to.toKeyspace, renamed.to.toTable);
+            }
+            return db;
+        }
     }
 
 }

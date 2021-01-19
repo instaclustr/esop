@@ -570,11 +570,12 @@ This strategy works for Cassandra version 3 as well as for Cassandra 4.
 
 #### Importing Strategy
 
-This strategy is similar to hardlinking strategy—the node upon restoration can still run and serve
+This strategy is similar to hardlinking strategy — the node upon restoration can still run and serve
 other requests so a restoration process is not disruptive. _Importing_ means that it will
 import downloaded SSTables via JMX directly so no hardlinks and refresh are necessary. Importing of
 SSTables by calling respecting JMX method was introduced in Cassandra 4 only, so this does not work
-against a node of version 3 or below.
+against a node of version 3 or below. Keep in mind that imported SSTables are physically deleted
+from download directory and moved to live Cassandra data directory.
 
 #### Restoration Phases for Hardlinking and Importing Strategy
 
@@ -597,16 +598,6 @@ In a situation where we are restoring into a cluster of multiple nodes, the trun
 operation should be executed only once against a particular node, as Cassandra will internally
 distribute the truncating operation to all nodes in a cluster. In other words, it is enough to
 truncate at one node only as data from all other nodes will be truncated too.
-
-For importing strategy, the disk space required for a restore is bigger than for hard-linking strategy.
-Let's imagine we have a node with one table which occupies 2GB of disk space. If we want to
-restore from a snapshot having 1GB, after download we occupy 3GB. Then we truncate, but truncating
-is not deleting the old files, it will just move them to `truncated-` directory, so we still occupy 3GB.
-If we create a hard link, it does not occupy any space. But importing will effectively copy data over
-so we occupy 4GB instead of hard-linking's 3GB. Then the cleaning phase kicks in and both are truncated and
-download directories are deleted, so we will end up with 1GB occupied in both cases.
-
-For the reasons mentioned above, it is important to measure/plan the restore capacity-wise as well.
 
 Downloading phase is proceeding all other phases because we want to be sure that we are truncating the data if
 and only if we have all data to restore from. If we truncated all data and download fails, we
@@ -937,15 +928,26 @@ it into table `tb2` in the same keyspace. Hence you need to specify `--rename=ks
 
 `--rename` options is meant to be used along with `--entities`. It is a valid scenario to do this:
 
+These examples show invalid cases for the combination of `--entities` and `--renamed`
+
+----
+--entities="" --rename=whatever non empty  -> invalid
+--entities=ks1 --rename=whatever non empty -> invalid, you can not use only a keyspace in --entities
+--entities=ks1.tb1 --rename=ks1.tb2=ks1.tb2 -> invalid as "from" is not in entities
+--entities=ks1.tb1 --rename=ks1.tb2=ks1.tb1 -> invalid as "to" is in entities (and from is not in entities)
+--entities=ks1.tb1 --rename=ks1.tb1=ks1.tb2 -> truncate ks1.tb2 and process just ks1.tb2, k1.tb1 is not touched
+----
+
+Valid cases:
+
 ----
 --entities=ks1.tb1 --rename=ks1.tb1=ks1.tb2
---entities=ks1 --rename=ks1.tb2=ks1.tb2
---entities=ks1.tb1,ks1.tb2,ks1.tb3 --rename=ks1.tb2=ks1.tb3
+--entities=ks1.tb1,ks2.tb2,ks3.tb4 --rename=ks1.tb1=ks1.tb2,ks2.tb2=ks3.tb3
 ----
 
 * keyspace in "from" entity (ks1.tb1) has to be same in "to" entity (ks1.tb2), in case it differs, it will error out.
 In other words, you can not restore a table across a keyspace.
-* entities in "to" have to be unique across all renaming pairs, "ks1.tb1=ks1.tb2" and "ks1.tb3=ks1.tb2" is invalid
+* entities in "to" have to be unique across all renaming pairs, "ks1.tb1=ks1.tb2,ks1.tb3=ks1.tb2" is invalid
 
 From Icarus point of view, you need to add a map under "rename" field:
 

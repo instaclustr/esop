@@ -11,12 +11,6 @@ import com.instaclustr.esop.impl.SSTableUtils;
 
 public class ManifestEnricher {
 
-    public void enrich(final CassandraData cassandraData,
-                       final Manifest manifest,
-                       final Path localRootPath) {
-        enrich(cassandraData, manifest, localRootPath, false);
-    }
-
     private static class TableName {
 
         public String keyspace;
@@ -28,6 +22,12 @@ public class ManifestEnricher {
             this.table = table;
             this.tableId = tableId;
         }
+    }
+
+    public void enrich(final CassandraData cassandraData,
+                       final Manifest manifest,
+                       final Path localRootPath) {
+        enrich(cassandraData, manifest, localRootPath, false);
     }
 
     private TableName getTableName(final CassandraData data,

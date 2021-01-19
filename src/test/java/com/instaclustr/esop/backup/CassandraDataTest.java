@@ -3,6 +3,7 @@ package com.instaclustr.esop.backup;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -78,7 +79,7 @@ public class CassandraDataTest {
 
         Optional<List<Path>> systemSchemaTablesPaths = parsed.getTablesPaths("system_schema");
         assertTrue(systemSchemaTablesPaths.isPresent());
-        Assert.assertEquals(2, systemSchemaTablesPaths.get().size());
+        assertEquals(2, systemSchemaTablesPaths.get().size());
 
         assertTrue(parsed.containsKeyspace("ks1"));
         assertFalse(parsed.containsKeyspace("asdsad"));
@@ -112,10 +113,10 @@ public class CassandraDataTest {
         // database entities
 
         DatabaseEntities databaseEntities = parsed.toDatabaseEntities(false);
-        Assert.assertFalse(databaseEntities.areEmpty());
+        assertFalse(databaseEntities.areEmpty());
         assertTrue(databaseEntities.getKeyspaces().containsAll(Arrays.asList("ks1", "ks2")));
         databaseEntities.getKeyspacesAndTables().entries().forEach(entry -> {
-            Assert.assertTrue(parsed.getTableId(entry.getKey(), entry.getValue()).isPresent());
+            assertTrue(parsed.getTableId(entry.getKey(), entry.getValue()).isPresent());
         });
 
         assertFalse(databaseEntities.contains("system_schema"));
@@ -139,15 +140,15 @@ public class CassandraDataTest {
     public void testDatabaseEntities() throws Exception {
         CassandraData parsed = new CassandraData(tableIdsMap, paths);
 
-        DatabaseEntities entities = DatabaseEntities.parse("ks1.tb1,kb3.tb3");
+        DatabaseEntities entities = DatabaseEntities.parse("ks1  .tb1  ,  kb3.  tb3");
 
         try {
             parsed.setDatabaseEntitiesFromRequest(entities);
         } catch (Exception ex) {
-            Assert.assertEquals(ex.getMessage(), "Tables [kb3.tb3] to process are not present in Cassandra.");
+            assertEquals(ex.getMessage(), "Tables [kb3.tb3] to process are not present in Cassandra.");
         }
 
-        parsed.setDatabaseEntitiesFromRequest(DatabaseEntities.parse("ks1.tb1"));
+        parsed.setDatabaseEntitiesFromRequest(DatabaseEntities.parse("ks1  .tb1"));
     }
 
     @Test
@@ -156,12 +157,12 @@ public class CassandraDataTest {
 
         try {
             parsed.setRenamedEntitiesFromRequest(new HashMap<String, String>() {{
-                put("ks3.tb4", "ks1.tb2");
+                put("ks3.  tb4", "ks1.  tb2");
             }});
 
             Assert.fail("should fail on non-existing ks3.tb4");
         } catch (Exception ex) {
-            Assert.assertEquals(ex.getMessage(), "There is not keyspace ks3 to rename an entity from!");
+            assertEquals(ex.getMessage(), "There is not keyspace ks3 to rename an entity from!");
         }
 
         try {
@@ -171,27 +172,27 @@ public class CassandraDataTest {
 
             Assert.fail("should fail on non-existing ks1.tb5");
         } catch (Exception ex) {
-            Assert.assertEquals(ex.getMessage(), "There is not table ks1.tb5 to rename an entity from!");
+            assertEquals(ex.getMessage(), "There is not table ks1.tb5 to rename an entity from!");
         }
 
         try {
             parsed.setRenamedEntitiesFromRequest(new HashMap<String, String>() {{
-                put("ks1.tb1", "ks3.tb1");
+                put("ks1.  tb1", "ks3  . tb1");
             }});
 
             Assert.fail("should fail on non-existing ks3.tb1");
         } catch (Exception ex) {
-            Assert.assertEquals(ex.getMessage(), "There is not keyspace ks3 to rename an entity to!");
+            assertEquals(ex.getMessage(), "There is not keyspace ks3 to rename an entity to!");
         }
 
         try {
             parsed.setRenamedEntitiesFromRequest(new HashMap<String, String>() {{
-                put("ks1.tb1", "ks2.tb5");
+                put("ks1   .tb1", "ks2.  tb5");
             }});
 
             Assert.fail("should fail on non-existing ks2.tb5");
         } catch (Exception ex) {
-            Assert.assertEquals(ex.getMessage(), "There is not table ks2.tb5 to rename an entity to!");
+            assertEquals(ex.getMessage(), "There is not table ks2.tb5 to rename an entity to!");
         }
     }
 
@@ -215,52 +216,29 @@ public class CassandraDataTest {
     }
 
     @Test
-    public void testGetEntitiesToTruncate() {
+    // --entities="" --rename=whatever non empty  -> invalid
+    public void testCassandraDataEntitiesEmptyRenameNonEmptySholdFail() {
+
         CassandraData parsed = new CassandraData(tableIdsMap, paths);
 
-        parsed.setDatabaseEntitiesFromRequest(DatabaseEntities.parse("ks1.tb1"));
+        parsed.setDatabaseEntitiesFromRequest(DatabaseEntities.parse(""));
 
         parsed.setRenamedEntitiesFromRequest(RenamedEntities.parse(new HashMap<String, String>() {{
             put("ks1.tb2", "ks1.tb3");
         }}));
 
-        DatabaseEntities databaseEntitiesToTruncate = parsed.getDatabaseEntitiesToProcessForRestore(manifest);
-
-        Assert.assertEquals(1, databaseEntitiesToTruncate.getKeyspaces().size());
-        Assert.assertEquals("ks1", databaseEntitiesToTruncate.getKeyspaces().get(0));
-
-        Assert.assertEquals(2, databaseEntitiesToTruncate.getKeyspacesAndTables().size());
-        Assert.assertTrue(databaseEntitiesToTruncate.getKeyspacesAndTables().containsEntry("ks1", "tb1"));
-        Assert.assertFalse(databaseEntitiesToTruncate.getKeyspacesAndTables().containsEntry("ks1", "tb2"));
-        Assert.assertTrue(databaseEntitiesToTruncate.getKeyspacesAndTables().containsEntry("ks1", "tb3"));
+        try {
+            parsed.validate();
+            fail("setting rename entities but not setting entities should fail");
+        } catch (final Exception ex) {
+            // ok
+        }
     }
 
     @Test
-    public void testGetEntitiesToTruncate2() throws Exception {
-        Manifest manifest = Manifest.read(Paths.get("src/test/resources/cassandra-data-test-manifest.json"), objectMapper);
-        CassandraData parsed = new CassandraData(tableIdsMap, paths);
+    // --entities=ks1 --rename=whatever non empty -> invalid
+    public void testCassandraDataKeyspaceEntitiesNotEmptyRenameNonEmptySholdFail() {
 
-        parsed.setDatabaseEntitiesFromRequest(DatabaseEntities.parse("ks1.tb1,ks1.tb2"));
-
-        parsed.setRenamedEntitiesFromRequest(RenamedEntities.parse(new HashMap<String, String>() {{
-            put("ks1.tb2", "ks1.tb3");
-        }}));
-
-        DatabaseEntities toProcess = parsed.getDatabaseEntitiesToProcessForRestore(manifest);
-
-        Assert.assertEquals(1, toProcess.getKeyspaces().size());
-        Assert.assertEquals("ks1", toProcess.getKeyspaces().get(0));
-
-        Assert.assertEquals(2, toProcess.getKeyspacesAndTables().size());
-        Assert.assertTrue(toProcess.getKeyspacesAndTables().containsEntry("ks1", "tb1"));
-        Assert.assertFalse(toProcess.getKeyspacesAndTables().containsEntry("ks1", "tb2"));
-        Assert.assertTrue(toProcess.getKeyspacesAndTables().containsEntry("ks1", "tb3"));
-
-        System.out.println(toProcess);
-    }
-
-    @Test
-    public void testGetEntitiesToTruncate3() {
         CassandraData parsed = new CassandraData(tableIdsMap, paths);
 
         parsed.setDatabaseEntitiesFromRequest(DatabaseEntities.parse("ks1"));
@@ -269,55 +247,79 @@ public class CassandraDataTest {
             put("ks1.tb2", "ks1.tb3");
         }}));
 
-        DatabaseEntities databaseEntitiesToTruncate = parsed.getDatabaseEntitiesToProcessForRestore(manifest);
-
-        Assert.assertEquals(1, databaseEntitiesToTruncate.getKeyspaces().size());
-        Assert.assertEquals("ks1", databaseEntitiesToTruncate.getKeyspaces().get(0));
-
-        Assert.assertEquals(3, databaseEntitiesToTruncate.getKeyspacesAndTables().size());
-        Assert.assertTrue(databaseEntitiesToTruncate.getKeyspacesAndTables().containsEntry("ks1", "tb1"));
-        Assert.assertFalse(databaseEntitiesToTruncate.getKeyspacesAndTables().containsEntry("ks1", "tb2"));
-        Assert.assertTrue(databaseEntitiesToTruncate.getKeyspacesAndTables().containsEntry("ks1", "tb3"));
-        Assert.assertTrue(databaseEntitiesToTruncate.getKeyspacesAndTables().containsEntry("ks1", "tb4"));
-
-        System.out.println(databaseEntitiesToTruncate);
+        try {
+            parsed.validate();
+            fail("setting rename entities with set keyspace entities should fail");
+        } catch (final Exception ex) {
+            // ok
+        }
     }
 
     @Test
-    public void testGetEntitiesToTruncate4() {
+    // --entities=ks1.tb1 --rename=ks1.tb2=ks1.tb2 -> invalid as "from" is not in entities
+    public void testCassandraDataMissingFromInRenamingInEntitiesShouldFail() {
+
         CassandraData parsed = new CassandraData(tableIdsMap, paths);
 
-        parsed.setDatabaseEntitiesFromRequest(DatabaseEntities.parse(""));
+        parsed.setDatabaseEntitiesFromRequest(DatabaseEntities.parse("ks1  .  tb1"));
 
         parsed.setRenamedEntitiesFromRequest(RenamedEntities.parse(new HashMap<String, String>() {{
             put("ks1.tb2", "ks1.tb3");
-            put("ks2.tb3", "ks2.tb4");
         }}));
 
-        DatabaseEntities toProcess = parsed.getDatabaseEntitiesToProcessForRestore(manifest);
+        try {
+            parsed.validate();
+            fail("setting rename entities where 'from' is missing in entities should fail");
+        } catch (final Exception ex) {
+            // ok
+        }
+    }
 
-        Assert.assertEquals(2, toProcess.getKeyspaces().size());
-        Assert.assertEquals("ks1", toProcess.getKeyspaces().get(0));
-        Assert.assertEquals("ks2", toProcess.getKeyspaces().get(1));
+    @Test
+    // --entities=ks1.tb1,ks1.tb2 --rename=ks1.tb2=ks1.tb1 -> invalid as "to" is in entities
+    public void testCassandraDataToInRenamingEntitiesIsPresentInEntitiesShouldFail() {
 
-        Assert.assertEquals(6, toProcess.getKeyspacesAndTables().size());
+        CassandraData parsed = new CassandraData(tableIdsMap, paths);
 
-        // ks1
-        Assert.assertTrue(toProcess.getKeyspacesAndTables().containsEntry("ks1", "tb1"));
+        parsed.setDatabaseEntitiesFromRequest(DatabaseEntities.parse("ks1.tb1,   ks1.tb2"));
 
-        Assert.assertFalse(toProcess.getKeyspacesAndTables().containsEntry("ks1", "tb2"));
+        parsed.setRenamedEntitiesFromRequest(RenamedEntities.parse(new HashMap<String, String>() {{
+            put("ks1.tb2", "ks1.tb1");
+        }}));
 
-        Assert.assertTrue(toProcess.getKeyspacesAndTables().containsEntry("ks1", "tb3"));
-        Assert.assertTrue(toProcess.getKeyspacesAndTables().containsEntry("ks1", "tb4"));
+        try {
+            parsed.validate();
+            fail("setting rename entities where 'to' is present in entities should fail");
+        } catch (final Exception ex) {
+            // ok
+        }
+    }
 
-        // ks2
+    @Test
+    // --entities=ks1.tb1,ks1.tb2 --rename=ks1.tb2=ks1.tb1 -> invalid as "to" is in entities
+    public void testCassandraDataForRenamingEntities() {
 
-        Assert.assertTrue(toProcess.getKeyspacesAndTables().containsEntry("ks2", "tb1"));
-        Assert.assertTrue(toProcess.getKeyspacesAndTables().containsEntry("ks2", "tb2"));
+        CassandraData parsed = new CassandraData(tableIdsMap, paths);
 
-        Assert.assertFalse(toProcess.getKeyspacesAndTables().containsEntry("ks2", "tb3"));
+        parsed.setDatabaseEntitiesFromRequest(DatabaseEntities.parse("ks1.tb1,  ks1.tb3,   ks2.tb3,   ks2.tb4"));
 
-        Assert.assertTrue(toProcess.getKeyspacesAndTables().containsEntry("ks2", "tb4"));
+        parsed.setRenamedEntitiesFromRequest(RenamedEntities.parse(new HashMap<String, String>() {{
+            put("ks1.tb1", "ks1.tb2");
+            put("ks2.tb3", "ks2.tb2");
+        }}));
+
+        DatabaseEntities databaseEntitiesToProcessForRestore = parsed.getDatabaseEntitiesToProcessForRestore();
+
+        assertTrue(databaseEntitiesToProcessForRestore.contains("ks1", "tb2"));
+        assertTrue(databaseEntitiesToProcessForRestore.contains("ks2", "tb2"));
+        assertTrue(databaseEntitiesToProcessForRestore.contains("ks1", "tb3"));
+        assertTrue(databaseEntitiesToProcessForRestore.contains("ks2", "tb4"));
+
+        assertFalse(databaseEntitiesToProcessForRestore.contains("ks1", "tb1"));
+        assertFalse(databaseEntitiesToProcessForRestore.contains("ks2", "tb3"));
+
+        assertEquals(2, databaseEntitiesToProcessForRestore.getKeyspaces().size());
+        assertEquals(4, databaseEntitiesToProcessForRestore.getKeyspacesAndTables().size());
     }
 
     @Test

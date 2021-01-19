@@ -346,7 +346,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
+            "--entities=test2.test2",
             "--restoration-strategy-type=" + strategyType.toValue().toLowerCase(),
             "--restoration-phase-type=download", /// DOWNLOAD
             "--import-source-dir=" + target("downloaded"),
@@ -361,7 +361,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
+            "--entities=test2.test2",
             "--restoration-strategy-type=" + strategyType.toValue().toLowerCase(),
             "--restoration-phase-type=truncate", // TRUNCATE
             "--import-source-dir=" + target("downloaded"),
@@ -376,7 +376,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
+            "--entities=test2.test2",
             "--restoration-strategy-type=" + strategyType.toValue().toLowerCase(),
             "--restoration-phase-type=import",
             "--import-source-dir=" + target("downloaded"),
@@ -391,7 +391,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
+            "--entities=test2.test2",
             "--restoration-strategy-type=" + strategyType.toValue().toLowerCase(),
             "--restoration-phase-type=cleanup", // CLEANUP
             "--import-source-dir=" + target("downloaded"),

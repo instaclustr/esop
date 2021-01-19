@@ -34,12 +34,17 @@ public class RenamedEntities {
         this.renamed.addAll(renamed);
     }
 
+    public boolean areEmpty() {
+        return this.renamed.isEmpty();
+    }
+
     public static void validate(final Map<String, String> rename) throws Exception {
         if (rename == null) {
             return;
         }
         final RenamedEntities parsed = RenamedEntities.parse(rename);
 
+        // --entities=ks1.tb1 --rename=ks1.tb1=ks2.tb3 -> invalid as renaming across keyspaces is not permitted
         for (final Renamed renamed : parsed.getRenamed()) {
             // source and target keyspace have to be same
             if (!renamed.from.fromKeyspace.equals(renamed.to.toKeyspace)) {
@@ -49,6 +54,16 @@ public class RenamedEntities {
 
         if (rename.size() != rename.values().stream().distinct().count()) {
             throw new IllegalStateException("all values in rename map have to be distinct");
+        }
+
+        // --rename=ks1.tb2=ks1.tb3,ks1.tb3=ks1.tb2 -> invalid as some "from" is in another "to" and some "to" is in another "from"
+        for (final Map.Entry<String, String> entry : rename.entrySet()) {
+            if (rename.containsValue(entry.getKey())) {
+                throw new IllegalStateException("rename map contains a value which is one of its key");
+            }
+            if (rename.containsKey(entry.getValue())) {
+                throw new IllegalStateException("rename map contains a key which is one of its value");
+            }
         }
     }
 
@@ -140,7 +155,7 @@ public class RenamedEntities {
         }
 
         public Renamed(Map.Entry<String, String> pair) {
-            this(pair.getKey(), pair.getValue());
+            this(pair.getKey().replaceAll("[ ]+", ""), pair.getValue().replaceAll("[ ]+", ""));
         }
     }
 

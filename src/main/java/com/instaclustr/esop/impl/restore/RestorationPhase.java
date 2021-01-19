@@ -71,6 +71,7 @@ public abstract class RestorationPhase {
             final CassandraData cassandraData = CassandraData.parse(ctxt.operation.request.cassandraDirectory.resolve("data"));
             cassandraData.setDatabaseEntitiesFromRequest(ctxt.operation.request.entities);
             cassandraData.setRenamedEntitiesFromRequest(ctxt.operation.request.rename);
+            cassandraData.validate();
             this.ctxt.cassandraData = cassandraData;
         }
     }
@@ -149,6 +150,8 @@ public abstract class RestorationPhase {
 
     public static class InitPhase extends RestorationPhase {
 
+        private static final Logger logger = LoggerFactory.getLogger(InitPhase.class);
+
         public InitPhase(final RestorationContext ctxt) throws Exception {
             super(ctxt, false);
         }
@@ -159,7 +162,27 @@ public abstract class RestorationPhase {
         }
 
         @Override
-        public void execute() {
+        public void execute() throws RestorationPhaseException {
+            try {
+                checkManifestExists();
+            } catch (final Exception ex) {
+                logger.error("Init phase has failed: {}", ex.getMessage());
+                throw RestorationPhaseException.construct(ex, getRestorationPhaseType());
+            }
+        }
+
+        private void checkManifestExists() throws Exception {
+            final RestoreOperationRequest request = ctxt.operation.request;
+
+            if (!ctxt.operation.request.skipBucketVerification) {
+                try (final BucketService bucketService = ctxt.bucketServiceFactoryMap.get(request.storageLocation.storageProvider).createBucketService(request)) {
+                    bucketService.checkBucket(request.storageLocation.bucket, false);
+                }
+            }
+
+            final String schemaVersion = new CassandraSchemaVersion(ctxt.jmx).act();
+
+            RestorationUtilities.downloadManifest(request, ctxt.restorer, schemaVersion, ctxt.objectMapper);
         }
     }
 
@@ -329,7 +352,7 @@ public abstract class RestorationPhase {
 
                 new ManifestEnricher().enrich(ctxt.cassandraData, manifest, ctxt.operation.request.importing.sourceDir);
 
-                final DatabaseEntities toTruncate = ctxt.cassandraData.getDatabaseEntitiesToProcessForRestore(manifest);
+                final DatabaseEntities toTruncate = ctxt.cassandraData.getDatabaseEntitiesToProcessForRestore();
 
                 if (toTruncate.getKeyspacesAndTables().isEmpty()) {
                     logger.info("It is not necessary to truncate any table.");
@@ -392,7 +415,7 @@ public abstract class RestorationPhase {
                 final String schemaVersion = new CassandraSchemaVersion(ctxt.jmx).act();
                 final Manifest manifest = RestorationUtilities.downloadManifest(ctxt.operation.request, ctxt.restorer, schemaVersion, ctxt.objectMapper);
                 new ManifestEnricher().enrich(ctxt.cassandraData, manifest, ctxt.operation.request.importing.sourceDir);
-                final DatabaseEntities databaseEntitiesToProcess = ctxt.cassandraData.getDatabaseEntitiesToProcessForRestore(manifest);
+                final DatabaseEntities databaseEntitiesToProcess = ctxt.cassandraData.getDatabaseEntitiesToProcessForRestore();
 
                 final DataVerification dataVerification = new DataVerification(ctxt).verify(manifest, databaseEntitiesToProcess);
                 if (dataVerification.hasErrors()) {
@@ -453,7 +476,7 @@ public abstract class RestorationPhase {
                 final String schemaVersion = new CassandraSchemaVersion(ctxt.jmx).act();
                 final Manifest manifest = RestorationUtilities.downloadManifest(ctxt.operation.request, ctxt.restorer, schemaVersion, ctxt.objectMapper);
                 new ManifestEnricher().enrich(ctxt.cassandraData, manifest, ctxt.operation.request.importing.sourceDir);
-                final DatabaseEntities databaseEntitiesToProcess = ctxt.cassandraData.getDatabaseEntitiesToProcessForRestore(manifest);
+                final DatabaseEntities databaseEntitiesToProcess = ctxt.cassandraData.getDatabaseEntitiesToProcessForRestore();
 
                 final DataVerification dataVerification = new DataVerification(ctxt).verify(manifest, databaseEntitiesToProcess);
                 if (dataVerification.hasErrors()) {

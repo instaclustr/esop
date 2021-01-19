@@ -78,7 +78,7 @@ public class DatabaseEntities {
     }
 
     public boolean contains(final String keyspace, final String table) {
-        return areEmpty() || contains(keyspace) || keyspacesAndTables.containsEntry(keyspace, table);
+        return keyspacesAndTables.containsEntry(keyspace, table);
     }
 
     public boolean tableSubsetOnly() {
@@ -141,7 +141,7 @@ public class DatabaseEntities {
             return DatabaseEntities.empty();
         }
 
-        final String sanitizedEntities = entities.replace("\\s+", "");
+        final String sanitizedEntities = entities.replaceAll("[ ]+", "");
 
         final String[] keyspaceTablePairs = sanitizedEntities.split(",");
 
@@ -286,6 +286,9 @@ public class DatabaseEntities {
     }
 
     public void retainAll(final Multimap<String, String> keyspacesAndTables) {
+        if (keyspacesAndTables.isEmpty()) {
+            return;
+        }
         this.keyspaces.clear();
         this.keyspaces.addAll(new ArrayList<>(keyspacesAndTables.keySet()));
         this.keyspacesAndTables.clear();
