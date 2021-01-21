@@ -86,7 +86,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                              @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
                              @JsonProperty("proxySettings") final ProxySettings proxySettings,
                              @JsonProperty("rename") final Map<String, String> rename,
-                             @JsonProperty("retry") final RetrySpec retry) {
+                             @JsonProperty("retry") final RetrySpec retry,
+                             @JsonProperty("singlePhase") final boolean singlePhase) {
         super(type, id, creationTime, state, errors, progress, startTime, new RestoreOperationRequest(type,
                                                                                                       storageLocation,
                                                                                                       concurrentConnections,
@@ -115,7 +116,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                                                                                                       skipBucketVerification,
                                                                                                       proxySettings,
                                                                                                       rename,
-                                                                                                      retry));
+                                                                                                      retry,
+                                                                                                      singlePhase));
         this.coordinator = null;
     }
 

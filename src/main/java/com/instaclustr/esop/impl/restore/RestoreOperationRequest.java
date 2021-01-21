@@ -147,6 +147,12 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
         description = "[OLD_KEYSPACE.OLD_TABLE]=[OLD_KEYSPACE.NEW_TABLE], if specified upon restoration, table will be restored into new table, not into the original one")
     public Map<String, String> rename = new HashMap<>();
 
+    // this option does not make sense for Esop CLI as any request would be confined to one node only and one phase only
+    // if specified in connection with Icarus, it will execute just one phase, cluster wide, and it will not advance to other phases
+    // which are required in restoration, by doing this, one migh e.g.call cluster-wide download phase or cleanup phase in isolation
+    @JsonProperty("singlePhase")
+    public boolean singlePhase;
+
     public RestoreOperationRequest() {
         // for picocli
     }
@@ -184,7 +190,8 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
                                    @JsonProperty("proxySettings") final ProxySettings proxySettings,
                                    @JsonProperty("rename") final Map<String, String> rename,
-                                   @JsonProperty("retry") final RetrySpec retry) {
+                                   @JsonProperty("retry") final RetrySpec retry,
+                                   @JsonProperty("singlePhase") final boolean singlePhase) {
         super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
         this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/")) ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
@@ -206,6 +213,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
         this.resolveHostIdFromTopology = resolveHostIdFromTopology;
         this.newCluster = newCluster;
         this.rename = rename == null ? Collections.emptyMap() : rename;
+        this.singlePhase = singlePhase;
     }
 
     @Override
@@ -238,6 +246,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             .add("cassandraVersion", cassandraVersion)
             .add("rename", rename)
             .add("retry", retry)
+            .add("singlePhase", singlePhase)
             .toString();
     }
 }
