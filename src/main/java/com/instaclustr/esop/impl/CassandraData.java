@@ -237,10 +237,6 @@ public class CassandraData {
     }
 
     public void setDatabaseEntitiesFromRequest(final DatabaseEntities entities) throws IllegalStateException {
-        if (entities.areEmpty()) {
-            this.databaseEntities = new DatabaseEntities();
-        }
-
         final List<String> notPresentKeyspaces = new ArrayList<>();
 
         for (final String keyspace : entities.getKeyspaces()) {
@@ -268,12 +264,11 @@ public class CassandraData {
         this.databaseEntities = entities;
     }
 
-
-     // --entities="" --rename=whatever non empty  -> invalid
-     // --entities=ks1 --rename=whatever non empty -> invalid
-     // --entities=ks1.tb1 --rename=ks1.tb2=ks1.tb2 -> invalid as "from" is not in entities
-     // --entities=ks1.tb1 --rename=ks1.tb2=ks1.tb1 -> invalid as "to" is in entities (and from is not in entities)
-     // --entities=ks1.tb1 --rename=ks1.tb1=ks1.tb2 -> truncate ks1.tb2 and process just ks1.tb2, k1.tb1 is not touched
+    // --entities="" --rename=whatever non empty  -> invalid
+    // --entities=ks1 --rename=whatever non empty -> invalid
+    // --entities=ks1.tb1 --rename=ks1.tb2=ks1.tb2 -> invalid as "from" is not in entities
+    // --entities=ks1.tb1 --rename=ks1.tb2=ks1.tb1 -> invalid as "to" is in entities (and from is not in entities)
+    // --entities=ks1.tb1 --rename=ks1.tb1=ks1.tb2 -> truncate ks1.tb2 and process just ks1.tb2, k1.tb1 is not touched
     public void validate() {
         // --entities="" --rename=whatever non empty  -> invalid
         if (databaseEntities.areEmpty() && !renamedEntities.areEmpty()) {
@@ -330,4 +325,15 @@ public class CassandraData {
         }
     }
 
+    public DatabaseEntities getDatabaseEntitiesToProcessForVerification() {
+        validate();
+
+        if (this.databaseEntities.keyspacesOnly()) {
+            final DatabaseEntities entities = toDatabaseEntities(false);
+            entities.retainAll(this.databaseEntities.getKeyspaces());
+            return entities;
+        } else {
+            return new DatabaseEntities(this.databaseEntities);
+        }
+    }
 }

@@ -415,15 +415,16 @@ public abstract class RestorationPhase {
                 final String schemaVersion = new CassandraSchemaVersion(ctxt.jmx).act();
                 final Manifest manifest = RestorationUtilities.downloadManifest(ctxt.operation.request, ctxt.restorer, schemaVersion, ctxt.objectMapper);
                 new ManifestEnricher().enrich(ctxt.cassandraData, manifest, ctxt.operation.request.importing.sourceDir);
-                final DatabaseEntities databaseEntitiesToProcess = ctxt.cassandraData.getDatabaseEntitiesToProcessForRestore();
+                final DatabaseEntities databaseEntitiesToVerify = ctxt.cassandraData.getDatabaseEntitiesToProcessForVerification();
+                final DatabaseEntities databaseEntitiesToRestore = ctxt.cassandraData.getDatabaseEntitiesToProcessForRestore();
 
-                final DataVerification dataVerification = new DataVerification(ctxt).verify(manifest, databaseEntitiesToProcess);
+                final DataVerification dataVerification = new DataVerification(ctxt).verify(manifest, databaseEntitiesToVerify);
                 if (dataVerification.hasErrors()) {
                     throw new RestorationPhaseException("Some local files were corrupted or they are missing, "
                                                             + "please consult the logs to see the details" + dataVerification.toString());
                 }
 
-                final List<ImportOperationRequest> imports = databaseEntitiesToProcess
+                final List<ImportOperationRequest> imports = databaseEntitiesToRestore
                     .getKeyspacesAndTables()
                     .entries()
                     .stream()
@@ -476,9 +477,10 @@ public abstract class RestorationPhase {
                 final String schemaVersion = new CassandraSchemaVersion(ctxt.jmx).act();
                 final Manifest manifest = RestorationUtilities.downloadManifest(ctxt.operation.request, ctxt.restorer, schemaVersion, ctxt.objectMapper);
                 new ManifestEnricher().enrich(ctxt.cassandraData, manifest, ctxt.operation.request.importing.sourceDir);
-                final DatabaseEntities databaseEntitiesToProcess = ctxt.cassandraData.getDatabaseEntitiesToProcessForRestore();
+                final DatabaseEntities databaseEntitiesToVerify = ctxt.cassandraData.getDatabaseEntitiesToProcessForVerification();
+                final DatabaseEntities databaseEntitiesToRestore = ctxt.cassandraData.getDatabaseEntitiesToProcessForRestore();
 
-                final DataVerification dataVerification = new DataVerification(ctxt).verify(manifest, databaseEntitiesToProcess);
+                final DataVerification dataVerification = new DataVerification(ctxt).verify(manifest, databaseEntitiesToVerify);
                 if (dataVerification.hasErrors()) {
                     throw new RestorationPhaseException("Some local files were corrupted or they are missing, please consult the logs to see the details.");
                 }
@@ -525,7 +527,7 @@ public abstract class RestorationPhase {
                 } else {
                     final Map<String, String> failedRefreshes = new HashMap<>();
 
-                    for (final Entry<String, String> entry : databaseEntitiesToProcess.getKeyspacesAndTables().entries()) {
+                    for (final Entry<String, String> entry : databaseEntitiesToRestore.getKeyspacesAndTables().entries()) {
                         try {
                             new RefreshOperation(ctxt.jmx, new RefreshOperationRequest(entry.getKey(), entry.getValue())).run();
                         } catch (final Exception ex) {
@@ -549,6 +551,8 @@ public abstract class RestorationPhase {
 
     public static class CleaningPhase extends RestorationPhase {
 
+        private static final Logger logger = LoggerFactory.getLogger(CleaningPhase.class);
+
         public CleaningPhase(final RestorationContext ctxt) throws Exception {
             super(ctxt, false);
         }
@@ -568,6 +572,8 @@ public abstract class RestorationPhase {
                 } catch (final Exception ex) {
                     throw new RestorationPhaseException("Unable to clean trucate dirs!", ex);
                 }
+            } else {
+                logger.info("Not deleting trucated files as noDeleteTruncates is true.");
             }
 
             if (!ctxt.operation.request.noDeleteDownloads) {
@@ -578,6 +584,8 @@ public abstract class RestorationPhase {
                 } catch (final Exception ex) {
                     throw new RestorationPhaseException("Unable to clean download dir!", ex);
                 }
+            } else {
+                logger.info("Not deleting downloaded files as noDeleteDownloads is true.");
             }
         }
     }
