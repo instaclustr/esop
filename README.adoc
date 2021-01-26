@@ -13,7 +13,7 @@ image::Esop.png[Esop,width=50%]
 
 This repository is home of backup and restoration tools from Instaclustr for Cassandra called https://en.wikipedia.org/wiki/Aesop[Esop]
 
-Esop is able to perform these operations:
+Esop is able to perform these operations and has these features:
 
 * Backup and restore of SSTables
 * Backup and restore of commit logs
@@ -31,6 +31,9 @@ downtime is necessary
 * It takes care of details such as initial tokens, auto bootstrapping, and so on...
 * Ability to throttle the bandwidth used for backup
 * Point-in-time restoration of commit logs
+* verification of downloaded data - computes hases upon upload and download and it has to match otherwise restoration fails
+* it is possible to restore tables under different names so they do not clash with your current tables ideal when you want to investigate / check data before you restore the original tables, to see what data you will have once you restore it
+* retry of failed operations against s3 when uploading / downloading failure happens
 
 This tool is used as a command line utility and it is meant to be executed from a shell
 or from scripts. However, this tooling is also embedded seamlessly into Instaclustr Icarus.
