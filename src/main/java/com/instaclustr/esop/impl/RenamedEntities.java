@@ -38,7 +38,7 @@ public class RenamedEntities {
         return this.renamed.isEmpty();
     }
 
-    public static void validate(final Map<String, String> rename) throws Exception {
+    public static void validate(final Map<String, String> rename) {
         if (rename == null) {
             return;
         }

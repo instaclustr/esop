@@ -1,22 +1,10 @@
 package com.instaclustr.esop.impl;
 
 import static java.lang.String.format;
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import javax.validation.Constraint;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
-import javax.validation.Payload;
 import java.io.IOException;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,8 +17,6 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.google.common.base.MoreObjects;
-import com.google.inject.Inject;
-import com.instaclustr.esop.guice.StorageProviders;
 import picocli.CommandLine;
 import picocli.CommandLine.ITypeConverter;
 
@@ -62,7 +48,7 @@ public class StorageLocation {
             initializeFileBackupLocation(this.rawLocation);
         } else {
             cloudLocation = true;
-            initializeCloudBackupLocation(this.rawLocation);
+            initializeCloudLocation(this.rawLocation);
         }
     }
 
@@ -86,7 +72,7 @@ public class StorageLocation {
         }
     }
 
-    private void initializeCloudBackupLocation(final String storageLocation) {
+    private void initializeCloudLocation(final String storageLocation) {
 
         final Matcher globalMatcher = globalPattern.matcher(storageLocation);
 
@@ -115,14 +101,14 @@ public class StorageLocation {
         if (cloudLocation) {
             if (!globalRequest) {
                 if (rawLocation == null || storageProvider == null || bucket == null || clusterId == null || datacenterId == null || nodeId == null) {
-                    throw new IllegalStateException(format("Backup location %s is not in form protocol://bucketName/clusterId/datacenterid/nodeId",
+                    throw new IllegalStateException(format("Storage location %s is not in form protocol://bucketName/clusterId/datacenterid/nodeId",
                                                            rawLocation));
                 }
             } else if (rawLocation == null || storageProvider == null || bucket == null) {
                 throw new IllegalStateException(format("Global storage location %s is not in form protocol://bucketName", rawLocation));
             }
         } else if (rawLocation == null || storageProvider == null || bucket == null || clusterId == null || datacenterId == null || nodeId == null || fileBackupDirectory == null) {
-            throw new IllegalStateException(format("Backup location %s is not in form file:///some/backup/path/clusterId/datacenterId/nodeId",
+            throw new IllegalStateException(format("Storage location %s is not in form file:///some/backup/path/clusterId/datacenterId/nodeId",
                                                    rawLocation));
         }
 
@@ -190,55 +176,6 @@ public class StorageLocation {
             .add("fileBackupDirectory", fileBackupDirectory)
             .add("cloudLocation", cloudLocation)
             .toString();
-    }
-
-    @Target({TYPE, PARAMETER, FIELD})
-    @Retention(RUNTIME)
-    @Constraint(validatedBy = ValidStorageLocation.StorageLocationValidator.class)
-    public @interface ValidStorageLocation {
-
-        String message() default "{com.instaclustr.esop.impl.StorageLocation.StorageLocationValidator.message}";
-
-        Class<?>[] groups() default {};
-
-        Class<? extends Payload>[] payload() default {};
-
-        class StorageLocationValidator implements ConstraintValidator<ValidStorageLocation, StorageLocation> {
-
-            private final Set<String> storageProviders;
-
-            @Inject
-            public StorageLocationValidator(final @StorageProviders Set<String> storageProviders) {
-                this.storageProviders = storageProviders;
-            }
-
-            @Override
-            public boolean isValid(final StorageLocation value, final ConstraintValidatorContext context) {
-
-                if (value == null) {
-                    return true;
-                }
-
-                context.disableDefaultConstraintViolation();
-
-                try {
-                    value.validate();
-                } catch (Exception ex) {
-                    context.buildConstraintViolationWithTemplate(format("Invalid backup location: %s",
-                                                                        ex.getLocalizedMessage())).addConstraintViolation();
-                    return false;
-                }
-
-                if (!storageProviders.contains(value.storageProvider)) {
-                    context.buildConstraintViolationWithTemplate(format("Available providers: %s",
-                                                                        Arrays.toString(storageProviders.toArray()))).addConstraintViolation();
-
-                    return false;
-                }
-
-                return true;
-            }
-        }
     }
 
     public static class StorageLocationTypeConverter implements ITypeConverter<StorageLocation> {

@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -141,9 +143,8 @@ public class DatabaseEntities {
             return DatabaseEntities.empty();
         }
 
-        final String sanitizedEntities = entities.replaceAll("[ ]+", "");
-
-        final String[] keyspaceTablePairs = sanitizedEntities.split(",");
+        final String sanitized = entities.trim().replaceAll("[ ]+\\.", ".").replaceAll("\\.[ ]+", ".").replaceAll(" ", ",").replaceAll("[,]+", ",");
+        final String[] keyspaceTablePairs = Stream.of(sanitized.split(",")).filter(s -> !s.isEmpty()).toArray(String[]::new);
 
         final List<String> keyspaces = new ArrayList<>();
         final Multimap<String, String> keyspacesWithTables = HashMultimap.create();

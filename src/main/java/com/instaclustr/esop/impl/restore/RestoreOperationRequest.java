@@ -1,12 +1,18 @@
 package com.instaclustr.esop.impl.restore;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
+import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.HARDLINKS;
+import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.IMPORT;
+import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.IN_PLACE;
+import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.UNKNOWN;
+import static java.lang.String.format;
+
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -23,6 +29,7 @@ import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesDeserializer;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesSerializer;
 import com.instaclustr.esop.impl.Directories;
 import com.instaclustr.esop.impl.ProxySettings;
+import com.instaclustr.esop.impl.RenamedEntities;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl._import.ImportOperationRequest;
 import com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType;
@@ -32,10 +39,10 @@ import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategy
 import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.jackson.PathSerializer;
+import com.instaclustr.kubernetes.KubernetesHelper;
 import com.instaclustr.picocli.typeconverter.PathTypeConverter;
 import picocli.CommandLine.Option;
 
-@ValidRestoreOperationRequest
 public class RestoreOperationRequest extends BaseRestoreOperationRequest {
 
     @JsonIgnore
@@ -64,7 +71,6 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
     @Option(names = {"-s", "--st", "--snapshot-tag"},
         description = "Snapshot to download and restore.",
         required = true)
-    @NotBlank
     public String snapshotTag;
 
     @Option(names = {"--entities"},
@@ -183,7 +189,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonProperty("k8sNamespace") final String k8sNamespace,
                                    @JsonProperty("k8sSecretName") final String k8sSecretName,
                                    @JsonProperty("globalRequest") final boolean globalRequest,
-                                   @JsonProperty("timeout") @Min(1) final Integer timeout,
+                                   @JsonProperty("timeout") final Integer timeout,
                                    @JsonProperty("resolveHostIdFromTopology") final boolean resolveHostIdFromTopology,
                                    @JsonProperty("insecure") final boolean insecure,
                                    @JsonProperty("newCluster") final boolean newCluster,
@@ -209,7 +215,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
         this.exactSchemaVersion = exactSchemaVersion;
         this.globalRequest = globalRequest;
         this.type = type;
-        this.timeout = timeout == null ? 5 : timeout;
+        this.timeout = timeout == null || timeout < 1 ? 5 : timeout;
         this.resolveHostIdFromTopology = resolveHostIdFromTopology;
         this.newCluster = newCluster;
         this.rename = rename == null ? Collections.emptyMap() : rename;
@@ -248,5 +254,72 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             .add("retry", retry)
             .add("singlePhase", singlePhase)
             .toString();
+    }
+
+    @JsonIgnore
+    public void validate(Set<String> storageProviders) {
+        super.validate(storageProviders);
+
+        if (this.snapshotTag == null || this.snapshotTag.isEmpty()) {
+            throw new IllegalStateException("snapshotTag can not be blank!");
+        }
+
+        if (this.restorationPhase == null) {
+            this.restorationPhase = RestorationPhaseType.UNKNOWN;
+        }
+
+        if (this.restorationStrategyType == UNKNOWN) {
+            throw new IllegalStateException("restorationStrategyType is not recognized");
+        }
+
+        if (this.restorationStrategyType != IN_PLACE) {
+            if (this.restorationPhase == RestorationPhaseType.UNKNOWN) {
+                throw new IllegalStateException("restorationPhase is not recognized, it has to be set when you use IMPORT or HARDLINKS strategy type");
+            }
+        }
+
+        if (this.restorationStrategyType == IN_PLACE && this.restorationPhase != RestorationPhaseType.UNKNOWN) {
+            throw new IllegalStateException(format("you can not set restorationPhase %s when your restorationStrategyType is IN_PLACE", this.restorationPhase));
+        }
+
+        if (this.restorationStrategyType == IMPORT || this.restorationStrategyType == HARDLINKS) {
+            if (this.importing == null) {
+                throw new IllegalStateException(format("you can not specify %s restorationStrategyType and have 'import' field empty!", this.restorationStrategyType));
+            }
+        }
+
+        if (!Files.exists(this.cassandraDirectory)) {
+            throw new IllegalStateException(format("cassandraDirectory %s does not exist", this.cassandraDirectory));
+        }
+
+        if ((KubernetesHelper.isRunningInKubernetes() || KubernetesHelper.isRunningAsClient())) {
+            if (this.resolveKubernetesSecretName() == null) {
+                throw new IllegalStateException("This code is running in Kubernetes or as a Kubernetes client but it is not possible to resolve k8s secret name for restores!");
+            }
+
+            if (this.resolveKubernetesNamespace() == null) {
+                throw new IllegalStateException("This code is running in Kubernetes or as a Kubernetes client but it is not possible to resolve k8s namespace for restores!");
+            }
+        }
+
+        if (this.entities == null) {
+            this.entities = DatabaseEntities.empty();
+        }
+
+        try {
+            DatabaseEntities.validateForRequest(this.entities);
+        } catch (final Exception ex) {
+            throw new IllegalStateException(ex.getMessage());
+        }
+
+        try {
+            RenamedEntities.validate(this.rename);
+        } catch (final Exception ex) {
+            throw new IllegalStateException("Invalid 'rename' parameter: " + ex.getMessage());
+        }
+
+        if (this.rename != null && !this.rename.isEmpty() && this.restorationStrategyType == IN_PLACE) {
+            throw new IllegalStateException("rename field can not be used for in-place strategy, only for import or hardlinks");
+        }
     }
 }

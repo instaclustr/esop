@@ -1,14 +1,19 @@
 package com.instaclustr.esop.impl.backup;
 
+import static com.instaclustr.kubernetes.KubernetesHelper.isRunningAsClient;
+import static com.instaclustr.kubernetes.KubernetesHelper.isRunningInKubernetes;
 import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-import javax.validation.constraints.Min;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Set;
 
 import com.amazonaws.services.s3.model.MetadataDirective;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -24,7 +29,6 @@ import com.instaclustr.measure.DataRate;
 import com.instaclustr.measure.Time;
 import picocli.CommandLine.Option;
 
-@ValidBackupOperationRequest
 public class BackupOperationRequest extends BaseBackupOperationRequest {
 
     @Option(names = {"-s", "--st", "--snapshot-tag"},
@@ -88,7 +92,7 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonProperty("k8sSecretName") final String k8sSecretName,
                                   @JsonProperty("globalRequest") final boolean globalRequest,
                                   @JsonProperty("dc") final String dc,
-                                  @JsonProperty("timeout") @Min(1) final Integer timeout,
+                                  @JsonProperty("timeout") final Integer timeout,
                                   @JsonProperty("insecure") final boolean insecure,
                                   @JsonProperty("createMissingBucket") final boolean createMissingBucket,
                                   @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
@@ -114,7 +118,7 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
         this.globalRequest = globalRequest;
         this.type = type;
         this.dc = dc;
-        this.timeout = timeout == null ? 5 : timeout;
+        this.timeout = timeout == null || timeout < 1 ? 5 : timeout;
         this.schemaVersion = schemaVersion;
         this.uploadClusterTopology = uploadClusterTopology;
     }
@@ -143,5 +147,38 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
             .add("proxySettings", proxySettings)
             .add("retry", retry)
             .toString();
+    }
+
+    @JsonIgnore
+    public void validate(final Set<String> storageProviders) {
+        super.validate(storageProviders);
+
+        if (this.cassandraDirectory == null || this.cassandraDirectory.toFile().getAbsolutePath().equals("/")) {
+            this.cassandraDirectory = Paths.get("/var/lib/cassandra");
+        }
+
+        if (!Files.exists(this.cassandraDirectory)) {
+            throw new IllegalStateException(String.format("cassandraDirectory %s does not exist", this.cassandraDirectory));
+        }
+
+        if ((isRunningInKubernetes() || isRunningAsClient())) {
+            if (this.resolveKubernetesSecretName() == null) {
+                throw new IllegalStateException("This code is running in Kubernetes or as a Kubernetes client but it is not possible to resolve k8s secret name for backups!");
+            }
+
+            if (this.resolveKubernetesNamespace() == null) {
+                throw new IllegalStateException("This code is running in Kubernetes or as a Kubernetes client but it is not possible to resolve k8s namespace for backups!");
+            }
+        }
+
+        if (this.entities == null) {
+            this.entities = DatabaseEntities.empty();
+        }
+
+        try {
+            DatabaseEntities.validateForRequest(this.entities);
+        } catch (final Exception ex) {
+            throw new IllegalStateException(ex.getMessage());
+        }
     }
 }

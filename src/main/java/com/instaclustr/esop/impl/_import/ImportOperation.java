@@ -4,7 +4,6 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
 
-import javax.validation.constraints.NotNull;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
@@ -64,7 +63,6 @@ public class ImportOperation extends Operation<ImportOperationRequest> {
                             @JsonProperty("noInvalidateCaches") final boolean noInvalidateCaches,
                             @JsonProperty("quick") final boolean quick,
                             @JsonProperty("extendedVerify") final boolean extendedVerify,
-                            @NotNull
                             @JsonProperty("sourceDir")
                             @JsonDeserialize(using = NioPathDeserializer.class)
                             @JsonSerialize(using = NioPathSerializer.class) final Path sourceDir) {

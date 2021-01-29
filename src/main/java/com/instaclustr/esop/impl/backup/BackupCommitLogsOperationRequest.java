@@ -1,9 +1,13 @@
 package com.instaclustr.esop.impl.backup;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Set;
 
 import com.amazonaws.services.s3.model.MetadataDirective;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -13,12 +17,12 @@ import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.jackson.PathSerializer;
+import com.instaclustr.kubernetes.KubernetesHelper;
 import com.instaclustr.measure.DataRate;
 import com.instaclustr.measure.Time;
 import com.instaclustr.picocli.typeconverter.PathTypeConverter;
 import picocli.CommandLine.Option;
 
-@ValidBackupCommitLogsOperationRequest
 public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest {
 
     @Option(names = {"--cl-archive"},
@@ -102,5 +106,21 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
             .add("proxySettings", proxySettings)
             .add("retry", retry)
             .toString();
+    }
+
+    @JsonIgnore
+    public void validate(final Set<String> storageProviders) {
+        super.validate(storageProviders);
+        if (this.cassandraDirectory == null || this.cassandraDirectory.toFile().getAbsolutePath().equals("/")) {
+            this.cassandraDirectory = Paths.get("/var/lib/cassandra");
+        }
+
+        if (!Files.exists(this.cassandraDirectory)) {
+            throw new IllegalStateException(String.format("cassandraDirectory %s does not exist", cassandraDirectory));
+        }
+
+        if (KubernetesHelper.isRunningInKubernetes() && this.resolveKubernetesSecretName() == null) {
+            throw new IllegalStateException("This code is running in Kubernetes but there is not 'k8sSecretName' field set on backup request!");
+        }
     }
 }

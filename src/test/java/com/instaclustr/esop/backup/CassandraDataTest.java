@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -134,6 +136,34 @@ public class CassandraDataTest {
         parsed.setRenamedEntitiesFromRequest(new HashMap<String, String>() {{
             put("ks1.tb2", "ks1.tb3");
         }});
+    }
+
+    @Test
+    public void testDatabaseEntitiesOnSpacesOnly() throws Exception {
+
+        for (String entity : Stream.of("  ks1  .tb1  ks3.    tb3  ",
+                                       "ks1.tb1  ks3.tb3",
+                                       "  ks1 .tb1  ks3.tb3  ",
+                                       " ks1.tb1  ks3.tb3,  ",
+                                       " ks1.tb1,ks3.tb3",
+                                       ",,,ks1.tb1,,,ks3.tb3,,,").collect(Collectors.toList())) {
+            DatabaseEntities parsed = DatabaseEntities.parse(entity);
+
+            Assert.assertTrue(parsed.getKeyspacesAndTables().containsEntry("ks1", "tb1"), entity);
+            Assert.assertTrue(parsed.getKeyspacesAndTables().containsEntry("ks3", "tb3"), entity);
+            Assert.assertEquals(parsed.getKeyspacesAndTables().size(), 2, entity);
+        }
+
+        for (String entity : Stream.of("  ks1  ks3  ",
+                                       "ks1 ks3",
+                                       " ks1,ks3,   ,",
+                                       ",,,ks1,ks3,,,").collect(Collectors.toList())) {
+            DatabaseEntities parsed = DatabaseEntities.parse(entity);
+
+            Assert.assertTrue(parsed.getKeyspaces().contains("ks1"), entity);
+            Assert.assertTrue(parsed.getKeyspaces().contains("ks3"), entity);
+            Assert.assertEquals(parsed.getKeyspaces().size(), 2, entity);
+        }
     }
 
     @Test

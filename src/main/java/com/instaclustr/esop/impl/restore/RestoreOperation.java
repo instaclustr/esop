@@ -1,11 +1,11 @@
 package com.instaclustr.esop.impl.restore;
 
-import javax.validation.constraints.Min;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.deser.std.UUIDDeserializer;
 import com.fasterxml.jackson.databind.ser.std.UUIDSerializer;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
+import com.instaclustr.esop.guice.StorageProviders;
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
@@ -30,9 +31,11 @@ import com.instaclustr.operations.OperationFailureException;
 public class RestoreOperation extends Operation<RestoreOperationRequest> implements Cloneable {
 
     private final OperationCoordinator<RestoreOperationRequest> coordinator;
+    private final Set<String> storageProviders;
 
     @AssistedInject
     public RestoreOperation(Optional<OperationCoordinator<RestoreOperationRequest>> coordinator,
+                            @StorageProviders Set<String> storageProviders,
                             @Assisted final RestoreOperationRequest request) {
         super(request);
 
@@ -41,11 +44,13 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
         }
 
         this.coordinator = coordinator.get();
+        this.storageProviders = storageProviders;
     }
 
     public RestoreOperation(final RestoreOperationRequest request) {
         super(request);
         this.coordinator = null;
+        this.storageProviders = null;
         this.type = "restore";
     }
 
@@ -79,7 +84,7 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                              @JsonProperty("k8sNamespace") final String k8sNamespace,
                              @JsonProperty("k8sSecretName") final String k8sSecretName,
                              @JsonProperty("globalRequest") final boolean globalRequest,
-                             @JsonProperty("timeout") @Min(1) final Integer timeout,
+                             @JsonProperty("timeout") final Integer timeout,
                              @JsonProperty("resolveHostIdFromTopology") final Boolean resolveHostIdFromTopology,
                              @JsonProperty("insecure") final boolean insecure,
                              @JsonProperty("newCluster") final boolean newCluster,
@@ -119,6 +124,7 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                                                                                                       retry,
                                                                                                       singlePhase));
         this.coordinator = null;
+        this.storageProviders = null;
     }
 
     @Override
@@ -129,6 +135,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
     @Override
     protected void run0() throws Exception {
         assert coordinator != null;
+        assert storageProviders != null;
+        request.validate(storageProviders);
         coordinator.coordinate(this);
     }
 }

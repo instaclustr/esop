@@ -15,9 +15,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.github.nosan.embedded.cassandra.api.Cassandra;
@@ -240,8 +243,10 @@ public class LocalBackupTest extends AbstractBackupTest {
             assert snapshot.isPresent();
             assert snapshot2.isPresent();
 
-            final BackupOperation backupOperation = new BackupOperation(operationCoordinator, backupOperationRequest);
-            final BackupOperation backupOperation2 = new BackupOperation(operationCoordinator, backupOperationRequest2);
+            Set<String> providers = Stream.of("file").collect(Collectors.toSet());
+
+            final BackupOperation backupOperation = new BackupOperation(operationCoordinator, providers, backupOperationRequest);
+            final BackupOperation backupOperation2 = new BackupOperation(operationCoordinator, providers, backupOperationRequest2);
 
             final List<ManifestEntry> manifestEntries = Manifest.from(snapshot.get()).getManifestEntries();
             final List<ManifestEntry> manifestEntries2 = Manifest.from(snapshot2.get()).getManifestEntries();

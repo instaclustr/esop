@@ -1,6 +1,5 @@
 package com.instaclustr.esop.impl._import;
 
-import javax.validation.constraints.NotNull;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -134,7 +133,6 @@ public class ImportOperationRequest extends OperationRequest {
         description = "upon import, run an extended verify, verifying all values in the new sstables")
     public boolean extendedVerify = false;
 
-    @NotNull
     @JsonDeserialize(using = NioPathDeserializer.class)
     @JsonSerialize(using = NioPathSerializer.class)
     @Option(names = {"--import-source-dir"},
@@ -176,7 +174,6 @@ public class ImportOperationRequest extends OperationRequest {
                                   @JsonProperty("noInvalidateCaches") final boolean noInvalidateCaches,
                                   @JsonProperty("quick") final boolean quick,
                                   @JsonProperty("extendedVerify") final boolean extendedVerify,
-                                  @NotNull
                                   @JsonProperty("sourceDir")
                                   @JsonDeserialize(using = NioPathDeserializer.class)
                                   @JsonSerialize(using = NioPathSerializer.class) final Path sourceDir) {

@@ -1,10 +1,10 @@
 package com.instaclustr.esop.impl.backup;
 
-import javax.validation.constraints.Min;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
+import com.instaclustr.esop.guice.StorageProviders;
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesDeserializer;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesSerializer;
@@ -33,10 +34,12 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
 
     private static final Logger logger = LoggerFactory.getLogger(BackupOperation.class);
 
+    private final Set<String> storageProviders;
     private final OperationCoordinator<BackupOperationRequest> coordinator;
 
     @AssistedInject
     public BackupOperation(Optional<OperationCoordinator<BackupOperationRequest>> coordinator,
+                           @StorageProviders Set<String> storageProviders,
                            @Assisted final BackupOperationRequest request) {
         super(request);
 
@@ -45,11 +48,13 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
         }
 
         this.coordinator = coordinator.get();
+        this.storageProviders = storageProviders;
     }
 
     public BackupOperation(final BackupOperationRequest request) {
         super(request);
         this.coordinator = null;
+        this.storageProviders = null;
         this.type = "backup";
     }
 
@@ -79,7 +84,7 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonProperty("k8sSecretName") final String k8sBackupSecretName,
                             @JsonProperty("globalRequest") final boolean globalRequest,
                             @JsonProperty("dc") final String dc,
-                            @JsonProperty("timeout") @Min(1) final Integer timeout,
+                            @JsonProperty("timeout") final Integer timeout,
                             @JsonProperty("insecure") final boolean insecure,
                             @JsonProperty("createMissingBucket") final boolean createMissingBucket,
                             @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
@@ -109,6 +114,7 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                                                                                                      proxySettings,
                                                                                                      retry));
         coordinator = null;
+        storageProviders = null;
     }
 
     @Override
@@ -119,6 +125,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
     @Override
     protected void run0() throws Exception {
         assert coordinator != null;
+        assert storageProviders != null;
+        request.validate(storageProviders);
         coordinator.coordinate(this);
     }
 }

@@ -1,6 +1,9 @@
 package com.instaclustr.esop.impl;
 
-import javax.validation.constraints.NotNull;
+import static java.lang.String.format;
+
+import java.util.Arrays;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -9,7 +12,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.instaclustr.esop.impl.StorageLocation.StorageLocationDeserializer;
 import com.instaclustr.esop.impl.StorageLocation.StorageLocationSerializer;
 import com.instaclustr.esop.impl.StorageLocation.StorageLocationTypeConverter;
-import com.instaclustr.esop.impl.StorageLocation.ValidStorageLocation;
 import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.kubernetes.KubernetesSecretsReader;
 import com.instaclustr.operations.OperationRequest;
@@ -28,8 +30,6 @@ public abstract class AbstractOperationRequest extends OperationRequest {
             "cloudProvider://bucketName/clusterId/datacenterId/nodeId or file:///some/path/bucketName/clusterId/datacenterId/nodeId. " +
             "'cloudProvider' is one of 's3', 'oracle', 'azure' or 'gcp'.",
         required = true)
-    @NotNull
-    @ValidStorageLocation
     @JsonSerialize(using = StorageLocationSerializer.class)
     @JsonDeserialize(using = StorageLocationDeserializer.class)
     public StorageLocation storageLocation;
@@ -68,7 +68,7 @@ public abstract class AbstractOperationRequest extends OperationRequest {
         // for picocli
     }
 
-    public AbstractOperationRequest(@NotNull final StorageLocation storageLocation,
+    public AbstractOperationRequest(final StorageLocation storageLocation,
                                     final String k8sNamespace,
                                     final String k8sSecretName,
                                     final boolean insecure,
@@ -112,5 +112,25 @@ public abstract class AbstractOperationRequest extends OperationRequest {
         logger.info("Resolved k8s namespace {}", resolvedNamespace);
 
         return resolvedNamespace;
+    }
+
+    public void validate(final Set<String> storageProviders) {
+        if (storageLocation == null) {
+            throw new IllegalStateException("storageLocation has to be specified!");
+        }
+
+        if (retry != null) {
+            retry.validate();
+        }
+
+        try {
+            storageLocation.validate();
+        } catch (Exception ex) {
+            throw new IllegalStateException(format("Invalid storage location: %s", ex.getLocalizedMessage()));
+        }
+
+        if (storageProviders != null && !storageProviders.contains(storageLocation.storageProvider)) {
+            throw new IllegalStateException(format("Available storage providers: %s", Arrays.toString(storageProviders.toArray())));
+        }
     }
 }

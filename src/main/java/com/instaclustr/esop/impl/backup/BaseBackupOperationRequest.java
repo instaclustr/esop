@@ -1,6 +1,5 @@
 package com.instaclustr.esop.impl.backup;
 
-import javax.validation.constraints.NotNull;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -29,7 +28,6 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
         defaultValue = "/var/lib/cassandra")
     @JsonSerialize(using = PathSerializer.class)
     @JsonDeserialize(using = PathDeserializer.class)
-    @NotNull
     public Path cassandraDirectory;
 
     @Option(names = {"-d", "--duration"},
