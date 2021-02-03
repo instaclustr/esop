@@ -365,9 +365,14 @@ public abstract class RestorationPhase {
 
                 for (final Map.Entry<String, String> request : toTruncate.getKeyspacesAndTables().entries()) {
                     try {
-                        new TruncateOperation(ctxt.jmx, new TruncateOperationRequest(request.getKey(), request.getValue())).run();
-                    } catch (Exception ex) {
-                        truncateFailuresMap.put(format("%s.%s", request.getKey(), request.getValue()), ex.getMessage());
+                        final TruncateOperation op = new TruncateOperation(ctxt.jmx, new TruncateOperationRequest(request.getKey(), request.getValue()));
+                        op.run();
+
+                        if (!op.errors.isEmpty()) {
+                            throw op.errors.get(0).throwable;
+                        }
+                    } catch (final Throwable t) {
+                        truncateFailuresMap.put(format("%s.%s", request.getKey(), request.getValue()), t.getMessage());
                     }
                 }
 
@@ -440,8 +445,23 @@ public abstract class RestorationPhase {
                     })
                     .filter(request -> Files.isDirectory(request.tablePath)).collect(toList());
 
+                final Map<String, String> failedImports = new HashMap<>();
+
                 for (final ImportOperationRequest request : imports) {
-                    new ImportOperation(ctxt.jmx, ctxt.cassandraVersion, request).run();
+                    try {
+                        final ImportOperation op = new ImportOperation(ctxt.jmx, ctxt.cassandraVersion, request);
+                        op.run();
+
+                        if (!op.errors.isEmpty()) {
+                            throw op.errors.get(0).throwable;
+                        }
+                    } catch (final Throwable t) {
+                        failedImports.put(request.keyspace + "." + request.table, t.getMessage());
+                    }
+                }
+
+                if (!failedImports.isEmpty()) {
+                    throw new RestorationPhaseException(format("Failed tables to import: %s", failedImports));
                 }
 
                 logger.info("Importing phase was finished successfully.");
@@ -529,9 +549,14 @@ public abstract class RestorationPhase {
 
                     for (final Entry<String, String> entry : databaseEntitiesToRestore.getKeyspacesAndTables().entries()) {
                         try {
-                            new RefreshOperation(ctxt.jmx, new RefreshOperationRequest(entry.getKey(), entry.getValue())).run();
-                        } catch (final Exception ex) {
-                            failedRefreshes.put(entry.getKey() + "." + entry.getValue(), ex.getMessage());
+                            final RefreshOperation op = new RefreshOperation(ctxt.jmx, new RefreshOperationRequest(entry.getKey(), entry.getValue()));
+                            op.run();
+
+                            if (!op.errors.isEmpty()) {
+                                throw op.errors.get(0).throwable;
+                            }
+                        } catch (final Throwable t) {
+                            failedRefreshes.put(entry.getKey() + "." + entry.getValue(), t.getMessage());
                         }
                     }
 
