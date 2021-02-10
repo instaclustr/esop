@@ -726,7 +726,7 @@ will be automatically expanded by Cassandra). Then you might archive your commit
 
 ----
 $ commitlog-backup \
-  --storage-location=s3://myBucket/mycluster/dc1/node1, \
+  --storage-location=s3://myBucket/mycluster/dc1/node1 \
   --cl-archive=/backup
 ----
 
@@ -805,7 +805,7 @@ You can backup commit logs as well. An example of a commit log backup is like th
 
 ----
 $ commitlog-backup \
-  --storage-location=s3://myBucket/mycluster/dc1/node1, \
+  --storage-location=s3://myBucket/mycluster/dc1/node1 \
   --data-directory=/my/installation/of/cassandra
 ----
 
