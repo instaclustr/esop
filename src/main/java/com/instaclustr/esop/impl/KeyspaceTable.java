@@ -61,7 +61,7 @@ public class KeyspaceTable implements Cloneable {
     }
 
     public static boolean isSystemKeyspace(final String keyspace) {
-        return keyspace.equals("system") || keyspace.equals("system_schema");
+        return keyspace.equals("system") || keyspace.equals("system_schema") || keyspace.equals("system_auth");
     }
 
     private static final List<String> bootstrappingKeyspaces = Arrays.asList("system", "system_schema");

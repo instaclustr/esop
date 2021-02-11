@@ -306,6 +306,9 @@ public class CassandraData {
     public DatabaseEntities getDatabaseEntitiesToProcessForRestore() {
         validate();
 
+        if (this.databaseEntities.areEmpty()) {
+            return toDatabaseEntities(false);
+        }
         if (this.databaseEntities.keyspacesOnly()) {
             final DatabaseEntities entities = toDatabaseEntities(false);
             entities.retainAll(this.databaseEntities.getKeyspaces());
