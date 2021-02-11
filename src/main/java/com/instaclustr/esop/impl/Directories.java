@@ -17,7 +17,7 @@ public class Directories {
     }
 
     public Path hints() {
-        return request.cassandraDirectory.resolve("hint");
+        return request.cassandraDirectory.resolve("hints");
     }
 
     public Path savedCaches() {

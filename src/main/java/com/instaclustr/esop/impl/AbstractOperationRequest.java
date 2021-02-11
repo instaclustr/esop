@@ -28,7 +28,7 @@ public abstract class AbstractOperationRequest extends OperationRequest {
         converter = StorageLocationTypeConverter.class,
         description = "Location to which files will be backed up or restored from, in form " +
             "cloudProvider://bucketName/clusterId/datacenterId/nodeId or file:///some/path/bucketName/clusterId/datacenterId/nodeId. " +
-            "'cloudProvider' is one of 's3', 'oracle', 'azure' or 'gcp'.",
+            "'cloudProvider' is one of 's3', 'oracle', 'ceph', 'minio', 'azure' or 'gcp'.",
         required = true)
     @JsonSerialize(using = StorageLocationSerializer.class)
     @JsonDeserialize(using = StorageLocationDeserializer.class)
