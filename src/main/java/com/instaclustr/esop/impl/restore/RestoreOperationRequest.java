@@ -321,5 +321,29 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
         if (this.rename != null && !this.rename.isEmpty() && this.restorationStrategyType == IN_PLACE) {
             throw new IllegalStateException("rename field can not be used for in-place strategy, only for import or hardlinks");
         }
+
+        if (importing != null && importing.sourceDir != null && cassandraDirectory != null) {
+            if (importing.sourceDir.equals(cassandraDirectory.resolve("data"))) {
+                throw new IllegalStateException(String.format("Directory where SSTables will be downloaded (%s) is equal to Cassandra data "
+                                                                  + "directory where your keyspaces are - this is not valid. Please set "
+                                                                  + "sourceDir to a destination which is not equal to nor in %s",
+                                                              importing.sourceDir,
+                                                              cassandraDirectory.resolve("data")));
+            }
+
+            if (importing.sourceDir.startsWith(cassandraDirectory.resolve("data"))) {
+                throw new IllegalStateException(String.format("Directory where SSTables will be downloaded (%s) is inside Cassandra data "
+                                                                  + "directory where your keyspaces are - this is not valid. Please set "
+                                                                  + "sourceDir to a destination which does not start with %s",
+                                                              importing.sourceDir,
+                                                              cassandraDirectory.resolve("data")));
+            }
+
+            if (importing.sourceDir.equals(cassandraDirectory)) {
+                throw new IllegalStateException(String.format("Directory where SSTables will be downloaded (%s) is equal to Cassandra directory %s",
+                                                              importing.sourceDir,
+                                                              cassandraDirectory));
+            }
+        }
     }
 }

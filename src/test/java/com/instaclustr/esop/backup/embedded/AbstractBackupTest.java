@@ -256,7 +256,8 @@ public abstract class AbstractBackupTest {
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
             "--restoration-strategy-type=import",
             "--restoration-phase-type=download", /// DOWNLOAD
-            "--import-source-dir=" + target("downloaded"),
+            //"--import-source-dir=" + target("downloaded"),
+            "--import-source-dir="  + cassandraDir.toAbsolutePath().toString() + "/data/downloads",
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
@@ -269,7 +270,7 @@ public abstract class AbstractBackupTest {
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
             "--restoration-strategy-type=import",
             "--restoration-phase-type=truncate", // TRUNCATE
-            "--import-source-dir=" + target("downloaded"),
+            "--import-source-dir="  + cassandraDir.toAbsolutePath().toString() + "/data/downloads",
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
@@ -282,7 +283,7 @@ public abstract class AbstractBackupTest {
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
             "--restoration-strategy-type=import",
             "--restoration-phase-type=import", // IMPORT
-            "--import-source-dir=" + target("downloaded"),
+            "--import-source-dir="  + cassandraDir.toAbsolutePath().toString() + "/data/downloads",
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
@@ -295,7 +296,7 @@ public abstract class AbstractBackupTest {
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
             "--restoration-strategy-type=import",
             "--restoration-phase-type=cleanup", // CLEANUP
-            "--import-source-dir=" + target("downloaded"),
+            "--import-source-dir="  + cassandraDir.toAbsolutePath().toString() + "/data/downloads",
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
