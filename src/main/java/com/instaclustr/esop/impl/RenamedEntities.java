@@ -42,15 +42,6 @@ public class RenamedEntities {
         if (rename == null) {
             return;
         }
-        final RenamedEntities parsed = RenamedEntities.parse(rename);
-
-        // --entities=ks1.tb1 --rename=ks1.tb1=ks2.tb3 -> invalid as renaming across keyspaces is not permitted
-        for (final Renamed renamed : parsed.getRenamed()) {
-            // source and target keyspace have to be same
-            if (!renamed.from.fromKeyspace.equals(renamed.to.toKeyspace)) {
-                throw new IllegalStateException("'from' and 'to' keyspace part for an entry in rename map has to be equal");
-            }
-        }
 
         if (rename.size() != rename.values().stream().distinct().count()) {
             throw new IllegalStateException("all values in rename map have to be distinct");

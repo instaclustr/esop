@@ -310,10 +310,18 @@ public abstract class AbstractBackupTest {
         };
     }
 
-    protected String[][] importArgumentsRenamedTable(final String cassandraVersion, final RestorationStrategyType strategyType) {
+    protected String[][] importArgumentsRenamedTable(final String cassandraVersion, final RestorationStrategyType strategyType, final boolean crossKeyspaceRename) {
 
         final String snapshotName1 = "snapshot1";
         final String snapshotName2 = "snapshot2";
+
+        String rename;
+
+        if (crossKeyspaceRename) {
+            rename = "--rename=test2.test2=test.test";
+        } else {
+            rename = "--rename=test2.test2=test2.test3";
+        }
 
         // BACKUP
 
@@ -353,7 +361,7 @@ public abstract class AbstractBackupTest {
             "--import-source-dir=" + target("downloaded"),
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             //// !!! Renaming for test2 to test3, test3 will be same as test2 and test2 will not be touched
-            "--rename=test2.test2=test2.test3"
+            rename
         };
 
         final String[] restoreArgsPhase2 = new String[]{
@@ -368,7 +376,7 @@ public abstract class AbstractBackupTest {
             "--import-source-dir=" + target("downloaded"),
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             //// !!! Renaming for test2 to test3, test3 will be same as test2 and test2 will not be touched
-            "--rename=test2.test2=test2.test3"
+            rename
         };
 
         final String[] restoreArgsPhase3 = new String[]{
@@ -383,7 +391,7 @@ public abstract class AbstractBackupTest {
             "--import-source-dir=" + target("downloaded"),
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             //// !!! Renaming for test2 to test3, test3 will be same as test2 and test2 will not be touched
-            "--rename=test2.test2=test2.test3"
+            rename
         };
 
         final String[] restoreArgsPhase4 = new String[]{
@@ -398,7 +406,7 @@ public abstract class AbstractBackupTest {
             "--import-source-dir=" + target("downloaded"),
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             //// !!! Renaming for test2 to test3, test3 will be same as test2 and test2 will not be touched
-            "--rename=test2.test2=test2.test3"
+            rename
         };
 
         return new String[][]{
@@ -652,7 +660,10 @@ public abstract class AbstractBackupTest {
         }
     }
 
-    public void liveBackupRestoreTestRenamedEntities(final String[][] arguments, final String cassandraVersion, int rounds) throws Exception {
+    public void liveBackupRestoreTestRenamedEntities(final String[][] arguments,
+                                                     final String cassandraVersion,
+                                                     int rounds,
+                                                     boolean crossKeyspaceRestore) throws Exception {
         Cassandra cassandra = getCassandra(cassandraDir, cassandraVersion, false);
         cassandra.start();
 
@@ -707,7 +718,9 @@ public abstract class AbstractBackupTest {
                 dumpTable(session, KEYSPACE, TABLE, 4);
                 dumpTable(session, KEYSPACE_2, TABLE_2, 4);
                 // here we expect that table3 is same as table2
-                dumpTable(session, KEYSPACE_2, TABLE_3, 4);
+                if (!crossKeyspaceRestore) {
+                    dumpTable(session, KEYSPACE_2, TABLE_3, 4);
+                }
             }
         } finally {
             cassandra.stop();

@@ -108,13 +108,23 @@ public class LocalBackupTest extends AbstractBackupTest {
     }
 
     @Test
+    public void testImportingBackupAndRestoreRenameEntitiesCrossKeyspaces() throws Exception {
+        liveBackupRestoreTestRenamedEntities(importArgumentsRenamedTable(CASSANDRA_4_VERSION, IMPORT, true), CASSANDRA_4_VERSION, 2, true);
+    }
+
+    @Test
+    public void testImportingHardlinksBackupAndRestoreRenameEntitiesCrossKeyspaces() throws Exception {
+        liveBackupRestoreTestRenamedEntities(importArgumentsRenamedTable(CASSANDRA_VERSION, HARDLINKS, true), CASSANDRA_VERSION, 2, true);
+    }
+
+    @Test
     public void testImportingBackupAndRestoreRenameEntities() throws Exception {
-        liveBackupRestoreTestRenamedEntities(importArgumentsRenamedTable(CASSANDRA_4_VERSION, IMPORT), CASSANDRA_4_VERSION, 2);
+        liveBackupRestoreTestRenamedEntities(importArgumentsRenamedTable(CASSANDRA_4_VERSION, IMPORT, false), CASSANDRA_4_VERSION, 2, false);
     }
 
     @Test
     public void testImportingHardlinksBackupAndRestoreRenameEntities() throws Exception {
-        liveBackupRestoreTestRenamedEntities(importArgumentsRenamedTable(CASSANDRA_VERSION, HARDLINKS), CASSANDRA_VERSION, 2);
+        liveBackupRestoreTestRenamedEntities(importArgumentsRenamedTable(CASSANDRA_VERSION, HARDLINKS, false), CASSANDRA_VERSION, 2, false);
     }
 
     @Test

@@ -949,12 +949,14 @@ Valid cases:
 
 ----
 --entities=ks1.tb1 --rename=ks1.tb1=ks1.tb2
+--entities=ks1.tb1 --rename=ks1.tb1=ks2.tb1
 --entities=ks1.tb1,ks2.tb2,ks3.tb4 --rename=ks1.tb1=ks1.tb2,ks2.tb2=ks3.tb3
 ----
 
-* keyspace in "from" entity (ks1.tb1) has to be same in "to" entity (ks1.tb2), in case it differs, it will error out.
-In other words, you can not restore a table across a keyspace.
 * entities in "to" have to be unique across all renaming pairs, "ks1.tb1=ks1.tb2,ks1.tb3=ks1.tb2" is invalid
+* please keep in mind that if you are doing cross-keyspace renaming, as of now you are completely on your
+own when it comes to e.g. replication factors etc, Esop currently does not check that replication factor
+and replication strategy in source and target keyspace match. This might be addressed in the future versions.
 
 From Icarus point of view, you need to add a map under "rename" field:
 
