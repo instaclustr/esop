@@ -6,7 +6,7 @@ import java.nio.file.Paths;
 
 public abstract class StorageInteractor implements AutoCloseable {
 
-    private StorageLocation storageLocation;
+    protected StorageLocation storageLocation;
 
     public abstract RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception;
 

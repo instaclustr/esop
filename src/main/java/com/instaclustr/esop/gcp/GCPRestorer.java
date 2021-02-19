@@ -28,6 +28,8 @@ import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.esop.gcp.GCPModule.GoogleStorageFactory;
 import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.RemoteObjectReference;
+import com.instaclustr.esop.impl.list.ListOperationRequest;
+import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
@@ -46,6 +48,20 @@ public class GCPRestorer extends Restorer {
     @AssistedInject
     public GCPRestorer(final GoogleStorageFactory storageFactory,
                        @Assisted final RestoreCommitLogsOperationRequest request) {
+        super(request);
+        this.storage = storageFactory.build(request);
+    }
+
+    @AssistedInject
+    public GCPRestorer(final GoogleStorageFactory storageFactory,
+                       @Assisted final ListOperationRequest request) {
+        super(request);
+        this.storage = storageFactory.build(request);
+    }
+
+    @AssistedInject
+    public GCPRestorer(final GoogleStorageFactory storageFactory,
+                       @Assisted final RemoveBackupRequest request) {
         super(request);
         this.storage = storageFactory.build(request);
     }

@@ -19,6 +19,8 @@ import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.esop.azure.AzureModule.CloudStorageAccountFactory;
 import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.RemoteObjectReference;
+import com.instaclustr.esop.impl.list.ListOperationRequest;
+import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
@@ -61,6 +63,29 @@ public class AzureRestorer extends Restorer {
 
         this.blobContainer = cloudBlobClient.getContainerReference(request.storageLocation.bucket);
     }
+
+    @AssistedInject
+    public AzureRestorer(final CloudStorageAccountFactory cloudStorageAccountFactory,
+                         @Assisted final ListOperationRequest request) throws Exception {
+        super(request);
+
+        cloudStorageAccount = cloudStorageAccountFactory.build(request);
+        cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+
+        this.blobContainer = cloudBlobClient.getContainerReference(request.storageLocation.bucket);
+    }
+
+    @AssistedInject
+    public AzureRestorer(final CloudStorageAccountFactory cloudStorageAccountFactory,
+                         @Assisted final RemoveBackupRequest request) throws Exception {
+        super(request);
+
+        cloudStorageAccount = cloudStorageAccountFactory.build(request);
+        cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+
+        this.blobContainer = cloudBlobClient.getContainerReference(request.storageLocation.bucket);
+    }
+
 
     @Override
     public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception {

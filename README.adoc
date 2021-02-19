@@ -1025,6 +1025,125 @@ restore_point_in_time=2020\:01\:13 11\:32\:51
 restore_command=cp -f %from %to
 ----
 
+## Listing of backups
+
+This feature is for now only available for `file://`-based backups.
+
+Listing of a bucket provides a better visibility into what backups there are, how may files they
+are consisting of and how much space they occupy as well as how many space we would reclaim by their deletion.
+
+----
+$ java -jar ~/esop.jar list \
+    --storage-location=file:///backup1/cluster/datacenter1/node1 \
+    --skip-node-resolution \
+    --human-units
+
+Timestamp               Name             Files Occupied space Reclaimable space
+2021-04-27T15:38:40.284 name-of-backup-1 154   113.1 kB       10.1 kB
+2021-04-27T15:38:20.259 name-of-backup-2 138   103.0 kB       0 B
+                                         154   113.1 kB
+----
+
+Listing of a backup will read all manifests there are for a respective node and it will compute the statistics above.
+It is important to understand that the figure representing the number of files for a specific backup does not
+represent the unique files. Since a backup can have SSTables present in more than one backup, the sum of
+files per backup does not need to match the global number of files. Above we see that backup1 has 154 files and backup2
+has 138 files but in total there is 154 files. This means that backup2 is logically consisting of SSTables which
+are all in backup1 and backup1 contains all SSTables in backup1 plus some new ones. Same holds for occupied space.
+
+The figure of reclaimable space represent the number of bytes (or any human readable size) which would be freed
+by deleting that particular backup. For example, from the above we see that by deleting backup-2, we would get
+now free space. Why? Because all SSTables in backup-2 also belongs to backup-1. So we can not just physically remove it
+because backup-1 would just be corrupted.
+
+On the other hand, by deletion of backup-1, we would gain 10.1 kB. Why? Because we just can not go and delete all SSTables
+belonging to backup-1, because backup-2 would be corrupted - it would miss SStables. We can safely delete only
+these files from backup-1 which are not in backup-2 - and that difference occupies just 10 kB.
+
+However, we see that in total, our data occupy 113 kB at disk even though the sum of occupied space of all backups
+does not match the total - because there are SSTables logically belonging to multiple backups.
+
+Please keep in mind that this table reflects the reality as long as you do not add nor delete any backup.
+
+
+|===
+|flag |explanation
+
+|--skip-node-resolution
+|Skips the resolution of cluster name, data center and host id of a node Esop is connected to, otherwise
+it will try to connect to that node and retrieve this information and it will replace respective placeholders
+in --storage-location property.
+
+|--simple-format
+|prints out just names of backups instead of all statistics
+
+|--json
+|prints out a json instead of a table
+
+|--human-units
+|prints human-friendly sizes, e.g 5 kB, 1 GB etc instead of just number of bytes
+
+|--to-file
+|path to file to redirect the output of the command to, file is created when it does not exist
+
+|--from-timestamp
+|expects unix timestamp (also present in backup's name at the end), once set, it will only process
+|backups taken since then, including.
+
+|--last-n
+|expects a postive integer to process only last (the oldest) n backups.
+|===
+
+All `--json`, `--simple-format` and `--to-file` might be freely turned on / off on demand. By
+default, it will print a table in complex format to the standard output.
+
+`list` command is receptive to all family of `--jmx-*` settings in order to connect to a running
+Cassandra node if necessary.
+
+## Removal of a backup
+
+Since we are storing each SSTable only once, ever, a deletion of a backup is not so straightforward.
+
+We might delete only SSTable which is present only in one backup. If some particular SSTable
+is present in multiple backups, we might delete that backup _logically_, but we can not
+delete that SSTable. The underlying logic computes how may backups a particular file is present it
+by scanning all manifests there are and if we specify we want to delete so and so backup, it will
+physically remove only files which are part of that very backup and they are not resent anywhere
+else.
+
+By doing this, we are not forced to remove only the last backup (for example looking at its timestamp)
+but we can in general remove any backup.
+
+The general workflow is to either list all backups and remove only the one you want, or you can
+specify `--oldest` to delete the oldest one and you can do this repeatedly. If you want to
+remove all backups older than some time, you might get this information from listing the backups by
+specifying `--from-timestamp` and then you can delete these backups one by one.
+
+----
+$ java -jar ~/esop.jar remove-backup \
+    --storage-location=file:///backup1/cluster/datacenter1/node1 \
+    --skip-node-resolution \
+    --backup-name=full-backup-name-from-listing-with-timestamp-etc
+----
+
+All flags:
+
+|===
+|flag |explanation
+
+|--backup-name
+|name of manifest file to delete a backup for (minus .json)
+
+|--oldest
+|removes oldest backup there is, backup names does not need to be specified then
+
+|--dry
+|it will not delete files for real, good for evaluation to see what it would do before shooting
+
+|--skip-node-resolution
+|consult list command, same logic
+|===
+
 ## Logging
 
 We are using logback. There is already `logback.xml` embedded in the built JAR. However if you

@@ -30,6 +30,8 @@ import com.amazonaws.services.s3.transfer.internal.S3ProgressListener;
 import com.google.common.io.CharStreams;
 import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.RemoteObjectReference;
+import com.instaclustr.esop.impl.list.ListOperationRequest;
+import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
@@ -54,6 +56,20 @@ public class BaseS3Restorer extends Restorer {
 
     public BaseS3Restorer(final TransferManagerFactory transferManagerFactory,
                           final RestoreCommitLogsOperationRequest request) {
+        super(request);
+        this.transferManager = transferManagerFactory.build(request);
+        this.amazonS3 = this.transferManager.getAmazonS3Client();
+    }
+
+    public BaseS3Restorer(final TransferManagerFactory transferManagerFactory,
+                          final ListOperationRequest request) {
+        super(request);
+        this.transferManager = transferManagerFactory.build(request);
+        this.amazonS3 = this.transferManager.getAmazonS3Client();
+    }
+
+    public BaseS3Restorer(final TransferManagerFactory transferManagerFactory,
+                          final RemoveBackupRequest request) {
         super(request);
         this.transferManager = transferManagerFactory.build(request);
         this.amazonS3 = this.transferManager.getAmazonS3Client();

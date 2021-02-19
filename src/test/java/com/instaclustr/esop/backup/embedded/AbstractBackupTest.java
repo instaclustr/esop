@@ -57,6 +57,8 @@ import com.instaclustr.esop.impl.backup.BackupModules.UploadingModule;
 import com.instaclustr.esop.impl.hash.HashModule;
 import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.interaction.CassandraSchemaVersion;
+import com.instaclustr.esop.impl.list.ListModule;
+import com.instaclustr.esop.impl.remove.RemoveBackupModule;
 import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType;
 import com.instaclustr.esop.impl.restore.RestoreModules.DownloadingModule;
 import com.instaclustr.esop.impl.restore.RestoreModules.RestorationStrategyModule;
@@ -79,6 +81,8 @@ public abstract class AbstractBackupTest {
         add(new UploadingModule());
         add(new DownloadingModule());
         add(new RestorationStrategyModule());
+        add(new ListModule());
+        add(new RemoveBackupModule());
         add(new HashModule(new HashSpec()));
 
         try {
@@ -257,7 +261,7 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=import",
             "--restoration-phase-type=download", /// DOWNLOAD
             //"--import-source-dir=" + target("downloaded"),
-            "--import-source-dir="  + cassandraDir.toAbsolutePath().toString() + "/data/downloads",
+            "--import-source-dir=" + cassandraDir.toAbsolutePath().toString() + "/data/downloads",
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
@@ -270,7 +274,7 @@ public abstract class AbstractBackupTest {
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
             "--restoration-strategy-type=import",
             "--restoration-phase-type=truncate", // TRUNCATE
-            "--import-source-dir="  + cassandraDir.toAbsolutePath().toString() + "/data/downloads",
+            "--import-source-dir=" + cassandraDir.toAbsolutePath().toString() + "/data/downloads",
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
@@ -283,7 +287,7 @@ public abstract class AbstractBackupTest {
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
             "--restoration-strategy-type=import",
             "--restoration-phase-type=import", // IMPORT
-            "--import-source-dir="  + cassandraDir.toAbsolutePath().toString() + "/data/downloads",
+            "--import-source-dir=" + cassandraDir.toAbsolutePath().toString() + "/data/downloads",
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
@@ -296,7 +300,7 @@ public abstract class AbstractBackupTest {
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
             "--restoration-strategy-type=import",
             "--restoration-phase-type=cleanup", // CLEANUP
-            "--import-source-dir="  + cassandraDir.toAbsolutePath().toString() + "/data/downloads",
+            "--import-source-dir=" + cassandraDir.toAbsolutePath().toString() + "/data/downloads",
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
@@ -1069,15 +1073,15 @@ public abstract class AbstractBackupTest {
         }});
     }
 
-    private void addColumnToTable(CqlSession session, String keyspace, String table, String column, DataType dataType) {
+    protected void addColumnToTable(CqlSession session, String keyspace, String table, String column, DataType dataType) {
         session.execute(SchemaBuilder.alterTable(keyspace, table).addColumn(column, dataType).build());
     }
 
-    private void removeColumnFromTable(CqlSession session, String keyspace, String table, String column) {
+    protected void removeColumnFromTable(CqlSession session, String keyspace, String table, String column) {
         session.execute(SchemaBuilder.alterTable(keyspace, table).dropColumn(column).build());
     }
 
-    private void createTable(CqlSession session, String keyspace, String table) {
+    protected void createTable(CqlSession session, String keyspace, String table) {
         session.execute(SchemaBuilder.createKeyspace(keyspace)
                             .ifNotExists()
                             .withNetworkTopologyStrategy(of("datacenter1", 1))
@@ -1097,7 +1101,7 @@ public abstract class AbstractBackupTest {
         return target.resolve(path).toAbsolutePath().toString();
     }
 
-    private void restoreOnStoppedNode(List<Long> insertionTimes, String[][] arguments) {
+    protected void restoreOnStoppedNode(List<Long> insertionTimes, String[][] arguments) {
 
         // RESTORE
 
@@ -1125,12 +1129,12 @@ public abstract class AbstractBackupTest {
         Esop.main(commitlogRestoreArgsAsList.toArray(new String[0]), false);
     }
 
-    private void copyCassandra(Path source, Path target) throws IOException {
+    protected void copyCassandra(Path source, Path target) throws IOException {
         copyDirectory(source.toFile(), target.toFile());
         cleanDirectory(target.resolve("data"));
     }
 
-    private void waitForCql() {
+    protected void waitForCql() {
         await()
             .pollInterval(10, SECONDS)
             .pollInSameThread()
@@ -1145,10 +1149,10 @@ public abstract class AbstractBackupTest {
     }
 
 
-    private void dumpTable(final CqlSession session,
-                           final String keyspace,
-                           final String table,
-                           int expectedLength) {
+    protected void dumpTable(final CqlSession session,
+                             final String keyspace,
+                             final String table,
+                             int expectedLength) {
         List<Row> rows = session.execute(selectFrom(keyspace, table).all().build()).all();
 
         logger.info(format("Dumping %s.%s", keyspace, table));

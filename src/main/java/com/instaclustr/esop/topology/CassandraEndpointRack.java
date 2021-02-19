@@ -37,7 +37,7 @@ public class CassandraEndpointRack implements CassandraInteraction<Map<InetAddre
             final String dc = cassandraJMXService.doWithMBean(new FunctionWithEx<EndpointSnitchInfoMBean, String>() {
                 @Override
                 public String apply(final EndpointSnitchInfoMBean mbean) throws Exception {
-                    return mbean.getRack(endpoint.getHostAddress());
+                    return mbean.getDatacenter(endpoint.getHostAddress());
                 }
             }, EndpointSnitchInfoMBean.class, V3.ENDPOINT_SNITCH_INFO_MBEAN_NAME);
 

@@ -16,8 +16,8 @@ import com.google.inject.Stage;
 import com.instaclustr.cassandra.CassandraModule;
 import com.instaclustr.esop.guice.StorageModules;
 import com.instaclustr.esop.impl.backup.BackupModules.UploadingModule;
-import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.hash.HashModule;
+import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.restore.RestoreModules.DownloadingModule;
 import com.instaclustr.guice.GuiceInjectorHolder;
 import com.instaclustr.jackson.JacksonModule;
@@ -40,7 +40,9 @@ import picocli.CommandLine.Spec;
     BackupApplication.class,
     RestoreApplication.class,
     CommitLogBackupApplication.class,
-    CommitLogRestoreApplication.class
+    CommitLogRestoreApplication.class,
+    ListApplication.class,
+    RemoveBackupApplication.class
 },
     versionProvider = Esop.class,
     name = "esop",

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -164,6 +165,11 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
         @JsonIgnore
         public List<NodeTopology> getNodesFromDcs(final List<String> dcs) {
             return topology.stream().filter(nodeTopology -> dcs.contains(nodeTopology.dc)).collect(toList());
+        }
+
+        @JsonIgnore
+        public Optional<NodeTopology> getNodeTopology(final String nodeId) {
+            return topology.stream().filter(nt -> nt.nodeId.toString().equals(nodeId)).findFirst();
         }
 
         @JsonIgnore
