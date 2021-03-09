@@ -65,7 +65,7 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
     public BaseBackupOperationRequest() {
         // for picocli
         if (metadataDirective == null) {
-            metadataDirective = MetadataDirective.COPY;
+            metadataDirective = MetadataDirective.REPLACE;
         }
     }
 
