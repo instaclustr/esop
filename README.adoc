@@ -185,6 +185,10 @@ Please consult the following section to know more about Kubernetes-related
 authentication properties resolution. Setting protocol to HTTP might be achieved similarly as for normal
 S3 module, by specifying `--insecure-http` flag.
 
+### Dell EMC ECS
+
+Dell provides S3-compatible storage solution, Esop is reported to work with this storage backend when using s3 protocol.
+
 #### Minio
 
 `minio` is alias of `oracle`. Oracle nor Minio uses path-style requests which S3 module does not.
