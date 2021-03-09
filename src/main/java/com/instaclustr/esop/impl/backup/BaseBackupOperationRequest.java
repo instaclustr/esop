@@ -88,7 +88,7 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
         this.bandwidth = bandwidth;
         this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/")) ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.concurrentConnections = concurrentConnections == null ? 10 : concurrentConnections;
-        this.metadataDirective = metadataDirective == null ? MetadataDirective.COPY : metadataDirective;
+        this.metadataDirective = metadataDirective == null ? MetadataDirective.REPLACE : metadataDirective;
         this.k8sNamespace = k8sNamespace;
         this.k8sSecretName = k8sBackupSecretName;
         this.createMissingBucket = createMissingBucket;
