@@ -45,8 +45,8 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
     public DatabaseEntities entities;
 
     @Option(names = "--datacenter",
-        description = "Name of datacenter against which restore will be done. It means that nodes in a different DC will not receive backup requests. "
-            + "This is valid only in case globalRequest is true. Use with caution because when truncating a table as part of ")
+        description = "Name of datacenter against which backup will be done. It means that nodes in a different DC will not receive backup requests. "
+            + "This is valid only in case globalRequest is true.")
     @JsonProperty("dc")
     public String dc;
 
