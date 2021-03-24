@@ -154,7 +154,8 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
                 }
 
                 if (operation.request.uploadClusterTopology) {
-                    final ClusterTopology topology = new CassandraClusterTopology(cassandraJMXService, operation.request.dc).act();
+                    // here we will upload all topology because we do not know what restore might look like (what dc a restorer will restore against if any)
+                    final ClusterTopology topology = new CassandraClusterTopology(cassandraJMXService, null).act();
                     ClusterTopology.upload(backuper, topology, objectMapper, operation.request.snapshotTag);
                 }
             } finally {

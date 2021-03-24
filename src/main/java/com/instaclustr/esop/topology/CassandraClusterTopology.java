@@ -12,8 +12,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -62,11 +65,11 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
 
         final String schemaVersion = new CassandraSchemaVersion(cassandraJMXService).act();
 
-        logger.info("Resolved endpoints: {}", endpoints.toString());
-        logger.info("Resolved endpoints and their dc: {}", endpointDcs.toString());
-        logger.info("Resolved cluster name: {}", clusterName);
+        final ClusterTopology resolvedTopology = constructTopology(clusterName, endpoints, endpointDcs, hostnames, endpointRacks, schemaVersion);
 
-        return constructTopology(clusterName, endpoints, endpointDcs, hostnames, endpointRacks, schemaVersion);
+        logger.info(resolvedTopology.toString());
+
+        return resolvedTopology;
     }
 
     private ClusterTopology constructTopology(final String clusterName,
@@ -92,29 +95,14 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
             topology.topology.add(nodeTopology);
         }
 
-        final ClusterTopology filteredTopology = filter(topology, dc);
+        topology.clusterName = clusterName;
+        topology.schemaVersion = schemaVersion;
+        topology.endpoints = endpoints;
+        topology.endpointDcs = endpointDcs;
+        topology.hostnames = hostnames;
+        topology.endpointRacks = endpointRacks;
 
-        filteredTopology.clusterName = clusterName;
-        filteredTopology.endpoints = endpoints;
-        filteredTopology.endpointDcs = endpointDcs;
-        filteredTopology.hostnames = hostnames;
-        filteredTopology.endpointRacks = endpointRacks;
-        filteredTopology.schemaVersion = schemaVersion;
-
-        return filteredTopology;
-    }
-
-    public ClusterTopology filter(final ClusterTopology clusterTopology, final String dc) {
-        if (dc == null) {
-            final ClusterTopology topology = new ClusterTopology();
-            topology.setTimestamp(clusterTopology.getTimestamp());
-            topology.topology.addAll(clusterTopology.topology);
-            return topology;
-        }
-
-        final ClusterTopology filtered = clusterTopology.filterDc(dc);
-        filtered.setTimestamp(clusterTopology.getTimestamp());
-        return filtered;
+        return ClusterTopology.filter(topology, dc);
     }
 
     public static class ClusterTopology {
@@ -167,13 +155,6 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
         @JsonIgnore
         public List<NodeTopology> getNodesFromDc(final String dc) {
             return topology.stream().filter(nodeTopology -> dc.equals(nodeTopology.dc)).collect(toList());
-        }
-
-        public ClusterTopology filterDc(final String dc) {
-            final ClusterTopology clusterTopology = new ClusterTopology();
-            clusterTopology.setTimestamp(clusterTopology.getTimestamp());
-            clusterTopology.topology.addAll(getNodesFromDc(dc));
-            return clusterTopology;
         }
 
         @JsonIgnore
@@ -242,6 +223,58 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
             }
         }
 
+        public static ClusterTopology filter(final ClusterTopology clusterTopology, final String dc) {
+            if (dc == null) {
+                return clusterTopology;
+            }
+
+            final List<NodeTopology> nodesFromDc = clusterTopology.getNodesFromDc(dc);
+            clusterTopology.topology.clear();
+            clusterTopology.topology.addAll(nodesFromDc);
+
+            // endpoint dcs
+            final Map<InetAddress, String> endpointDcs = clusterTopology.endpointDcs
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getValue().equals(dc))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+            clusterTopology.endpointDcs.clear();
+            clusterTopology.endpointDcs.putAll(endpointDcs);
+
+            // endpoints
+            final Map<InetAddress, UUID> endpoints = clusterTopology.endpoints
+                .entrySet()
+                .stream()
+                .filter(entry -> endpointDcs.containsKey(entry.getKey()))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+            clusterTopology.endpoints.clear();
+            clusterTopology.endpoints.putAll(endpoints);
+
+            // hostnames
+            final Map<InetAddress, String> hostnames = clusterTopology.hostnames
+                .entrySet()
+                .stream()
+                .filter(entry -> endpointDcs.containsKey(entry.getKey()))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+            clusterTopology.hostnames.clear();
+            clusterTopology.hostnames.putAll(hostnames);
+
+            // endpoint racks
+            final Map<InetAddress, String> endpointRacks = clusterTopology.endpointRacks
+                .entrySet()
+                .stream()
+                .filter(entry -> endpointDcs.containsKey(entry.getKey()))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+            clusterTopology.endpointRacks.clear();
+            clusterTopology.endpointRacks.putAll(endpointRacks);
+
+            return clusterTopology;
+        }
+
         @Override
         public String toString() {
             return "ClusterTopology{" +
@@ -254,6 +287,30 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
                 ", schemaVersion='" + schemaVersion + '\'' +
                 ", topology=" + topology +
                 '}';
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final ClusterTopology that = (ClusterTopology) o;
+            return timestamp == that.timestamp &&
+                Objects.equals(clusterName, that.clusterName) &&
+                Objects.equals(endpoints, that.endpoints) &&
+                Objects.equals(endpointDcs, that.endpointDcs) &&
+                Objects.equals(hostnames, that.hostnames) &&
+                Objects.equals(endpointRacks, that.endpointRacks) &&
+                Objects.equals(schemaVersion, that.schemaVersion) &&
+                Objects.equals(topology, that.topology);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(timestamp, clusterName, endpoints, endpointDcs, hostnames, endpointRacks, schemaVersion, topology);
         }
 
         public static class NodeTopology {
