@@ -172,6 +172,8 @@ public abstract class RestorationPhase {
         }
 
         private void checkManifestExists() throws Exception {
+            final String schemaVersion = new CassandraSchemaVersion(ctxt.jmx).act();
+
             final RestoreOperationRequest request = ctxt.operation.request;
 
             if (!ctxt.operation.request.skipBucketVerification) {
@@ -179,8 +181,6 @@ public abstract class RestorationPhase {
                     bucketService.checkBucket(request.storageLocation.bucket, false);
                 }
             }
-
-            final String schemaVersion = new CassandraSchemaVersion(ctxt.jmx).act();
 
             RestorationUtilities.downloadManifest(request, ctxt.restorer, schemaVersion, ctxt.objectMapper);
         }
