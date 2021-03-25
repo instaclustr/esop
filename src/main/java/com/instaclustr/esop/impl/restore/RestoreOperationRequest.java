@@ -159,6 +159,11 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
     @JsonProperty("singlePhase")
     public boolean singlePhase;
 
+    @Option(names = "--datacenter",
+        description = "Name of datacenter against which restore will be done. It means that nodes in a different DC will not receive restore requests.")
+    @JsonProperty("dc")
+    public String dc;
+
     public RestoreOperationRequest() {
         // for picocli
     }
@@ -167,7 +172,6 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
     public RestoreOperationRequest(@JsonProperty("type") final String type,
                                    @JsonProperty("storageLocation") final StorageLocation storageLocation,
                                    @JsonProperty("concurrentConnections") final Integer concurrentConnections,
-                                   @JsonProperty("lockFile") final Path lockFile,
                                    @JsonProperty("cassandraDirectory") final Path cassandraDirectory,
                                    @JsonProperty("cassandraConfigDirectory") final Path cassandraConfigDirectory,
                                    @JsonProperty("restoreSystemKeyspace") final boolean restoreSystemKeyspace,
@@ -189,6 +193,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonProperty("k8sNamespace") final String k8sNamespace,
                                    @JsonProperty("k8sSecretName") final String k8sSecretName,
                                    @JsonProperty("globalRequest") final boolean globalRequest,
+                                   @JsonProperty("dc") final String dc,
                                    @JsonProperty("timeout") final Integer timeout,
                                    @JsonProperty("resolveHostIdFromTopology") final boolean resolveHostIdFromTopology,
                                    @JsonProperty("insecure") final boolean insecure,
@@ -198,7 +203,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonProperty("rename") final Map<String, String> rename,
                                    @JsonProperty("retry") final RetrySpec retry,
                                    @JsonProperty("singlePhase") final boolean singlePhase) {
-        super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
+        super(storageLocation, concurrentConnections, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
         this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/")) ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
         this.restoreSystemKeyspace = restoreSystemKeyspace;
@@ -214,6 +219,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
         this.schemaVersion = schemaVersion;
         this.exactSchemaVersion = exactSchemaVersion;
         this.globalRequest = globalRequest;
+        this.dc = dc;
         this.type = type;
         this.timeout = timeout == null || timeout < 1 ? 5 : timeout;
         this.resolveHostIdFromTopology = resolveHostIdFromTopology;
@@ -243,6 +249,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             .add("k8sNamespace", k8sNamespace)
             .add("k8sSecretName", k8sSecretName)
             .add("globalRequest", globalRequest)
+            .add("dc", dc)
             .add("timeout", timeout)
             .add("resolveHostIdFromTopology", resolveHostIdFromTopology)
             .add("insecure", insecure)

@@ -7,4 +7,8 @@ else
     JAVA="`which java`"
 fi
 
-"$JAVA" -jar "/usr/share/java/esop.jar" $@
+if [ -f /etc/logback-esop.xml ]; then
+  "$JAVA" -Dlogback.configurationFile=/etc/logback-esop.xml -jar "/usr/share/java/esop.jar" $@
+else
+  "$JAVA" -jar "/usr/share/java/esop.jar" $@
+fi

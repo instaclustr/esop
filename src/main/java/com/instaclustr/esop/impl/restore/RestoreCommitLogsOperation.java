@@ -7,7 +7,6 @@ import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,7 +34,6 @@ import com.instaclustr.esop.impl.BucketService;
 import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.restore.DownloadTracker.DownloadUnit;
-import com.instaclustr.io.GlobalLock;
 import com.instaclustr.operations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,9 +61,6 @@ public class RestoreCommitLogsOperation extends Operation<RestoreCommitLogsOpera
 
     @Override
     protected void run0() throws Exception {
-
-        final FileLock fileLock = new GlobalLock(request.lockFile).waitForLock();
-
         try (final Restorer restorer = restorerFactoryMap.get(request.storageLocation.storageProvider).createCommitLogRestorer(request)) {
             checkBucket();
             backupCurrentCommitLogs();
@@ -73,8 +68,6 @@ public class RestoreCommitLogsOperation extends Operation<RestoreCommitLogsOpera
             updateCommitLogArchivingProperties();
             writeConfigOptions();
 
-        } finally {
-            fileLock.release();
         }
     }
 

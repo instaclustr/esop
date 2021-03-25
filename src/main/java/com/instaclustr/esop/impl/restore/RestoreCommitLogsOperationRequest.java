@@ -75,7 +75,6 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
     @JsonCreator
     public RestoreCommitLogsOperationRequest(@JsonProperty("storageLocation") final StorageLocation storageLocation,
                                              @JsonProperty("concurrentConnections") final Integer concurrentConnections,
-                                             @JsonProperty("lockFile") final Path lockFile,
                                              @JsonProperty("cassandraDirectory") final Path cassandraDirectory,
                                              @JsonProperty("sharedContainerPath") final Path sharedContainerPath,
                                              @JsonProperty("cassandraConfigDirectory") final Path cassandraConfigDirectory,
@@ -89,7 +88,7 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
                                              @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
                                              @JsonProperty("proxySettings") final ProxySettings proxySettings,
                                              @JsonProperty("retry") final RetrySpec retry) {
-        super(storageLocation, concurrentConnections, lockFile, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
+        super(storageLocation, concurrentConnections, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
         this.cassandraDirectory = cassandraDirectory == null ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.sharedContainerPath = sharedContainerPath == null ? Paths.get("/") : sharedContainerPath;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
@@ -105,7 +104,6 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
         return MoreObjects.toStringHelper(this)
             .add("storageLocation", storageLocation)
             .add("concurrentConnections", concurrentConnections)
-            .add("lockFile", lockFile)
             .add("cassandraDirectory", cassandraDirectory)
             .add("sharedContainerPath", sharedContainerPath)
             .add("cassandraConfigDirectory", cassandraConfigDirectory)

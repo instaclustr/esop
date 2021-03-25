@@ -6,7 +6,6 @@ import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhas
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.of;
 
-import java.nio.channels.FileLock;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,7 +21,6 @@ import com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType;
 import com.instaclustr.esop.impl.restore.RestorationStrategy;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
-import com.instaclustr.io.GlobalLock;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.Operation.Error;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
@@ -79,10 +77,7 @@ public abstract class AbstractRestorationStrategy implements RestorationStrategy
     }
 
     @Override
-    public void restore(final Restorer restorer, final Operation<RestoreOperationRequest> operation) throws Exception {
-
-        final FileLock fileLock = new GlobalLock(operation.request.lockFile).waitForLock();
-
+    public void restore(final Restorer restorer, final Operation<RestoreOperationRequest> operation) {
         try {
             final RestorationPhase restorationPhase = resolveRestorationPhase(operation, restorer);
 
@@ -98,8 +93,6 @@ public abstract class AbstractRestorationStrategy implements RestorationStrategy
             restorationPhase.execute();
         } catch (final Exception ex) {
             operation.addError(Error.from(ex));
-        } finally {
-            fileLock.release();
         }
     }
 }

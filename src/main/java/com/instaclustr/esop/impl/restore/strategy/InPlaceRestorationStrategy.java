@@ -3,7 +3,6 @@ package com.instaclustr.esop.impl.restore.strategy;
 import static com.instaclustr.io.FileUtils.cleanDirectory;
 import static java.lang.String.format;
 
-import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,7 +32,6 @@ import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology;
 import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology.NodeTopology;
 import com.instaclustr.io.FileUtils;
-import com.instaclustr.io.GlobalLock;
 import com.instaclustr.kubernetes.KubernetesHelper;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.Operation.Error;
@@ -69,8 +67,6 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
     public void restore(final Restorer restorer, final Operation<RestoreOperationRequest> operation) throws Exception {
 
         final RestoreOperationRequest request = operation.request;
-
-        final FileLock fileLock = new GlobalLock(request.lockFile).waitForLock();
 
         try {
             if (operation.request.restorationStrategyType != RestorationStrategyType.IN_PLACE) {
@@ -230,8 +226,6 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
             }
         } catch (final Exception ex) {
             operation.addError(Error.from(ex));
-        } finally {
-            fileLock.release();
         }
     }
 
