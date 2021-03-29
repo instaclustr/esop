@@ -1,0 +1,55 @@
+#!/bin/bash
+
+function esop-restore-backup() {
+echo "executing $2 on node in dc$1"
+
+ssh root@spark-master-$1 /submit/demo/2x1/.generic-esop-restore-running-cluster $2 dc$1 node1 $3
+}
+
+echo "PHASE 1 - INIT"
+echo "-------------"
+echo "INIT on node in DC1"
+echo "INIT on node in DC2"
+echo ""
+echo "PHASE 2 - DOWNLOAD"
+echo "-------------"
+echo "DOWNLOAD on node in DC1"
+echo "DOWNLOAD on node in DC2"
+echo ""
+echo "PHASE 3 - TRUNCATE"
+echo "------------------"
+echo "TRUNCATE on node in DC1 - removes all data"
+echo ""
+echo "PHASE 4 - DOWNLOAD"
+echo "------------------"
+echo "IMPORT on node in DC1"
+echo "IMPORT on node in DC2"
+echo ""
+echo "PHASE 5 - CLEANUP"
+echo "-----------------"
+echo "CLEANUP on node in DC1 - removes /var/lib/cassandra/download"
+echo "CLEANUP on node in DC2 - removes /var/lib/cassandra/download"
+echo ""
+read -p "press any key to continue to INIT on node in DC1"
+
+esop-restore-backup 1 init backup1
+esop-restore-backup 2 init backup1
+
+read -p "press any key to continue to DOWNLOAD"
+
+esop-restore-backup 1 download backup1
+esop-restore-backup 2 download backup1
+
+read -p "press any key to continue to TRUNCATE"
+
+esop-restore-backup 1 truncate backup1
+
+read -p "press any key to continue to IMPORT"
+
+esop-restore-backup 1 import backup1
+esop-restore-backup 2 import backup1
+
+read -p "press any key to continue to CLEANUP"
+
+esop-restore-backup 1 cleanup backup1
+esop-restore-backup 2 cleanup backup1

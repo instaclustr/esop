@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -x
+
+curl -i -X POST http://$(hostname):4567/operations -H "Content-Type: application/json" --data-binary "@backup.json"

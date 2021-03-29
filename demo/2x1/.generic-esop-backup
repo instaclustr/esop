@@ -1,0 +1,17 @@
+#!/bin/bash
+
+. ~/.bash_profile
+
+esop backup \
+  --jmx-service=$(hostname):7199 \
+  --jmx-user=cassandra \
+  --jmx-password=cassandra \
+  --jmx-truststore=/submit/cassandra/ssl/combined.ts \
+  --jmx-truststore-password=cassandra \
+  --jmx-keystore=/submit/cassandra/ssl/client-server-keystore.p12 \
+  --jmx-keystore-password=cassandra \
+  --storage-location=azure://attdemo/my-cluster/$2/$3 \
+  --snapshot-tag=$1 \
+  --data-directory=/var/lib/cassandra \
+  --entities=att1,att2 \
+  --create-missing-bucket

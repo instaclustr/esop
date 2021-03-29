@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# create att1 and att2 keyspaces for both DCs
+
+cqlsh -e "CREATE KEYSPACE IF NOT EXISTS att1 WITH replication = {'class': 'NetworkTopologyStrategy', 'dc1': 1, 'dc2': 1};"
+cqlsh -e "CREATE KEYSPACE IF NOT EXISTS att2 WITH replication = {'class': 'NetworkTopologyStrategy', 'dc1': 1, 'dc2': 1};"
+
+# create tables t1, t2 and t3 for both att1 and att2
+
+cqlsh -e "CREATE TABLE IF NOT EXISTS att1.t1 ( id uuid primary key);"
+cqlsh -e "CREATE TABLE IF NOT EXISTS att1.t2 ( id uuid primary key);"
+cqlsh -e "CREATE TABLE IF NOT EXISTS att1.t3 ( id uuid primary key);"
+
+echo "tables att1.{t1,t2.t3} created"
+
+cqlsh -e "CREATE TABLE IF NOT EXISTS att2.t1 ( id uuid primary key);"
+cqlsh -e "CREATE TABLE IF NOT EXISTS att2.t2 ( id uuid primary key);"
+cqlsh -e "CREATE TABLE IF NOT EXISTS att2.t3 ( id uuid primary key);"
+
+for keyspace in att1 att2; do
+	for table in t1 t2 t3; do
+		for i in {1..10}; do
+			cqlsh -e "insert into ${keyspace}.${table} (id) values (uuid())";
+		done
+		echo "10 rows added to ${keyspace}.${table}"
+	done
+done

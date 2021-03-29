@@ -1,0 +1,13 @@
+{
+  "type": "restore",
+  "storageLocation": "azure://attdemo/clustername/dcname/nodeid",
+  "snapshotTag": "backup3",
+  "entities": "att1,att2",
+  "globalRequest": "true",
+  "restorationStrategyType": "IMPORT",
+  "restorationPhase": "INIT",
+  "import": {
+    "type": "import",
+    "sourceDir": "/var/lib/cassandra/download"
+  }
+}

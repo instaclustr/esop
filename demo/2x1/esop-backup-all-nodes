@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# call like esop-backup-all-nodes backup1
+# add more data
+# call like esop-backup-all-nodes backup2
+
+echo "executing backup with snapshot $1 on the first node in dc1"
+
+ssh root@spark-master-1 /submit/demo/2x1/.generic-esop-backup $1 dc1 node1
+
+sleep 5
+
+echo "executing backup with snapshot $1 on the second node in dc2"
+
+ssh root@spark-master-2 /submit/demo/2x1/.generic-esop-backup $1 dc2 node1

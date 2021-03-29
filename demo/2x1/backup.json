@@ -1,0 +1,9 @@
+{
+  "type": "backup",
+  "storageLocation": "azure://attdemo/my-cluster/dc1/whatever",
+  "snapshotTag": "backup3",
+  "globalRequest": true,
+  "createMissingBucket": true,
+  "skipBucketVerification": false,
+  "entities": "att1,att2"
+}

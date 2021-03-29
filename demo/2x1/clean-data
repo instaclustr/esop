@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# tidy up first
+
+cqlsh -e "DROP KEYSPACE IF EXISTS att1;"
+cqlsh -e "DROP KEYSPACE IF EXISTS att2;"
+
+echo "keyspaces dropped"
+
+# delete files physically from disk too
+
+pssh -h .hosts -P rm -rf /var/lib/cassandra/data/att1
+pssh -h .hosts -P rm -rf /var/lib/cassandra/data/att2
+pssh -h .hosts -P rm -rf /var/lib/cassandra/download
+pssh -h .hosts -P rm -rf /var/lib/cassandra/download

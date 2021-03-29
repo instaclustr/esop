@@ -1,0 +1,126 @@
+#!/bin/bash
+
+. ~/.bash_profile
+
+function init() {
+
+  mkdir -p /tmp/data
+  rm -rf /tmp/data/*
+
+  echo "Executing INIT phase of IMPORT strategy"
+
+  set -x
+
+  esop restore \
+    --jmx-service=$(hostname):7199 \
+    --jmx-user=cassandra \
+    --jmx-password=cassandra \
+    --jmx-truststore=/submit/cassandra/ssl/combined.ts \
+    --jmx-truststore-password=cassandra \
+    --jmx-keystore=/submit/cassandra/ssl/client-server-keystore.p12 \
+    --jmx-keystore-password=cassandra \
+    --storage-location=azure://attdemo/my-cluster/$1/$2 \
+    --snapshot-tag=$3 \
+    --data-directory=/var/lib/cassandra \
+    --entities=att1,att2 \
+    --restoration-strategy-type=HARDLINKS \
+    --restoration-phase-type=INIT
+}
+
+function download() {
+
+  echo "Executing DOWNLOAD phase of IMPORT strategy"
+
+  set -x
+
+  esop restore \
+    --jmx-service=$(hostname):7199 \
+    --jmx-user=cassandra \
+    --jmx-password=cassandra \
+    --jmx-truststore=/submit/cassandra/ssl/combined.ts \
+    --jmx-truststore-password=cassandra \
+    --jmx-keystore=/submit/cassandra/ssl/client-server-keystore.p12 \
+    --jmx-keystore-password=cassandra \
+    --storage-location=azure://attdemo/my-cluster/$1/$2 \
+    --snapshot-tag=$3 \
+    --data-directory=/var/lib/cassandra \
+    --entities=att1,att2 \
+    --restoration-strategy-type=IMPORT \
+    --restoration-phase-type=DOWNLOAD \
+    --import-source-dir=/var/lib/cassandra/download
+}
+
+function truncate() {
+
+  echo "Executing TRUNCATE phase of IMPORT strategy"
+
+  set -x
+
+  esop restore \
+    --jmx-service=$(hostname):7199 \
+    --jmx-user=cassandra \
+    --jmx-password=cassandra \
+    --jmx-truststore=/submit/cassandra/ssl/combined.ts \
+    --jmx-truststore-password=cassandra \
+    --jmx-keystore=/submit/cassandra/ssl/client-server-keystore.p12 \
+    --jmx-keystore-password=cassandra \
+    --storage-location=azure://attdemo/my-cluster/$1/$2 \
+    --snapshot-tag=$3 \
+    --data-directory=/var/lib/cassandra \
+    --entities=att1,att2 \
+    --restoration-strategy-type=IMPORT \
+    --restoration-phase-type=TRUNCATE
+}
+
+function import() {
+
+  echo "Executing IMPORT phase of IMPORT strategy"
+
+  set -x
+
+  esop restore \
+    --jmx-service=$(hostname):7199 \
+    --jmx-user=cassandra \
+    --jmx-password=cassandra \
+    --jmx-truststore=/submit/cassandra/ssl/combined.ts \
+    --jmx-truststore-password=cassandra \
+    --jmx-keystore=/submit/cassandra/ssl/client-server-keystore.p12 \
+    --jmx-keystore-password=cassandra \
+    --storage-location=azure://attdemo/my-cluster/$1/$2 \
+    --snapshot-tag=$3 \
+    --data-directory=/var/lib/cassandra \
+    --entities=att1,att2 \
+    --restoration-strategy-type=IMPORT \
+    --restoration-phase-type=IMPORT \
+    --import-source-dir=/var/lib/cassandra/download
+}
+
+function cleanup() {
+
+  echo "Executing CLEANUP phase of IMPORT strategy"
+
+  set -x
+
+  esop restore \
+    --jmx-service=$(hostname):7199 \
+    --jmx-user=cassandra \
+    --jmx-password=cassandra \
+    --jmx-truststore=/submit/cassandra/ssl/combined.ts \
+    --jmx-truststore-password=cassandra \
+    --jmx-keystore=/submit/cassandra/ssl/client-server-keystore.p12 \
+    --jmx-keystore-password=cassandra \
+    --storage-location=azure://attdemo/my-cluster/$1/$2 \
+    --snapshot-tag=$3 \
+    --data-directory=/var/lib/cassandra \
+    --entities=att1,att2 \
+    --restoration-strategy-type=HARDLINKS \
+    --restoration-phase-type=CLEANUP \
+    --import-source-dir=/var/lib/cassandra/download
+}
+
+# 1 - method
+# 2 - dc
+# 3 - nodeId
+# 4 - snapashot name
+
+$1 $2 $3 $4
