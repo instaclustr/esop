@@ -160,7 +160,9 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
     public boolean singlePhase;
 
     @Option(names = "--datacenter",
-        description = "Name of datacenter against which restore will be done. It means that nodes in a different DC will not receive restore requests.")
+        description = "Name of datacenter(s) against which restore will be done. "
+            + "It means that nodes in a different DC will not receive restore requests. "
+            + "Multiple dcs are separated by comma.")
     @JsonProperty("dc")
     public String dc;
 

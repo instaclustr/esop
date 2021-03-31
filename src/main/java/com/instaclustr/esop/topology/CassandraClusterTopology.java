@@ -1,6 +1,7 @@
 package com.instaclustr.esop.topology;
 
 import static java.lang.String.format;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
@@ -10,6 +11,8 @@ import java.net.InetAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -35,11 +38,11 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
     private static final Logger logger = LoggerFactory.getLogger(CassandraClusterTopology.class);
 
     private final CassandraJMXService cassandraJMXService;
-    private final String dc;
+    private final String dcs;
 
-    public CassandraClusterTopology(final CassandraJMXService cassandraJMXService, final String dc) {
+    public CassandraClusterTopology(final CassandraJMXService cassandraJMXService, final String dcs) {
         this.cassandraJMXService = cassandraJMXService;
-        this.dc = dc;
+        this.dcs = dcs;
     }
 
     @Override
@@ -66,6 +69,12 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
         final String schemaVersion = new CassandraSchemaVersion(cassandraJMXService).act();
 
         final ClusterTopology resolvedTopology = constructTopology(clusterName, endpoints, endpointDcs, hostnames, endpointRacks, schemaVersion);
+
+        final Set<String> invalidDcs = ClusterTopology.sanitizeDcs(dcs).stream().filter(dc -> !resolvedTopology.getDcs().contains(dc)).collect(toSet());
+
+        if (!invalidDcs.isEmpty()) {
+            throw new IllegalStateException(format("Some DCs to filter on do not exist: %s, existing: %s", invalidDcs, String.join(",", resolvedTopology.getDcs())));
+        }
 
         logger.info(resolvedTopology.toString());
 
@@ -102,7 +111,7 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
         topology.hostnames = hostnames;
         topology.endpointRacks = endpointRacks;
 
-        return ClusterTopology.filter(topology, dc);
+        return ClusterTopology.filter(topology, dcs);
     }
 
     public static class ClusterTopology {
@@ -153,18 +162,18 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
         }
 
         @JsonIgnore
-        public List<NodeTopology> getNodesFromDc(final String dc) {
-            return topology.stream().filter(nodeTopology -> dc.equals(nodeTopology.dc)).collect(toList());
+        public List<NodeTopology> getNodesFromDcs(final List<String> dcs) {
+            return topology.stream().filter(nodeTopology -> dcs.contains(nodeTopology.dc)).collect(toList());
         }
 
         @JsonIgnore
         public int getNumberOfNodesFromDc(final String dc) {
-            return getNodesFromDc(dc).size();
+            return getNodesFromDcs(singletonList(dc)).size();
         }
 
         @JsonIgnore
         public List<NodeTopology> getNodesFromDcAndRack(final String dc, final String rack) {
-            return getNodesFromDc(dc).stream().filter(nodeTopology -> rack.equals(nodeTopology.rack)).collect(toList());
+            return getNodesFromDcs(singletonList(dc)).stream().filter(nodeTopology -> rack.equals(nodeTopology.rack)).collect(toList());
         }
 
         @JsonIgnore
@@ -175,7 +184,7 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
         // tailored for Instaclustr Cassandra operator
         public NodeTopology translateToNodeTopology(final String nodeId) {
 
-            logger.info(String.format("Going to nodeId %s against topology %s", nodeId, this.toString()));
+            logger.info(format("Going to nodeId %s against topology %s", nodeId, this.toString()));
 
             // Given nodeId is in form "cassandra-test-cluster-dc1-west1-a-0.cassandra-test-cluster-dc1-seeds.default.svc.cluster.local" instead of uuid
             // when we restore by Cassandra operator we need to filter based on "hostname" on nodeTopology instead on "nodeId".
@@ -223,12 +232,23 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
             }
         }
 
+        public static List<String> sanitizeDcs(final String dcs) {
+            if (dcs == null) {
+                return Collections.emptyList();
+            }
+            return Arrays.asList(dcs.trim().replaceAll("[ ]+,", ",").replaceAll(" ", ",").replaceAll("[,]+", ",").split(","));
+        }
+
         public static ClusterTopology filter(final ClusterTopology clusterTopology, final String dc) {
-            if (dc == null) {
+            return filter(clusterTopology, sanitizeDcs(dc));
+        }
+
+        public static ClusterTopology filter(final ClusterTopology clusterTopology, final List<String> dcs) {
+            if (dcs == null || dcs.isEmpty()) {
                 return clusterTopology;
             }
 
-            final List<NodeTopology> nodesFromDc = clusterTopology.getNodesFromDc(dc);
+            final List<NodeTopology> nodesFromDc = clusterTopology.getNodesFromDcs(dcs);
             clusterTopology.topology.clear();
             clusterTopology.topology.addAll(nodesFromDc);
 
@@ -236,7 +256,7 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
             final Map<InetAddress, String> endpointDcs = clusterTopology.endpointDcs
                 .entrySet()
                 .stream()
-                .filter(entry -> entry.getValue().equals(dc))
+                .filter(entry -> dcs.contains(entry.getValue()))
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
             clusterTopology.endpointDcs.clear();

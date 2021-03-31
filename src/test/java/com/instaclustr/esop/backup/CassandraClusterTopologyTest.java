@@ -1,10 +1,14 @@
 package com.instaclustr.esop.backup;
 
 import static java.net.InetAddress.getByName;
+import static java.util.stream.Collectors.toSet;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 
 import java.net.InetAddress;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.UUID;
 
 import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology;
@@ -73,7 +77,7 @@ public class CassandraClusterTopologyTest {
     @Test
     public void testNoDcFiltering() throws Exception {
         final ClusterTopology topology = getClusterTopology();
-        ClusterTopology filtered = ClusterTopology.filter(topology, null);
+        ClusterTopology filtered = ClusterTopology.filter(topology, Collections.emptyList());
         assertEquals(topology, filtered);
     }
 
@@ -88,5 +92,25 @@ public class CassandraClusterTopologyTest {
         Assert.assertEquals(3, topology.endpoints.size());
         Assert.assertEquals(3, topology.hostnames.size());
         Assert.assertEquals(3, topology.endpointRacks.size());
+    }
+
+    @Test
+    public void testMultipleDcFiltering() throws Exception {
+        final ClusterTopology topology = getClusterTopology();
+        ClusterTopology filtered = ClusterTopology.filter(topology, " dc1,   dc2   ,");
+
+        Assert.assertEquals(topology.schemaVersion, filtered.schemaVersion);
+
+        Assert.assertEquals(6, topology.endpointDcs.size());
+        Assert.assertEquals(6, topology.endpoints.size());
+        Assert.assertEquals(6, topology.hostnames.size());
+        Assert.assertEquals(6, topology.endpointRacks.size());
+    }
+
+    @Test
+    public void invalidDcs() throws Exception {
+        final ClusterTopology topology = getClusterTopology();
+        final Set<String> invalidDcs = ClusterTopology.sanitizeDcs(" dc3   ,").stream().filter(dc -> !topology.getDcs().contains(dc)).collect(toSet());
+        assertFalse(invalidDcs.isEmpty());
     }
 }
