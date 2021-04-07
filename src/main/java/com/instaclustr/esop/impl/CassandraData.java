@@ -1,8 +1,9 @@
 package com.instaclustr.esop.impl;
 
 import static java.lang.String.format;
-import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
 
+import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.instaclustr.esop.impl.RenamedEntities.Renamed;
 
@@ -158,27 +160,102 @@ public class CassandraData {
         return renamedEntities;
     }
 
+    public static class SnapshotsLister extends SimpleFileVisitor<Path> {
+
+        private boolean isDropped = false;
+
+        @Override
+        public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
+            if (dir.getParent().getFileName().toString().equals("snapshots")) {
+                if (dir.getFileName().toString().startsWith("dropped-")) {
+                    isDropped = true;
+                    return FileVisitResult.TERMINATE;
+                } else {
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+            } else {
+                return FileVisitResult.CONTINUE;
+            }
+        }
+
+        public boolean isDropped() {
+            return isDropped;
+        }
+    }
+
+    public static class KeyspaceTableLister extends SimpleFileVisitor<Path> {
+
+        private final Path cassandraDir;
+        private final Map<Path, List<Path>> dataDirs = new HashMap<>();
+
+        public KeyspaceTableLister(final Path cassandraDir) {
+            this.cassandraDir = cassandraDir;
+        }
+
+        @Override
+        public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
+            // we hit keyspace
+            if (dir.getParent().equals(cassandraDir)) {
+                dataDirs.putIfAbsent(dir, new ArrayList<>());
+                return FileVisitResult.CONTINUE;
+                // we hit table
+            } else if (dir.getParent().getParent().equals(cassandraDir)) {
+                // detect if it is a dropped table
+                Path snapshotsDir = dir.resolve("snapshots");
+                if (Files.exists(snapshotsDir)) {
+                    SnapshotsLister snapshotsLister = new SnapshotsLister();
+                    Files.walkFileTree(snapshotsDir, snapshotsLister);
+                    if (!snapshotsLister.isDropped()) {
+                        dataDirs.get(dir.getParent()).add(dir);
+                    }
+                } else {
+                    dataDirs.get(dir.getParent()).add(dir);
+                }
+
+                return FileVisitResult.SKIP_SUBTREE;
+            } else {
+                return FileVisitResult.CONTINUE;
+            }
+        }
+
+        /**
+         * Remove keyspaces which have 0 tables, it means that each table has a snapshot with "dropped-" snapshot name
+         */
+        public void removeDroppedKeyspaces() {
+            final List<Path> droppedKeyspaces = dataDirs
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getValue().isEmpty())
+                .map(Entry::getKey)
+                .collect(toList());
+
+            for (final Path droppedKeyspace : droppedKeyspaces) {
+                dataDirs.remove(droppedKeyspace);
+            }
+        }
+
+        public Map<Path, List<Path>> getDataDirs() {
+            return dataDirs;
+        }
+
+        @Override
+        public String toString() {
+            return dataDirs.toString();
+        }
+    }
+
     public static CassandraData parse(final Path cassandraDir) throws Exception {
 
         if (!Files.exists(cassandraDir)) {
             return CassandraData.empty();
         }
 
-        final Map<Path, List<Path>> dataDirs = Files.find(cassandraDir,
-                                                          2,
-                                                          (path, basicFileAttributes) -> basicFileAttributes.isDirectory() &&
-                                                              !path.getParent().equals(cassandraDir) &&
-                                                              !path.equals(cassandraDir))
-            // take only these into consideration which do not have "snapshots/dropped-"
-            .filter(table -> {
-                try {
-                    return Files.find(table, 2, (p, b) -> b.isDirectory() && p.toString().contains("snapshots/dropped-")).count() == 0;
-                } catch (final Exception ex) {
-                    return false;
-                }
+        final KeyspaceTableLister lister = new KeyspaceTableLister(cassandraDir);
 
-            })
-            .collect(groupingBy(Path::getParent));
+        Files.walkFileTree(cassandraDir, lister);
+        lister.removeDroppedKeyspaces();
+
+        final Map<Path, List<Path>> dataDirs = lister.getDataDirs();
 
         final Map<String, Map<String, String>> tableIdsMap = new HashMap<>();
 

@@ -6,9 +6,13 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -667,13 +671,10 @@ public class Snapshots implements Cloneable {
         }
 
         final Snapshots snapshots = new Snapshots();
+        final SnapshotLister lister = new SnapshotLister();
+        Files.walkFileTree(cassandraDir, lister);
 
-        final Map<String, List<Path>> snapshotPaths = Files.find(cassandraDir,
-                                                                 4,
-                                                                 (path, basicFileAttributes) -> basicFileAttributes.isDirectory()
-                                                                     && path.getParent().endsWith("snapshots")
-                                                                     && !path.getFileName().toString().startsWith("truncated"))
-            .collect(groupingBy(p -> p.getFileName().toString()));
+        final Map<String, List<Path>> snapshotPaths = lister.getSnapshotPaths();
 
         for (final Entry<String, List<Path>> paths : snapshotPaths.entrySet()) {
             snapshots.snapshots.put(paths.getKey(), Snapshot.parse(paths.getKey(), paths.getValue()));
@@ -694,5 +695,31 @@ public class Snapshots implements Cloneable {
         }
 
         return false;
+    }
+
+    public static class SnapshotLister extends SimpleFileVisitor<Path> {
+
+        private final List<Path> snapshotPaths = new ArrayList<>();
+
+        @Override
+        public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
+            if (dir.getParent().getFileName().toString().equals("snapshots")) {
+                if (!dir.getFileName().toString().startsWith("truncated-")) {
+                    if (!dir.getFileName().toString().startsWith("dropped-")) {
+                        snapshotPaths.add(dir);
+                    } else {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                } else {
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+            }
+
+            return FileVisitResult.CONTINUE;
+        }
+
+        public Map<String, List<Path>> getSnapshotPaths() {
+            return snapshotPaths.stream().collect(groupingBy(p -> p.getFileName().toString()));
+        }
     }
 }
