@@ -1087,8 +1087,7 @@ in --storage-location property.
 |path to file to redirect the output of the command to, file is created when it does not exist
 
 |--from-timestamp
-|expects unix timestamp (also present in backup's name at the end), once set, it will only process
-|backups taken since then, including.
+|expects unix timestamp (also present in backup's name at the end), once set, it will only process backups taken since then, including.
 
 |--last-n
 |expects a postive integer to process only last (the oldest) n backups.
