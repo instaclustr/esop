@@ -1108,7 +1108,7 @@ We might delete only SSTable which is present only in one backup. If some partic
 is present in multiple backups, we might delete that backup _logically_, but we can not
 delete that SSTable. The underlying logic computes how may backups a particular file is present it
 by scanning all manifests there are and if we specify we want to delete so and so backup, it will
-physically remove only files which are part of that very backup and they are not resent anywhere
+physically remove only files which are part of that very backup and they are not present anywhere
 else.
 
 By doing this, we are not forced to remove only the last backup (for example looking at its timestamp)
