@@ -1049,11 +1049,11 @@ It is important to understand that the figure representing the number of files f
 represent the unique files. Since a backup can have SSTables present in more than one backup, the sum of
 files per backup does not need to match the global number of files. Above we see that backup1 has 154 files and backup2
 has 138 files but in total there is 154 files. This means that backup2 is logically consisting of SSTables which
-are all in backup1 and backup1 contains all SSTables in backup1 plus some new ones. Same holds for occupied space.
+are all in backup1 and backup1 contains all SSTables in backup2 plus some new ones. Same holds for occupied space.
 
-The figure of reclaimable space represent the number of bytes (or any human readable size) which would be freed
+The figure of reclaimable space represents the number of bytes (or any human readable size) which would be freed
 by deleting that particular backup. For example, from the above we see that by deleting backup-2, we would get
-now free space. Why? Because all SSTables in backup-2 also belongs to backup-1. So we can not just physically remove it
+no free space. Why? Because all SSTables in backup-2 also belongs to backup-1. So we can not just physically remove it
 because backup-1 would just be corrupted.
 
 On the other hand, by deletion of backup-1, we would gain 10.1 kB. Why? Because we just can not go and delete all SSTables
