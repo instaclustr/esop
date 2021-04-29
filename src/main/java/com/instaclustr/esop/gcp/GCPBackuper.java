@@ -8,6 +8,7 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Path;
 
 import com.google.cloud.WriteChannel;
+import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
@@ -54,12 +55,21 @@ public class GCPBackuper extends Backuper {
         final BlobId blobId = ((GCPRemoteObjectReference) object).blobId;
 
         try {
-            storage.copy(new Storage.CopyRequest.Builder()
-                             .setSource(blobId)
-                             .setTarget(BlobInfo.newBuilder(blobId).build(), Storage.BlobTargetOption.predefinedAcl(BUCKET_OWNER_FULL_CONTROL))
-                             .build());
+            if (!request.skipRefreshing) {
+                storage.copy(new Storage.CopyRequest.Builder()
+                                 .setSource(blobId)
+                                 .setTarget(BlobInfo.newBuilder(blobId).build(), Storage.BlobTargetOption.predefinedAcl(BUCKET_OWNER_FULL_CONTROL))
+                                 .build());
 
-            return FreshenResult.FRESHENED;
+                return FreshenResult.FRESHENED;
+            } else {
+                final Blob blob = storage.get(blobId);
+                if (blob == null || !blob.exists()) {
+                    return FreshenResult.UPLOAD_REQUIRED;
+                } else {
+                    return FreshenResult.FRESHENED;
+                }
+            }
         } catch (final StorageException e) {
             if (e.getCode() != 404) {
                 throw e;

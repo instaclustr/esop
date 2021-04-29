@@ -99,7 +99,8 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonProperty("schemaVersion") final String schemaVersion,
                                   @JsonProperty("uploadClusterTopology") final boolean uploadClusterTopology,
                                   @JsonProperty("proxySettings") final ProxySettings proxySettings,
-                                  @JsonProperty("retry") final RetrySpec retry) {
+                                  @JsonProperty("retry") final RetrySpec retry,
+                                  @JsonProperty("skipRefreshing") final boolean skipRefreshing) {
         super(storageLocation,
               duration,
               bandwidth,
@@ -112,7 +113,8 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
               createMissingBucket,
               skipBucketVerification,
               proxySettings,
-              retry);
+              retry,
+              skipRefreshing);
         this.entities = entities == null ? DatabaseEntities.empty() : entities;
         this.snapshotTag = snapshotTag == null ? format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis())) : snapshotTag;
         this.globalRequest = globalRequest;
@@ -146,6 +148,7 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
             .add("skipBucketVerification", skipBucketVerification)
             .add("proxySettings", proxySettings)
             .add("retry", retry)
+            .add("skipRefreshing", skipRefreshing)
             .toString();
     }
 

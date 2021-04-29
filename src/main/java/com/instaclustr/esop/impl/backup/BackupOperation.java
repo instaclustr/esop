@@ -91,7 +91,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonProperty("schemaVersion") final String schemaVersion,
                             @JsonProperty("uploadClusterTopology") final boolean uploadClusterTopology,
                             @JsonProperty("proxySettings") final ProxySettings proxySettings,
-                            @JsonProperty("retry") final RetrySpec retry) {
+                            @JsonProperty("retry") final RetrySpec retry,
+                            @JsonProperty("skipRefreshing") final boolean skipRefreshing) {
         super(type, id, creationTime, state, errors, progress, startTime, new BackupOperationRequest(type,
                                                                                                      storageLocation,
                                                                                                      duration,
@@ -112,7 +113,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                                                                                                      schemaVersion,
                                                                                                      uploadClusterTopology,
                                                                                                      proxySettings,
-                                                                                                     retry));
+                                                                                                     retry,
+                                                                                                     skipRefreshing));
         coordinator = null;
         storageProviders = null;
     }

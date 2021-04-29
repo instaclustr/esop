@@ -66,7 +66,8 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
                                             @JsonProperty("commitLog") final Path commitLog,
                                             @JsonProperty("online") boolean online,
                                             @JsonProperty("proxySettings") final ProxySettings proxySettings,
-                                            @JsonProperty("retry") final RetrySpec retry) {
+                                            @JsonProperty("retry") final RetrySpec retry,
+                                            @JsonProperty("skipRefreshing") final boolean skipRefreshing) {
         super(storageLocation,
               duration,
               bandwidth,
@@ -79,7 +80,8 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
               createMissingBucket,
               skipBucketVerification,
               proxySettings,
-              retry);
+              retry,
+              skipRefreshing);
         this.type = "commitlog-backup";
         this.commitLogArchiveOverride = commitLogArchiveOverride;
         this.commitLog = commitLog;
@@ -105,6 +107,7 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
             .add("insecure", insecure)
             .add("proxySettings", proxySettings)
             .add("retry", retry)
+            .add("skipRefreshing", skipRefreshing)
             .toString();
     }
 

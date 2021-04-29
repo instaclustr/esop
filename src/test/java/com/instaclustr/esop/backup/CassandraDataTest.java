@@ -356,16 +356,6 @@ public class CassandraDataTest {
     public void testRenamed() {
         try {
             RenamedEntities.validate(new HashMap<String, String>() {{
-                put("ks1.tb1", "ks2.tb2");
-            }});
-
-            Assert.fail("should error out on different keyspace");
-        } catch (final Exception ex) {
-            // empty
-        }
-
-        try {
-            RenamedEntities.validate(new HashMap<String, String>() {{
                 put("ks1.tb1", "ks1.tb1");
                 put("ks2.tb2", "ks1.tb1");
             }});

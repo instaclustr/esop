@@ -62,6 +62,12 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
         converter = MetadataDirectiveTypeConverter.class)
     public MetadataDirective metadataDirective;
 
+    @Option(names = {"--skip-refreshing"},
+        description = "Skip refreshing files on their last modification date in remote storage upon backup. When turned on, "
+            + "there will be no attempt to change the last modification time, there will be just a check done on their presence "
+            + "based on which a respective local file will be upload or not, defaults to false.")
+    public boolean skipRefreshing;
+
     public BaseBackupOperationRequest() {
         // for picocli
         if (metadataDirective == null) {
@@ -81,7 +87,8 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
                                       final boolean createMissingBucket,
                                       final boolean skipBucketVerification,
                                       final ProxySettings proxySettings,
-                                      final RetrySpec retrySpec) {
+                                      final RetrySpec retrySpec,
+                                      final boolean skipRefreshing) {
         super(storageLocation, k8sNamespace, k8sBackupSecretName, insecure, skipBucketVerification, proxySettings, retrySpec);
         this.storageLocation = storageLocation;
         this.duration = duration;
@@ -92,5 +99,6 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
         this.k8sNamespace = k8sNamespace;
         this.k8sSecretName = k8sBackupSecretName;
         this.createMissingBucket = createMissingBucket;
+        this.skipRefreshing = skipRefreshing;
     }
 }
