@@ -58,19 +58,34 @@ public class BaseS3Backuper extends Backuper {
 
     @Override
     public FreshenResult freshenRemoteObject(final RemoteObjectReference object) throws Exception {
-        final String canonicalPath = ((S3RemoteObjectReference) object).canonicalPath;
-
-        final CopyObjectRequest copyRequest = new CopyObjectRequest(request.storageLocation.bucket, canonicalPath, request.storageLocation.bucket, canonicalPath)
-            .withStorageClass(StorageClass.Standard)
-            .withMetadataDirective(request.metadataDirective);
-
         return RetrierFactory.getRetrier(request.retry).submit(new Callable<FreshenResult>() {
             @Override
             public FreshenResult call() throws Exception {
+                final String canonicalPath = ((S3RemoteObjectReference) object).canonicalPath;
                 try {
-                    // attempt to refresh existing object in the bucket via an inplace copy
-                    transferManager.copy(copyRequest).waitForCompletion();
-                    return FreshenResult.FRESHENED;
+                    if (!request.skipRefreshing) {
+                        final CopyObjectRequest copyRequest = new CopyObjectRequest(request.storageLocation.bucket,
+                                                                                    canonicalPath,
+                                                                                    request.storageLocation.bucket,
+                                                                                    canonicalPath)
+                            .withStorageClass(StorageClass.Standard)
+                            .withMetadataDirective(request.metadataDirective);
+
+                        // attempt to refresh existing object in the bucket via an inplace copy
+                        transferManager.copy(copyRequest).waitForCompletion();
+                        return FreshenResult.FRESHENED;
+                    } else {
+                        if (!transferManager.getAmazonS3Client().doesObjectExist(request.storageLocation.bucket, canonicalPath)) {
+                            return FreshenResult.UPLOAD_REQUIRED;
+                        } else {
+                            // it is technically not freshened,
+                            // this code path avoid copying file to itself
+                            // to update last modification date, helpful for cases
+                            // when objects in a bucket are versioned so it would
+                            // produce new objects still
+                            return FreshenResult.FRESHENED;
+                        }
+                    }
                 } catch (final AmazonServiceException ex) {
                     // AWS S3 under certain access policies can't return NoSuchKey (404)
                     // instead, it returns AccessDenied (403) — handle it the same way

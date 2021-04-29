@@ -73,11 +73,14 @@ public class AzureBackuper extends Backuper {
         final Instant now = Instant.now();
 
         try {
-            blob.getMetadata().put(DATE_TIME_METADATA_KEY, now.toString());
-            blob.uploadMetadata();
+            if (!request.skipRefreshing) {
+                blob.getMetadata().put(DATE_TIME_METADATA_KEY, now.toString());
+                blob.uploadMetadata();
 
-            return FreshenResult.FRESHENED;
-
+                return FreshenResult.FRESHENED;
+            } else {
+                return blob.exists() ? FreshenResult.FRESHENED : FreshenResult.UPLOAD_REQUIRED;
+            }
         } catch (final StorageException e) {
             if (e.getHttpStatusCode() != 404) {
                 throw e;

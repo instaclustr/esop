@@ -972,6 +972,26 @@ From Icarus point of view, you need to add a map under "rename" field:
 }
 ----
 
+### Skipping refreshment of remote objects
+
+By default, Esop "refreshes" remote objects. Refreshment means that the last modification
+date of a remote object will be updated to the time the backup was done. This is done because
+we need to somehow detect if a remote file already exists or not. If it does, we do not upload it.
+If it does not exist, we upload it. However, if it does exist, we need to update the modification date
+because there might be, for example, a retention policy on remote objects in a bucket to be set for
+some period of time (for example, 14 days) and if a particular files not touched for 14 days, it would be removed.
+This way you might automatically implement the deletion of older backups because if there is a newer backup
+consisting of a set of SSTables, all SSTables which were previously a part of the older backup but they are not
+a part of the current backup would not be touched - hence no modification date would be refreshed - so they would expire.
+
+For cases there is a versioning enabled (currently known to be an issue for S3 backups only),
+our attempt to refresh it would create new, versioned, file. This is not desired. Hence we
+have the possibility to skip refreshment and we just detect if a file is there or not, but you would
+lose the ability to expire objects as described above.
+
+This behavior is controlled by flag called `--skip-refreshing` on backup command. By default, when
+not specified, it is evaluated to `false`, so skipping would not happen.
+
 ### Retry of upload / download operations
 
 Imagine there is a restore happening which is downloading 100 GB of data and your connectivity

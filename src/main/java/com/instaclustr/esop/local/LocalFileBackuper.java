@@ -47,9 +47,13 @@ public class LocalFileBackuper extends Backuper {
     public FreshenResult freshenRemoteObject(final RemoteObjectReference object) throws Exception {
         final File fullRemoteObject = resolveFullRemoteObjectPath(object).toFile();
         if (fullRemoteObject.exists()) {
-            //if we can't update modified time for whatever reason, then we will re-upload
-            if (fullRemoteObject.setLastModified(System.currentTimeMillis())) {
+            if (request.skipRefreshing) {
                 return FreshenResult.FRESHENED;
+            } else {
+                //if we can't update modified time for whatever reason, then we will re-upload
+                if (fullRemoteObject.setLastModified(System.currentTimeMillis())) {
+                    return FreshenResult.FRESHENED;
+                }
             }
         }
         return FreshenResult.UPLOAD_REQUIRED;
