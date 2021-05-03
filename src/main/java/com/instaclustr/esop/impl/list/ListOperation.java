@@ -23,9 +23,9 @@ import com.instaclustr.esop.guice.RestorerFactory;
 import com.instaclustr.esop.impl.Manifest.AllManifestsReport;
 import com.instaclustr.esop.impl.Manifest.ManifestReporter.ManifestReport;
 import com.instaclustr.esop.impl.ProxySettings;
+import com.instaclustr.esop.impl.StorageInteractor;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.TableBuilder;
-import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.esop.topology.CassandraSimpleTopology;
 import com.instaclustr.esop.topology.CassandraSimpleTopology.CassandraSimpleTopologyResult;
@@ -111,8 +111,8 @@ public class ListOperation extends Operation<ListOperationRequest> {
 
         }
 
-        try (final Restorer restorer = restorerFactoryMap.get(request.storageLocation.storageProvider).createListingRestorer(request)) {
-            final AllManifestsReport report = AllManifestsReport.report(restorer.list());
+        try (final StorageInteractor interactor = restorerFactoryMap.get(request.storageLocation.storageProvider).createListingInteractor(request)) {
+            final AllManifestsReport report = AllManifestsReport.report(interactor.listManifests());
             filterFromTimestamp(report, request.fromTimestamp);
             filterLastN(report, request.lastN);
             try (final PrintStream ps = getOutputStream(request)) {
@@ -140,7 +140,7 @@ public class ListOperation extends Operation<ListOperationRequest> {
         }
         final List<ManifestReport> filtered = report.getReports()
             .stream()
-            .filter(mr -> mr.unixtimestamp >= fromTimestamp)
+            .filter(mr -> mr.unixtimestamp <= fromTimestamp)
             .collect(toList());
 
         report.getReports().clear();

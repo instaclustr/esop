@@ -7,20 +7,30 @@ import static org.awaitility.Awaitility.await;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.Module;
+import com.instaclustr.esop.guice.RestorerFactory;
 import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.remove.RemoveBackupModule;
+import com.instaclustr.esop.impl.remove.RemoveBackupOperation;
 import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
+import com.instaclustr.measure.Time;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
 import com.instaclustr.picocli.CassandraJMXSpec;
+import com.instaclustr.picocli.typeconverter.TimeMeasureTypeConverter;
+import com.instaclustr.scheduling.DaemonScheduler;
+import jmx.org.apache.cassandra.service.CassandraJMXService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @Command(name = "remove-backup",
@@ -42,8 +52,22 @@ public class RemoveBackupApplication implements Runnable {
     @Mixin
     private CassandraJMXSpec jmxSpec;
 
+    @Option(names = {"-r", "--rate"},
+        description = "Rate of operation executon.",
+        converter = TimeMeasureTypeConverter.class)
+    public Time rate = Time.zeroTime();
+
     @Inject
     private OperationsService operationsService;
+
+    @Inject
+    private CassandraJMXService cassandraJMXService;
+
+    @Inject
+    private Map<String, RestorerFactory> restorerFactoryMap;
+
+    @Inject
+    private ObjectMapper objectMapper;
 
     public static void main(String[] args) {
         System.exit(execute(new ListApplication(), args));
@@ -57,12 +81,19 @@ public class RemoveBackupApplication implements Runnable {
 
         Esop.init(this, jmxSpec, new HashSpec(), request, logger, modules);
 
-        final Operation<?> operation = operationsService.submitOperationRequest(request);
+        if (rate.value == 0) {
+            final Operation<?> operation = operationsService.submitOperationRequest(request);
 
-        await().forever().until(() -> operation.state.isTerminalState());
+            await().forever().until(() -> operation.state.isTerminalState());
 
-        if (operation.state == FAILED) {
-            throw new IllegalStateException(format("List operation %s was not successful.", operation.id));
+            if (operation.state == FAILED) {
+                throw new IllegalStateException(format("List operation %s was not successful.", operation.id));
+            }
+        } else {
+            final Supplier<RemoveBackupOperation> supplier = () -> new RemoveBackupOperation(request, cassandraJMXService, restorerFactoryMap, objectMapper);
+            final DaemonScheduler<RemoveBackupRequest, RemoveBackupOperation> scheduler = new DaemonScheduler<>(rate, supplier);
+            scheduler.setup();
+            scheduler.execute();
         }
     }
 }

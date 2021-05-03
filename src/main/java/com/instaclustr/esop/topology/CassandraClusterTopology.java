@@ -227,7 +227,7 @@ public class CassandraClusterTopology implements CassandraInteraction<ClusterTop
             try {
                 final String clusterTopologyString = ClusterTopology.writeToString(objectMapper, clusterTopology);
 
-                final Path topologyPath = Paths.get(format("topology/%s-%s-topology.json", clusterTopology.clusterName, snapshotTag));
+                final Path topologyPath = Paths.get(format("topology/%s.json", snapshotTag));
 
                 logger.info("Uploading cluster topology under {}", topologyPath);
                 logger.info("\n" + clusterTopologyString);

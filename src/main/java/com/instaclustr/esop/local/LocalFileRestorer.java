@@ -65,6 +65,10 @@ public class LocalFileRestorer extends Restorer {
         this.objectMapper = objectMapper;
     }
 
+    @Override
+    public Path resolveRoot() {
+        return request.storageLocation.fileBackupDirectory.resolve(request.storageLocation.bucket);
+    }
 
     @Override
     public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception {
@@ -180,7 +184,7 @@ public class LocalFileRestorer extends Restorer {
     }
 
     @Override
-    public List<Manifest> list() throws Exception {
+    public List<Manifest> listManifests() throws Exception {
         assert objectMapper != null;
         final List<Path> manifests = Files.list(Paths.get(storageLocation.rawLocation.replaceAll("file://", ""), "manifests"))
             .sorted(new ManifestAgePathComparator())
@@ -209,21 +213,22 @@ public class LocalFileRestorer extends Restorer {
 
     @Override
     public void delete(final ManifestReport backupToDelete, final RemoveBackupRequest request) throws Exception {
+        logger.info("Deleting backup {}", backupToDelete.name);
         if (backupToDelete.reclaimableSpace > 0 && !backupToDelete.getRemovableEntries().isEmpty()) {
             for (final String removableEntry : backupToDelete.getRemovableEntries()) {
                 if (!request.dry) {
                     delete(Paths.get(removableEntry));
                 } else {
-                    logger.info("Deletion of {} was executed in dry mode.", backupToDelete.name);
+                    logger.info("Deletion of {} was executed in dry mode.", removableEntry);
                 }
             }
         }
 
-        // manifest as the last
+        // manifest and topology as the last
         if (!request.dry) {
             delete(backupToDelete.manifest.objectKey);
         } else {
-            logger.info("Deletion of {} was executed in dry mode.", backupToDelete.manifest.objectKey);
+            logger.info("Deletion of manifest {} was executed in dry mode.", backupToDelete.manifest.objectKey);
         }
 
         if (!request.dry && request.storageLocation.storageProvider.equals("file")) {
@@ -236,6 +241,8 @@ public class LocalFileRestorer extends Restorer {
                 }
             }
 
+            // by deleting empty dirs after sstables, we might suddently have an empty table dir
+            // so run another round to get rid of them too
             final List<Path> emptyTableDirectories = getEmptyDirectories(request.storageLocation);
 
             for (final Path emptyTableDir : emptyTableDirectories) {
@@ -245,6 +252,8 @@ public class LocalFileRestorer extends Restorer {
                 }
             }
 
+            // by deleting empty dirs of tables, we might suddenly have an empty keyspace dir
+            // so run another round to get rid of them too
             final List<Path> emptyKeyspaceDirectories = getEmptyDirectories(request.storageLocation);
 
             for (final Path emptyKeyspaceDir : emptyKeyspaceDirectories) {
@@ -254,6 +263,45 @@ public class LocalFileRestorer extends Restorer {
                 }
             }
         }
+    }
+
+    @Override
+    public List<StorageLocation> listNodes() throws Exception {
+        final List<String> dcs = listDcs();
+        final List<StorageLocation> locations = new ArrayList<>();
+
+        for (final String dc : dcs) {
+            locations.addAll(listNodes(dc));
+        }
+
+        return locations;
+    }
+
+    @Override
+    public List<StorageLocation> listNodes(final String dc) throws Exception {
+        return getDirectories(Paths.get(StorageLocation.updateDatacenter(storageLocation, dc).withoutNode().replace("file://", "")))
+            .stream()
+            .map(p -> new StorageLocation("file://" + p.toAbsolutePath().toString())).collect(toList());
+    }
+
+    @Override
+    public List<StorageLocation> listNodes(final List<String> dcs) throws Exception {
+        final List<StorageLocation> storageLocations = new ArrayList<>();
+
+        if (dcs == null || dcs.isEmpty()) {
+            storageLocations.addAll(listNodes());
+        } else {
+            for (final String dc : dcs) {
+                storageLocations.addAll(listNodes(dc));
+            }
+        }
+
+        return storageLocations;
+    }
+
+    @Override
+    public List<String> listDcs() throws Exception {
+        return getDirectories(Paths.get(storageLocation.withoutNodeAndDc().replaceAll("file://", ""))).stream().map(p -> p.getFileName().toString()).collect(toList());
     }
 
     private List<Path> getEmptyDirectories(final StorageLocation storageLocation) throws Exception {
@@ -266,23 +314,32 @@ public class LocalFileRestorer extends Restorer {
             .resolve(request.storageLocation.nodeId)
             .resolve("data");
 
-        Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
-                if (isDirectoryEmpty(dir)) {
-                    emptyDirectories.add(dir);
-                    return FileVisitResult.SKIP_SUBTREE;
+        try {
+            Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
+                    if (attrs.isDirectory() && isDirectoryEmpty(dir)) {
+                        emptyDirectories.add(dir);
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    return FileVisitResult.CONTINUE;
                 }
-                return FileVisitResult.CONTINUE;
-            }
-        });
+            });
+        } catch (final Exception ex) {
+            logger.debug(String.format("Unable to list directory %s. This might happen when you mount Azure File Share.", root), ex);
+        }
 
         return emptyDirectories;
     }
 
-    private boolean isDirectoryEmpty(Path directory) throws IOException {
-        DirectoryStream<Path> stream = Files.newDirectoryStream(directory);
-        return !stream.iterator().hasNext();
+    private List<Path> getDirectories(final Path directory) throws Exception {
+        return Files.list(directory).filter(p -> Files.isDirectory(p) && !p.equals(directory)).collect(toList());
+    }
+
+    private boolean isDirectoryEmpty(final Path directory) throws IOException {
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
+            return !stream.iterator().hasNext();
+        }
     }
 
     @Override

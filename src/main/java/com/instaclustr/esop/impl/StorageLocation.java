@@ -164,6 +164,15 @@ public class StorageLocation {
         }
     }
 
+    public String withoutNode() {
+        return rawLocation.substring(0, rawLocation.lastIndexOf("/"));
+    }
+
+    public String withoutNodeAndDc() {
+        final String withoutNode = withoutNode();
+        return withoutNode.substring(0, withoutNode.lastIndexOf("/"));
+    }
+
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)

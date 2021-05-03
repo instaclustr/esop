@@ -1,5 +1,7 @@
 package com.instaclustr.esop.impl.remove;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -10,6 +12,8 @@ import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.restore.BaseRestoreOperationRequest;
 import com.instaclustr.esop.impl.retry.RetrySpec;
+import com.instaclustr.measure.Time;
+import com.instaclustr.picocli.typeconverter.TimeMeasureTypeConverter;
 import picocli.CommandLine.Option;
 
 public class RemoveBackupRequest extends BaseRestoreOperationRequest {
@@ -27,10 +31,20 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
         + "it is expected that storageLocation represents the correct path.")
     public boolean skipNodeCoordinatesResolution = false;
 
-    @Option(names = {"-o", "--oldest"}, description = "removes oldest backup there is, backup names does not need to be specified then")
+    @Option(names = {"-o", "--oldest"}, description = "Removes oldest backup there is, backup names does not need to be specified then")
     public boolean removeOldest;
 
-    public ManifestReport report;
+    @Option(names = {"--older-than"},
+        description = "All backups older than this time period will be removed, computed from point when this request was submitted",
+        converter = TimeMeasureTypeConverter.class)
+    public Time olderThan = Time.zeroTime();
+
+    @Option(names = {"--dcs"}, description = "Only in effect when --global-request is set, if not specified, it will "
+        + "remove backup(s) for all datacenters")
+    public List<String> dcs = new ArrayList<>();
+
+    @Option(names = {"--global-request"}, description = "If true, it will remove backups for all nodes in storage location, in datacenters based on --dcs option")
+    public boolean globalRemoval = false;
 
     public RemoveBackupRequest() {
         // for picocli
@@ -47,12 +61,13 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
                                @JsonProperty("backupName") final String backupName,
                                @JsonProperty("dry") final boolean dry,
                                @JsonProperty("report") final ManifestReport report,
-                               @JsonProperty("skipNodeCoordinatesResolution") final boolean skipNodeCoordinatesResolution) {
+                               @JsonProperty("skipNodeCoordinatesResolution") final boolean skipNodeCoordinatesResolution,
+                               @JsonProperty("olderThan") final Time olderThan) {
         super(storageLocation, 1, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
         this.backupName = backupName;
         this.dry = dry;
-        this.report = report;
         this.skipNodeCoordinatesResolution = skipNodeCoordinatesResolution;
+        this.olderThan = olderThan == null ? Time.zeroTime() : olderThan;
     }
 
     @Override
@@ -60,20 +75,36 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
         return MoreObjects.toStringHelper(this)
             .add("backupName", backupName)
             .add("dry", dry)
-            .add("report", report)
             .add("skipNodeCoordinatesResolution", skipNodeCoordinatesResolution)
+            .add("olderThan", olderThan)
             .toString();
     }
 
     @Override
     public void validate(final Set<String> storageProviders) {
-        super.validate(storageProviders);
-        if (backupName == null && !removeOldest) {
-            throw new IllegalStateException("You have not set backup name but you have not set --oldest flag!");
+        //super.validate(storageProviders);
+
+        if (olderThan == null) {
+            olderThan = Time.zeroTime();
         }
 
-        if (backupName != null && removeOldest) {
-            throw new IllegalStateException(String.format("You have set backup name %s but you have also set --oldest flag! Choose just one.", backupName));
+        if (removeOldest) {
+            if (backupName != null) {
+                throw new IllegalStateException("You have specified you want to remove the oldest backup but you specified backupName too!");
+            }
+            if (olderThan.value != 0) {
+                throw new IllegalStateException("You have specified you want to remove the oldest backup but you specified olderThan too!");
+            }
+        } else {
+            if (backupName != null) {
+                if (olderThan.value != 0) {
+                    throw new IllegalStateException(String.format("You have specified you want to remove backup %s but you specified olderThan too!", backupName));
+                }
+            } else {
+                if (olderThan.value == 0) {
+                    throw new IllegalStateException("You have not specified you want to remove any specific backup but you have not specified olderThan either!");
+                }
+            }
         }
     }
 }

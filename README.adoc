@@ -1143,6 +1143,49 @@ All flags:
 |consult list command, same logic
 |===
 
+## Global removal of backups
+
+From the previous section, you know how to delete an individual backup. However, it would be
+nice to be able to delete, for example, all backups older than 14 days, globaly. "Globally" means
+that it will scan whole local backup destination of all nodes (all dcs). You have the
+option to either do individual removal or global removal.
+
+For global removal of backups older than 14 days:
+
+[source,bash]
+----
+$ esop remove-backup \
+    --global-request \
+    --skip-node-resolution \
+    --storage-location=file:///submit/backup/Test-Cluster/dc1/ab3f1d62-1a61-4f84-a2e2-97a626940d8d \
+    --older-than=14day
+----
+
+It is enough to specify one node, all other nodes will be resolved automatically.
+
+`--older-than` accepts a format like "number+unit", for example "1h", "1minute".
+
+
+If you want to run this in a daemon mode - meaning this operation would be run repeatedly, you need to
+execute it like this:
+
+[source,bash]
+----
+$ esop remove-backup \
+    --global-request \
+    --skip-node-resolution \
+    --storage-location=file:///submit/backup/Test-Cluster/dc1/ab3f1d62-1a61-4f84-a2e2-97a626940d8d \
+    --older-than=5minute \
+    --rate=1minute
+----
+
+This means it will execute a backup removal every 1 minute and it will delete all backups older than 5 minutes.
+For more real scenarios you might specify `--older-than=14day` and `--rate=1day`. The time for the next
+execution will count down from the time this command was firstly executed.
+
+You have also possibility to specify datacenters to remove by `--dcs` flag (might be specified multiple times
+for each dc separately)
+
 ## Logging
 
 We are using logback. There is already `logback.xml` embedded in the built JAR. However if you

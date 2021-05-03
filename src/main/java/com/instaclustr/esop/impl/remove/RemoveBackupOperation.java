@@ -1,7 +1,11 @@
 package com.instaclustr.esop.impl.remove;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
@@ -9,10 +13,11 @@ import com.google.inject.assistedinject.Assisted;
 import com.instaclustr.esop.guice.RestorerFactory;
 import com.instaclustr.esop.impl.Manifest.AllManifestsReport;
 import com.instaclustr.esop.impl.Manifest.ManifestReporter.ManifestReport;
+import com.instaclustr.esop.impl.StorageInteractor;
 import com.instaclustr.esop.impl.StorageLocation;
-import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.esop.topology.CassandraSimpleTopology;
 import com.instaclustr.esop.topology.CassandraSimpleTopology.CassandraSimpleTopologyResult;
+import com.instaclustr.measure.Time;
 import com.instaclustr.operations.Operation;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 import org.slf4j.Logger;
@@ -25,6 +30,7 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
     private final Map<String, RestorerFactory> restorerFactoryMap;
     private final ObjectMapper objectMapper;
     private final CassandraJMXService cassandraJMXService;
+    private final long time;
 
     @Inject
     public RemoveBackupOperation(@Assisted final RemoveBackupRequest request,
@@ -32,9 +38,18 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
                                  final Map<String, RestorerFactory> restorerFactoryMap,
                                  final ObjectMapper objectMapper) {
         super(request);
+        time = System.currentTimeMillis();
         this.restorerFactoryMap = restorerFactoryMap;
         this.objectMapper = objectMapper;
         this.cassandraJMXService = cassandraJMXService;
+    }
+
+    private List<StorageLocation> getStorageLocations(final StorageInteractor restorer) throws Exception {
+        if (request.globalRemoval) {
+            return restorer.listNodes(request.dcs);
+        } else {
+            return Collections.singletonList(request.storageLocation);
+        }
     }
 
     @Override
@@ -54,47 +69,76 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
 
         }
 
-        try (final Restorer restorer = restorerFactoryMap.get(request.storageLocation.storageProvider).createDeletingRestorer(request)) {
-            final Optional<AllManifestsReport> reportOptional = getReport(restorer);
+        try (final StorageInteractor interactor = restorerFactoryMap.get(request.storageLocation.storageProvider).createDeletingInteractor(request)) {
+            for (final StorageLocation nodeLocation : getStorageLocations(interactor)) {
+                logger.info("Looking for backups to delete for node {}", nodeLocation.nodePath());
+                interactor.setStorageLocation(nodeLocation);
+                request.storageLocation = nodeLocation;
 
-            if (!reportOptional.isPresent()) {
-                return;
-            }
+                final Optional<AllManifestsReport> reportOptional = getReport(interactor);
 
-            final AllManifestsReport report = reportOptional.get();
-
-            final Optional<ManifestReport> backupToDeleteOptional;
-
-            if (request.removeOldest) {
-                backupToDeleteOptional = report.getOldest();
-            } else {
-                backupToDeleteOptional = report.get(request.backupName);
-            }
-
-            if (!backupToDeleteOptional.isPresent()) {
-                if (request.backupName != null) {
-                    this.addError(Error.from(new IllegalStateException(String.format("There is not any %s backup to remove!", request.backupName))));
-                } else {
-                    this.addError(Error.from(new IllegalStateException("There is not any backup to remove!")));
+                if (!reportOptional.isPresent()) {
+                    logger.info("No backups found for {}", nodeLocation.nodePath());
+                    continue;
                 }
-                return;
+
+                final AllManifestsReport report = reportOptional.get();
+                final List<ManifestReport> allBackupsToDelete = getBackupsToDelete(report);
+
+                if (allBackupsToDelete.isEmpty()) {
+                    if (request.backupName != null) {
+                        logger.debug("There is not any {} backup to remove for node {}", request.backupName, nodeLocation);
+                    } else {
+                        logger.debug("There is not any backup to remove for node {}", nodeLocation);
+                    }
+                    return;
+                }
+
+                logger.info("Removing backups for node {}: {}",
+                            nodeLocation.nodePath(),
+                            allBackupsToDelete.stream().map(mr -> mr.name).collect(Collectors.joining(",")));
+
+                for (final ManifestReport mr : allBackupsToDelete) {
+                    interactor.delete(mr, request);
+                }
+
+                for (final ManifestReport mr : allBackupsToDelete) {
+                    if (request.globalRemoval) {
+                        if (!request.dry) {
+                            interactor.deleteTopology(mr.name);
+                        } else {
+                            logger.info("Deletion of topology for {} was executed in dry mode", mr.name);
+                        }
+                    }
+                }
             }
-
-            final ManifestReport backupToDelete = backupToDeleteOptional.get();
-            request.report = backupToDelete;
-
-            restorer.delete(backupToDelete, request);
         } catch (final Exception ex) {
             logger.error("Unable to perform backup deletion! - " + ex.getMessage(), ex);
             this.addError(Error.from(ex));
         }
     }
 
-    private Optional<AllManifestsReport> getReport(final Restorer restorer) {
+    private List<ManifestReport> getBackupsToDelete(final AllManifestsReport allManifestsReport) {
+        final List<ManifestReport> manifestReports = new ArrayList<>();
+
+        if (request.removeOldest) {
+            allManifestsReport.getOldest().map(manifestReports::add);
+        } else if (request.backupName != null) {
+            allManifestsReport.get(request.backupName).map(manifestReports::add);
+        } else if (request.olderThan.value > 0) {
+            Time time = request.olderThan.asMilliseconds();
+            final long cut = this.time - time.value;
+            manifestReports.addAll(allManifestsReport.filter(report -> report.unixtimestamp < cut));
+        }
+
+        return manifestReports;
+    }
+
+    private Optional<AllManifestsReport> getReport(final StorageInteractor storageInteractor) {
         try {
-            return Optional.of(AllManifestsReport.report(restorer.list()));
+            return Optional.of(AllManifestsReport.report(storageInteractor.listManifests()));
         } catch (final Exception ex) {
-            logger.error("Unable to perform listing! - " + ex.getMessage(), ex);
+            logger.error(String.format("Unable to perform listing against node %s - %s", storageInteractor.getStorageLocation(), ex.getMessage()), ex);
             this.addError(Error.from(ex));
         }
 

@@ -90,7 +90,7 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
                 final NodeTopology nodeTopology = getNodeTopology(restorer, request);
                 // here, nodeTopology.nodeId is uuid, not hostname
                 operation.request.storageLocation = StorageLocation.updateNodeId(operation.request.storageLocation, nodeTopology.nodeId);
-                restorer.updateStorageLocation(operation.request.storageLocation);
+                restorer.setStorageLocation(operation.request.storageLocation);
                 logger.info(format("Updated storage location to %s", operation.request.storageLocation));
             }
 
@@ -236,7 +236,7 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
 
     private NodeTopology getNodeTopology(final Restorer restorer, final RestoreOperationRequest request) {
         try {
-            final String topologyFile = format("topology/%s-%s", request.storageLocation.clusterId, request.snapshotTag);
+            final String topologyFile = format("topology/%s.json", request.snapshotTag);
             final String topology = restorer.downloadFileToString(Paths.get(topologyFile), fileName -> fileName.contains(topologyFile));
             final ClusterTopology clusterTopology = objectMapper.readValue(topology, ClusterTopology.class);
             // nodeId here is propagated by Cassandra operator and it is "hostname"

@@ -18,6 +18,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -696,6 +697,9 @@ public class Manifest implements Cloneable {
             return report;
         }
 
+        public List<ManifestReport> filter(final Predicate<ManifestReport> predicate) {
+            return reports.stream().filter(predicate).collect(toList());
+        }
 
         @Override
         public String toString() {
