@@ -34,12 +34,6 @@ public class TakeSnapshotOperation extends Operation<TakeSnapshotOperationReques
 
     @Override
     protected void run0() throws Exception {
-        if (request.entities.areEmpty()) {
-            logger.info("Taking snapshot '{}' on all keyspaces.", request.tag);
-        } else {
-            logger.info("Taking snapshot '{}' on {}", request.tag, request.entities);
-        }
-
         if (cassandraVersionProvider.get().getMajor() == 2) {
             takeSnapshotForCassandra2();
         } else {
@@ -52,12 +46,18 @@ public class TakeSnapshotOperation extends Operation<TakeSnapshotOperationReques
             @Override
             public Void apply(final Cassandra2StorageServiceMBean object) throws Exception {
                 if (request.entities.areEmpty()) {
+                    logger.info("Taking snapshot '{}' on all keyspaces.", request.tag);
                     object.takeSnapshot(request.tag);
+                    logger.info("Snapshot '{}' was taken on all keyspaces.", request.tag);
                 } else {
                     if (request.entities.keyspacesOnly()) {
+                        logger.info("Taking snapshot '{}' on {}.", request.tag, String.join(",", request.entities.getKeyspaces()));
                         object.takeSnapshot(request.tag, request.entities.getKeyspaces().toArray(new String[0]));
+                        logger.info("Snapshot '{}' was taken on {}.", request.tag, String.join(",", request.entities.getKeyspaces()));
                     } else {
+                        logger.info("Taking snapshot '{}' on {}.", request.tag, request.entities);
                         object.takeMultipleColumnFamilySnapshot(request.tag, DatabaseEntities.forTakingSnapshot(request.entities));
+                        logger.info("Snapshot '{}' was taken on {}.", request.tag, request.entities);
                     }
                 }
 
@@ -71,9 +71,13 @@ public class TakeSnapshotOperation extends Operation<TakeSnapshotOperationReques
             @Override
             public Void apply(StorageServiceMBean ssMBean) throws Exception {
                 if (request.entities.areEmpty()) {
+                    logger.info("Taking snapshot '{}' on all keyspaces.", request.tag);
                     ssMBean.takeSnapshot(request.tag, new HashMap<>());
+                    logger.info("Snapshot '{}' was taken on all keyspaces.", request.tag);
                 } else {
+                    logger.info("Taking snapshot '{}' on {}.", request.tag, request.entities);
                     ssMBean.takeSnapshot(request.tag, new HashMap<>(), DatabaseEntities.forTakingSnapshot(request.entities));
+                    logger.info("Snapshot '{}' was taken on {}.", request.tag, request.entities);
                 }
 
                 return null;
