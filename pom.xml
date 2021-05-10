@@ -35,14 +35,14 @@
         <git.command.plugin.version>2.2.4</git.command.plugin.version>
         <nexus.staging.maven.plugin.version>1.6.8</nexus.staging.maven.plugin.version>
         <cassandra.maven.plugin.version>3.6</cassandra.maven.plugin.version>
-    
+        
         <maintainer>Various &lt;support@instaclustr.com&gt;</maintainer>
         <version.jdeb>1.8</version.jdeb>
         <version.rpm>1.5.0</version.rpm>
-    
+        
         <git.commit.id/>
         <git.build.time/>
-    
+        
         <outputDirectory>${project.build.directory}</outputDirectory>
         
         <!-- Cassandra 3 does not work with Java 11 -->
@@ -330,78 +330,92 @@
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.vafer</groupId>
-                <artifactId>jdeb</artifactId>
-                <version>${version.jdeb}</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>jdeb</goal>
-                        </goals>
-                        <configuration>
-                            <name>${project.artifactId}</name>
-                            <deb>${outputDirectory}/[[name]]_${project.version}.deb</deb>
-                            <dataSet>
-                                <data>
-                                    <src>${outputDirectory}/${project.build.finalName}.jar</src>
-                                    <type>file</type>
-                                    <mapper>
-                                        <type>perm</type>
-                                        <prefix>/usr/share/java/</prefix>
-                                    </mapper>
-                                </data>
-                                <data>
-                                    <src>bin/esop</src>
-                                    <type>file</type>
-                                    <mapper>
-                                        <type>perm</type>
-                                        <prefix>/usr/local/bin/</prefix>
-                                    </mapper>
-                                </data>
-                            </dataSet>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>de.dentrassi.maven</groupId>
-                <artifactId>rpm</artifactId>
-                <version>${version.rpm}</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>rpm</goal>
-                        </goals>
-                        <configuration>
-                            <packageName>${project.artifactId}</packageName>
-                            <group>Applications/Databases</group>
-                            <packager>${maintainer}</packager>
-                    
-                            <skipSigning>true</skipSigning>
-                    
-                            <entries>
-                                <entry>
-                                    <name>/usr/share/java/${project.build.finalName}.jar</name>
-                                    <file>${outputDirectory}/${project.build.finalName}.jar</file>
-                                </entry>
-                                <entry>
-                                    <name>/usr/local/bin/esop</name>
-                                    <file>${project.basedir}/bin/esop</file>
-                                    <mode>0755</mode>
-                                </entry>
-                            </entries>
-                            <targetDir>${outputDirectory}</targetDir>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
     
     <profiles>
+        <profile>
+            <id>deb</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.vafer</groupId>
+                        <artifactId>jdeb</artifactId>
+                        <version>${version.jdeb}</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jdeb</goal>
+                                </goals>
+                                <configuration>
+                                    <name>${project.artifactId}</name>
+                                    <deb>${outputDirectory}/[[name]]_${project.version}.deb</deb>
+                                    <dataSet>
+                                        <data>
+                                            <src>${outputDirectory}/${project.build.finalName}.jar</src>
+                                            <type>file</type>
+                                            <mapper>
+                                                <type>perm</type>
+                                                <prefix>/usr/share/java/</prefix>
+                                            </mapper>
+                                        </data>
+                                        <data>
+                                            <src>bin/esop</src>
+                                            <type>file</type>
+                                            <mapper>
+                                                <type>perm</type>
+                                                <prefix>/usr/local/bin/</prefix>
+                                            </mapper>
+                                        </data>
+                                    </dataSet>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>rpm</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>de.dentrassi.maven</groupId>
+                        <artifactId>rpm</artifactId>
+                        <version>${version.rpm}</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>rpm</goal>
+                                </goals>
+                                <configuration>
+                                    <packageName>${project.artifactId}</packageName>
+                                    <group>Applications/Databases</group>
+                                    <packager>${maintainer}</packager>
+                                    
+                                    <skipSigning>true</skipSigning>
+                                    
+                                    <entries>
+                                        <entry>
+                                            <name>/usr/share/java/${project.build.finalName}.jar</name>
+                                            <file>${outputDirectory}/${project.build.finalName}.jar</file>
+                                        </entry>
+                                        <entry>
+                                            <name>/usr/local/bin/esop</name>
+                                            <file>${project.basedir}/bin/esop</file>
+                                            <mode>0755</mode>
+                                        </entry>
+                                    </entries>
+                                    <targetDir>${outputDirectory}</targetDir>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <!-- Use this profile when releasing. For example: "mvn clean deploy -P release" -->
         <profile>
             <id>release</id>
@@ -474,7 +488,7 @@
                 </plugins>
             </build>
         </profile>
-    
+        
         <profile>
             <id>localTests</id>
             <activation>
@@ -569,7 +583,7 @@
                 </plugins>
             </build>
         </profile>
-    
+        
         <profile>
             <id>cephTests</id>
             <activation>

@@ -1251,6 +1251,8 @@ In order to skip tests altogether, invoke the build like `mvn clean install -Dsk
 User can use a Maven wrapper script so all Maven will be downloaded automatically. The build
 in that case is run as `./mvnw clean install`.
 
+If you want to build rpm or deb package, you need to enable `rpm` and/or `deb` Maven profile.
+
 ## Further Information
 
 - Please see https://www.instaclustr.com/support/documentation/announcements/instaclustr-open-source-project-status/ for Instaclustr support status of this project
