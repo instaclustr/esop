@@ -20,6 +20,8 @@ Esop is able to perform these operations and has these features:
 * Restoration of data into a Cassandra schema or diffrent table schema
 * Backing-up to and restoring from S3 (Oracle and Ceph via Object Gateway  too), Azure, or GCP, or into any local destination or other storage
 providing they are easily implementable
+* listing of local backups and their removal, global removal of backups across all nodes in cluster
+* periodic removal of backups (e.g. after 10 days)
 * Effective upload and download—it will upload only SSTables which are not present remotely so
 any subsequent backups will upload and restores will download only the difference
 * When used in connection with https://github.com/instaclustr/icarus[Instaclustr Icarus] it is possible to backup **simultaneously** so there
