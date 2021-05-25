@@ -159,6 +159,32 @@ S3 connectors will expect to find environment properties `AWS_ACCESS_KEY_ID` and
 They will also accept `AWS_REGION` and `AWS_ENDPOINT` environment properties—however they are not required.
 If `AWS_ENDPOINT` is set, `AWS_REGION` has to be set too.
 
+S3 currently supports two different addressing models: path-style and virtual-hosted style (https://docs.aws.amazon.com/AmazonS3/latest/userguide/RESTAPI.html).
+
+Esop supports different S3 providers and applies the following default addressing models.
+
+.default settings per provider
+|===
+|provider |addressing model
+
+|AWS
+|virtual
+
+|Ceph
+|virtual
+
+|Minio
+|path
+
+|Oracle
+|path
+|===
+
+Providing the AWS_ENABLE_PATH_STYLE_ACCESS environment variable with `true` or `false` overrides this default setting. Note that this applies to each provider, except when running in Kubernetes.
+
+|provider|model|
+|Minio|path|
+
 The communication with S3 might be insecure, this is controlled by `--insecure-http` flag on the command line. By default,
 it uses HTTPS.
 

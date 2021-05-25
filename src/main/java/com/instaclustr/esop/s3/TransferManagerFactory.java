@@ -2,6 +2,7 @@ package com.instaclustr.esop.s3;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.instaclustr.kubernetes.KubernetesHelper.isRunningAsClient;
+import static java.lang.Boolean.parseBoolean;
 import static java.lang.String.format;
 
 import java.util.Map;
@@ -67,7 +68,9 @@ public class TransferManagerFactory {
             builder.withRegion(Regions.fromName(s3Conf.awsRegion.toLowerCase()));
         }
 
-        if (enablePathStyleAccess) {
+        if(s3Conf.awsPathStyleAccessEnabled != null) {
+            builder.withPathStyleAccessEnabled(s3Conf.awsPathStyleAccessEnabled);
+        } else if(enablePathStyleAccess) {
             // for being able to work with Oracle "s3"
             builder.enablePathStyleAccess();
         }
@@ -205,6 +208,8 @@ public class TransferManagerFactory {
         s3Configuration.awsEndpoint = System.getenv("AWS_ENDPOINT");
         s3Configuration.awsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
         s3Configuration.awsSecretKey = System.getenv("AWS_SECRET_KEY");
+        String awsEnablePathStyleAccess = System.getenv("AWS_ENABLE_PATH_STYLE_ACCESS");
+        s3Configuration.awsPathStyleAccessEnabled = awsEnablePathStyleAccess != null ? parseBoolean(awsEnablePathStyleAccess) : null;
 
         // accesskeyid and awssecretkey will be taken from normal configuration mechanism in ~/.aws/ ...
         // s3Configuration.awsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
@@ -222,10 +227,10 @@ public class TransferManagerFactory {
     }
 
     public static final class S3Configuration {
-
         public String awsRegion;
         public String awsEndpoint;
         public String awsAccessKeyId;
         public String awsSecretKey;
+        public Boolean awsPathStyleAccessEnabled;
     }
 }
