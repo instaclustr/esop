@@ -664,7 +664,7 @@ public class Snapshots implements Cloneable {
         }
     }
 
-    public static Snapshots parse(final Path cassandraDir) throws Exception {
+    public static synchronized Snapshots parse(final Path cassandraDir) throws Exception {
 
         if (Snapshots.hashSpec == null) {
             Snapshots.hashSpec = new HashSpec();
