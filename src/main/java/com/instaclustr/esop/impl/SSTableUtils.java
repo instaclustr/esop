@@ -9,12 +9,14 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.Adler32;
 
 import com.google.common.collect.ImmutableList;
+import com.instaclustr.esop.impl.hash.HashService;
 import com.instaclustr.esop.impl.hash.HashServiceImpl;
 import com.instaclustr.io.FileUtils;
 import org.slf4j.Logger;
@@ -94,6 +96,12 @@ public class SSTableUtils {
     public static Stream<ManifestEntry> ssTableManifest(Path snapshotDirectory,
                                                         Path tableBackupPath,
                                                         HashSpec hashSpec) throws IOException {
+        if (!Files.exists(snapshotDirectory)) {
+            return Stream.empty();
+        }
+
+        final HashService hashService = new HashServiceImpl(hashSpec);
+
         return Files.list(snapshotDirectory)
             .flatMap(path -> {
                 if (isCassandra22SecIndex(path)) {
@@ -118,7 +126,7 @@ public class SSTableUtils {
 
                     backupPath = backupPath.resolve(hash).resolve(manifestComponentFileName.getFileName());
 
-                    final String hashOfFile = new HashServiceImpl(hashSpec).hash(localPath);
+                    final String hashOfFile = hashService.hash(localPath);
                     return new ManifestEntry(backupPath, localPath, ManifestEntry.Type.FILE, hashOfFile);
                 } catch (Exception e) {
                     throw new UncheckedIOException(new IOException(e));
