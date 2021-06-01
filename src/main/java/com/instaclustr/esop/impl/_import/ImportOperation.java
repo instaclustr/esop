@@ -127,7 +127,8 @@ public class ImportOperation extends Operation<ImportOperationRequest> {
                                                                                        !request.noVerify,
                                                                                        !request.noVerifyTokens,
                                                                                        !request.noInvalidateCaches,
-                                                                                       request.extendedVerify);
+                                                                                       request.extendedVerify,
+                                                                                       true);
 
                 logger.info(format("Importing SSTables of %s.%s has finished.", request.keyspace, request.table));
 
