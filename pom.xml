@@ -21,7 +21,7 @@
         
         <cassandra.driver.version>4.11.1</cassandra.driver.version>
         
-        <version.embedded.cassandra>3.0.2</version.embedded.cassandra>
+        <version.embedded.cassandra>4.0.1</version.embedded.cassandra>
         <testng.version>6.14.3</testng.version>
         <mockito.version>2.23.4</mockito.version>
         <awaitility.version>3.1.6</awaitility.version>
@@ -597,6 +597,26 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+
+        <profile>
+            <id>snapshotRepo</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>apache.snapshots</id>
+                    <name>Apache Development Snapshot Repository</name>
+                    <url>https://repository.apache.org/content/repositories/snapshots/</url>
+                    <releases>
+                        <enabled>false</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
         </profile>
     </profiles>
 

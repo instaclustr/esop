@@ -18,7 +18,7 @@ import java.util.Optional;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.nosan.embedded.cassandra.api.Cassandra;
+import com.github.nosan.embedded.cassandra.Cassandra;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -87,7 +87,7 @@ public class LocalListingAndBackupRemovalTest extends AbstractBackupTest {
 
     @Test
     public void testHardlinksBackupAndRestore() throws Exception {
-        Cassandra cassandra = getCassandra(cassandraDir, CASSANDRA_VERSION, false);
+        Cassandra cassandra = getCassandra(cassandraDir, CASSANDRA_VERSION);
         cassandra.start();
 
         waitForCql();

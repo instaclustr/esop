@@ -26,14 +26,15 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.nosan.embedded.cassandra.EmbeddedCassandraFactory;
-import com.github.nosan.embedded.cassandra.api.Cassandra;
-import com.github.nosan.embedded.cassandra.api.Version;
-import com.github.nosan.embedded.cassandra.artifact.Artifact;
+import com.github.nosan.embedded.cassandra.Cassandra;
+import com.github.nosan.embedded.cassandra.CassandraBuilder;
+import com.github.nosan.embedded.cassandra.Version;
+import com.github.nosan.embedded.cassandra.WorkingDirectoryDestroyer;
 import com.google.common.collect.HashMultimap;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -76,12 +77,11 @@ public class ManifestTest {
 
     private static final Logger logger = LoggerFactory.getLogger(ManifestTest.class);
 
-    private final Path cassandraDir = new File("target/cassandra").toPath().toAbsolutePath();
+    private final Path cassandraDir = new File("target/cassandra-manifest-test").toPath().toAbsolutePath();
     private final Path cassandraDataDir = cassandraDir.resolve("data/data").toAbsolutePath();
 
     private Cassandra cassandra;
     private CqlSession session;
-
 
     @Inject
     private Provider<CassandraVersion> cassandraVersionProvider;
@@ -365,16 +365,20 @@ public class ManifestTest {
 
         operationsService = new OperationsService(executorServiceSupplier.get());
 
-        EmbeddedCassandraFactory cassandraFactory = new EmbeddedCassandraFactory();
-        cassandraFactory.setWorkingDirectory(cassandraDir);
-        cassandraFactory.setArtifact(Artifact.ofVersion(Version.of("4.0-rc1")));
-        cassandraFactory.getJvmOptions().add("-Xmx2g");
-        cassandraFactory.getJvmOptions().add("-Xms2g");
-
-        cassandra = cassandraFactory.create();
+        cassandra = getCassandra();
         cassandra.start();
+        waitForCql();
 
         session = CqlSession.builder().build();
+    }
+
+    private Cassandra getCassandra() {
+        return new CassandraBuilder()
+            .version(Version.parse(System.getProperty("cassandra3.version", "3.11.10")))
+            .jvmOptions("-Xmx1g", "-Xms1g", "-Dcassandra.ring_delay_ms=1000")
+            .workingDirectory(() -> cassandraDir)
+            .workingDirectoryDestroyer(WorkingDirectoryDestroyer.deleteAll())
+            .build();
     }
 
     @AfterMethod
@@ -448,5 +452,19 @@ public class ManifestTest {
                 return null;
             }
         });
+    }
+
+    private void waitForCql() {
+        await()
+            .pollInterval(10, TimeUnit.SECONDS)
+            .pollInSameThread()
+            .timeout(1, TimeUnit.MINUTES)
+            .until(() -> {
+                try (final CqlSession cqlSession = CqlSession.builder().build();) {
+                    return true;
+                } catch (final Exception ex) {
+                    return false;
+                }
+            });
     }
 }

@@ -16,7 +16,6 @@ import static com.instaclustr.esop.backup.embedded.TestEntity2.KEYSPACE_2;
 import static com.instaclustr.esop.backup.embedded.TestEntity2.TABLE_2;
 import static com.instaclustr.esop.backup.embedded.TestEntity3.KEYSPACE_3;
 import static com.instaclustr.esop.backup.embedded.TestEntity3.TABLE_3;
-import static com.instaclustr.io.FileUtils.cleanDirectory;
 import static com.instaclustr.io.FileUtils.deleteDirectory;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -25,17 +24,18 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
-import static org.apache.commons.io.FileUtils.copyDirectory;
 import static org.awaitility.Awaitility.await;
 import static org.testng.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,11 +43,10 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
-import com.github.nosan.embedded.cassandra.EmbeddedCassandraFactory;
-import com.github.nosan.embedded.cassandra.api.Cassandra;
-import com.github.nosan.embedded.cassandra.api.Version;
-import com.github.nosan.embedded.cassandra.artifact.Artifact;
-import com.github.nosan.embedded.cassandra.artifact.DefaultArtifact;
+import com.github.nosan.embedded.cassandra.Cassandra;
+import com.github.nosan.embedded.cassandra.CassandraBuilder;
+import com.github.nosan.embedded.cassandra.Version;
+import com.github.nosan.embedded.cassandra.WorkingDirectoryCustomizer;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.AbstractModule;
 import com.instaclustr.cassandra.CassandraModule;
@@ -95,9 +94,9 @@ public abstract class AbstractBackupTest {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbstractBackupTest.class);
 
-    public static final String CASSANDRA_VERSION = System.getProperty("backup.tests.cassandra.version", "3.11.10");
+    public static final String CASSANDRA_VERSION = System.getProperty("cassandra3.version", "3.11.10");
 
-    public static final String CASSANDRA_4_VERSION = System.getProperty("backup.tests.cassandra4.version", "4.0-rc1");
+    public static final String CASSANDRA_4_VERSION = System.getProperty("cassandra4.version", "4.0-rc1");
 
     // This is number of rows we inserted into Cassandra DB in total
     // we backed up first 6 rows. For the last two rows, they are stored in commit logs.
@@ -623,7 +622,7 @@ public abstract class AbstractBackupTest {
         Cassandra cassandra = null;
 
         try {
-            cassandra = getCassandra(cassandraDir, CASSANDRA_VERSION, false);
+            cassandra = getCassandra(cassandraDir, CASSANDRA_VERSION);
             cassandra.start();
 
             List<Long> insertionTimes;
@@ -636,20 +635,14 @@ public abstract class AbstractBackupTest {
             logger.info("Executing backup of commit logs {}", asList(arguments[3]));
             Esop.mainWithoutExit(arguments[3]);
 
-            //Thread.sleep(10000);
-
-            // just backup, same snapshot but the latest wins
-
-            //Esop.main(arguments[2], false);
-
-            copyCassandra(cassandraDir, cassandraRestoredDir);
             cassandra.stop();
 
-            restoreOnStoppedNode(insertionTimes, arguments);
-
             // RESTORE VERIFICATION
+            cassandra = getCassandra(cassandraRestoredDir, CASSANDRA_VERSION, (workingDirectory, version) -> {
+                Files.createDirectory(workingDirectory.resolve("data"));
+                restoreOnStoppedNode(insertionTimes, arguments);
+            });
 
-            cassandra = getCassandra(cassandraRestoredDir, CASSANDRA_VERSION, true);
             cassandra.start();
 
             waitForCql();
@@ -671,7 +664,7 @@ public abstract class AbstractBackupTest {
                                                      final String cassandraVersion,
                                                      int rounds,
                                                      boolean crossKeyspaceRestore) throws Exception {
-        Cassandra cassandra = getCassandra(cassandraDir, cassandraVersion, false);
+        Cassandra cassandra = getCassandra(cassandraDir, cassandraVersion);
         cassandra.start();
 
         waitForCql();
@@ -737,7 +730,7 @@ public abstract class AbstractBackupTest {
     }
 
     public void liveBackupRestoreTest(final String[][] arguments, final String cassandraVersion, int rounds) throws Exception {
-        Cassandra cassandra = getCassandra(cassandraDir, cassandraVersion, false);
+        Cassandra cassandra = getCassandra(cassandraDir, cassandraVersion);
         cassandra.start();
 
         waitForCql();
@@ -814,7 +807,7 @@ public abstract class AbstractBackupTest {
     public void liveBackupWithRestoreOnDifferentTableSchema(final String[][] arguments,
                                                             final String cassandraVersion,
                                                             final boolean tableAddition) throws Exception {
-        Cassandra cassandra = getCassandra(cassandraDir, cassandraVersion, false);
+        Cassandra cassandra = getCassandra(cassandraDir, cassandraVersion);
         cassandra.start();
 
         waitForCql();
@@ -891,7 +884,7 @@ public abstract class AbstractBackupTest {
     }
 
     public void liveBackupWithRestoreOnDifferentSchema(final String[][] arguments, final String cassandraVersion) throws Exception {
-        Cassandra cassandra = getCassandra(cassandraDir, cassandraVersion, false);
+        Cassandra cassandra = getCassandra(cassandraDir, cassandraVersion);
         cassandra.start();
 
         waitForCql();
@@ -1012,28 +1005,32 @@ public abstract class AbstractBackupTest {
         }};
     }
 
-    protected Cassandra getCassandra(final Path cassandraHome, final String version, boolean reuse) throws Exception {
+    protected Cassandra getCassandra(final Path cassandraHome, final String version) throws Exception {
+        return getCassandra(cassandraHome, version, null);
+    }
+
+    protected Cassandra getCassandra(final Path cassandraHome, final String version, final WorkingDirectoryCustomizer customizer) throws Exception {
         FileUtils.createDirectory(cassandraHome);
-        EmbeddedCassandraFactory cassandraFactory = new EmbeddedCassandraFactory();
-        cassandraFactory.setWorkingDirectory(cassandraHome);
-        cassandraFactory.getJvmOptions().add("-Xmx1g");
-        cassandraFactory.getJvmOptions().add("-Xms1g");
-        if (reuse) {
-            cassandraFactory.setArtifact(new DefaultArtifact(Version.of(version), cassandraHome));
-        } else {
-            cassandraFactory.setArtifact(Artifact.ofVersion(Version.of(version)));
+
+        CassandraBuilder builder = new CassandraBuilder();
+        builder.version(Version.parse(version));
+        builder.jvmOptions("-Dcassandra.ring_delay_ms=1000", "-Xms1g", "-Xmx1g");
+        builder.workingDirectory(() -> cassandraHome);
+
+        if (customizer != null) {
+            builder.workingDirectoryCustomizers(customizer);
         }
 
         if (version.startsWith("2")) {
-
             FileUtils.createDirectory(cassandraHome.resolve("data").resolve("data"));
-
-            cassandraFactory.getConfigProperties().put("data_file_directories", new String[]{
-                cassandraHome.resolve("data").resolve("data").toAbsolutePath().toString()
-            });
+            builder.addConfigProperties(new HashMap<String, String[]>() {{
+                put("data_file_directories", new String[]{
+                    cassandraHome.resolve("data").resolve("data").toAbsolutePath().toString()
+                });
+            }});
         }
 
-        return cassandraFactory.create();
+        return builder.build();
     }
 
     protected void init() throws ApiException, IOException {
@@ -1130,11 +1127,6 @@ public abstract class AbstractBackupTest {
         logger.info("Executing restore of commit logs with arguments {}", asList(commitlogRestoreArgsAsList));
 
         Esop.main(commitlogRestoreArgsAsList.toArray(new String[0]), false);
-    }
-
-    protected void copyCassandra(Path source, Path target) throws IOException {
-        copyDirectory(source.toFile(), target.toFile());
-        cleanDirectory(target.resolve("data"));
     }
 
     protected void waitForCql() {

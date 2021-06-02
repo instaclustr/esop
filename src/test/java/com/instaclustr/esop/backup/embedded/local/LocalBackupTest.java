@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.github.nosan.embedded.cassandra.api.Cassandra;
+import com.github.nosan.embedded.cassandra.Cassandra;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Guice;
@@ -211,7 +211,7 @@ public class LocalBackupTest extends AbstractBackupTest {
         Cassandra cassandra = null;
 
         try {
-            cassandra = getCassandra(cassandraDir, CASSANDRA_VERSION, false);
+            cassandra = getCassandra(cassandraDir, CASSANDRA_VERSION);
             cassandra.start();
 
             try (CqlSession session = CqlSession.builder().build()) {
