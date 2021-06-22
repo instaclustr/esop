@@ -111,8 +111,7 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
                                       cassandraVersionProvider).run0();
 
             Snapshots.hashSpec = hashSpec;
-            final Snapshots snapshots = Snapshots.parse(request.cassandraDirectory.resolve("data"));
-
+            final Snapshots snapshots = Snapshots.parse(request.cassandraDirectory.resolve("data"), request.snapshotTag);
             final Optional<Snapshot> snapshot = snapshots.get(request.snapshotTag);
 
             if (!snapshot.isPresent()) {

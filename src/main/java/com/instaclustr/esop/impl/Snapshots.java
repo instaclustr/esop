@@ -664,8 +664,7 @@ public class Snapshots implements Cloneable {
         }
     }
 
-    public static synchronized Snapshots parse(final Path cassandraDir) throws Exception {
-
+    public static synchronized Snapshots parse(final Path cassandraDir, final String snapshot) throws Exception {
         if (Snapshots.hashSpec == null) {
             Snapshots.hashSpec = new HashSpec();
         }
@@ -674,13 +673,21 @@ public class Snapshots implements Cloneable {
         final SnapshotLister lister = new SnapshotLister();
         Files.walkFileTree(cassandraDir, lister);
 
-        final Map<String, List<Path>> snapshotPaths = lister.getSnapshotPaths();
+        final Map<String, List<Path>> snapshotPaths = lister.getSnapshotPaths()
+                .entrySet()
+                .stream()
+                .filter(entry -> snapshot == null || (entry.getKey().equals(snapshot)))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
         for (final Entry<String, List<Path>> paths : snapshotPaths.entrySet()) {
             snapshots.snapshots.put(paths.getKey(), Snapshot.parse(paths.getKey(), paths.getValue()));
         }
 
         return snapshots;
+    }
+
+    public static synchronized Snapshots parse(final Path cassandraDir) throws Exception {
+        return Snapshots.parse(cassandraDir, null);
     }
 
     public static boolean snapshotContainsTimestamp(String snapshotTag) {
