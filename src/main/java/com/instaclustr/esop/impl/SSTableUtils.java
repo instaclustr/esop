@@ -93,7 +93,9 @@ public class SSTableUtils {
         }
     }
 
-    public static Stream<ManifestEntry> ssTableManifest(Path snapshotDirectory,
+    public static Stream<ManifestEntry> ssTableManifest(String keyspace,
+                                                        String table,
+                                                        Path snapshotDirectory,
                                                         Path tableBackupPath,
                                                         HashSpec hashSpec) throws IOException {
         if (!Files.exists(snapshotDirectory)) {
@@ -127,7 +129,7 @@ public class SSTableUtils {
                     backupPath = backupPath.resolve(hash).resolve(manifestComponentFileName.getFileName());
 
                     final String hashOfFile = hashService.hash(localPath);
-                    return new ManifestEntry(backupPath, localPath, ManifestEntry.Type.FILE, hashOfFile);
+                    return new ManifestEntry(backupPath, localPath, ManifestEntry.Type.FILE, hashOfFile, new KeyspaceTable(keyspace, table));
                 } catch (Exception e) {
                     throw new UncheckedIOException(new IOException(e));
                 }

@@ -196,8 +196,6 @@ public abstract class AbstractBackupTest {
             // would be regenerated, only schema should be as it was.
             "--restore-into-new-cluster",
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
-            // restoring specifically for Cassandra 2 (maybe)
-            "--cassandra-version=" + cassandraVersion,
             "--restoration-strategy-type=IN_PLACE"
         };
 

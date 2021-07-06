@@ -143,11 +143,6 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
         description = "If set to true, IN_PLACE restoration will pick only keyspaces necessary for bootstrapping, e.g. system_schema, while all other system keyspaces will be re-generated.")
     public boolean newCluster;
 
-    @Option(names = "--cassandra-version",
-        description = "Version of Cassandra version to restore into. It is important to specify it only in case we are restoring to Cassandra 2 and "
-            + "--restoration-strategy-type is IN_PLACE")
-    public String cassandraVersion;
-
     @JsonProperty
     @Option(names = "--rename",
         description = "[OLD_KEYSPACE.OLD_TABLE]=[OLD_KEYSPACE.NEW_TABLE], if specified upon restoration, table will be restored into new table, not into the original one")
@@ -258,7 +253,6 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             .add("newCluster", newCluster)
             .add("skipBucketVerification", skipBucketVerification)
             .add("proxySettings", proxySettings)
-            .add("cassandraVersion", cassandraVersion)
             .add("rename", rename)
             .add("retry", retry)
             .add("singlePhase", singlePhase)
@@ -288,7 +282,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
         }
 
         if (this.restorationStrategyType == IN_PLACE && this.restorationPhase != RestorationPhaseType.UNKNOWN) {
-            throw new IllegalStateException(format("you can not set restorationPhase %s when your restorationStrategyType is IN_PLACE", this.restorationPhase));
+            throw new IllegalStateException(format("you can not set / use any restoration phases (you used %s) when your restorationStrategyType is IN_PLACE", this.restorationPhase));
         }
 
         if (this.restorationStrategyType == IMPORT || this.restorationStrategyType == HARDLINKS) {

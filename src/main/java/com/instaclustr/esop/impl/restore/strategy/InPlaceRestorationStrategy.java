@@ -99,15 +99,13 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
 
             final Manifest manifest = RestorationUtilities.downloadManifest(operation.request, restorer, null, objectMapper);
             manifest.enrichManifestEntries(request.cassandraDirectory);
-            final DatabaseEntities filteredManifestDatabaseEntities = manifest.getDatabaseEntities(true).filter(request.entities,
-                                                                                                                request.restoreSystemKeyspace,
-                                                                                                                request.newCluster);
+
+            final DatabaseEntities filteredManifestDatabaseEntities = manifest.getDatabaseEntities(true).filter(request.entities);
 
             final List<ManifestEntry> manifestFiles = manifest.getManifestFiles(filteredManifestDatabaseEntities,
-                                                                                request.restoreSystemKeyspace,
-                                                                                request.newCluster,
-                                                                                true,
-                                                                                operation.request.cassandraVersion);
+                                                                                request.restoreSystemKeyspace, // false
+                                                                                request.newCluster, // true
+                                                                                true);
 
             // 3. Build a list of all SSTables currently present, that are candidates for deleting
             final Set<Path> existingFiles = Manifest.getLocalExistingEntries(request.dirs.data());

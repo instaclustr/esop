@@ -292,32 +292,12 @@ public class Manifest implements Cloneable {
     @JsonIgnore
     public List<ManifestEntry> getManifestFiles(final DatabaseEntities entities,
                                                 final boolean restoreSystemKeyspace,
-                                                final boolean newCluster) {
-        return getManifestFiles(entities, restoreSystemKeyspace, newCluster, true);
-    }
-
-    @JsonIgnore
-    public List<ManifestEntry> getManifestFiles(final DatabaseEntities entities,
-                                                final boolean restoreSystemKeyspace,
                                                 final boolean newCluster,
                                                 final boolean withSchemas) {
-        return getManifestFiles(entities, restoreSystemKeyspace, newCluster, withSchemas, null);
-    }
-
-    @JsonIgnore
-    public List<ManifestEntry> getManifestFiles(final DatabaseEntities entities,
-                                                final boolean restoreSystemKeyspace,
-                                                final boolean newCluster,
-                                                final boolean withSchemas,
-                                                final String cassandraVersion) {
         final List<ManifestEntry> manifestEntries = new ArrayList<>();
 
         if (entities.areEmpty()) {
             for (final Entry<String, Keyspace> entry : snapshot.getKeyspaces().entrySet()) {
-                if (KeyspaceTable.isSystemKeyspace(entry.getKey()) && !restoreSystemKeyspace) {
-                    continue;
-                }
-
                 manifestEntries.addAll(entry.getValue().getManifestEntries());
             }
         } else if (entities.tableSubsetOnly()) {
@@ -327,10 +307,6 @@ public class Manifest implements Cloneable {
 
                 if (!keyspace.isPresent()) {
                     throw new IllegalStateException(format("Keyspace %s is not in manifest!", entry.getKey()));
-                }
-
-                if (filterSystemKeyspace(entry.getKey(), restoreSystemKeyspace, newCluster)) {
-                    continue;
                 }
 
                 final Optional<Table> table = keyspace.get().getTable(entry.getValue());
@@ -349,10 +325,6 @@ public class Manifest implements Cloneable {
                     throw new IllegalStateException(format("Keyspace %s is not in manifest!", ks));
                 }
 
-                if (filterSystemKeyspace(ks, restoreSystemKeyspace, newCluster)) {
-                    continue;
-                }
-
                 manifestEntries.addAll(keyspace.get().getManifestEntries());
             }
         }
@@ -363,35 +335,24 @@ public class Manifest implements Cloneable {
             manifestEntryStream = manifestEntryStream.filter(entry -> entry.type != Type.CQL_SCHEMA);
         }
 
-        // we filter out system tables in case we are on Cassandra 2 in case we are restoring into a new cluster
-        // so we have only system.schema_ tables
-        if (newCluster && cassandraVersion != null) {
-            manifestEntryStream = manifestEntryStream.filter(entry -> {
-                if (cassandraVersion.startsWith("2")) {
-                    if (KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace)) {
-                        return entry.keyspaceTable.table.startsWith("schema_");
-                    }
+        manifestEntryStream = manifestEntryStream.filter(entry -> {
+            final String keyspace = entry.keyspaceTable.keyspace;
+            final String table = entry.keyspaceTable.table;
 
-                    return true;
-                } else {
-                    return true;
+            if (!KeyspaceTable.isSystemKeyspace(keyspace)) {
+                return true;
+            }
+
+            if (keyspace.equals("system")) {
+                if (table.equals("system_schema") || table.startsWith("schema_")) {
+                    return newCluster;
                 }
-            });
-        }
+            }
+
+            return restoreSystemKeyspace;
+        });
 
         return manifestEntryStream.collect(toList());
-    }
-
-    private boolean filterSystemKeyspace(String ks, boolean restoreSystemKeyspace, boolean newCluster) {
-        if (KeyspaceTable.isSystemKeyspace(ks)) {
-            if (KeyspaceTable.isBootstrappingKeyspace(ks)) {
-                return !newCluster && !restoreSystemKeyspace;
-            } else {
-                return !restoreSystemKeyspace;
-            }
-        }
-
-        return false;
     }
 
     // for in place strategy

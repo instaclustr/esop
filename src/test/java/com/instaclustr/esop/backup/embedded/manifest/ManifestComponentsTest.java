@@ -1,22 +1,11 @@
 package com.instaclustr.esop.backup.embedded.manifest;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNotSame;
-import static org.testng.Assert.assertTrue;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.KeyspaceTable;
 import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.ManifestEntry;
@@ -28,6 +17,14 @@ import com.instaclustr.jackson.JacksonModule;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import static org.testng.Assert.*;
 
 public class ManifestComponentsTest {
 
@@ -157,6 +154,91 @@ public class ManifestComponentsTest {
 
         assertNotSame(cloned, manifest);
         assertEquals(cloned, manifest);
+    }
+
+    /**
+     * ks1
+     *  ks1t1
+     *  ks1t2
+     * ks2
+     *  ks2t1
+     *  ks2t2
+     * system_auth
+     * system
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testManifestFilterNoRestoreSystemKeyspaceNoNewCluster() throws Exception {
+        Manifest manifest = parseManifest();
+        manifest.enrichManifestEntries(Paths.get("/tmp/somepath"));
+
+        List<ManifestEntry> manifestFiles = manifest.getManifestFiles(new DatabaseEntities(),
+                                                                      false, // restoreSystemKeyspace
+                                                                      false, // newCluster
+                                                                      false); // withSchemas
+
+        Assert.assertTrue(manifestFiles.stream().noneMatch(entry -> KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace)));
+    }
+
+    @Test
+    public void testManifestFilterNoRestoreSystemKeyspaceNoNewClusterNoEmptyRequestEntities() throws Exception {
+        Manifest manifest = parseManifest();
+        manifest.enrichManifestEntries(Paths.get("/tmp/somepath"));
+
+        List<ManifestEntry> manifestFiles = manifest.getManifestFiles(DatabaseEntities.parse("ks1"),
+                                                                      false, // restoreSystemKeyspace
+                                                                      false, // newCluster
+                                                                      false); // withSchemas
+
+        Assert.assertTrue(manifestFiles.stream().noneMatch(entry -> KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace)));
+        Assert.assertTrue(manifestFiles.stream().allMatch(entry -> entry.keyspaceTable.keyspace.equals("ks1")));
+    }
+
+    @Test
+    public void testManifestFilterNoRestoreSystemKeyspaceNoNewClusterTableRequestEntities() throws Exception {
+        Manifest manifest = parseManifest();
+        manifest.enrichManifestEntries(Paths.get("/tmp/somepath"));
+
+        List<ManifestEntry> manifestFiles = manifest.getManifestFiles(DatabaseEntities.parse("ks1.ks1t2"),
+                                                                      false, // restoreSystemKeyspace
+                                                                      false, // newCluster
+                                                                      false); // withSchemas
+
+        Assert.assertTrue(manifestFiles.stream().noneMatch(entry -> KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace)));
+        Assert.assertTrue(manifestFiles.stream().allMatch(entry -> entry.keyspaceTable.keyspace.equals("ks1") || entry.keyspaceTable.table.equals("ks1t2")));
+    }
+
+    @Test
+    public void testManifestFilterNoRestoreSystemKeyspaceYesNewCluster() throws Exception {
+        Manifest manifest = parseManifest();
+        manifest.enrichManifestEntries(Paths.get("/tmp/somepath"));
+
+        List<ManifestEntry> manifestFiles = manifest.getManifestFiles(new DatabaseEntities(),
+                                                                      false, // restoreSystemKeyspace
+                                                                      true, // newCluster
+                                                                      false); // withSchemas
+
+        Assert.assertTrue(manifestFiles.stream().allMatch(entry -> {
+            if (entry.keyspaceTable.keyspace.equals("system")) {
+                return entry.keyspaceTable.table.startsWith("schema_");
+            } else if (entry.keyspaceTable.keyspace.equals("system_schema")) {
+                return true;
+            } else return !KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace);
+        }));
+    }
+
+    @Test
+    public void testManifestFilterYesRestoreSystemKeyspaceYesNewCluster() throws Exception {
+        Manifest manifest = parseManifest();
+        manifest.enrichManifestEntries(Paths.get("/tmp/somepath"));
+
+        List<ManifestEntry> manifestFiles = manifest.getManifestFiles(new DatabaseEntities(),
+                                                                      true, // restoreSystemKeyspace
+                                                                      true, // newCluster
+                                                                      false); // withSchemas
+
+        Assert.assertEquals(manifestFiles.size(), 304);
     }
 
     private Manifest parseManifest() throws Exception {

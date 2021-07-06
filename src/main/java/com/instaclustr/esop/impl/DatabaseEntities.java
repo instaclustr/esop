@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -178,9 +177,7 @@ public class DatabaseEntities {
     }
 
     // only used in InPlace strategy
-    public DatabaseEntities filter(final DatabaseEntities entitiesFromRequest,
-                                   final boolean systemEntities,
-                                   final boolean newCluster) {
+    public DatabaseEntities filter(final DatabaseEntities entitiesFromRequest) {
         if (entitiesFromRequest.areEmpty()) {
             return this;
         }
@@ -191,17 +188,6 @@ public class DatabaseEntities {
                 .getKeyspaces()
                 .stream()
                 .filter(ks -> getKeyspaces().contains(ks))
-                .filter(ks -> {
-                    if (KeyspaceTable.isSystemKeyspace(ks)) {
-                        if (newCluster && KeyspaceTable.isBootstrappingKeyspace(ks)) {
-                            return true;
-                        } else {
-                            return systemEntities;
-                        }
-                    }
-
-                    return true;
-                })
                 .collect(toList());
 
             final HashMultimap<String, String> keyspacesAndTables = HashMultimap.create();
@@ -217,28 +203,17 @@ public class DatabaseEntities {
 
         if (!entitiesFromRequest.getKeyspacesAndTables().isEmpty()) {
 
-            final HashMultimap<String, String> map = HashMultimap.create();
+            final HashMultimap<String, String> keyspacesAndTables = HashMultimap.create();
 
             entitiesFromRequest.getKeyspacesAndTables().entries()
                 .stream()
                 .filter(entry -> getKeyspacesAndTables().containsEntry(entry.getKey(), entry.getValue()))
-                .filter(entry -> {
-                    if (!systemEntities) {
-                        return !KeyspaceTable.isSystemKeyspace(entry.getKey());
-                    }
-                    return true;
-                })
-                .forEach(entry -> map.put(entry.getKey(), entry.getValue()));
+                .forEach(entry -> keyspacesAndTables.put(entry.getKey(), entry.getValue()));
 
-            return new DatabaseEntities(Collections.emptyList(), map);
+            return new DatabaseEntities(Collections.emptyList(), keyspacesAndTables);
         }
 
         throw new IllegalStateException("Unable to filter entities!");
-    }
-
-    public DatabaseEntities filter(final DatabaseEntities entitiesFromRequest,
-                                   final boolean systemEntities) {
-        return filter(entitiesFromRequest, systemEntities, false);
     }
 
     public DatabaseEntities removeSystemEntities() {

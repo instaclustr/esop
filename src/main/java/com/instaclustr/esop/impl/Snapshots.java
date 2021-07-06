@@ -520,7 +520,7 @@ public class Snapshots implements Cloneable {
                     final Path tablePath = Paths.get("data").resolve(Paths.get(keyspace, table));
 
                     for (final Path path : value) {
-                        tb.entries.addAll(SSTableUtils.ssTableManifest(path, tablePath, Snapshots.hashSpec).collect(toList()));
+                        tb.entries.addAll(SSTableUtils.ssTableManifest(keyspace, table, path, tablePath, Snapshots.hashSpec).collect(toList()));
                     }
 
                     final Optional<Path> schemaPath = value.stream().map(p -> p.resolve("schema.cql")).filter(Files::exists).findFirst();
@@ -530,7 +530,8 @@ public class Snapshots implements Cloneable {
                         tb.schema = new ManifestEntry(tablePath.resolve("schema.cql"),
                                                       schema,
                                                       Type.CQL_SCHEMA,
-                                                      null);
+                                                      null,
+                                                      new KeyspaceTable(keyspace, table));
                         tb.schemaContent = new String(Files.readAllBytes(schemaPath.get()));
                         tb.entries.add(tb.schema);
                     }
