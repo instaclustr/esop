@@ -290,6 +290,7 @@ public class Manifest implements Cloneable {
     // helpers
 
     @JsonIgnore
+    // Called in InPlaceStrategy only
     public List<ManifestEntry> getManifestFiles(final DatabaseEntities entities,
                                                 final boolean restoreSystemKeyspace,
                                                 final boolean newCluster,
@@ -335,6 +336,7 @@ public class Manifest implements Cloneable {
             manifestEntryStream = manifestEntryStream.filter(entry -> entry.type != Type.CQL_SCHEMA);
         }
 
+        // take care or system keyspaces
         manifestEntryStream = manifestEntryStream.filter(entry -> {
             final String keyspace = entry.keyspaceTable.keyspace;
             final String table = entry.keyspaceTable.table;
@@ -343,12 +345,26 @@ public class Manifest implements Cloneable {
                 return true;
             }
 
+            // schemas are required only for cases we are going to restore into vanilla node but we have already
+            // some data in tables so we need to tell Cassandra what tables we got
+            // there is --restore-into-new-cluster flag telling that (translates to "newCluster")
+
+            // Cassandra 2.0 case
             if (keyspace.equals("system")) {
-                if (table.equals("system_schema") || table.startsWith("schema_")) {
-                    return newCluster;
+                if (table.startsWith("schema_")) {
+                    // if we restore into new cluster, we want to restore it
+                    // if we do not, we ask if we want to restore system keyspaces as such
+                    return newCluster || restoreSystemKeyspace;
                 }
             }
 
+            // Cassandra 3+ case
+            if (keyspace.equals("system_schema")) {
+                return newCluster || restoreSystemKeyspace;
+            }
+
+            // if it is some other system keyspace / table, which is not necessary for restorations from scratch,
+            // we just ask if we want to indeed restore it, this method is called in InPlace strategy only
             return restoreSystemKeyspace;
         });
 

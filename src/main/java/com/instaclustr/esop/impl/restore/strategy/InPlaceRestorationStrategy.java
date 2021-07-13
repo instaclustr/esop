@@ -102,6 +102,8 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
 
             final DatabaseEntities filteredManifestDatabaseEntities = manifest.getDatabaseEntities(true).filter(request.entities);
 
+            logger.info("filtered entities from manifest: " + filteredManifestDatabaseEntities.toString());
+
             final List<ManifestEntry> manifestFiles = manifest.getManifestFiles(filteredManifestDatabaseEntities,
                                                                                 request.restoreSystemKeyspace, // false
                                                                                 request.newCluster, // true
