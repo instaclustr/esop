@@ -175,6 +175,7 @@ public class ManifestComponentsTest {
 
         List<ManifestEntry> manifestFiles = manifest.getManifestFiles(new DatabaseEntities(),
                                                                       false, // restoreSystemKeyspace
+                                                                      false, // restoreSystemAuth
                                                                       false, // newCluster
                                                                       false); // withSchemas
 
@@ -188,6 +189,7 @@ public class ManifestComponentsTest {
 
         List<ManifestEntry> manifestFiles = manifest.getManifestFiles(DatabaseEntities.parse("ks1"),
                                                                       false, // restoreSystemKeyspace
+                                                                      false, // restoreSystemAuth
                                                                       false, // newCluster
                                                                       false); // withSchemas
 
@@ -202,6 +204,7 @@ public class ManifestComponentsTest {
 
         List<ManifestEntry> manifestFiles = manifest.getManifestFiles(DatabaseEntities.parse("ks1.ks1t2"),
                                                                       false, // restoreSystemKeyspace
+                                                                      false, // restoreSystemAuth
                                                                       false, // newCluster
                                                                       false); // withSchemas
 
@@ -216,6 +219,7 @@ public class ManifestComponentsTest {
 
         List<ManifestEntry> manifestFiles = manifest.getManifestFiles(new DatabaseEntities(),
                                                                       false, // restoreSystemKeyspace
+                                                                      false, // restoreSystemAuth
                                                                       true, // newCluster
                                                                       false); // withSchemas
 
@@ -235,6 +239,7 @@ public class ManifestComponentsTest {
 
         List<ManifestEntry> manifestFiles = manifest.getManifestFiles(new DatabaseEntities(),
                                                                       true, // restoreSystemKeyspace
+                                                                      false, // restoreSystemAuth
                                                                       true, // newCluster
                                                                       false); // withSchemas
 

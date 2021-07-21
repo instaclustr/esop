@@ -105,8 +105,9 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
             logger.info("filtered entities from manifest: " + filteredManifestDatabaseEntities.toString());
 
             final List<ManifestEntry> manifestFiles = manifest.getManifestFiles(filteredManifestDatabaseEntities,
-                                                                                request.restoreSystemKeyspace, // false
-                                                                                request.newCluster, // true
+                                                                                request.restoreSystemKeyspace,
+                                                                                request.restoreSystemAuth,
+                                                                                request.newCluster,
                                                                                 true);
 
             // 3. Build a list of all SSTables currently present, that are candidates for deleting

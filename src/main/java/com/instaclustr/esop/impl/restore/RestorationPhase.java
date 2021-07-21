@@ -287,6 +287,7 @@ public abstract class RestorationPhase {
                 // there will be only entries in this list which are backed by existing keyspace on disk
                 final List<ManifestEntry> manifestFiles = manifest.getManifestFiles(request.entities,
                                                                                     false,  // not possible to restore system keyspace on a live cluster
+                                                                                    false, // not possible to restore system_auth on a live cluster
                                                                                     false,  // no new cluster
                                                                                     false); // with schemas
 
@@ -708,7 +709,7 @@ public abstract class RestorationPhase {
         }
 
         public DataVerification verify(final Manifest manifest, final DatabaseEntities entities) {
-            final List<ManifestEntry> entries = manifest.getManifestFiles(entities, false, false, false);
+            final List<ManifestEntry> entries = manifest.getManifestFiles(entities, false, false,false, false);
 
             for (final ManifestEntry entry : entries) {
                 if (!Files.exists(entry.localFile)) {

@@ -68,6 +68,10 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
         description = "Restore system keyspaces too, consult option '--restore-into-new-cluster' as well.")
     public boolean restoreSystemKeyspace;
 
+    @Option(names = {"--ra", "--restore-system-auth"},
+            description = "Restore system_auth keyspace, irrelevant if --restore-system-keyspace is set")
+    public boolean restoreSystemAuth;
+
     @Option(names = {"-s", "--st", "--snapshot-tag"},
         description = "Snapshot to download and restore.",
         required = true)
@@ -172,6 +176,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonProperty("cassandraDirectory") final Path cassandraDirectory,
                                    @JsonProperty("cassandraConfigDirectory") final Path cassandraConfigDirectory,
                                    @JsonProperty("restoreSystemKeyspace") final boolean restoreSystemKeyspace,
+                                   @JsonProperty("restoreSystemAuth") final boolean restoreSystemAuth,
                                    @JsonProperty("snapshotTag") final String snapshotTag,
                                    @JsonProperty("entities")
                                    @JsonDeserialize(using = DatabaseEntitiesDeserializer.class)
@@ -204,6 +209,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
         this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/")) ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
         this.restoreSystemKeyspace = restoreSystemKeyspace;
+        this.restoreSystemAuth = restoreSystemAuth;
         this.snapshotTag = snapshotTag;
         this.entities = entities == null ? DatabaseEntities.empty() : entities;
         this.updateCassandraYaml = updateCassandraYaml;
@@ -232,6 +238,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             .add("concurrentConnections", concurrentConnections)
             .add("cassandraDirectory", cassandraDirectory)
             .add("restoreSystemKeyspace", restoreSystemKeyspace)
+            .add("restoreSystemAuth", restoreSystemAuth)
             .add("snapshotTag", snapshotTag)
             .add("entities", entities)
             .add("restorationStrategyType", restorationStrategyType)

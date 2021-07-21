@@ -293,6 +293,7 @@ public class Manifest implements Cloneable {
     // Called in InPlaceStrategy only
     public List<ManifestEntry> getManifestFiles(final DatabaseEntities entities,
                                                 final boolean restoreSystemKeyspace,
+                                                final boolean restoreSystemAuth,
                                                 final boolean newCluster,
                                                 final boolean withSchemas) {
         final List<ManifestEntry> manifestEntries = new ArrayList<>();
@@ -361,6 +362,10 @@ public class Manifest implements Cloneable {
             // Cassandra 3+ case
             if (keyspace.equals("system_schema")) {
                 return newCluster || restoreSystemKeyspace;
+            }
+
+            if (keyspace.equals("system_auth")) {
+                return restoreSystemAuth || restoreSystemKeyspace;
             }
 
             // if it is some other system keyspace / table, which is not necessary for restorations from scratch,
