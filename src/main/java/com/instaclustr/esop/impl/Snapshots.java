@@ -6,6 +6,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -708,6 +709,21 @@ public class Snapshots implements Cloneable {
     public static class SnapshotLister extends SimpleFileVisitor<Path> {
 
         private final List<Path> snapshotPaths = new ArrayList<>();
+
+        @Override
+        public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+            if (file.toString().contains("/snapshots/")) {
+                // rethrow if it belongs to snapshots because that is indeed a failure
+                throw exc;
+            } else if (!(exc instanceof FileNotFoundException)) {
+                // rethrow also in case it is not fnfe, some files might be just compacted
+                // by the time we are reading them
+                throw exc;
+            } else {
+                // if it does not belong to any snapshot and if it is fnfe, just carry on
+                return FileVisitResult.CONTINUE;
+            }
+        }
 
         @Override
         public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
