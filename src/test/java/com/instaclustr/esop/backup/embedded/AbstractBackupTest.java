@@ -94,7 +94,7 @@ public abstract class AbstractBackupTest {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbstractBackupTest.class);
 
-    public static final String CASSANDRA_VERSION = System.getProperty("cassandra3.version", "3.11.10");
+    public static final String CASSANDRA_VERSION = System.getProperty("cassandra3.version", "3.11.11");
 
     public static final String CASSANDRA_4_VERSION = System.getProperty("cassandra4.version", "4.0-rc2");
 
