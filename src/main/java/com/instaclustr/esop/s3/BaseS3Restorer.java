@@ -154,11 +154,9 @@ public class BaseS3Restorer extends Restorer {
         ObjectMapper objectMapper = new ObjectMapper();
         assert objectMapper != null;
         //Get list of manifest object summaries
-        List<S3ObjectSummary> manifestSumms = listBucket("", s -> s.contains("manifests"));
-        System.out.println(manifestSumms.size());
+        List<S3ObjectSummary> manifestSumms = listBucket(resolveNodeAwareRemotePath(Paths.get("manifests")), s -> true);
         for (S3ObjectSummary o: manifestSumms){
             Path manifestPath = Paths.get(o.getKey());
-            System.out.println();
             //Download corresponding manifest to string
             String manifest = downloadManifestToString(Paths.get("manifests"), s -> s.contains(manifestPath.getFileName().toString()));
             Manifest read = Manifest.read(manifest, objectMapper);
