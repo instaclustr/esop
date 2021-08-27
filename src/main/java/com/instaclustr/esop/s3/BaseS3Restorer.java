@@ -149,7 +149,6 @@ public class BaseS3Restorer extends Restorer {
     }
 
     public void downloadManifestsToFile(Path localPath) throws Exception {
-        FileUtils.cleanDirectory(localPath.toFile());
         List<S3ObjectSummary> manifestSumms = listBucket("", s -> s.contains("manifests"));
         for (S3ObjectSummary o: manifestSumms){
             Path manifestPath = Paths.get(o.getKey());
@@ -161,6 +160,7 @@ public class BaseS3Restorer extends Restorer {
     public List<Manifest> listManifests() throws Exception {
         // Key example:cluster/dc/node/manifests/autosnap-12314142.json
         Path localPath = Paths.get(System.getProperty("user.home"), ".esop");
+        FileUtils.cleanDirectory(localPath.toFile());
         downloadManifestsToFile(localPath);
         ObjectMapper objectMapper = new ObjectMapper();
         final List<Path> manifests = Files.list(Paths.get(localPath.toString(), getStorageLocation().nodePath(), "manifests"))
