@@ -43,6 +43,8 @@ import com.instaclustr.esop.impl.retry.Retrier.RetriableException;
 import com.instaclustr.esop.impl.retry.RetrierFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.commons.io.FileUtils;
+
 
 public class BaseS3Restorer extends Restorer {
 
@@ -146,25 +148,34 @@ public class BaseS3Restorer extends Restorer {
         return downloadFileToString(objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
     }
 
+    public void downloadManifestsToFile(Path localPath) throws Exception {
+        FileUtils.cleanDirectory(localPath.toFile());
+        List<S3ObjectSummary> manifestSumms = listBucket("", s -> s.contains("manifests"));
+        for (S3ObjectSummary o: manifestSumms){
+            Path manifestPath = Paths.get(o.getKey());
+            downloadFile(Paths.get(localPath.toString(), getStorageLocation().nodePath(), "manifests", manifestPath.getFileName().toString()), objectKeyToRemoteReference(manifestPath));
+        }
+    }
 
     @Override
     public List<Manifest> listManifests() throws Exception {
         // Key example:cluster/dc/node/manifests/autosnap-12314142.json
-        List<Manifest> manifestList = new ArrayList<>();
+        Path localPath = Paths.get(System.getProperty("user.home"), ".esop");
+        downloadManifestsToFile(localPath);
         ObjectMapper objectMapper = new ObjectMapper();
-        assert objectMapper != null;
-        //Get list of manifest object summaries
-        List<S3ObjectSummary> manifestSumms = listBucket(resolveNodeAwareRemotePath(Paths.get("manifests")), s -> true);
-        for (S3ObjectSummary o: manifestSumms){
-            Path manifestPath = Paths.get(o.getKey());
-            //Download corresponding manifest to string
-            String manifest = downloadManifestToString(Paths.get("manifests"), s -> s.contains(manifestPath.getFileName().toString()));
-            Manifest read = Manifest.read(manifest, objectMapper);
-            System.out.println(read.getManifestName());
-            read.setManifest(new ManifestEntry(manifestPath.subpath(3, 5), manifestPath, ManifestEntry.Type.FILE, null));
-            manifestList.add(read);
+        final List<Path> manifests = Files.list(Paths.get(localPath.toString(), getStorageLocation().nodePath(), "manifests"))
+                .sorted(new Manifest.ManifestAgePathComparator())
+                .collect(toList());
+
+        final List<Manifest> manifestsList = new ArrayList<>();
+
+        for (final Path manifest : manifests) {
+            final Manifest read = Manifest.read(manifest, objectMapper);
+            read.setManifest(new ManifestEntry(Paths.get("manifests", manifest.getFileName().toString()), manifest, ManifestEntry.Type.FILE, null));
+            manifestsList.add(read);
         }
-        return manifestList;
+
+        return manifestsList;
     }
 
     @Override
