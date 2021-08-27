@@ -154,7 +154,7 @@ public class BaseS3Restorer extends Restorer {
         ObjectMapper objectMapper = new ObjectMapper();
         assert objectMapper != null;
         //Get list of manifest object summaries
-        List<S3ObjectSummary> manifestSumms = listBucket("manifests", s -> true);
+        List<S3ObjectSummary> manifestSumms = listBucket("", s -> s.contains("manifests"));
         System.out.println(manifestSumms.size());
         for (S3ObjectSummary o: manifestSumms){
             Path manifestPath = Paths.get(o.getKey());
