@@ -2,6 +2,7 @@ package com.instaclustr.esop.s3;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,9 +28,12 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.PersistableTransfer;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.internal.S3ProgressListener;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.CharStreams;
 import com.instaclustr.esop.impl.Manifest;
+import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.RemoteObjectReference;
+import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
@@ -46,6 +50,7 @@ public class BaseS3Restorer extends Restorer {
 
     protected final AmazonS3 amazonS3;
     protected final TransferManager transferManager;
+    //private ObjectMapper objectMapper;
 
     public BaseS3Restorer(final TransferManagerFactory transferManagerFactory,
                           final RestoreOperationRequest request) {
@@ -139,6 +144,99 @@ public class BaseS3Restorer extends Restorer {
         final S3Object manifestObject = getManifest(resolveNodeAwareRemotePath(remotePrefix), keyFilter);
         final String fileName = manifestObject.getKey().split("/")[manifestObject.getKey().split("/").length - 1];
         return downloadFileToString(objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
+    }
+
+
+    @Override
+    public List<Manifest> listManifests() throws Exception {
+        // Key example:cluster/dc/node/manifests/autosnap-12314142.json
+        List<Manifest> manifestList = new ArrayList<>();
+        ObjectMapper objectMapper = new ObjectMapper();
+        assert objectMapper != null;
+        //Get list of manifest object summaries
+        List<S3ObjectSummary> manifestSumms = listBucket("manifests", s -> true);
+        System.out.println(manifestSumms.size());
+        for (S3ObjectSummary o: manifestSumms){
+            Path manifestPath = Paths.get(o.getKey());
+            System.out.println();
+            //Download corresponding manifest to string
+            String manifest = downloadManifestToString(Paths.get("manifests"), s -> s.contains(manifestPath.getFileName().toString()));
+            Manifest read = Manifest.read(manifest, objectMapper);
+            System.out.println(read.getManifestName());
+            read.setManifest(new ManifestEntry(manifestPath.subpath(3, 5), manifestPath, ManifestEntry.Type.FILE, null));
+            manifestList.add(read);
+        }
+        return manifestList;
+    }
+
+    @Override
+    public List<StorageLocation> listNodes() throws Exception{
+        //List manifest object summaries
+        List<S3ObjectSummary> manifestSumms = listBucket("manifests", s -> true);
+        List<String> NodeStrings = new ArrayList<>();
+        for (S3ObjectSummary s: manifestSumms) {
+            Path manifestPath = Paths.get(s.getKey());
+            //Get path of manifest up to the node
+            String sub = manifestPath.subpath(0, 3).toString();
+            if (!NodeStrings.contains(sub)) {
+                NodeStrings.add(sub);
+            }
+        }
+        //Convert node paths to StorageLocation object
+        List<StorageLocation> Nodes = NodeStrings.stream().map(p -> new StorageLocation("s3://" + p)).collect(toList());
+        return Nodes;
+    }
+
+    @Override
+    public List<StorageLocation> listNodes(final String dc) throws Exception{
+        System.out.println();
+        List<S3ObjectSummary> m = listBucket("manifests", s -> true);
+        List<String> NodeStrings = new ArrayList<>();
+        for (S3ObjectSummary s: m) {
+            Path manifestPath = Paths.get(s.getKey());
+            //Only continue if key contains data center name
+            if (!manifestPath.getName(1).equals(dc)) {
+                break;
+            }
+            //Get path of manifest up to the node
+            String sub = manifestPath.subpath(0, 3).toString();
+            if (!NodeStrings.contains(sub)) {
+                NodeStrings.add(sub);
+            }
+        }
+        List<StorageLocation> Nodes = NodeStrings.stream().map(p -> new StorageLocation("s3://" + p)).collect(toList());
+        return Nodes;
+
+    }
+
+    @Override
+    public List<StorageLocation> listNodes(final List<String> dcs) throws Exception{
+        final List<StorageLocation> storageLocations = new ArrayList<>();
+
+        if (dcs == null || dcs.isEmpty()) {
+            storageLocations.addAll(listNodes());
+        } else {
+            for (final String dc : dcs) {
+                storageLocations.addAll(listNodes(dc));
+            }
+        }
+
+        return storageLocations;
+    }
+
+    @Override
+    public List<String> listDcs() throws Exception {
+        System.out.println();
+        List<S3ObjectSummary> m = listBucket("manifests", s -> true);
+        List<String> Dcs = new ArrayList<>();
+        for (S3ObjectSummary s: m) {
+            Path manifestPath = Paths.get(s.getKey());
+            String dc = manifestPath.getName(1).toString();
+            if (!Dcs.contains(dc)) {
+                Dcs.add(dc);
+            }
+        }
+        return Dcs;
     }
 
     @Override
