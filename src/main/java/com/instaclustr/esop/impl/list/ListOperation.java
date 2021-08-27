@@ -7,6 +7,9 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.time.Instant;
@@ -26,6 +29,7 @@ import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageInteractor;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.TableBuilder;
+import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.esop.topology.CassandraSimpleTopology;
 import com.instaclustr.esop.topology.CassandraSimpleTopology.CassandraSimpleTopologyResult;
@@ -98,8 +102,18 @@ public class ListOperation extends Operation<ListOperationRequest> {
     protected void run0() throws Exception {
         assert restorerFactoryMap != null;
         assert objectMapper != null;
+        Path localPath = Paths.get(System.getProperty("user.home"), ".esop");
 
         request.storageLocation.validate();
+
+        //implement manifest to file download
+        if (!request.storageLocation.storageProvider.equals("file")){
+            if (!Files.exists(localPath)) {
+                Files.createDirectories(localPath);
+            }
+
+        }
+
 
         if (!request.skipNodeCoordinatesResolution) {
             assert cassandraJMXService != null;
@@ -112,6 +126,9 @@ public class ListOperation extends Operation<ListOperationRequest> {
         }
 
         try (final StorageInteractor interactor = restorerFactoryMap.get(request.storageLocation.storageProvider).createListingInteractor(request)) {
+//            if (interactor instanceof Restorer){
+//                ((Restorer) interactor).downloadManifestsToFile(localPath);
+//            }
             final AllManifestsReport report = AllManifestsReport.report(interactor.listManifests());
             filterFromTimestamp(report, request.fromTimestamp);
             filterLastN(report, request.lastN);
