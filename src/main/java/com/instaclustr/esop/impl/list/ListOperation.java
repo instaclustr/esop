@@ -106,12 +106,11 @@ public class ListOperation extends Operation<ListOperationRequest> {
 
         request.storageLocation.validate();
 
-        //implement manifest to file download
+        //create manifest cache folder if it does not exist
         if (!request.storageLocation.storageProvider.equals("file")){
             if (!Files.exists(localPath)) {
                 Files.createDirectories(localPath);
             }
-
         }
 
 
