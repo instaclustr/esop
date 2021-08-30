@@ -57,6 +57,7 @@ public class BaseS3Restorer extends Restorer {
     LocalFileRestorer localFileRestorer;
     Path localPath; //Path to .esop folder
     Path localPathToNode;
+    boolean skipDownload = false;
 
     public BaseS3Restorer(final TransferManagerFactory transferManagerFactory,
                           final RestoreOperationRequest request) {
@@ -77,6 +78,7 @@ public class BaseS3Restorer extends Restorer {
         super(request);
         this.transferManager = transferManagerFactory.build(request);
         this.amazonS3 = this.transferManager.getAmazonS3Client();
+        skipDownload = request.skipDownload;
         this.localPath = Paths.get(System.getProperty("user.home"),
                 ".esop");
         this.localPathToNode = Paths.get(
@@ -98,7 +100,9 @@ public class BaseS3Restorer extends Restorer {
                 false,
                 null,
                 false,
-                Long.MAX_VALUE, 0), new ObjectMapper());
+                Long.MAX_VALUE,
+                0,
+                false), new ObjectMapper());
 
     }
 
@@ -187,7 +191,9 @@ public class BaseS3Restorer extends Restorer {
     public List<Manifest> listManifests() throws Exception {
         // Key example:cluster/dc/node/manifests/autosnap-12314142.json
         FileUtils.cleanDirectory(localPath.toFile());
-        downloadManifestsToFile(localPath);
+        if (!skipDownload) {
+            downloadManifestsToFile(localPath);
+        }
         return localFileRestorer.listManifests();
 
 //        final List<Path> manifests = Files.list(Paths.get(localPath.toString(), getStorageLocation().nodePath(), "manifests"))

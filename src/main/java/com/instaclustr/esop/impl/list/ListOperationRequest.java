@@ -35,6 +35,10 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
     @Option(names = {"--last-n"}, description = "Number of last reports to print")
     public int lastN = 0;
 
+    @Option(names = {"--skip-download"}, description = "Skip downloading manifests from the cloud into the local cache everytime listing is called." +
+            "Only set if manifests have already been downloaded previously and your backup collection has not changed.")
+    public boolean skipDownload = true;
+
     public ListOperationRequest() {
         // for picocli
     }
@@ -53,7 +57,8 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
                                 @JsonProperty("toFile") final String toFile,
                                 @JsonProperty("simpleFormat") final boolean simpleFormat,
                                 @JsonProperty("fromTimestamp") final Long fromTimestamp,
-                                @JsonProperty("lastN") final Integer lastN) {
+                                @JsonProperty("lastN") final Integer lastN,
+                                @JsonProperty("skipDownload") final boolean skipDownload) {
         super(storageLocation, 1, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
         this.json = json;
         this.skipNodeCoordinatesResolution = skipNodeCoordinatesResolution;
@@ -62,6 +67,7 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
         this.simpleFormat = simpleFormat;
         this.fromTimestamp = fromTimestamp == null ? Long.MAX_VALUE : fromTimestamp;
         this.lastN = lastN == null ? 0 : lastN;
+        this.skipDownload = skipDownload;
     }
 
     @Override
@@ -74,6 +80,7 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
             .add("simpleFormat", simpleFormat)
             .add("fromTimestamp", fromTimestamp)
             .add("lastN", lastN)
+            .add ("skipDownload", skipDownload)
             .toString();
     }
 }
