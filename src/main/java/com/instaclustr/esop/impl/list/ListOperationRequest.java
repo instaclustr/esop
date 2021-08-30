@@ -37,7 +37,7 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
 
     @Option(names = {"--skip-download"}, description = "Skip downloading manifests from the cloud into the local cache everytime listing is called." +
             "Only set if manifests have already been downloaded previously and your backup collection has not changed.")
-    public boolean skipDownload = true;
+    public boolean skipDownload = false;
 
     public ListOperationRequest() {
         // for picocli
