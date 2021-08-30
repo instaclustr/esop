@@ -53,7 +53,6 @@ public class BaseS3Restorer extends Restorer {
 
     protected final AmazonS3 amazonS3;
     protected final TransferManager transferManager;
-    //private ObjectMapper objectMapper;
     LocalFileRestorer localFileRestorer;
     Path localPath; //Path to .esop folder
     Path localPathToNode;
@@ -83,12 +82,11 @@ public class BaseS3Restorer extends Restorer {
                 ".esop");
         this.localPathToNode = Paths.get(
                 localPath.toString(),
-                request.storageLocation.clusterId,
-                request.storageLocation.datacenterId,
-                request.storageLocation.nodeId);
-        request.storageLocation.rawLocation = "file://" + localPathToNode;
+                getStorageLocation().nodePath());
+        String cacheRawLocation = "file://" + localPathToNode;
+        StorageLocation cacheLocation =  new StorageLocation(cacheRawLocation);
         this.localFileRestorer = new LocalFileRestorer(new ListOperationRequest(
-                request.storageLocation,
+                cacheLocation,
                 request.k8sNamespace,
                 request.k8sSecretName,
                 request.insecure,
@@ -180,17 +178,18 @@ public class BaseS3Restorer extends Restorer {
     }
 
     public void downloadManifestsToFile(Path localPath) throws Exception {
+        FileUtils.cleanDirectory(localPath.toFile());
         List<S3ObjectSummary> manifestSumms = listBucket("", s -> s.contains("manifests"));
         for (S3ObjectSummary o: manifestSumms){
             Path manifestPath = Paths.get(o.getKey());
-            downloadFile(Paths.get(localPath.toString(), getStorageLocation().nodePath(), "manifests", manifestPath.getFileName().toString()), objectKeyToRemoteReference(manifestPath));
+            downloadFile(Paths.get(localPath.toString(), getStorageLocation().nodePath(),
+                    "manifests", manifestPath.getFileName().toString()), objectKeyToRemoteReference(manifestPath));
         }
     }
 
     @Override
     public List<Manifest> listManifests() throws Exception {
         // Key example:cluster/dc/node/manifests/autosnap-12314142.json
-        FileUtils.cleanDirectory(localPath.toFile());
         if (!skipDownload) {
             downloadManifestsToFile(localPath);
         }
