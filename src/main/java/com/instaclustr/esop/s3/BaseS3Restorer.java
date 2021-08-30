@@ -56,7 +56,6 @@ public class BaseS3Restorer extends Restorer {
     LocalFileRestorer localFileRestorer;
     Path localPath; //Path to .esop folder
     Path localPathToNode;
-    boolean skipDownload = false;
 
     public BaseS3Restorer(final TransferManagerFactory transferManagerFactory,
                           final RestoreOperationRequest request) {
@@ -77,7 +76,6 @@ public class BaseS3Restorer extends Restorer {
         super(request);
         this.transferManager = transferManagerFactory.build(request);
         this.amazonS3 = this.transferManager.getAmazonS3Client();
-        skipDownload = request.skipDownload;
         this.localPath = Paths.get(System.getProperty("user.home"),
                 ".esop");
         this.localPathToNode = Paths.get(
@@ -85,6 +83,7 @@ public class BaseS3Restorer extends Restorer {
                 getStorageLocation().nodePath());
         String cacheRawLocation = "file://" + localPathToNode;
         StorageLocation cacheLocation =  new StorageLocation(cacheRawLocation);
+        //Create localFileRestorer to use methods (flags are not used)
         this.localFileRestorer = new LocalFileRestorer(new ListOperationRequest(
                 cacheLocation,
                 request.k8sNamespace,
@@ -189,98 +188,30 @@ public class BaseS3Restorer extends Restorer {
 
     @Override
     public List<Manifest> listManifests() throws Exception {
-        // Key example:cluster/dc/node/manifests/autosnap-12314142.json
-        if (!skipDownload) {
+        //If skipDownload flag is not set, download manifests
+        if (!((ListOperationRequest) request).skipDownload){
             downloadManifestsToFile(localPath);
         }
         return localFileRestorer.listManifests();
-
-//        final List<Path> manifests = Files.list(Paths.get(localPath.toString(), getStorageLocation().nodePath(), "manifests"))
-//                .sorted(new Manifest.ManifestAgePathComparator())
-//                .collect(toList());
-//
-//        final List<Manifest> manifestsList = new ArrayList<>();
-//
-//        for (final Path manifest : manifests) {
-//            final Manifest read = Manifest.read(manifest, objectMapper);
-//            read.setManifest(new ManifestEntry(Paths.get("manifests", manifest.getFileName().toString()), manifest, ManifestEntry.Type.FILE, null));
-//            manifestsList.add(read);
-//        }
-//
-//        return manifestsList;
     }
 
     @Override
     public List<StorageLocation> listNodes() throws Exception{
-        //List manifest object summaries
-//        List<S3ObjectSummary> manifestSumms = listBucket("manifests", s -> true);
-//        List<String> NodeStrings = new ArrayList<>();
-//        for (S3ObjectSummary s: manifestSumms) {
-//            Path manifestPath = Paths.get(s.getKey());
-//            //Get path of manifest up to the node
-//            String sub = manifestPath.subpath(0, 3).toString();
-//            if (!NodeStrings.contains(sub)) {
-//                NodeStrings.add(sub);
-//            }
-//        }
-//        //Convert node paths to StorageLocation object
-//        List<StorageLocation> Nodes = NodeStrings.stream().map(p -> new StorageLocation("s3://" + p)).collect(toList());
-//        return Nodes;
         return localFileRestorer.listNodes();
     }
 
     @Override
     public List<StorageLocation> listNodes(final String dc) throws Exception{
-//        System.out.println();
-//        List<S3ObjectSummary> m = listBucket("manifests", s -> true);
-//        List<String> NodeStrings = new ArrayList<>();
-//        for (S3ObjectSummary s: m) {
-//            Path manifestPath = Paths.get(s.getKey());
-//            //Only continue if key contains data center name
-//            if (!manifestPath.getName(1).equals(dc)) {
-//                break;
-//            }
-//            //Get path of manifest up to the node
-//            String sub = manifestPath.subpath(0, 3).toString();
-//            if (!NodeStrings.contains(sub)) {
-//                NodeStrings.add(sub);
-//            }
-//        }
-//        List<StorageLocation> Nodes = NodeStrings.stream().map(p -> new StorageLocation("s3://" + p)).collect(toList());
-//        return Nodes;
         return localFileRestorer.listNodes(dc);
-
     }
 
     @Override
     public List<StorageLocation> listNodes(final List<String> dcs) throws Exception{
-//        final List<StorageLocation> storageLocations = new ArrayList<>();
-//
-//        if (dcs == null || dcs.isEmpty()) {
-//            storageLocations.addAll(listNodes());
-//        } else {
-//            for (final String dc : dcs) {
-//                storageLocations.addAll(listNodes(dc));
-//            }
-//        }
-//
-//        return storageLocations;
         return localFileRestorer.listNodes(dcs);
     }
 
     @Override
     public List<String> listDcs() throws Exception {
-//        System.out.println();
-//        List<S3ObjectSummary> m = listBucket("manifests", s -> true);
-//        List<String> Dcs = new ArrayList<>();
-//        for (S3ObjectSummary s: m) {
-//            Path manifestPath = Paths.get(s.getKey());
-//            String dc = manifestPath.getName(1).toString();
-//            if (!Dcs.contains(dc)) {
-//                Dcs.add(dc);
-//            }
-//        }
-//        return Dcs;
         return localFileRestorer.listDcs();
     }
 

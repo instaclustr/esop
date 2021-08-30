@@ -35,8 +35,8 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
     @Option(names = {"--last-n"}, description = "Number of last reports to print")
     public int lastN = 0;
 
-    @Option(names = {"--skip-download"}, description = "Skip downloading manifests from the cloud into the local cache everytime listing is called." +
-            "Only set if manifests have already been downloaded previously and your backup collection has not changed.")
+    @Option(names = {"--skip-download"}, description = "Skip downloading backup information from the cloud into the local cache everytime listing is done." +
+            "Only set if listing has been done previously and your backup collection has not changed.")
     public boolean skipDownload = false;
 
     public ListOperationRequest() {

@@ -115,7 +115,6 @@ public class ListOperation extends Operation<ListOperationRequest> {
             }
         }
 
-
         if (!request.skipNodeCoordinatesResolution) {
             assert cassandraJMXService != null;
             CassandraSimpleTopologyResult simpleTopology = new CassandraSimpleTopology(cassandraJMXService).act();
@@ -123,7 +122,6 @@ public class ListOperation extends Operation<ListOperationRequest> {
                                                              simpleTopology.getClusterName(),
                                                              simpleTopology.getDc(),
                                                              simpleTopology.getHostId());
-
         }
 
         try (final StorageInteractor interactor = restorerFactoryMap.get(request.storageLocation.storageProvider).createListingInteractor(request)) {
@@ -133,6 +131,7 @@ public class ListOperation extends Operation<ListOperationRequest> {
             try (final PrintStream ps = getOutputStream(request)) {
                 print(report, request, ps);
             }
+
         } catch (final Exception ex) {
             logger.error("Unable to perform listing! - " + ex.getMessage(), ex);
             this.addError(Error.from(ex));
