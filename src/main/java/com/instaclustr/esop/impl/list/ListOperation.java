@@ -78,7 +78,8 @@ public class ListOperation extends Operation<ListOperationRequest> {
                           @JsonProperty("toFile") final String toFile,
                           @JsonProperty("simpleFormat") final boolean simpleFormat,
                           @JsonProperty("fromTimestamp") final Long fromTimestamp,
-                          @JsonProperty("lastN") final Integer lastN) {
+                          @JsonProperty("lastN") final Integer lastN,
+                          @JsonProperty("skipDownload") final boolean skipDownload) {
         super(type, id, creationTime, state, errors, progress, startTime, new ListOperationRequest(storageLocation,
                                                                                                    k8sNamespace,
                                                                                                    k8sSecretName,
@@ -92,7 +93,8 @@ public class ListOperation extends Operation<ListOperationRequest> {
                                                                                                    toFile,
                                                                                                    simpleFormat,
                                                                                                    fromTimestamp,
-                                                                                                   lastN));
+                                                                                                   lastN,
+                                                                                                   skipDownload));
         this.restorerFactoryMap = null;
         this.objectMapper = null;
         this.cassandraJMXService = null;
@@ -125,9 +127,6 @@ public class ListOperation extends Operation<ListOperationRequest> {
         }
 
         try (final StorageInteractor interactor = restorerFactoryMap.get(request.storageLocation.storageProvider).createListingInteractor(request)) {
-//            if (interactor instanceof Restorer){
-//                ((Restorer) interactor).downloadManifestsToFile(localPath);
-//            }
             final AllManifestsReport report = AllManifestsReport.report(interactor.listManifests());
             filterFromTimestamp(report, request.fromTimestamp);
             filterLastN(report, request.lastN);
