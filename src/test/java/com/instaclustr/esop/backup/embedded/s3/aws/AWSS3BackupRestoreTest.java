@@ -24,8 +24,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = {
-    "s3Test",
-    "cloudTest",
+        "s3Test",
+        "cloudTest",
 })
 public class AWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
 
@@ -39,7 +39,7 @@ public class AWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
     }
 
     @AfterMethod
-    public void teardown() throws ApiException {
+    public void teardown() throws Exception {
         destroy();
     }
 

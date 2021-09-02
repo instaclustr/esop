@@ -38,7 +38,7 @@ public class CephS3BackupRestoreTest extends BaseCephS3BackupRestoreTest {
     }
 
     @AfterMethod
-    public void teardown() throws ApiException {
+    public void teardown() throws Exception {
         destroy();
     }
 
