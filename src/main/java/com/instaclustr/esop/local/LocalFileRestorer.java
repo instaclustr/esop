@@ -159,7 +159,7 @@ public class LocalFileRestorer extends Restorer {
 
         if (filtered.size() != 1) {
             throw new IllegalStateException(format("There is not one key which satisfies key filter! %s for remote prefix %s",
-                                                   filtered.toString(),
+                                                   filtered,
                                                    remotePrefix));
         }
         return filtered.get(0).toString();
@@ -175,7 +175,7 @@ public class LocalFileRestorer extends Restorer {
         }
 
         final List<Path> pathsList = Files.walk(directoryToWalk)
-            .filter(filePath -> Files.isRegularFile(filePath))
+            .filter(Files::isRegularFile)
             .collect(toList());
 
         for (final Path path : pathsList) {
@@ -235,7 +235,7 @@ public class LocalFileRestorer extends Restorer {
             final List<Path> emptySSTableDirectories = getEmptyDirectories(request.storageLocation);
 
             for (final Path emptySSTableDir : emptySSTableDirectories) {
-                logger.info("Deleting empty sstable directory {}", emptySSTableDir.toAbsolutePath().toString());
+                logger.info("Deleting empty sstable directory {}", emptySSTableDir.toAbsolutePath());
                 if (!request.dry) {
                     Files.delete(emptySSTableDir);
                 }
@@ -246,7 +246,7 @@ public class LocalFileRestorer extends Restorer {
             final List<Path> emptyTableDirectories = getEmptyDirectories(request.storageLocation);
 
             for (final Path emptyTableDir : emptyTableDirectories) {
-                logger.info("Deleting empty table directory {}", emptyTableDir.toAbsolutePath().toString());
+                logger.info("Deleting empty table directory {}", emptyTableDir.toAbsolutePath());
                 if (!request.dry) {
                     Files.delete(emptyTableDir);
                 }
@@ -257,7 +257,7 @@ public class LocalFileRestorer extends Restorer {
             final List<Path> emptyKeyspaceDirectories = getEmptyDirectories(request.storageLocation);
 
             for (final Path emptyKeyspaceDir : emptyKeyspaceDirectories) {
-                logger.info("Deleting empty keyspace directory {}", emptyKeyspaceDir.toAbsolutePath().toString());
+                logger.info("Deleting empty keyspace directory {}", emptyKeyspaceDir.toAbsolutePath());
                 if (!request.dry) {
                     Files.delete(emptyKeyspaceDir);
                 }
@@ -280,8 +280,8 @@ public class LocalFileRestorer extends Restorer {
     @Override
     public List<StorageLocation> listNodes(final String dc) throws Exception {
         return getDirectories(Paths.get(StorageLocation.updateDatacenter(storageLocation, dc).withoutNode().replace("file://", "")))
-            .stream()
-            .map(p -> new StorageLocation("file://" + p.toAbsolutePath().toString())).collect(toList());
+                .stream()
+                .map(p -> new StorageLocation("file://" + p.toAbsolutePath())).collect(toList());
     }
 
     @Override

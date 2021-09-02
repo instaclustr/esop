@@ -1,21 +1,5 @@
 package com.instaclustr.esop.s3;
 
-import static java.lang.String.format;
-import static java.util.stream.Collectors.toCollection;
-import static java.util.stream.Collectors.toList;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.event.ProgressEvent;
@@ -31,7 +15,6 @@ import com.amazonaws.services.s3.transfer.internal.S3ProgressListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.CharStreams;
 import com.instaclustr.esop.impl.Manifest;
-import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
@@ -42,9 +25,25 @@ import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.esop.impl.retry.Retrier.RetriableException;
 import com.instaclustr.esop.impl.retry.RetrierFactory;
 import com.instaclustr.esop.local.LocalFileRestorer;
+import com.instaclustr.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.commons.io.FileUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import static com.instaclustr.esop.impl.list.ListOperationRequest.getForLocalListing;
+import static java.lang.String.format;
+import static java.util.stream.Collectors.toCollection;
 
 
 public class BaseS3Restorer extends Restorer {
@@ -54,8 +53,6 @@ public class BaseS3Restorer extends Restorer {
     protected final AmazonS3 amazonS3;
     protected final TransferManager transferManager;
     LocalFileRestorer localFileRestorer;
-    Path localPath; //Path to .esop folder
-    Path localPathToNode;
 
     public BaseS3Restorer(final TransferManagerFactory transferManagerFactory,
                           final RestoreOperationRequest request) {
@@ -72,42 +69,23 @@ public class BaseS3Restorer extends Restorer {
     }
 
     public BaseS3Restorer(final TransferManagerFactory transferManagerFactory,
+                          final ObjectMapper objectMapper,
                           final ListOperationRequest request) {
         super(request);
         this.transferManager = transferManagerFactory.build(request);
         this.amazonS3 = this.transferManager.getAmazonS3Client();
-        this.localPath = Paths.get(System.getProperty("user.home"),
-                ".esop");
-        this.localPathToNode = Paths.get(
-                localPath.toString(),
-                getStorageLocation().nodePath());
-        String cacheRawLocation = "file://" + localPathToNode;
-        StorageLocation cacheLocation =  new StorageLocation(cacheRawLocation);
-        //Create localFileRestorer to use methods (flags are not used)
-        this.localFileRestorer = new LocalFileRestorer(new ListOperationRequest(
-                cacheLocation,
-                request.k8sNamespace,
-                request.k8sSecretName,
-                request.insecure,
-                request.skipBucketVerification,
-                request.proxySettings,
-                request.retry,
-                false,
-                false,
-                false,
-                null,
-                false,
-                Long.MAX_VALUE,
-                0,
-                false), new ObjectMapper());
-
+        this.localFileRestorer = new LocalFileRestorer(getForLocalListing(request, request.cacheDir, request.storageLocation),
+                                                       objectMapper);
     }
 
     public BaseS3Restorer(final TransferManagerFactory transferManagerFactory,
+                          final ObjectMapper objectMapper,
                           final RemoveBackupRequest request) {
         super(request);
         this.transferManager = transferManagerFactory.build(request);
         this.amazonS3 = this.transferManager.getAmazonS3Client();
+        this.localFileRestorer = new LocalFileRestorer(getForLocalListing(request, request.cacheDir, request.storageLocation),
+                                                       objectMapper);
     }
 
     @Override
@@ -123,7 +101,8 @@ public class BaseS3Restorer extends Restorer {
     @Override
     public String downloadFileToString(final RemoteObjectReference objectReference) throws Exception {
         final GetObjectRequest getObjectRequest = new GetObjectRequest(request.storageLocation.bucket, objectReference.canonicalPath);
-        try (final InputStream is = transferManager.getAmazonS3Client().getObject(getObjectRequest).getObjectContent(); final InputStreamReader isr = new InputStreamReader(is)) {
+        try (final InputStream is = transferManager.getAmazonS3Client().getObject(getObjectRequest).getObjectContent();
+             final InputStreamReader isr = new InputStreamReader(is)) {
             return CharStreams.toString(isr);
         }
     }
@@ -176,37 +155,47 @@ public class BaseS3Restorer extends Restorer {
         return downloadFileToString(objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
     }
 
-    public void downloadManifestsToFile(Path localPath) throws Exception {
-        FileUtils.cleanDirectory(localPath.toFile());
-        List<S3ObjectSummary> manifestSumms = listBucket("", s -> s.contains("manifests"));
-        for (S3ObjectSummary o: manifestSumms){
+    public void downloadManifestsToDirectory(Path downloadDir) throws Exception {
+        FileUtils.createDirectory(downloadDir);
+        FileUtils.cleanDirectory(downloadDir.toFile());
+        final List<S3ObjectSummary> manifestSumms = listBucket("", s -> s.contains("manifests"));
+        for (S3ObjectSummary o : manifestSumms) {
             Path manifestPath = Paths.get(o.getKey());
-            downloadFile(Paths.get(localPath.toString(), getStorageLocation().nodePath(),
-                    "manifests", manifestPath.getFileName().toString()), objectKeyToRemoteReference(manifestPath));
+            Path manifestName = manifestPath.getFileName();
+
+            Path destination = downloadDir.resolve(getStorageLocation().nodePath())
+                                          .resolve("manifests")
+                                          .resolve(manifestName);
+
+            downloadFile(destination, objectKeyToRemoteReference(manifestPath));
         }
     }
 
     @Override
     public List<Manifest> listManifests() throws Exception {
         //If skipDownload flag is not set, download manifests
-        if (!((ListOperationRequest) request).skipDownload){
-            downloadManifestsToFile(localPath);
+        if (this.request instanceof ListOperationRequest) {
+            if (!((ListOperationRequest) this.request).skipDownload) {
+                StorageLocation location = this.localFileRestorer.getStorageLocation();
+                Path downloadDirectory = location.fileBackupDirectory.resolve(this.localFileRestorer.getStorageLocation().bucket);
+                downloadManifestsToDirectory(downloadDirectory);
+            }
         }
         return localFileRestorer.listManifests();
     }
 
     @Override
-    public List<StorageLocation> listNodes() throws Exception{
+    public List<StorageLocation> listNodes() throws Exception {
         return localFileRestorer.listNodes();
     }
 
     @Override
-    public List<StorageLocation> listNodes(final String dc) throws Exception{
+    public List<StorageLocation> listNodes(final String dc) throws Exception {
         return localFileRestorer.listNodes(dc);
     }
 
     @Override
-    public List<StorageLocation> listNodes(final List<String> dcs) throws Exception{
+    public List<StorageLocation> listNodes(final List<String> dcs) throws Exception {
         return localFileRestorer.listNodes(dcs);
     }
 
@@ -253,9 +242,9 @@ public class BaseS3Restorer extends Restorer {
 
         while (hasMoreContent) {
             objectListing.getObjectSummaries().stream()
-                .filter(objectSummary -> !objectSummary.getKey().endsWith("/")) // no dirs
-                .filter(file -> keyFilter.test(file.getKey()))
-                .collect(toCollection(() -> summaryList));
+                         .filter(objectSummary -> !objectSummary.getKey().endsWith("/")) // no dirs
+                         .filter(file -> keyFilter.test(file.getKey()))
+                         .collect(toCollection(() -> summaryList));
 
             if (objectListing.isTruncated()) {
                 objectListing = amazonS3.listNextBatchOfObjects(objectListing);
@@ -310,8 +299,8 @@ public class BaseS3Restorer extends Restorer {
 
         while (hasMoreContent) {
             objectListing.getObjectSummaries().stream()
-                .filter(objectSummary -> !objectSummary.getKey().endsWith("/"))
-                .forEach(objectSummary -> consumer.accept(objectKeyToNodeAwareRemoteReference(bucketPath.relativize(Paths.get(objectSummary.getKey())))));
+                         .filter(objectSummary -> !objectSummary.getKey().endsWith("/"))
+                         .forEach(objectSummary -> consumer.accept(objectKeyToNodeAwareRemoteReference(bucketPath.relativize(Paths.get(objectSummary.getKey())))));
 
             if (objectListing.isTruncated()) {
                 objectListing = amazonS3.listNextBatchOfObjects(objectListing);

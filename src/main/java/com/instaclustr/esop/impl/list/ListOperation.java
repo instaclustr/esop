@@ -29,10 +29,10 @@ import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageInteractor;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.TableBuilder;
-import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.esop.topology.CassandraSimpleTopology;
 import com.instaclustr.esop.topology.CassandraSimpleTopology.CassandraSimpleTopologyResult;
+import com.instaclustr.io.FileUtils;
 import com.instaclustr.operations.Operation;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 import org.slf4j.Logger;
@@ -79,7 +79,8 @@ public class ListOperation extends Operation<ListOperationRequest> {
                           @JsonProperty("simpleFormat") final boolean simpleFormat,
                           @JsonProperty("fromTimestamp") final Long fromTimestamp,
                           @JsonProperty("lastN") final Integer lastN,
-                          @JsonProperty("skipDownload") final boolean skipDownload) {
+                          @JsonProperty("skipDownload") final boolean skipDownload,
+                          @JsonProperty("cacheDir") final Path cacheDir) {
         super(type, id, creationTime, state, errors, progress, startTime, new ListOperationRequest(storageLocation,
                                                                                                    k8sNamespace,
                                                                                                    k8sSecretName,
@@ -94,7 +95,8 @@ public class ListOperation extends Operation<ListOperationRequest> {
                                                                                                    simpleFormat,
                                                                                                    fromTimestamp,
                                                                                                    lastN,
-                                                                                                   skipDownload));
+                                                                                                   skipDownload,
+                                                                                                   cacheDir));
         this.restorerFactoryMap = null;
         this.objectMapper = null;
         this.cassandraJMXService = null;
@@ -104,15 +106,13 @@ public class ListOperation extends Operation<ListOperationRequest> {
     protected void run0() throws Exception {
         assert restorerFactoryMap != null;
         assert objectMapper != null;
-        Path localPath = Paths.get(System.getProperty("user.home"), ".esop");
 
         request.storageLocation.validate();
 
-        //create manifest cache folder if it does not exist
-        if (!request.storageLocation.storageProvider.equals("file")){
-            if (!Files.exists(localPath)) {
-                Files.createDirectories(localPath);
-            }
+        Path localPath = request.cacheDir;
+
+        if (!request.skipDownload && !Files.exists(localPath)) {
+            FileUtils.createDirectory(localPath);
         }
 
         if (!request.skipNodeCoordinatesResolution) {
@@ -131,7 +131,6 @@ public class ListOperation extends Operation<ListOperationRequest> {
             try (final PrintStream ps = getOutputStream(request)) {
                 print(report, request, ps);
             }
-
         } catch (final Exception ex) {
             logger.error("Unable to perform listing! - " + ex.getMessage(), ex);
             this.addError(Error.from(ex));

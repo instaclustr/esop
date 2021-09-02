@@ -11,6 +11,7 @@ import com.instaclustr.esop.azure.AzureModule.CloudStorageAccountFactory;
 import com.instaclustr.esop.impl.BucketService;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
+import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.microsoft.azure.storage.CloudStorageAccount;
@@ -59,6 +60,13 @@ public class AzureBucketService extends BucketService {
         this.cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
     }
 
+    @AssistedInject
+    public AzureBucketService(final CloudStorageAccountFactory accountFactory,
+                              @Assisted final ListOperationRequest request) throws URISyntaxException {
+        this.cloudStorageAccount = accountFactory.build(request);
+        this.cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+    }
+
     @Override
     public boolean doesExist(final String bucketName) throws BucketServiceException {
         try {
@@ -74,9 +82,9 @@ public class AzureBucketService extends BucketService {
         while (true) {
             try {
                 cloudBlobClient.getContainerReference(bucketName)
-                    .createIfNotExists(BlobContainerPublicAccessType.OFF,
-                                       new BlobRequestOptions(),
-                                       new OperationContext());
+                               .createIfNotExists(BlobContainerPublicAccessType.OFF,
+                                                  new BlobRequestOptions(),
+                                                  new OperationContext());
 
                 break;
             } catch (URISyntaxException ex) {
