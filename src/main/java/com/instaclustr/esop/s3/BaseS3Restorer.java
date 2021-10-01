@@ -9,6 +9,8 @@ import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import com.amazonaws.services.s3.transfer.PersistableTransfer;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.internal.S3ProgressListener;
@@ -169,6 +171,51 @@ public class BaseS3Restorer extends Restorer {
 
             downloadFile(destination, objectKeyToRemoteReference(manifestPath));
         }
+    }
+
+    @Override
+    public void delete(final Path objectKey) throws Exception {
+        final RemoteObjectReference remoteObjectReference = objectKeyToNodeAwareRemoteReference(objectKey);
+        final Path fileToDelete = Paths.get(request.storageLocation.bucket,
+                remoteObjectReference.canonicalPath);
+        logger.info("Non dry: " + fileToDelete);
+        amazonS3.deleteObject(new DeleteObjectRequest(request.storageLocation.bucket, remoteObjectReference.canonicalPath));
+    }
+
+    @Override
+    public void delete(final Manifest.ManifestReporter.ManifestReport backupToDelete, final RemoveBackupRequest request) throws Exception {
+        logger.info("Deleting backup {}", backupToDelete.name);
+        if (backupToDelete.reclaimableSpace > 0 && !backupToDelete.getRemovableEntries().isEmpty()) {
+            //convert removable entries into S3 object keys
+            String[] toRemove = backupToDelete.getRemovableEntries()
+                    .stream()
+                    .map(entry -> objectKeyToNodeAwareRemoteReference(Paths.get(entry)).canonicalPath)
+                    .toArray(String[]::new);
+
+            for (String remove : toRemove) {
+                if (request.dry) {
+                    logger.info("Dry: " + remove);
+                } else {
+                    logger.info("Non dry: " + remove);
+                }
+            }
+
+            if (!request.dry){
+                amazonS3.deleteObjects(new DeleteObjectsRequest(request.storageLocation.bucket).withKeys(toRemove));
+                logger.info("Deletion of files complete");
+            }
+        }
+
+        // manifest and topology as the last
+        if (!request.dry) {
+            //delete in S3
+            delete(backupToDelete.manifest.objectKey);
+            //delete in local cache
+            localFileRestorer.delete(backupToDelete.manifest.objectKey);
+        } else {
+            logger.info("Dry: " + backupToDelete.manifest.objectKey);
+        }
+
     }
 
     @Override
