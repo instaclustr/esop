@@ -1,5 +1,6 @@
 package com.instaclustr.esop.s3.aws;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
@@ -25,13 +26,15 @@ public class S3Restorer extends BaseS3Restorer {
 
     @AssistedInject
     public S3Restorer(final S3TransferManagerFactory transferManagerFactory,
+                      final ObjectMapper objectMapper,
                       @Assisted final ListOperationRequest request) {
-        super(transferManagerFactory, request);
+        super(transferManagerFactory, objectMapper, request);
     }
 
     @AssistedInject
     public S3Restorer(final S3TransferManagerFactory transferManagerFactory,
+                      final ObjectMapper objectMapper,
                       @Assisted final RemoveBackupRequest request) {
-        super(transferManagerFactory, request);
+        super(transferManagerFactory, objectMapper, request);
     }
 }
