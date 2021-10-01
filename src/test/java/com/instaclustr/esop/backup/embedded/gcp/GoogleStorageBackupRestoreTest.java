@@ -72,6 +72,9 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
     public void testDownload() throws Exception {
         GCPBucketService gcpBucketService = new GCPBucketService(googleStorageFactory, getBackupOperationRequest());
 
+        Path tmp = Files.createTempDirectory("tmp");
+        tmp.toFile().deleteOnExit();
+
         try {
             gcpBucketService.create(BUCKET_NAME);
 
@@ -92,7 +95,7 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
 
             // 1
 
-            final Path downloadedFile = gcpRestorer.downloadNodeFileToDir(Paths.get("/tmp"), Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
+            final Path downloadedFile = gcpRestorer.downloadNodeFileToDir(tmp, Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
             assertTrue(Files.exists(downloadedFile));
 
             // 2
@@ -107,10 +110,10 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
 
             // 4
 
-            gcpRestorer.downloadFile(Paths.get("/tmp/some-file"), gcpRestorer.objectKeyToRemoteReference(Paths.get("snapshot/in/dir/name-" + BUCKET_NAME)));
+            gcpRestorer.downloadFile(tmp.resolve("some-file"), gcpRestorer.objectKeyToRemoteReference(Paths.get("snapshot/in/dir/name-" + BUCKET_NAME)));
 
-            Assert.assertTrue(Files.exists(Paths.get("/tmp/some-file")));
-            Assert.assertEquals("hello world", new String(Files.readAllBytes(Paths.get("/tmp/some-file"))));
+            Assert.assertTrue(Files.exists(tmp.resolve("some-file")));
+            Assert.assertEquals("hello world", new String(Files.readAllBytes(tmp.resolve("some-file"))));
 
             // backup
 
@@ -120,7 +123,7 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
         } finally {
             gcpBucketService.delete(BUCKET_NAME);
             deleteDirectory(Paths.get(target("commitlog_download_dir")));
-            Files.deleteIfExists(Paths.get("/tmp/some-file"));
+            Files.deleteIfExists(tmp.resolve("some-file"));
         }
     }
 }
