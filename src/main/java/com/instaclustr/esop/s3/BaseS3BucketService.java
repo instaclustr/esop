@@ -10,6 +10,7 @@ import com.amazonaws.services.s3.transfer.TransferManager;
 import com.instaclustr.esop.impl.BucketService;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
+import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import org.slf4j.Logger;
@@ -38,6 +39,11 @@ public class BaseS3BucketService extends BucketService {
 
     public BaseS3BucketService(final TransferManagerFactory transferManagerFactory,
                                final RestoreCommitLogsOperationRequest request) {
+        this.transferManager = transferManagerFactory.build(request);
+    }
+
+    public BaseS3BucketService(final TransferManagerFactory transferManagerFactory,
+                               final ListOperationRequest request) {
         this.transferManager = transferManagerFactory.build(request);
     }
 
@@ -102,7 +108,7 @@ public class BaseS3BucketService extends BucketService {
         }
     }
 
-    private void delete(final AmazonS3 s3Client, final ObjectListing objectListing, final String bucketName) throws BucketServiceException {
+    private void delete(final AmazonS3 s3Client, final ObjectListing objectListing, final String bucketName) {
         for (final S3ObjectSummary summary : objectListing.getObjectSummaries()) {
             s3Client.deleteObject(bucketName, summary.getKey());
         }

@@ -24,8 +24,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = {
-    "s3Test",
-    "cloudTest",
+        "s3Test",
+        "cloudTest",
 })
 public class AWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
 
@@ -39,7 +39,7 @@ public class AWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
     }
 
     @AfterMethod
-    public void teardown() throws ApiException {
+    public void teardown() throws Exception {
         destroy();
     }
 
@@ -79,6 +79,9 @@ public class AWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
 
         S3BucketService s3BucketService = new S3BucketService(factory, getBackupOperationRequest());
 
+        Path tmp = Files.createTempDirectory("tmp");
+        tmp.toFile().deleteOnExit();
+
         try {
             s3BucketService.create(BUCKET_NAME);
 
@@ -100,7 +103,7 @@ public class AWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
 
             // 1
 
-            final Path downloadedFile = s3Restorer.downloadNodeFileToDir(Paths.get("/tmp"), Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
+            final Path downloadedFile = s3Restorer.downloadNodeFileToDir(tmp, Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
             assertTrue(Files.exists(downloadedFile));
 
             // 2
@@ -115,10 +118,10 @@ public class AWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
 
             // 4
 
-            s3Restorer.downloadFile(Paths.get("/tmp/some-file"), s3Restorer.objectKeyToRemoteReference(Paths.get("snapshot/in/dir/my-name-" + BUCKET_NAME)));
+            s3Restorer.downloadFile(tmp.resolve("some-file"), s3Restorer.objectKeyToRemoteReference(Paths.get("snapshot/in/dir/my-name-" + BUCKET_NAME)));
 
-            Assert.assertTrue(Files.exists(Paths.get("/tmp/some-file")));
-            Assert.assertEquals("hello world", new String(Files.readAllBytes(Paths.get("/tmp/some-file"))));
+            Assert.assertTrue(Files.exists(tmp.resolve("some-file")));
+            Assert.assertEquals("hello world", new String(Files.readAllBytes(tmp.resolve("some-file"))));
 
             // backup
 
@@ -129,7 +132,7 @@ public class AWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
         } finally {
             s3BucketService.delete(BUCKET_NAME);
             deleteDirectory(Paths.get(target("commitlog_download_dir")));
-            Files.deleteIfExists(Paths.get("/tmp/some-file"));
+            Files.deleteIfExists(tmp.resolve("some-file"));
         }
     }
 }

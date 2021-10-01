@@ -71,6 +71,9 @@ public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
     public void testDownload() throws Exception {
         AzureBucketService azureBucketService = new AzureBucketService(cloudStorageAccountFactory, getBackupOperationRequest());
 
+        Path tmp = Files.createTempDirectory("tmp");
+        tmp.toFile().deleteOnExit();
+
         try {
             azureBucketService.create(BUCKET_NAME);
 
@@ -95,7 +98,7 @@ public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
 
             // 1
 
-            final Path downloadedFile = azureRestorer.downloadNodeFileToDir(Paths.get("/tmp"), Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
+            final Path downloadedFile = azureRestorer.downloadNodeFileToDir(tmp, Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
             assertTrue(Files.exists(downloadedFile));
 
             // 2
@@ -110,10 +113,10 @@ public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
 
             // 4
 
-            azureRestorer.downloadFile(Paths.get("/tmp/some-file"), azureRestorer.objectKeyToRemoteReference(Paths.get("snapshot/in/dir/name-" + BUCKET_NAME)));
+            azureRestorer.downloadFile(tmp.resolve("some-file"), azureRestorer.objectKeyToRemoteReference(Paths.get("snapshot/in/dir/name-" + BUCKET_NAME)));
 
-            Assert.assertTrue(Files.exists(Paths.get("/tmp/some-file")));
-            Assert.assertEquals("hello world", new String(Files.readAllBytes(Paths.get("/tmp/some-file"))));
+            Assert.assertTrue(Files.exists(tmp.resolve("some-file")));
+            Assert.assertEquals("hello world", new String(Files.readAllBytes(tmp.resolve("some-file"))));
 
             // backup
 
@@ -128,7 +131,7 @@ public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
         } finally {
             azureBucketService.delete(BUCKET_NAME);
             deleteDirectory(Paths.get(target("commitlog_download_dir")));
-            Files.deleteIfExists(Paths.get("/tmp/some-file"));
+            Files.deleteIfExists(tmp.resolve("some-file"));
         }
     }
 }

@@ -795,13 +795,6 @@ public abstract class AbstractBackupTest {
         });
     }
 
-    /**
-     *
-     * @param arguments
-     * @param cassandraVersion
-     * @param tableAddition if true, column will be added, otherwise it will be removed
-     * @throws Exception
-     */
     public void liveBackupWithRestoreOnDifferentTableSchema(final String[][] arguments,
                                                             final String cassandraVersion,
                                                             final boolean tableAddition) throws Exception {
@@ -964,8 +957,8 @@ public abstract class AbstractBackupTest {
 
         // this will invoke backup 2 times, each time generating 2 records and taking a snapshot and backup
         List<Long> times = range(0, 2)
-            .mapToObj(i -> insertAndCallBackupCLI(2, session, arguments[0]))
-            .flatMap(Collection::stream).collect(toList());
+                .mapToObj(i -> insertAndCallBackupCLI(2, session, arguments[0]))
+                .flatMap(Collection::stream).collect(toList());
 
         // insert two more records, snapshot with predefined name and back it up too
         List<Long> times2 = insertAndCallBackupCLI(2, session, arguments[1]);
@@ -987,8 +980,8 @@ public abstract class AbstractBackupTest {
 
         // this will invoke backup 2 times, each time generating 2 records and taking a snapshot and backup
         List<Long> times = range(0, 2)
-            .mapToObj(i -> insert(2, session))
-            .flatMap(Collection::stream).collect(toList());
+                .mapToObj(i -> insert(2, session))
+                .flatMap(Collection::stream).collect(toList());
 
         List<Long> times2 = insert(2, session);
 
@@ -1023,7 +1016,7 @@ public abstract class AbstractBackupTest {
             FileUtils.createDirectory(cassandraHome.resolve("data").resolve("data"));
             builder.addConfigProperties(new HashMap<String, String[]>() {{
                 put("data_file_directories", new String[]{
-                    cassandraHome.resolve("data").resolve("data").toAbsolutePath().toString()
+                        cassandraHome.resolve("data").resolve("data").toAbsolutePath().toString()
                 });
             }});
         }
@@ -1035,8 +1028,8 @@ public abstract class AbstractBackupTest {
 
     }
 
-    protected void destroy() throws ApiException {
-
+    protected void destroy() throws Exception {
+        FileUtils.cleanDirectory(Paths.get(target(".esop")));
     }
 
     protected List<Long> insertAndCallBackupCLI(int records, CqlSession cqlSession, String[] backupArgs) {

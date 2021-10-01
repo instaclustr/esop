@@ -13,6 +13,7 @@ import com.instaclustr.esop.gcp.GCPModule.GoogleStorageFactory;
 import com.instaclustr.esop.impl.BucketService;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
+import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import org.slf4j.Logger;
@@ -45,6 +46,12 @@ public class GCPBucketService extends BucketService {
     @AssistedInject
     public GCPBucketService(final GoogleStorageFactory storageFactory,
                             @Assisted final RestoreCommitLogsOperationRequest request) {
+        this.storage = storageFactory.build(request);
+    }
+
+    @AssistedInject
+    public GCPBucketService(final GoogleStorageFactory storageFactory,
+                            @Assisted final ListOperationRequest request) {
         this.storage = storageFactory.build(request);
     }
 

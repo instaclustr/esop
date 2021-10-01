@@ -7,6 +7,9 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.time.Instant;
@@ -29,6 +32,7 @@ import com.instaclustr.esop.impl.TableBuilder;
 import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.esop.topology.CassandraSimpleTopology;
 import com.instaclustr.esop.topology.CassandraSimpleTopology.CassandraSimpleTopologyResult;
+import com.instaclustr.io.FileUtils;
 import com.instaclustr.operations.Operation;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 import org.slf4j.Logger;
@@ -74,7 +78,9 @@ public class ListOperation extends Operation<ListOperationRequest> {
                           @JsonProperty("toFile") final String toFile,
                           @JsonProperty("simpleFormat") final boolean simpleFormat,
                           @JsonProperty("fromTimestamp") final Long fromTimestamp,
-                          @JsonProperty("lastN") final Integer lastN) {
+                          @JsonProperty("lastN") final Integer lastN,
+                          @JsonProperty("skipDownload") final boolean skipDownload,
+                          @JsonProperty("cacheDir") final Path cacheDir) {
         super(type, id, creationTime, state, errors, progress, startTime, new ListOperationRequest(storageLocation,
                                                                                                    k8sNamespace,
                                                                                                    k8sSecretName,
@@ -88,7 +94,9 @@ public class ListOperation extends Operation<ListOperationRequest> {
                                                                                                    toFile,
                                                                                                    simpleFormat,
                                                                                                    fromTimestamp,
-                                                                                                   lastN));
+                                                                                                   lastN,
+                                                                                                   skipDownload,
+                                                                                                   cacheDir));
         this.restorerFactoryMap = null;
         this.objectMapper = null;
         this.cassandraJMXService = null;
@@ -101,6 +109,12 @@ public class ListOperation extends Operation<ListOperationRequest> {
 
         request.storageLocation.validate();
 
+        Path localPath = request.cacheDir;
+
+        if (!request.skipDownload && !Files.exists(localPath)) {
+            FileUtils.createDirectory(localPath);
+        }
+
         if (!request.skipNodeCoordinatesResolution) {
             assert cassandraJMXService != null;
             CassandraSimpleTopologyResult simpleTopology = new CassandraSimpleTopology(cassandraJMXService).act();
@@ -108,7 +122,6 @@ public class ListOperation extends Operation<ListOperationRequest> {
                                                              simpleTopology.getClusterName(),
                                                              simpleTopology.getDc(),
                                                              simpleTopology.getHostId());
-
         }
 
         try (final StorageInteractor interactor = restorerFactoryMap.get(request.storageLocation.storageProvider).createListingInteractor(request)) {
