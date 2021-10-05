@@ -63,7 +63,7 @@ This binary is all you need to backup/restore. It is the command line applicatio
 see help. You can invoke `help backup` for `backup` command, for example.
 
 ----
-$ java -jar target/instaclustr-esop.jar
+$ java -jar target/esop.jar
 Missing required subcommand.
 Usage: <main class> [-V] COMMAND
   -V, --version   print version information and exit
@@ -79,15 +79,32 @@ Commands:
   commitlog-restore  Restores archived commit logs to node.
 ----
 
+You get detailed help by invoking `help` subcommand like this:
+
+----
+$ java -jar target/esop.jar backup help
+----
+
 ### Connecting to Cassandra Node
 
-As already mentioned, this tool expects to be invoked alongside a node—it needs
+As already mentioned, this tool expects to be invoked alongside a node - it needs
 to be able to read/write into Cassandra data directories. For other operations such as
 knowing tokens etc., it connects to respective node via JMX. By default, it will try to connect
 to `service:jmx:rmi:///jndi/rmi://127.0.0.1:7199/jmxrmi`. It is possible to override this
 and other related settings via the command line arguments. It is also possible to connect to
 such nodes securely if it is necessary, and this tool also supports specifying keystore, truststore,
 user name and password etc. For brevity, please consult the command line `help`.
+
+If you do not want to specify credentials on the command line, you can put them into a file and 
+reference it by `--jmx-credentials` options. The content of this file is treated as a standard Java property file, 
+expecting this content:
+
+----
+username=jmxusername
+password=jmxpassword
+keystorePassword=keystorepassword
+truststorePassword=truststorepassword
+----
 
 Not all sub-commands require the connection to Cassandra to exist. As of now, a JMX connection is
 necessary for:
@@ -738,7 +755,7 @@ might be turned on on demand.
 The example of backup (for brevity, we are showing just the sub-command):
 
 ----
-$ commitlog-backup \
+$ java -jar esop.jar commitlog-backup \
   --storage-location=s3://myBucket/mycluster/dc1/node1, \
   --data-directory=/my/installation/of/cassandra/data
 ----
@@ -757,7 +774,7 @@ where `%path` is a fully qualified path of the segment to archive and `%name` is
 will be automatically expanded by Cassandra). Then you might archive your commit logs like this:
 
 ----
-$ commitlog-backup \
+$ java -jar esop.jar commitlog-backup \
   --storage-location=s3://myBucket/mycluster/dc1/node1 \
   --cl-archive=/backup
 ----
@@ -778,7 +795,7 @@ The content of `backup-script.sh` might look like:
 ----
 $!/bin/bash
 
-java -jar instaclustr-esop.jar commitlog-backup \
+java -jar esop.jar commitlog-backup \
     --storage-location=s3://myBucket/mycluster/dc1/node1 \
     --commit-log=$1
 ----
@@ -792,7 +809,7 @@ $!/bin/bash
 # specifying --online will update s3://myBucket/mycluster/dc1/node1 to
 # s3://myBucket/real-dc/real-dc-name/68fcbda0-442f-4ca4-86ec-ec46f2a00a71 where uuid is host id.
 
-java -jar instaclustr-backup-restore.jar commitlog-backup \
+java -jar esop.jar commitlog-backup \
     --storage-location=s3://myBucket/mycluster/dc1/node1 \
     --commit-log=$1 \
     --online
@@ -800,7 +817,7 @@ java -jar instaclustr-backup-restore.jar commitlog-backup \
 
 ### Examples of Command Line Invocation
 
-Each example shown here should be prepended with `java -jar instaclustr-esop.jar`. We are showing here
+Each example shown here should be prepended with `java -jar esop.jar`. We are showing here
 just respective commands.
 
 This command will copy over all SSTables to the remote location. It is also possible to choose a location
@@ -1075,13 +1092,13 @@ restore_command=cp -f %from %to
 
 ## Listing of backups
 
-This feature is for now only available for `file://`-based backups.
+This feature is for now only available for `file://`-based backups and `s3://`-based backups.
 
 Listing of a bucket provides a better visibility into what backups there are, how may files they
 are consisting of and how much space they occupy as well as how many space we would reclaim by their deletion.
 
 ----
-$ java -jar ~/esop.jar list \
+$ java -jar esop.jar list \
     --storage-location=file:///backup1/cluster/datacenter1/node1 \
     --skip-node-resolution \
     --human-units
@@ -1167,7 +1184,7 @@ remove all backups older than some time, you might get this information from lis
 specifying `--from-timestamp` and then you can delete these backups one by one.
 
 ----
-$ java -jar ~/esop.jar remove-backup \
+$ java -jar esop.jar remove-backup \
     --storage-location=file:///backup1/cluster/datacenter1/node1 \
     --skip-node-resolution \
     --backup-name=full-backup-name-from-listing-with-timestamp-etc
