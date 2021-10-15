@@ -20,7 +20,7 @@ Esop is able to perform these operations and has these features:
 * Restoration of data into a Cassandra schema or diffrent table schema
 * Backing-up to and restoring from S3 (Oracle and Ceph via Object Gateway  too), Azure, or GCP, or into any local destination or other storage
 providing they are easily implementable
-* listing of local backups and their removal, global removal of backups across all nodes in cluster
+* listing of backups and their removal (from remote location, s3, azure, gcp), global removal of backups across all nodes in cluster
 * periodic removal of backups (e.g. after 10 days)
 * Effective upload and download—it will upload only SSTables which are not present remotely so
 any subsequent backups will upload and restores will download only the difference
@@ -1092,10 +1092,10 @@ restore_command=cp -f %from %to
 
 ## Listing of backups
 
-This feature is for now only available for `file://`-based backups and `s3://`-based backups.
+This feature is available for file, s3, azure and gcp backups.
 
-Listing of a bucket provides a better visibility into what backups there are, how may files they
-are consisting of and how much space they occupy as well as how many space we would reclaim by their deletion.
+Listing of a bucket provides a better visibility into what backups there are, how many files they
+consist of and how much space they occupy as well as how much space we would reclaim by their deletion.
 
 ----
 $ java -jar esop.jar list \
@@ -1116,13 +1116,13 @@ files per backup does not need to match the global number of files. Above we see
 has 138 files but in total there is 154 files. This means that backup2 is logically consisting of SSTables which
 are all in backup1 and backup1 contains all SSTables in backup2 plus some new ones. Same holds for occupied space.
 
-The figure of reclaimable space represents the number of bytes (or any human readable size) which would be freed
+The figure of reclaimable space represents the number of bytes (or any human-readable size) which would be freed
 by deleting that particular backup. For example, from the above we see that by deleting backup-2, we would get
 no free space. Why? Because all SSTables in backup-2 also belongs to backup-1. So we can not just physically remove it
 because backup-1 would just be corrupted.
 
 On the other hand, by deletion of backup-1, we would gain 10.1 kB. Why? Because we just can not go and delete all SSTables
-belonging to backup-1, because backup-2 would be corrupted - it would miss SStables. We can safely delete only
+belonging to backup-1, because backup-2 would be corrupted - it would miss SSTables. We can safely delete only
 these files from backup-1 which are not in backup-2 - and that difference occupies just 10 kB.
 
 However, we see that in total, our data occupy 113 kB at disk even though the sum of occupied space of all backups
@@ -1130,6 +1130,8 @@ does not match the total - because there are SSTables logically belonging to mul
 
 Please keep in mind that this table reflects the reality as long as you do not add nor delete any backup.
 
+If you want to use different storage location, for example, if your backups are in AWS, use "--storage-location=s3://...".
+The same logic applies for Azure and GCP (`azure://` and `gcp://` respectively).
 
 |===
 |flag |explanation
@@ -1168,6 +1170,8 @@ Cassandra node if necessary.
 
 Since we are storing each SSTable only once, ever, a deletion of a backup is not so straightforward.
 
+Removal works for file, s3, gcp and azure protocol.
+
 We might delete only SSTable which is present only in one backup. If some particular SSTable
 is present in multiple backups, we might delete that backup _logically_, but we can not
 delete that SSTable. The underlying logic computes how may backups a particular file is present it
@@ -1176,7 +1180,7 @@ physically remove only files which are part of that very backup and they are not
 else.
 
 By doing this, we are not forced to remove only the last backup (for example looking at its timestamp)
-but we can in general remove any backup.
+however we can, in general, remove any backup.
 
 The general workflow is to either list all backups and remove only the one you want, or you can
 specify `--oldest` to delete the oldest one and you can do this repeatedly. If you want to
@@ -1211,7 +1215,7 @@ All flags:
 ## Global removal of backups
 
 From the previous section, you know how to delete an individual backup. However, it would be
-nice to be able to delete, for example, all backups older than 14 days, globaly. "Globally" means
+nice to be able to delete, for example, all backups older than 14 days, globally. "Globally" means
 that it will scan whole local backup destination of all nodes (all dcs). You have the
 option to either do individual removal or global removal.
 
