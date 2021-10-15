@@ -1,5 +1,6 @@
 package com.instaclustr.esop.azure;
 
+import static com.instaclustr.esop.impl.list.ListOperationRequest.getForLocalListing;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
@@ -13,17 +14,25 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.StreamSupport;
 
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.esop.azure.AzureModule.CloudStorageAccountFactory;
 import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.RemoteObjectReference;
+import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
+import com.instaclustr.esop.local.LocalFileRestorer;
+import com.instaclustr.io.FileUtils;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.BlobListingDetails;
@@ -41,6 +50,7 @@ public class AzureRestorer extends Restorer {
     private final CloudBlobContainer blobContainer;
     private final CloudBlobClient cloudBlobClient;
     private final CloudStorageAccount cloudStorageAccount;
+    LocalFileRestorer localFileRestorer;
 
     @AssistedInject
     public AzureRestorer(final CloudStorageAccountFactory cloudStorageAccountFactory,
@@ -66,24 +76,30 @@ public class AzureRestorer extends Restorer {
 
     @AssistedInject
     public AzureRestorer(final CloudStorageAccountFactory cloudStorageAccountFactory,
-                         @Assisted final ListOperationRequest request) throws Exception {
+                         @Assisted final ListOperationRequest request,
+                         final ObjectMapper objectMapper) throws Exception {
         super(request);
 
         cloudStorageAccount = cloudStorageAccountFactory.build(request);
         cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
 
         this.blobContainer = cloudBlobClient.getContainerReference(request.storageLocation.bucket);
+        this.localFileRestorer = new LocalFileRestorer(getForLocalListing(request, request.cacheDir, request.storageLocation),
+                objectMapper);
     }
 
     @AssistedInject
     public AzureRestorer(final CloudStorageAccountFactory cloudStorageAccountFactory,
-                         @Assisted final RemoveBackupRequest request) throws Exception {
+                         @Assisted final RemoveBackupRequest request,
+                         final ObjectMapper objectMapper) throws Exception {
         super(request);
 
         cloudStorageAccount = cloudStorageAccountFactory.build(request);
         cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
 
         this.blobContainer = cloudBlobClient.getContainerReference(request.storageLocation.bucket);
+        this.localFileRestorer = new LocalFileRestorer(getForLocalListing(request, request.cacheDir, request.storageLocation),
+                objectMapper);
     }
 
 
@@ -181,6 +197,17 @@ public class AzureRestorer extends Restorer {
         return blobItems.get(0).getUri().getPath();
     }
 
+    private List<String> getBlobPaths(final Iterable<ListBlobItem> blobItemsIterable, final Predicate<String> keyFilter) {
+        final List<String> blobPaths = new ArrayList<>();
+        blobItemsIterable.spliterator().forEachRemaining(s->  {
+                    String path = s.getUri().getPath();
+                    if (keyFilter.test(path)) {
+                        blobPaths.add(path);
+                    }
+                });
+        return blobPaths;
+    }
+
     @Override
     public void consumeFiles(final RemoteObjectReference prefix, final Consumer<RemoteObjectReference> consumer) throws Exception {
         final AzureRemoteObjectReference azureRemoteObjectReference = (AzureRemoteObjectReference) prefix;
@@ -194,6 +221,89 @@ public class AzureRestorer extends Restorer {
                 throw ex;
             }
         }
+    }
+
+    public void downloadManifestsToDirectory(Path downloadDir) throws Exception {
+        FileUtils.createDirectory(downloadDir);
+        FileUtils.cleanDirectory(downloadDir.toFile());
+        final List<String> manifestKeys = getBlobPaths(list(""), s -> s.contains("manifests"));
+        for (String o: manifestKeys) {
+            Path manifestPath = Paths.get(o);
+            Path manifestName = manifestPath.getFileName();
+
+            Path destination = downloadDir.resolve(getStorageLocation().nodePath())
+                    .resolve("manifests")
+                    .resolve(manifestName);
+
+            downloadFile(destination, objectKeyToRemoteReference(manifestPath));
+        }
+    }
+
+    @Override
+    public List<Manifest> listManifests() throws Exception {
+        //If skipDownload flag is not set, download manifests
+        if (this.request instanceof ListOperationRequest) {
+            if (!((ListOperationRequest) this.request).skipDownload) {
+                StorageLocation location = this.localFileRestorer.getStorageLocation();
+                Path downloadDirectory = location.fileBackupDirectory.resolve(this.localFileRestorer.getStorageLocation().bucket);
+                downloadManifestsToDirectory(downloadDirectory);
+            }
+        }
+        return localFileRestorer.listManifests();
+    }
+
+    @Override
+    public void delete(final Path objectKey) throws Exception {
+        final RemoteObjectReference remoteObjectReference = objectKeyToNodeAwareRemoteReference(objectKey);
+        final Path fileToDelete = Paths.get(request.storageLocation.bucket,
+                remoteObjectReference.canonicalPath);
+        logger.info("Non dry: " + fileToDelete);
+        ((AzureRemoteObjectReference) remoteObjectReference).blob.delete();
+    }
+
+    @Override
+    public void delete(final Manifest.ManifestReporter.ManifestReport backupToDelete, final RemoveBackupRequest request) throws Exception {
+        logger.info("Deleting backup {}", backupToDelete.name);
+        if (backupToDelete.reclaimableSpace > 0 && !backupToDelete.getRemovableEntries().isEmpty()) {
+            for (final String removableEntry : backupToDelete.getRemovableEntries()) {
+                if (!request.dry) {
+                    delete(Paths.get(removableEntry));
+                } else {
+                    logger.info("Dry: " + removableEntry);
+                }
+            }
+        }
+
+        // manifest and topology as the last
+        if (!request.dry) {
+            //delete in Azure
+            delete(backupToDelete.manifest.objectKey);
+            //delete in local cache
+            localFileRestorer.delete(backupToDelete.manifest.objectKey);
+        } else {
+            logger.info("Dry: " + backupToDelete.manifest.objectKey);
+        }
+
+    }
+
+    @Override
+    public List<StorageLocation> listNodes() throws Exception {
+        return localFileRestorer.listNodes();
+    }
+
+    @Override
+    public List<StorageLocation> listNodes(final String dc) throws Exception {
+        return localFileRestorer.listNodes(dc);
+    }
+
+    @Override
+    public List<StorageLocation> listNodes(final List<String> dcs) throws Exception {
+        return localFileRestorer.listNodes(dcs);
+    }
+
+    @Override
+    public List<String> listDcs() throws Exception {
+        return localFileRestorer.listDcs();
     }
 
     private Path removeNodePrefix(final ListBlobItem listBlobItem) {
