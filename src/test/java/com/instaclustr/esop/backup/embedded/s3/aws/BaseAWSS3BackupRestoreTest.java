@@ -17,6 +17,11 @@ public abstract class BaseAWSS3BackupRestoreTest extends AbstractBackupTest {
 
     protected abstract BackupOperationRequest getBackupOperationRequest();
 
+    @Override
+    protected String protocol() {
+        return "s3://";
+    }
+
     public void inject() {
         final List<Module> modules = new ArrayList<Module>() {{
             add(new KubernetesApiModule());

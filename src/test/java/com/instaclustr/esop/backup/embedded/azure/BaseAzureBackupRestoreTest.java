@@ -32,13 +32,8 @@ public abstract class BaseAzureBackupRestoreTest extends AbstractBackupTest {
     }
 
     @Override
-    protected String getStorageLocation() {
-        return "azure://" + BUCKET_NAME + "/cluster/datacenter1/node1";
-    }
-
-    @Override
-    protected String getStorageLocation2() {
-        return "azure://" + BUCKET_NAME + "/cluster2/datacenter1/node1";
+    protected String protocol() {
+        return "azure://";
     }
 
     public void inPlaceTest(final String[][] programArguments) throws Exception {

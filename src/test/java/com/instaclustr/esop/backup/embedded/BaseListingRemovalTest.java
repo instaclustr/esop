@@ -154,7 +154,7 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
 
                 final String[] jsonComplex2 = new String[]{
                         "list",
-                        "--storage-location=" + getStorageLocation2(),
+                        "--storage-location=" + getStorageLocationForAnotherCluster(),
                         "--skip-node-resolution",
                         "--human-units",
                         "--simple-format",
@@ -231,7 +231,7 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
 
                 final String[] delete3 = new String[]{
                         "remove-backup",
-                        "--storage-location=" + getStorageLocation2(),
+                        "--storage-location=" + getStorageLocationForAnotherCluster(),
                         "--skip-node-resolution",
                         "--backup-name=" + oldestBackupName2,
                         "--cache-dir=" + target(".esop")
@@ -243,8 +243,8 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 Esop.mainWithoutExit(delete3);
 
                 // check if third backup was actually deleted
-                assertEquals(Files.list(Paths.get(getStorageLocation2().replaceAll(protocol() + "://", ""), "data")).count(), 0);
-                assertEquals(Files.list(Paths.get(getStorageLocation2().replaceAll(protocol() + "://", ""), "manifests")).count(), 0);
+                assertEquals(Files.list(Paths.get(getStorageLocationForAnotherCluster().replaceAll(protocol() + "://", ""), "data")).count(), 0);
+                assertEquals(Files.list(Paths.get(getStorageLocationForAnotherCluster().replaceAll(protocol() + "://", ""), "manifests")).count(), 0);
 
 
             } finally {

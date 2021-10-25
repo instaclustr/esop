@@ -35,7 +35,7 @@ public class AzureListingAndBackupRemovalTest extends BaseListingRemovalTest {
     }
 
     @Override
-    protected String getStorageLocation2() {
+    protected String getStorageLocationForAnotherCluster() {
         return protocol() + "://" + BUCKET_NAME + "/cluster2/datacenter1/node1";
     }
 

@@ -453,7 +453,7 @@ public abstract class AbstractBackupTest {
         final String[] backupArgs2WithSnapshotName = new String[]{
                 "backup",
                 "--jmx-service", "127.0.0.1:7199",
-                "--storage-location=" + getStorageLocation2(),
+                "--storage-location=" + getStorageLocationForAnotherCluster(),
                 "--snapshot-tag=" + snapshotName,
                 "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
                 "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
@@ -625,10 +625,15 @@ public abstract class AbstractBackupTest {
         };
     }
 
-    protected abstract String getStorageLocation();
+    protected String getStorageLocation() {
+        return protocol() + BUCKET_NAME + "/cluster/datacenter1/node1";
+    }
 
-    protected abstract String getStorageLocation2();
+    protected String getStorageLocationForAnotherCluster() {
+        return protocol() + BUCKET_NAME + "/cluster2/datacenter1/node1";
+    }
 
+    protected abstract String protocol();
 
     public void inPlaceBackupRestoreTest(final String[][] arguments) throws Exception {
 

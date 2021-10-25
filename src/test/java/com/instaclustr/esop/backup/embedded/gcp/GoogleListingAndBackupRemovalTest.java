@@ -34,7 +34,7 @@ public class GoogleListingAndBackupRemovalTest extends BaseListingRemovalTest {
         return protocol() + "://" + BUCKET_NAME + "/cluster/datacenter1/node1";
     }
 
-    protected String getStorageLocation2() {
+    protected String getStorageLocationForAnotherCluster() {
         return protocol() + "://" + BUCKET_NAME + "/cluster2/datacenter1/node1";
     }
 
