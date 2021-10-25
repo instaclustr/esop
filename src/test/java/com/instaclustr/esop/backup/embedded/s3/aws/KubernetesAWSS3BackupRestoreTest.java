@@ -41,6 +41,11 @@ public class KubernetesAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest
     }
 
     @Override
+    protected String getStorageLocation2() {
+        return "s3://" + BUCKET_NAME + "/cluster2/datacenter1/node1";
+    }
+
+    @Override
     protected void init() throws ApiException {
         System.setProperty("kubernetes.client", "true");
 

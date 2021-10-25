@@ -450,6 +450,17 @@ public abstract class AbstractBackupTest {
             "--create-missing-bucket"
         };
 
+        final String[] backupArgs2WithSnapshotName = new String[]{
+                "backup",
+                "--jmx-service", "127.0.0.1:7199",
+                "--storage-location=" + getStorageLocation2(),
+                "--snapshot-tag=" + snapshotName,
+                "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+                "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
+                "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
+                "--create-missing-bucket"
+        };
+
         // RESTORE
 
         final String[] downloadPhase = new String[]{
@@ -511,6 +522,7 @@ public abstract class AbstractBackupTest {
             truncatePhase,
             importPhase,
             cleanupPhase,
+            backupArgs2WithSnapshotName
         };
     }
 
@@ -614,6 +626,9 @@ public abstract class AbstractBackupTest {
     }
 
     protected abstract String getStorageLocation();
+
+    protected abstract String getStorageLocation2();
+
 
     public void inPlaceBackupRestoreTest(final String[][] arguments) throws Exception {
 

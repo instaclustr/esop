@@ -30,6 +30,11 @@ public class LocalListingAndBackupRemovalTest extends BaseListingRemovalTest {
     }
 
     @Override
+    protected String getStorageLocation2() {
+        return protocol() + "://" + target(BUCKET_NAME) + "/cluster2/datacenter1/node1";
+    }
+
+    @Override
     protected String protocol() {
         return "file";
     }

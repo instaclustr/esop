@@ -35,6 +35,11 @@ public abstract class BaseGoogleStorageBackupRestoreTest extends AbstractBackupT
     protected String getStorageLocation() {
         return "gcp://" + BUCKET_NAME + "/cluster/datacenter1/node1";
     }
+    @Override
+    protected String getStorageLocation2() {
+        return "gcp://" + BUCKET_NAME + "/cluster2/datacenter1/node1";
+    }
+
 
     public void inPlaceTest(final String[][] programArguments) throws Exception {
         try {

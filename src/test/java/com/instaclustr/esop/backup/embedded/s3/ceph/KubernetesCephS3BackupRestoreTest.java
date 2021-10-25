@@ -42,6 +42,12 @@ public class KubernetesCephS3BackupRestoreTest extends BaseAWSS3BackupRestoreTes
     }
 
     @Override
+    protected String getStorageLocation2() {
+        return "ceph://" + BUCKET_NAME + "/cluster2/datacenter1/node1";
+    }
+
+
+    @Override
     protected void init() throws ApiException {
         System.setProperty("kubernetes.client", "true");
 

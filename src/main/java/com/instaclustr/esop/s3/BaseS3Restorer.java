@@ -160,11 +160,7 @@ public class BaseS3Restorer extends Restorer {
         final List<S3ObjectSummary> manifestSumms = listBucket("", s -> s.contains("manifests"));
         for (S3ObjectSummary o : manifestSumms) {
             Path manifestPath = Paths.get(o.getKey());
-            Path manifestName = manifestPath.getFileName();
-
-            Path destination = downloadDir.resolve(getStorageLocation().nodePath())
-                                          .resolve("manifests")
-                                          .resolve(manifestName);
+            Path destination = downloadDir.resolve(manifestPath);
 
             downloadFile(destination, objectKeyToRemoteReference(manifestPath));
         }

@@ -196,6 +196,10 @@ public class LocalBackupTest extends AbstractBackupTest {
     protected String getStorageLocation() {
         return "file://" + target("backup1") + "/cluster/datacenter1/node1";
     }
+    @Override
+    protected String getStorageLocation2() {
+        return "file://" + target("backup1") + "/cluster2/datacenter1/node1";
+    }
 
     @Test
     public void testUploadTracker() throws Exception {

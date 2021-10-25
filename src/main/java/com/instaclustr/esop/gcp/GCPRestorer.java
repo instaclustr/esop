@@ -220,11 +220,7 @@ public class GCPRestorer extends Restorer {
                 s -> s.contains("manifests"));
         for (String o: manifestKeys) {
             Path manifestPath = Paths.get(o);
-            Path manifestName = manifestPath.getFileName();
-
-            Path destination = downloadDir.resolve(getStorageLocation().nodePath())
-                    .resolve("manifests")
-                    .resolve(manifestName);
+            Path destination = downloadDir.resolve(manifestPath);
 
             downloadFile(destination, objectKeyToRemoteReference(manifestPath));
         }
