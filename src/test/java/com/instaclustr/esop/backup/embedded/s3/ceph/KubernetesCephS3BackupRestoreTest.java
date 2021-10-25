@@ -37,8 +37,8 @@ public class KubernetesCephS3BackupRestoreTest extends BaseAWSS3BackupRestoreTes
     }
 
     @Override
-    protected String getStorageLocation() {
-        return "ceph://" + BUCKET_NAME + "/cluster/datacenter1/node1";
+    protected String protocol() {
+        return "ceph://";
     }
 
     @Override

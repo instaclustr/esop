@@ -43,11 +43,6 @@ public class CephS3BackupRestoreTest extends BaseCephS3BackupRestoreTest {
     }
 
     @Override
-    protected String getStorageLocation() {
-        return "ceph://" + BUCKET_NAME + "/cluster/datacenter1/node1";
-    }
-
-    @Override
     public CephS3TransferManagerFactory getTransferManagerFactory() {
         return transferManagerFactory;
     }

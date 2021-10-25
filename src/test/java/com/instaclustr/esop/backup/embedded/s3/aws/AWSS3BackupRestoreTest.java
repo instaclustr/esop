@@ -44,11 +44,6 @@ public class AWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
     }
 
     @Override
-    protected String getStorageLocation() {
-        return "s3://" + BUCKET_NAME + "/cluster/datacenter1/node1";
-    }
-
-    @Override
     public S3TransferManagerFactory getTransferManagerFactory() {
         return transferManagerFactory;
     }

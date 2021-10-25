@@ -82,6 +82,11 @@ public class LocalBackupTest extends AbstractBackupTest {
     @Inject
     private OperationsService operationsService;
 
+    @Override
+    protected String protocol() {
+        return "file://";
+    }
+
     @BeforeMethod
     public void setup() throws Exception {
 
@@ -195,6 +200,10 @@ public class LocalBackupTest extends AbstractBackupTest {
     @Override
     protected String getStorageLocation() {
         return "file://" + target("backup1") + "/cluster/datacenter1/node1";
+    }
+    @Override
+    protected String getStorageLocationForAnotherCluster() {
+        return "file://" + target("backup1") + "/cluster2/datacenter1/node1";
     }
 
     @Test

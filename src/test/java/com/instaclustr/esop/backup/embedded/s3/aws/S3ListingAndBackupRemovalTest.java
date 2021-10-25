@@ -30,13 +30,8 @@ public class S3ListingAndBackupRemovalTest extends BaseListingRemovalTest {
     }
 
     @Override
-    protected String getStorageLocation() {
-        return protocol() + "://" + BUCKET_NAME + "/cluster/datacenter1/node1";
-    }
-
-    @Override
     protected String protocol() {
-        return "s3";
+        return "s3://";
     }
 
     @Override

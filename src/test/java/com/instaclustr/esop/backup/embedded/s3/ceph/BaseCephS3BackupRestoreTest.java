@@ -17,6 +17,11 @@ public abstract class BaseCephS3BackupRestoreTest extends AbstractBackupTest {
 
     protected abstract BackupOperationRequest getBackupOperationRequest();
 
+    @Override
+    protected String protocol() {
+        return "ceph://";
+    }
+
     public void inject() {
         final List<Module> modules = new ArrayList<Module>() {{
             add(new KubernetesApiModule());
