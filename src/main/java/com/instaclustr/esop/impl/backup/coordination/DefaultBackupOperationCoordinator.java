@@ -42,7 +42,9 @@ public class DefaultBackupOperationCoordinator extends BaseBackupOperationCoordi
         }
 
         try {
-            operation.request.schemaVersion = new CassandraSchemaVersion(cassandraJMXService).act();
+            if (operation.request.schemaVersion == null) {
+                operation.request.schemaVersion = new CassandraSchemaVersion(cassandraJMXService).act();
+            }
             operation.request.snapshotTag = resolveSnapshotTag(operation.request, System.currentTimeMillis());
             super.coordinate(operation);
         } catch (final Exception ex) {

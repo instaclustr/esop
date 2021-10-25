@@ -13,6 +13,10 @@ image::Esop.png[Esop,width=50%]
 
 This repository is home of backup and restoration tools from Instaclustr for Cassandra called https://en.wikipedia.org/wiki/Aesop[Esop]
 
+Esop of version 2.0.0 is not compatible with any Esop of version 1.x.x.
+Esop 2.0.0 has changed the manifest format which is uploaded to a remote
+location hence, as of now, Esop 2.0.0 can not read manifests for versions 1.x.x.
+
 Esop is able to perform these operations and has these features:
 
 * Backup and restore of SSTables
@@ -36,6 +40,7 @@ downtime is necessary
 * verification of downloaded data - computes hases upon upload and download and it has to match otherwise restoration fails
 * it is possible to restore tables under different names so they do not clash with your current tables ideal when you want to investigate / check data before you restore the original tables, to see what data you will have once you restore it
 * retry of failed operations against s3 when uploading / downloading failure happens
+* support of multiple data directories for Cassandra node
 
 This tool is used as a command line utility and it is meant to be executed from a shell
 or from scripts. However, this tooling is also embedded seamlessly into Instaclustr Icarus.
@@ -373,20 +378,23 @@ The content of a manifest file looks like this:
       "ks1" : {
         "tables" : {
           "ks1t1" : {
-            "entries" : [ {
-              "objectKey" : "path-to/1-1146970048/na-1-big-CompressionInfo.db",
-              "type" : "FILE",
-              "size" : 47
-            }, {
-              "objectKey" : "path-to/1-1146970048/na-1-big-Data.db",
-              "type" : "FILE",
-              "size" : 53
-
-            }, {
-              "objectKey" : "path-to/schema.cql",
-              "type" : "CQL_SCHEMA",
-              "size" : 934
-            } ],
+            "sstables" : {
+              "md-2-big" : [ {
+                "objectKey" : "data/test2/test2-9939cd004ed711ecbe182d028df13d6f/2-79610399/md-2-big-CompressionInfo.db",
+                "type" : "FILE",
+                "size" : 43,
+                "hash" : "f8678a952d1fadf8d3368e078318dbc6cdf5eb7666631c77b288ead7d42ed572"
+              }, {
+                "objectKey" : "data/test2/test2-9939cd004ed711ecbe182d028df13d6f/2-79610399/md-2-big-Data.db",
+                "type" : "FILE",
+                "size" : 55,
+                "hash" : "004a1da4ef6681c11a5119cd0fe5c2cf73adabd52d76b0b2139ab09b6e1ce2ea"
+              }, {
+                "objectKey" : "data/test2/test2-9939cd004ed711ecbe182d028df13d6f/2-79610399/md-2-big-Digest.crc32",
+                "type" : "FILE",
+                "size" : 8,
+                "hash" : "5ff7e315ca70052e3b8f31753d3bdc4b8ddc966d3ca9991e519eed0f558dd6a4"
+              }],
             "id" : "e17ff4b0e89211eab4313d37e7f4ac07",
             "schemaContent" : "CREATE TABLE IF NOT EXISTS ks1.ks1t1 ..."
           },
@@ -500,6 +508,31 @@ Upon backup, the schema version is determined by calling respective JMX method. 
 On the other hand, the second way how to resolve the problems above during restoration is to specify `--exactSchemaVersion` flag.
 When set, it will try to filter only manifests which were done on the same schema version as a current node runs on.
 The last option is to use `--schema-version` option (in connection with `--exact-schema-version`) with the schema version manually.
+
+#### Multiple Cassandra data directories
+
+It is possible to work with a Cassandra node which
+has data in multiple locations, not only in one,
+as `data_files_directories` in `cassandra.yaml` is an array.
+
+In order to point backup or restore procedures to multiple
+data directories, there is a flag called `--data-dir`.
+This flag can be set multiple times - each one pointing to
+different data directory, as it is set in `cassandra.yaml`.
+
+Upon backup, files of all SSTables across all directories
+are uploaded to a remote location. However, upon restore,
+they are not necessarily put into the same directories.
+
+For in-place restoration strategy, SSTables are dispersed
+among all data directories in a round-robin fashion.
+
+For hard-linking strategy, it is logically same as for in-place, SSTables
+are again dispersed among all data directories with any signifant order.
+
+For importing strategy, Esop does not control where SSTables will be put
+at all as this is delegated to imporing mechanism of Cassandra itself so
+the support of multiple data directories is there out of the box.
 
 #### Backup
 
@@ -756,14 +789,14 @@ The example of backup (for brevity, we are showing just the sub-command):
 
 ----
 $ java -jar esop.jar commitlog-backup \
-  --storage-location=s3://myBucket/mycluster/dc1/node1, \
-  --data-directory=/my/installation/of/cassandra/data
+  --storage-location=s3://myBucket/mycluster/dc1/node1 \
+  --commit-log-dir /var/lib/cassandra/data/commitlog
 ----
 
 Note that in this example, there is not any need to specify `--jmx-service` because it is not needed. JMX is needed
-for taking snapshots, for example, but here we do not take any. This command will expect `commitlog` directory under
-`--data-directory`. It is possible to override this by specifying `--cl-archive` with the path to the commit logs
-instead of expecting them to be under `--data-directory`. This plays nicely especially with
+for taking snapshots, for example, but here we do not take any. Commitlog directory is specified by
+`--commit-log-dir`. It is possible to override this by specifying `--cl-archive` with the path to the commit logs
+instead of expecting them to be under `--commit-log-dir`. This plays nicely especially with
 the commit log archiving procedure of Cassandra. Let's say you have this in `commitlog_archiving.properties` file:
 
 ----
@@ -828,7 +861,7 @@ in a cloud. For backup, a node has to be up to back it up.
 backup \
 --jmx-service 127.0.0.1:7199 \
 --storage-location=s3://myBucket/mycluster/dc1/node1 \
---data-directory=/my/installation/of/cassandra \
+--data-dir /my/installation/of/cassandra/data/data \
 --entities=ks1,ks2 \
 --snapshot-tag=mysnapshot
 ----
@@ -848,25 +881,12 @@ The verification of a bucket might be skipped by flag `--skip-bucket-verificatio
 If the verification is not skipped (which is default) and we detect that a
 bucket does not exist, the operation fails if we do not specify `--create-missing-bucket` flag.
 
-### Example of `commitlog-backup`
-
-You can backup commit logs as well. An example of a commit log backup is like the following:
-
-----
-$ commitlog-backup \
-  --storage-location=s3://myBucket/mycluster/dc1/node1 \
-  --data-directory=/my/installation/of/cassandra
-----
-
-Note that there is no need to specify jmx-service. JMX is needed
-for taking snapshots, but here we do not take any.
-
 ### Example of in-place `restore`
 
 The restoration of a node is achieved by following parameters:
 
 ----
-$ restore --data-directory=/my/installation/of/restored-cassandra/data \
+$ restore --data-dir /my/installation/of/cassandra/data/data \ \
           --config-directory=/my/installation/of/restored-cassandra/conf \
           --snapshot-tag=stefansnapshot" \
           --storage-location=s3://bucket-name/cluster-name/dc-name/node-id \
@@ -900,7 +920,7 @@ cluster. Backup and restore will look like the following:
 backup \
 --jmx-service 127.0.0.1:7199 \
 --storage-location=s3://myBucket/mycluster/dc1/node1 \
---data-directory=/my/installation/of/cassandra \
+--data-dir /my/installation/of/cassandra/data/data \
 --entities=ks1,ks2 \
 --snapshot-tag=mysnapshot
 ----
@@ -909,7 +929,7 @@ The first restoration phase is DOWNLOAD as we need to download remote SSTables:
 
 ----
 restore \
---data-directory=/path/to/cassandra/data \
+--data-dir /my/installation/of/cassandra/data/data \
 --snapshot-tag=my-snapshot \
 --storage-location=s3://myBucket/mycluster/dc1/node1 \
 --entities=ks1,ks2 \
@@ -922,7 +942,7 @@ Then we need to truncate `ks1` and `ks2`:
 
 ----
 restore,
---data-directory=/path/to/cassandra/data \
+--data-dir /my/installation/of/cassandra/data/data \
 --snapshot-tag=my-snapshot \
 --storage-location=s3://myBucket/mycluster/dc1/node1 \
 --entities=ks1,ks2 \
@@ -936,7 +956,7 @@ to the Cassandra data directory:
 
 ----
 restore,
---data-directory=/path/to/cassandra/data \
+--data-dir /my/installation/of/cassandra/data/data \
 --snapshot-tag=my-snapshot \
 --storage-location=s3://myBucket/mycluster/dc1/node1 \
 --entities=ks1,ks2 \
@@ -949,7 +969,7 @@ Lastly we can cleanup downloaded data as well as truncated as they are not neede
 
 ----
 restore,
---data-directory=/path/to/cassandra/data \
+--data-dir /my/installation/of/cassandra/data/data \
 --snapshot-tag=my-snapshot \
 --storage-location=s3://myBucket/mycluster/dc1/node1 \
 --entities=ks1,ks2 \
@@ -1071,10 +1091,10 @@ have any usage during CLI executions.
 The restoration of commit logs can be done like this:
 
 ----
-$ commitlog-restore --data-directory=/my/installation/of/restored-cassandra/data
-                    --config-directory=/my/installation/of/restored-cassandra/conf
-                    --storage-location=s3://bucket-name/cluster-name/dc-name/node-id
-                    --commitlog-download-dir=/dir/where/commitlogs/are/downloaded
+$ commitlog-restore --commit-log-dir=/my/installation/of/restored-cassandra/data/commitlog \
+                    --config-directory=/my/installation/of/restored-cassandra/conf \
+                    --storage-location=s3://bucket-name/cluster-name/dc-name/node-id \
+                    --commitlog-download-dir=/dir/where/commitlogs/are/downloaded \
                     --timestamp-end=unix_timestamp_of_last_transaction_to_replay
 ----
 

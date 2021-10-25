@@ -94,12 +94,12 @@ public class ManifestComponentsTest {
         assertNotSame(table, cloned);
         assertEquals(table, cloned);
 
-        cloned.add(new ManifestEntry(Paths.get("abc/def"),
-                                     null,
-                                     Type.FILE,
-                                     50,
-                                     null,
-                                     null));
+        cloned.add("me-1-big-Data.db", new ManifestEntry(Paths.get("abc/def"),
+                                                         null,
+                                                         Type.FILE,
+                                                         50,
+                                                         null,
+                                                         null));
 
         assertNotEquals(table, cloned);
     }
@@ -171,7 +171,7 @@ public class ManifestComponentsTest {
     @Test
     public void testManifestFilterNoRestoreSystemKeyspaceNoNewCluster() throws Exception {
         Manifest manifest = parseManifest();
-        manifest.enrichManifestEntries(Paths.get("/tmp/somepath"));
+        manifest.enrichManifestEntries();
 
         List<ManifestEntry> manifestFiles = manifest.getManifestFiles(new DatabaseEntities(),
                                                                       false, // restoreSystemKeyspace
@@ -185,7 +185,7 @@ public class ManifestComponentsTest {
     @Test
     public void testManifestFilterNoRestoreSystemKeyspaceNoNewClusterNoEmptyRequestEntities() throws Exception {
         Manifest manifest = parseManifest();
-        manifest.enrichManifestEntries(Paths.get("/tmp/somepath"));
+        manifest.enrichManifestEntries();
 
         List<ManifestEntry> manifestFiles = manifest.getManifestFiles(DatabaseEntities.parse("ks1"),
                                                                       false, // restoreSystemKeyspace
@@ -200,7 +200,7 @@ public class ManifestComponentsTest {
     @Test
     public void testManifestFilterNoRestoreSystemKeyspaceNoNewClusterTableRequestEntities() throws Exception {
         Manifest manifest = parseManifest();
-        manifest.enrichManifestEntries(Paths.get("/tmp/somepath"));
+        manifest.enrichManifestEntries();
 
         List<ManifestEntry> manifestFiles = manifest.getManifestFiles(DatabaseEntities.parse("ks1.ks1t2"),
                                                                       false, // restoreSystemKeyspace
@@ -215,7 +215,7 @@ public class ManifestComponentsTest {
     @Test
     public void testManifestFilterNoRestoreSystemKeyspaceYesNewCluster() throws Exception {
         Manifest manifest = parseManifest();
-        manifest.enrichManifestEntries(Paths.get("/tmp/somepath"));
+        manifest.enrichManifestEntries();
 
         List<ManifestEntry> manifestFiles = manifest.getManifestFiles(new DatabaseEntities(),
                                                                       false, // restoreSystemKeyspace
@@ -235,7 +235,7 @@ public class ManifestComponentsTest {
     @Test
     public void testManifestFilterYesRestoreSystemKeyspaceYesNewCluster() throws Exception {
         Manifest manifest = parseManifest();
-        manifest.enrichManifestEntries(Paths.get("/tmp/somepath"));
+        manifest.enrichManifestEntries();
 
         List<ManifestEntry> manifestFiles = manifest.getManifestFiles(new DatabaseEntities(),
                                                                       true, // restoreSystemKeyspace

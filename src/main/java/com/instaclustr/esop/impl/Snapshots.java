@@ -1,10 +1,15 @@
 package com.instaclustr.esop.impl;
 
-import static java.lang.String.format;
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Collectors.toSet;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.instaclustr.esop.impl.ManifestEntry.Type;
+import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace.Table;
+import com.instaclustr.esop.impl.hash.HashSpec;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -26,24 +31,34 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.HashMultimap;
-import com.instaclustr.esop.impl.ManifestEntry.Type;
-import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace.Table;
-import com.instaclustr.esop.impl.hash.HashSpec;
+import static java.lang.String.format;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 
 public class Snapshots implements Cloneable {
 
     public static HashSpec hashSpec;
 
     private final Map<String, Snapshot> snapshots = new HashMap<>();
+
+    public static Snapshots of(Map<String, Snapshot> snapshots) {
+        return new Snapshots(snapshots);
+    }
+
+    public Snapshots() {
+    }
+
+    public Snapshots(Map<String, Snapshot> snapshots) {
+        this.snapshots.putAll(snapshots);
+    }
 
     public final Optional<Snapshot> get(final String snapshotTag) {
         return Optional.ofNullable(snapshots.get(snapshotTag));
@@ -81,8 +96,8 @@ public class Snapshots implements Cloneable {
     @Override
     public String toString() {
         return "Snapshots{" +
-            "snapshots=" + snapshots +
-            '}';
+               "snapshots=" + snapshots +
+               '}';
     }
 
     @Override
@@ -109,6 +124,30 @@ public class Snapshots implements Cloneable {
         private String name;
 
         private final Map<String, Keyspace> keyspaces = new HashMap<>();
+
+        public static Snapshot merge(List<Snapshot> snapshots, String snapshotName) {
+            if (snapshots.size() == 1) {
+                return snapshots.get(0);
+            }
+
+            if (snapshots.stream().map(s -> s.name).collect(toSet()).size() != 1) {
+                throw new IllegalStateException("Merging snapshots of different names!");
+            }
+
+            final Snapshot merged = new Snapshot();
+            merged.name = snapshotName;
+            for (final Snapshot toMerge : snapshots) {
+                toMerge.forEachKeyspace(keyspaceEntry -> {
+                    final Keyspace keyspace = keyspaceEntry.getValue();
+                    keyspace.forEachTable(tableEntry -> {
+                        merged.addKeyspace(keyspaceEntry.getKey());
+                        Table table = merged.addTable(keyspaceEntry.getKey(), tableEntry.getValue());
+                        table.sstables.putAll(tableEntry.getValue().sstables);
+                    });
+                });
+            }
+            return merged;
+        }
 
         public void setName(String name) {
             this.name = name;
@@ -151,14 +190,42 @@ public class Snapshots implements Cloneable {
         public void removeTables(final String keyspace, final List<String> tables) {
             this.getKeyspace(keyspace).ifPresent(ks -> {
                 final Map<String, Table> valuesToStay = ks.getTables().entrySet().stream()
-                    .filter(entry -> !tables.contains(entry.getKey()))
-                    .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+                                                          .filter(entry -> !tables.contains(entry.getKey()))
+                                                          .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
                 ks.setTables(valuesToStay);
             });
         }
 
         public void removeTable(final String keyspace, final String table) {
             removeTables(keyspace, Collections.singletonList(table));
+        }
+
+        public Keyspace addKeyspace(final String name) {
+            if (containsKeyspace(name)) {
+                return null;
+            }
+            Keyspace k = new Keyspace();
+            this.keyspaces.put(name, k);
+            return k;
+        }
+
+        public Table addTable(final String keyspace, Table table) {
+            addKeyspace(keyspace);
+            if (!containsTable(keyspace, table.name)) {
+                Table newTable = new Table(table.name, table.id);
+                newTable.schemaContent = table.schemaContent;
+                newTable.schema = table.schema;
+                this.keyspaces.get(keyspace).add(table.name, newTable);
+            }
+            Table t = getTable(keyspace, table.name).get();
+            if (table.schema != null) {
+                t.schema = table.schema;
+            }
+            if (table.schemaContent != null) {
+                t.schemaContent = table.schemaContent;
+            }
+
+            return t;
         }
 
         public void add(final String name, final Keyspace keyspace) {
@@ -204,9 +271,9 @@ public class Snapshots implements Cloneable {
         @JsonIgnore
         public List<ManifestEntry> getManifestEntries(final String... keyspace) {
             return Collections.unmodifiableList(keyspaces.entrySet().stream()
-                                                    .filter(ks -> Arrays.asList(keyspace).contains(ks.getKey()))
-                                                    .flatMap(entry -> entry.getValue().getManifestEntries().stream())
-                                                    .collect(toList()));
+                                                         .filter(ks -> Arrays.asList(keyspace).contains(ks.getKey()))
+                                                         .flatMap(entry -> entry.getValue().getManifestEntries().stream())
+                                                         .collect(toList()));
         }
 
         @JsonIgnore
@@ -220,7 +287,7 @@ public class Snapshots implements Cloneable {
             snapshot.setName(snapshotName);
 
             final Map<String, List<Path>> keyspaceSnapshotPaths = snapshotPaths.stream()
-                .collect(groupingBy(p -> p.getParent().getParent().getParent().getFileName().toString()));
+                                                                               .collect(groupingBy(p -> p.getParent().getParent().getParent().getFileName().toString()));
 
             for (final Entry<String, List<Path>> entry : keyspaceSnapshotPaths.entrySet()) {
                 snapshot.keyspaces.put(entry.getKey(), Keyspace.parse(entry.getKey(), entry.getValue()));
@@ -232,9 +299,9 @@ public class Snapshots implements Cloneable {
         @JsonIgnore
         public List<ManifestEntry> getSchemas() {
             return keyspaces.entrySet().stream()
-                .flatMap(entry -> entry.getValue().getTables().values().stream().map(Table::getSchema))
-                .filter(Objects::nonNull)
-                .collect(toList());
+                            .flatMap(entry -> entry.getValue().getTables().values().stream().map(Table::getSchema))
+                            .filter(Objects::nonNull)
+                            .collect(toList());
         }
 
         @JsonIgnore
@@ -258,15 +325,15 @@ public class Snapshots implements Cloneable {
             }
             final Snapshot snapshot = (Snapshot) o;
             return com.google.common.base.Objects.equal(name, snapshot.name) &&
-                com.google.common.base.Objects.equal(keyspaces, snapshot.keyspaces);
+                   com.google.common.base.Objects.equal(keyspaces, snapshot.keyspaces);
         }
 
         @Override
         public String toString() {
             return "Snapshot{" +
-                "name='" + name + '\'' +
-                ", keyspaces=" + keyspaces +
-                '}';
+                   "name='" + name + '\'' +
+                   ", keyspaces=" + keyspaces +
+                   '}';
         }
 
         @Override
@@ -340,6 +407,9 @@ public class Snapshots implements Cloneable {
 
             private final Map<String, Table> tables = new HashMap<>();
 
+            public Keyspace() {
+            }
+
             @JsonCreator
             public Keyspace(@JsonProperty("tables") Map<String, Table> tables) {
                 if (tables != null) {
@@ -384,9 +454,9 @@ public class Snapshots implements Cloneable {
 
             public List<ManifestEntry> getManifestEntries(final String... tables) {
                 return Collections.unmodifiableList(this.tables.entrySet().stream()
-                                                        .filter(entry -> Arrays.asList(tables).contains(entry.getKey()))
-                                                        .flatMap(table -> table.getValue().getEntries().stream())
-                                                        .collect(toList()));
+                                                               .filter(entry -> Arrays.asList(tables).contains(entry.getKey()))
+                                                               .flatMap(table -> table.getValue().getEntries().stream())
+                                                               .collect(toList()));
             }
 
             @JsonIgnore
@@ -447,8 +517,8 @@ public class Snapshots implements Cloneable {
             @JsonIgnore
             public Map<String, String> getTableSchemas() {
                 return this.tables.entrySet().stream()
-                    .filter(e -> Objects.nonNull(e.getValue().schemaContent))
-                    .collect(toMap(Entry::getKey, e -> e.getValue().schemaContent));
+                                  .filter(e -> Objects.nonNull(e.getValue().schemaContent))
+                                  .collect(toMap(Entry::getKey, e -> e.getValue().schemaContent));
             }
 
             @Override
@@ -471,8 +541,8 @@ public class Snapshots implements Cloneable {
             @Override
             public String toString() {
                 return "Keyspace{" +
-                    "tables=" + tables +
-                    '}';
+                       "tables=" + tables +
+                       '}';
             }
 
             @Override
@@ -484,44 +554,48 @@ public class Snapshots implements Cloneable {
 
                 public static final Pattern TABLE_PATTERN = Pattern.compile("(.*)-((.){32})");
 
-                private final List<ManifestEntry> entries = new ArrayList<>();
                 // simple name without id
-
                 public String name;
                 public String id;
                 private ManifestEntry schema;
                 private String schemaContent;
+                private Map<String, List<ManifestEntry>> sstables = new HashMap<>();
 
-                public Table() {
-
+                public Table(String name, String id) {
+                    this.name = name;
+                    this.id = id;
                 }
 
                 @JsonCreator
-                public Table(final @JsonProperty("entries") List<ManifestEntry> entries,
+                public Table(final @JsonProperty("sstables") Map<String, List<ManifestEntry>> sstables,
+                             final @JsonProperty("schema") ManifestEntry schema,
                              final @JsonProperty("id") String id,
                              final @JsonProperty("schemaContent") String schemaContent) {
-                    this.entries.addAll(entries);
-                    this.schema = entries.stream().filter(entry -> entry.type == Type.CQL_SCHEMA).findFirst().orElse(null);
+                    this.sstables.putAll(sstables);
+                    this.schema = schema;
                     this.schemaContent = schemaContent;
                     this.id = id;
                 }
 
                 public static Table parse(final String keyspace, final String table, final List<Path> value) throws Exception {
-                    final Table tb = new Table();
-
                     final Matcher matcher = TABLE_PATTERN.matcher(table);
 
+                    String tableName;
+                    String tableId;
+
                     if (matcher.matches()) {
-                        tb.setName(matcher.group(1));
-                        tb.setId(matcher.group(2));
+                        tableName = matcher.group(1);
+                        tableId = matcher.group(2);
                     } else {
                         throw new IllegalStateException(format("Illegal format of table name %s for pattern %s", table, TABLE_PATTERN));
                     }
 
+                    final Table tb = new Table(tableName, tableId);
+
                     final Path tablePath = Paths.get("data").resolve(Paths.get(keyspace, table));
 
                     for (final Path path : value) {
-                        tb.entries.addAll(SSTableUtils.ssTableManifest(keyspace, table, path, tablePath, Snapshots.hashSpec).collect(toList()));
+                        tb.sstables.putAll(SSTableUtils.getSSTables(keyspace, table, path, tablePath, Snapshots.hashSpec));
                     }
 
                     final Optional<Path> schemaPath = value.stream().map(p -> p.resolve("schema.cql")).filter(Files::exists).findFirst();
@@ -534,7 +608,6 @@ public class Snapshots implements Cloneable {
                                                       null,
                                                       new KeyspaceTable(keyspace, table));
                         tb.schemaContent = new String(Files.readAllBytes(schemaPath.get()));
-                        tb.entries.add(tb.schema);
                     }
 
                     return tb;
@@ -544,8 +617,22 @@ public class Snapshots implements Cloneable {
                     getEntries().forEach(entryConsumer);
                 }
 
+                public void setSTables(Map<String, List<ManifestEntry>> sstables) {
+                    this.sstables = sstables;
+                }
+
+                public Map<String, List<ManifestEntry>> getSstables() {
+                    return sstables;
+                }
+
+                @JsonIgnore
                 public List<ManifestEntry> getEntries() {
-                    return Collections.unmodifiableList(entries);
+                    if (schema != null) {
+                        return Stream.concat(sstables.values().stream().flatMap(Collection::stream), Stream.of(schema))
+                                     .collect(toList());
+                    } else {
+                        return sstables.values().stream().flatMap(Collection::stream).collect(toList());
+                    }
                 }
 
                 @JsonIgnore
@@ -566,8 +653,21 @@ public class Snapshots implements Cloneable {
                 }
 
                 @JsonIgnore
-                public void add(ManifestEntry manifestEntry) {
-                    this.entries.add(manifestEntry);
+                public void add(String sstable, ManifestEntry manifestEntry) {
+                    this.sstables.computeIfAbsent(sstable, new Function<String, List<ManifestEntry>>() {
+                        @Override
+                        public List<ManifestEntry> apply(String s) {
+                            return new ArrayList<ManifestEntry>() {{
+                                add(manifestEntry);
+                            }};
+                        }
+                    });
+
+                    List<ManifestEntry> manifestEntries = this.sstables.get(sstable);
+
+                    if (!manifestEntries.contains(manifestEntry)) {
+                        manifestEntries.add(manifestEntry);
+                    }
                 }
 
                 @JsonIgnore
@@ -580,7 +680,6 @@ public class Snapshots implements Cloneable {
                 }
 
                 /**
-                 *
                  * @return CQL creation statement without everything after "WITH ..."
                  */
                 @JsonIgnore
@@ -620,35 +719,33 @@ public class Snapshots implements Cloneable {
                         return false;
                     }
                     final Table table = (Table) o;
-                    return com.google.common.base.Objects.equal(entries, table.entries) &&
-                        com.google.common.base.Objects.equal(name, table.name) &&
-                        com.google.common.base.Objects.equal(id, table.id) &&
-                        com.google.common.base.Objects.equal(schema, table.schema) &&
-                        com.google.common.base.Objects.equal(schemaContent, table.schemaContent);
+
+                    return com.google.common.base.Objects.equal(getEntries(), table.getEntries()) &&
+                           com.google.common.base.Objects.equal(name, table.name) &&
+                           com.google.common.base.Objects.equal(id, table.id) &&
+                           com.google.common.base.Objects.equal(schema, table.schema) &&
+                           com.google.common.base.Objects.equal(schemaContent, table.schemaContent);
                 }
 
                 @Override
                 public int hashCode() {
-                    return com.google.common.base.Objects.hashCode(entries, name, id, schema, schemaContent);
+                    return com.google.common.base.Objects.hashCode(getEntries(), name, id, schema, schemaContent);
                 }
 
                 @Override
                 public String toString() {
                     return "Table{" +
-                        "entries=" + entries +
-                        ", name='" + name + '\'' +
-                        ", id='" + id + '\'' +
-                        ", schema=" + schema +
-                        ", schemaContent='" + schemaContent + '\'' +
-                        '}';
+                           "entries=" + getEntries() +
+                           ", name='" + name + '\'' +
+                           ", id='" + id + '\'' +
+                           ", schema=" + schema +
+                           ", schemaContent='" + schemaContent + '\'' +
+                           '}';
                 }
 
                 @Override
                 public Table clone() throws CloneNotSupportedException {
-                    final Table cloned = new Table();
-
-                    cloned.setId(this.id);
-                    cloned.setName(this.name);
+                    final Table cloned = new Table(this.name, this.id);
 
                     if (this.schema != null) {
                         cloned.schema = this.schema.clone();
@@ -656,14 +753,51 @@ public class Snapshots implements Cloneable {
 
                     cloned.schemaContent = schemaContent;
 
-                    for (final ManifestEntry me : this.entries) {
-                        cloned.entries.add(me.clone());
+                    for (final ManifestEntry me : this.getEntries()) {
+                        cloned.getEntries().add(me.clone());
                     }
 
                     return cloned;
                 }
             }
         }
+    }
+
+    public static synchronized Snapshots parse(final List<Path> cassandraDirs) throws Exception {
+        return parse(cassandraDirs, null);
+    }
+
+    public static synchronized Snapshots parse(final List<Path> cassandraDataDirs, final String snapshot) throws Exception {
+        final List<Snapshots> snapshots = cassandraDataDirs.stream()
+                                                           .map(dataDir -> {
+                                                               try {
+                                                                   return Snapshots.parse(dataDir, snapshot);
+                                                               } catch (final Exception ex) {
+                                                                   throw new RuntimeException(String.format("Unable to parse snapshots in directory %s", dataDir), ex);
+                                                               }
+                                                           }).collect(toList());
+
+        return merge(snapshots);
+    }
+
+    public static synchronized Snapshots merge(final List<Snapshots> scannedSnapshotDirs) {
+        Multimap<String, Snapshot> snapshotsMap = ArrayListMultimap.create();
+
+        scannedSnapshotDirs.stream()
+                           .flatMap(s -> s.snapshots.entrySet().stream())
+                           .forEach(entry -> snapshotsMap.put(entry.getKey(), entry.getValue()));
+
+        Map<String, Snapshot> snapshots = new HashMap<>();
+
+        snapshotsMap.entries()
+                    .stream()
+                    .collect(groupingBy(Entry::getKey))
+                    .entrySet()
+                    .stream()
+                    .map(e -> Pair.of(e.getKey(), e.getValue().stream().map(Entry::getValue).collect(toList())))
+                    .forEach(pair -> snapshots.put(pair.getKey(), Snapshot.merge(pair.getValue(), pair.getKey())));
+
+        return Snapshots.of(snapshots);
     }
 
     public static synchronized Snapshots parse(final Path cassandraDir, final String snapshot) throws Exception {
@@ -676,10 +810,10 @@ public class Snapshots implements Cloneable {
         Files.walkFileTree(cassandraDir, lister);
 
         final Map<String, List<Path>> snapshotPaths = lister.getSnapshotPaths()
-                .entrySet()
-                .stream()
-                .filter(entry -> snapshot == null || (entry.getKey().equals(snapshot)))
-                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+                                                            .entrySet()
+                                                            .stream()
+                                                            .filter(entry -> snapshot == null || (entry.getKey().equals(snapshot)))
+                                                            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
         for (final Entry<String, List<Path>> paths : snapshotPaths.entrySet()) {
             snapshots.snapshots.put(paths.getKey(), Snapshot.parse(paths.getKey(), paths.getValue()));

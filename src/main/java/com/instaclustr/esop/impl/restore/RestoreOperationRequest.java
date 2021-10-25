@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -28,6 +29,7 @@ import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesConverter;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesDeserializer;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesSerializer;
 import com.instaclustr.esop.impl.Directories;
+import com.instaclustr.esop.impl.ListPathSerializer;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.RenamedEntities;
 import com.instaclustr.esop.impl.StorageLocation;
@@ -49,12 +51,19 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
     public final Directories dirs = new Directories(this);
 
     @Option(names = {"--dd", "--data-directory"},
-        description = "Base directory that contains the Cassandra data, cache and commitlog directories",
+        description = "Base directory that contains the Cassandra hints, cache and commitlog directories",
         converter = PathTypeConverter.class,
-        defaultValue = "/var/lib/cassandra/")
+        defaultValue = "/var/lib/cassandra")
     @JsonDeserialize(using = PathDeserializer.class)
     @JsonSerialize(using = PathSerializer.class)
     public Path cassandraDirectory;
+
+    @Option(names = {"--data-dir"},
+            converter = PathTypeConverter.class,
+            defaultValue = "/var/lib/cassandra/data/data")
+    @JsonSerialize(using = ListPathSerializer.class)
+    @JsonDeserialize(contentUsing = PathDeserializer.class)
+    public List<Path> dataDirs;
 
     @Option(names = {"--cd", "--config-directory"},
         description = "Directory where configuration of Cassandra is stored.",
@@ -204,7 +213,10 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonProperty("proxySettings") final ProxySettings proxySettings,
                                    @JsonProperty("rename") final Map<String, String> rename,
                                    @JsonProperty("retry") final RetrySpec retry,
-                                   @JsonProperty("singlePhase") final boolean singlePhase) {
+                                   @JsonProperty("singlePhase") final boolean singlePhase,
+                                   @JsonProperty("dataDirs")
+                                   @JsonSerialize(using = ListPathSerializer.class)
+                                   @JsonDeserialize(contentUsing = PathDeserializer.class) List<Path> dataDirs) {
         super(storageLocation, concurrentConnections, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
         this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/")) ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
@@ -229,6 +241,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
         this.newCluster = newCluster;
         this.rename = rename == null ? Collections.emptyMap() : rename;
         this.singlePhase = singlePhase;
+        this.dataDirs = dataDirs;
     }
 
     @Override
@@ -263,6 +276,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             .add("rename", rename)
             .add("retry", retry)
             .add("singlePhase", singlePhase)
+            .add("dataDirs", dataDirs)
             .toString();
     }
 

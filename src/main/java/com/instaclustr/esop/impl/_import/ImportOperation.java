@@ -96,7 +96,7 @@ public class ImportOperation extends Operation<ImportOperationRequest> {
 
         if (!CassandraVersion.isFour(cassandraVersion)) {
             throw new OperationFailureException(format("Underlying version of Cassandra is not supported to import SSTables: %s. Use this method "
-                                                           + "only if you run Cassandra 4 and above", cassandraVersion.toString()));
+                                                           + "only if you run Cassandra 4 and above", cassandraVersion));
         }
 
         if (isNullOrEmpty(request.keyspace)) {
@@ -119,7 +119,7 @@ public class ImportOperation extends Operation<ImportOperationRequest> {
             @Override
             public List<String> apply(final Cassandra4ColumnFamilyStoreMBean cfProxy) {
 
-                logger.info(format("Importing SSTables of %s.%s from %s", request.keyspace, request.table, request.tablePath.toAbsolutePath().toString()));
+                logger.info(format("Importing SSTables of %s.%s from %s", request.keyspace, request.table, request.tablePath.toAbsolutePath()));
 
                 final List<String> failedImportDirectories = cfProxy.importNewSSTables(Sets.newHashSet(request.tablePath.toAbsolutePath().toString()),
                                                                                        !request.keepLevel,
@@ -137,7 +137,7 @@ public class ImportOperation extends Operation<ImportOperationRequest> {
         }, request.keyspace, request.table);
 
         if (failedImportDirs != null && !failedImportDirs.isEmpty()) {
-            throw new OperationFailureException(format("Failed to import SSTable directories %s.", failedImportDirs.toString()));
+            throw new OperationFailureException(format("Failed to import SSTable directories %s.", failedImportDirs));
         }
     }
 }

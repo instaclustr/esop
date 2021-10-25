@@ -144,7 +144,7 @@ public class BackupCommitLogsOperation extends Operation<BackupCommitLogsOperati
         if (request.commitLogArchiveOverride != null && request.commitLogArchiveOverride.toFile().exists()) {
             return request.commitLogArchiveOverride;
         } else {
-            return request.cassandraDirectory.resolve(CASSANDRA_COMMITLOG);
+            return request.cassandraCommitLogDirectory;
         }
     }
 }

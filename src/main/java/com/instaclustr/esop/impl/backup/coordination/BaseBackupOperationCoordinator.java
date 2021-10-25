@@ -92,7 +92,7 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
                 }
             }
 
-            final CassandraData cassandraData = CassandraData.parse(request.cassandraDirectory.resolve("data"));
+            final CassandraData cassandraData = CassandraData.parse(request.dataDirs.get(0));
             cassandraData.setDatabaseEntitiesFromRequest(request.entities);
 
             final List<String> tokens = new CassandraTokens(cassandraJMXService).act();
@@ -100,7 +100,9 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
             logger.info("Tokens {}", tokens);
 
             if (!Snapshots.snapshotContainsTimestamp(operation.request.snapshotTag)) {
-                operation.request.schemaVersion = new CassandraSchemaVersion(cassandraJMXService).act();
+                if (operation.request.schemaVersion == null) {
+                    operation.request.schemaVersion = new CassandraSchemaVersion(cassandraJMXService).act();
+                }
                 operation.request.snapshotTag = resolveSnapshotTag(operation.request, System.currentTimeMillis());
             }
 
@@ -111,7 +113,7 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
                                       cassandraVersionProvider).run0();
 
             Snapshots.hashSpec = hashSpec;
-            final Snapshots snapshots = Snapshots.parse(request.cassandraDirectory.resolve("data"), request.snapshotTag);
+            final Snapshots snapshots = Snapshots.parse(request.dataDirs, request.snapshotTag);
             final Optional<Snapshot> snapshot = snapshots.get(request.snapshotTag);
 
             if (!snapshot.isPresent()) {
@@ -124,7 +126,7 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
             manifest.setTokens(tokens);
 
             // manifest
-            final Path localManifestPath = getLocalManifestPath(request.cassandraDirectory, request.snapshotTag);
+            final Path localManifestPath = getLocalManifestPath(request.snapshotTag);
             Manifest.write(manifest, localManifestPath, objectMapper);
             manifest.setManifest(getManifestAsManifestEntry(localManifestPath));
 

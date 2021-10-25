@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -237,23 +238,8 @@ public class Manifest implements Cloneable {
         return objectMapper.readValue(manifest, Manifest.class);
     }
 
-    public static Path getLocalManifestPath(final Path cassandraDir, final String snapshotTag) {
-        return cassandraDir.resolve("manifests").resolve(snapshotTag + ".json");
-    }
-
-    public static Set<Path> getLocalExistingEntries(final Path dataDir) {
-        final Set<Path> existingEntries = new HashSet<>();
-        final int skipBackupsAndSnapshotsFolders = 4;
-
-        if (dataDir.toFile().exists()) {
-            try (Stream<Path> paths = Files.walk(dataDir, skipBackupsAndSnapshotsFolders)) {
-                paths.filter(Files::isRegularFile).forEach(existingEntries::add);
-            } catch (final IOException ex) {
-                throw new IllegalStateException(format("Unable to walk through Cassandra data dir %s", dataDir), ex);
-            }
-        }
-
-        return existingEntries;
+    public static Path getLocalManifestPath(final String snapshotTag) {
+        return Paths.get(System.getProperty("java.io.tmpdir", "/tmp")).resolve("manifests").resolve(snapshotTag + ".json");
     }
 
     public static synchronized String parseLatestManifest(final List<String> manifestsPaths) {
@@ -377,14 +363,15 @@ public class Manifest implements Cloneable {
     }
 
     // for in place strategy
-    public void enrichManifestEntries(final Path localPathRoot) {
+    public void enrichManifestEntries() {
 
         snapshot.getKeyspaces().forEach((ksName, keyspace) -> {
             keyspace.getTables().forEach((tableName, table) -> {
                 table.getEntries().forEach(entry -> {
                     final Path objectKey = entry.objectKey;
                     final int hashPathPart = SSTableUtils.isSecondaryIndexManifest(objectKey) ? 4 : 3;
-                    entry.localFile = localPathRoot.resolve(objectKey.subpath(0, hashPathPart)).resolve(objectKey.getFileName());
+                    // localFile will be here, for example, "keyspace/table-with-id/me-5-big-Data.db"
+                    entry.localFile = objectKey.subpath(1, hashPathPart).resolve(objectKey.getFileName());
                     entry.keyspaceTable = new KeyspaceTable(ksName, tableName);
                 });
             });

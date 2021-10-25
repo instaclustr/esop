@@ -18,12 +18,14 @@ import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.esop.guice.StorageProviders;
 import com.instaclustr.esop.impl.DatabaseEntities;
+import com.instaclustr.esop.impl.ListPathSerializer;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl._import.ImportOperationRequest;
 import com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType;
 import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType;
 import com.instaclustr.esop.impl.retry.RetrySpec;
+import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationCoordinator;
 import com.instaclustr.operations.OperationFailureException;
@@ -93,7 +95,10 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                              @JsonProperty("proxySettings") final ProxySettings proxySettings,
                              @JsonProperty("rename") final Map<String, String> rename,
                              @JsonProperty("retry") final RetrySpec retry,
-                             @JsonProperty("singlePhase") final boolean singlePhase) {
+                             @JsonProperty("singlePhase") final boolean singlePhase,
+                             @JsonProperty("dataDirs")
+                             @JsonSerialize(using = ListPathSerializer.class)
+                             @JsonDeserialize(contentUsing = PathDeserializer.class) List<Path> dataDirs) {
         super(type, id, creationTime, state, errors, progress, startTime, new RestoreOperationRequest(type,
                                                                                                       storageLocation,
                                                                                                       concurrentConnections,
@@ -124,7 +129,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                                                                                                       proxySettings,
                                                                                                       rename,
                                                                                                       retry,
-                                                                                                      singlePhase));
+                                                                                                      singlePhase,
+                                                                                                      dataDirs));
         this.coordinator = null;
         this.storageProviders = null;
     }

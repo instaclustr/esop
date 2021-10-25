@@ -25,6 +25,14 @@ import picocli.CommandLine.Option;
 
 public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest {
 
+    @Option(names = {"--commit-log-dir"},
+            description = "Base directory that contains cassandra commit logs in node's runtime",
+            converter = PathTypeConverter.class,
+            defaultValue = "/var/lib/cassandra/data/commitlog")
+    @JsonSerialize(using = PathSerializer.class)
+    @JsonDeserialize(using = PathDeserializer.class)
+    public Path cassandraCommitLogDirectory;
+
     @Option(names = {"--cl-archive"},
         description = "Override path to the commitlog archive directory, relative to the container root.",
         converter = PathTypeConverter.class)
@@ -56,7 +64,7 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
                                             @JsonProperty("bandwidth") final DataRate bandwidth,
                                             @JsonProperty("concurrentConnections") final Integer concurrentConnections,
                                             @JsonProperty("metadataDirective") final MetadataDirective metadataDirective,
-                                            @JsonProperty("cassandraDirectory") final Path cassandraDirectory,
+                                            @JsonProperty("cassandraCommitLogDirectory") final Path cassandraCommitLogDirectory,
                                             @JsonProperty("commitLogArchiveOverride") final Path commitLogArchiveOverride,
                                             @JsonProperty("k8sNamespace") final String k8sNamespace,
                                             @JsonProperty("k8sSecretName") final String k8sSecretName,
@@ -72,7 +80,6 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
               duration,
               bandwidth,
               concurrentConnections,
-              cassandraDirectory,
               metadataDirective,
               k8sNamespace,
               k8sSecretName,
@@ -81,11 +88,13 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
               skipBucketVerification,
               proxySettings,
               retry,
-              skipRefreshing);
+              skipRefreshing,
+              null);
         this.type = "commitlog-backup";
         this.commitLogArchiveOverride = commitLogArchiveOverride;
         this.commitLog = commitLog;
         this.online = online;
+        this.cassandraCommitLogDirectory = cassandraCommitLogDirectory;
     }
 
     @Override
@@ -96,7 +105,7 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
             .add("bandwidth", bandwidth)
             .add("concurrentConnections", concurrentConnections)
             .add("metadataDirective", metadataDirective)
-            .add("cassandraDirectory", cassandraDirectory)
+            .add("cassandraCommitLogDirectory", cassandraCommitLogDirectory)
             .add("commitLogArchiveOverride", commitLogArchiveOverride)
             .add("commitLog", commitLog)
             .add("online", online)
@@ -114,12 +123,12 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
     @JsonIgnore
     public void validate(final Set<String> storageProviders) {
         super.validate(storageProviders);
-        if (this.cassandraDirectory == null || this.cassandraDirectory.toFile().getAbsolutePath().equals("/")) {
-            this.cassandraDirectory = Paths.get("/var/lib/cassandra");
+        if (this.cassandraCommitLogDirectory == null || this.cassandraCommitLogDirectory.toFile().getAbsolutePath().equals("/")) {
+            this.cassandraCommitLogDirectory = Paths.get("/var/lib/cassandra/data/commitlog");
         }
 
-        if (!Files.exists(this.cassandraDirectory)) {
-            throw new IllegalStateException(String.format("cassandraDirectory %s does not exist", cassandraDirectory));
+        if (!Files.exists(this.cassandraCommitLogDirectory)) {
+            throw new IllegalStateException(String.format("cassandraCommitLogDirectory %s does not exist", cassandraCommitLogDirectory));
         }
 
         if (KubernetesHelper.isRunningInKubernetes() && this.resolveKubernetesSecretName() == null) {

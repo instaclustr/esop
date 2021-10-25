@@ -6,25 +6,34 @@ import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-import java.nio.file.Files;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Set;
 
 import com.amazonaws.services.s3.model.MetadataDirective;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.google.common.base.MoreObjects;
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesConverter;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesDeserializer;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesSerializer;
+import com.instaclustr.esop.impl.ListPathSerializer;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.retry.RetrySpec;
+import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.measure.DataRate;
 import com.instaclustr.measure.Time;
 import picocli.CommandLine.Option;
@@ -83,7 +92,6 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonProperty("bandwidth") final DataRate bandwidth,
                                   @JsonProperty("concurrentConnections") final Integer concurrentConnections,
                                   @JsonProperty("metadataDirective") final MetadataDirective metadataDirective,
-                                  @JsonProperty("cassandraDirectory") final Path cassandraDirectory,
                                   @JsonProperty("entities")
                                   @JsonSerialize(using = DatabaseEntitiesSerializer.class)
                                   @JsonDeserialize(using = DatabaseEntitiesDeserializer.class) final DatabaseEntities entities,
@@ -100,12 +108,14 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonProperty("uploadClusterTopology") final boolean uploadClusterTopology,
                                   @JsonProperty("proxySettings") final ProxySettings proxySettings,
                                   @JsonProperty("retry") final RetrySpec retry,
-                                  @JsonProperty("skipRefreshing") final boolean skipRefreshing) {
+                                  @JsonProperty("skipRefreshing") final boolean skipRefreshing,
+                                  @JsonSerialize(using = ListPathSerializer.class)
+                                  @JsonDeserialize(contentUsing = PathDeserializer.class)
+                                  @JsonProperty("dataDirs") final List<Path> dataDirs) {
         super(storageLocation,
               duration,
               bandwidth,
               concurrentConnections,
-              cassandraDirectory,
               metadataDirective,
               k8sNamespace,
               k8sSecretName,
@@ -114,7 +124,8 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
               skipBucketVerification,
               proxySettings,
               retry,
-              skipRefreshing);
+              skipRefreshing,
+              dataDirs);
         this.entities = entities == null ? DatabaseEntities.empty() : entities;
         this.snapshotTag = snapshotTag == null ? format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis())) : snapshotTag;
         this.globalRequest = globalRequest;
@@ -132,7 +143,7 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
             .add("duration", duration)
             .add("bandwidth", bandwidth)
             .add("concurrentConnections", concurrentConnections)
-            .add("cassandraDirectory", cassandraDirectory)
+            .add("dataDirs", dataDirs)
             .add("entities", entities)
             .add("snapshotTag", snapshotTag)
             .add("k8sNamespace", k8sNamespace)
@@ -155,14 +166,6 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
     @JsonIgnore
     public void validate(final Set<String> storageProviders) {
         super.validate(storageProviders);
-
-        if (this.cassandraDirectory == null || this.cassandraDirectory.toFile().getAbsolutePath().equals("/")) {
-            this.cassandraDirectory = Paths.get("/var/lib/cassandra");
-        }
-
-        if (!Files.exists(this.cassandraDirectory)) {
-            throw new IllegalStateException(String.format("cassandraDirectory %s does not exist", this.cassandraDirectory));
-        }
 
         if ((isRunningInKubernetes() || isRunningAsClient())) {
             if (this.resolveKubernetesSecretName() == null) {

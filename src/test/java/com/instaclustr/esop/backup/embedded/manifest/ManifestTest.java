@@ -291,7 +291,7 @@ public class ManifestTest {
             Manifest manifest = new Manifest(snapshots.get("snapshot3").get());
 
             // manifest itself, but it wont be serialised
-            final Path localManifestPath = getLocalManifestPath(cassandraDir, "snapshot1");
+            final Path localManifestPath = getLocalManifestPath("snapshot1");
             manifest.setManifest(getManifestAsManifestEntry(localManifestPath));
 
             // tokens

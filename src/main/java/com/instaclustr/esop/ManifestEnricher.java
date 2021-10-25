@@ -1,6 +1,7 @@
 package com.instaclustr.esop;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 import com.instaclustr.esop.impl.CassandraData;
@@ -22,12 +23,6 @@ public class ManifestEnricher {
             this.table = table;
             this.tableId = tableId;
         }
-    }
-
-    public void enrich(final CassandraData cassandraData,
-                       final Manifest manifest,
-                       final Path localRootPath) {
-        enrich(cassandraData, manifest, localRootPath, false);
     }
 
     private TableName getTableName(final CassandraData data,
@@ -63,31 +58,32 @@ public class ManifestEnricher {
 
     public void enrich(final CassandraData cassandraData,
                        final Manifest manifest,
-                       final Path localRootPath,
-                       final boolean forInPlaceStrategy) {
+                       final Path localRootPath) {
 
         // populate localFile and keyspaceTable for each entry, based on what
         // table and its id we have locally, ids might differ in manifest from these which are
         // present locally (for example when a table is deleted and then created again and after that
         // we want to e.g. restore - id of that table would be suddenly different from one which was
-        // backed up so we would have problems upon e.g. hard-linking
+        // backed up, so we would have problems upon e.g. hard-linking.
         manifest.getSnapshot().forEachEntry((entry, keyspace, table, idInManifest) -> {
-            final TableName tableName = getTableName(cassandraData, keyspace, table, idInManifest, forInPlaceStrategy);
+            final TableName tableName = getTableName(cassandraData, keyspace, table, idInManifest, false);
 
             // "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/1-937685388/na-1-big-Filter.db"
             // "data/system/sstable_activity-5a1ff267ace03f128563cfae6103c65e/.indexname/1-937685388/na-1-big-Filter.db"
 
             final int subPathEndIndex = SSTableUtils.isSecondaryIndexManifest(entry.objectKey) ? 4 : 3;
 
+            Path initialPath = localRootPath == null ? Paths.get(tableName.keyspace) : localRootPath.resolve(tableName.keyspace);
+
             if (subPathEndIndex == 4) {
                 Path indexName = entry.objectKey.subpath(0, 4).getFileName();
 
-                entry.localFile = localRootPath.resolve(tableName.keyspace)
+                entry.localFile = initialPath
                     .resolve(tableName.table + "-" + tableName.tableId)
                     .resolve(indexName)
                     .resolve(entry.objectKey.getFileName());
             } else {
-                entry.localFile = localRootPath.resolve(tableName.keyspace)
+                entry.localFile = initialPath
                     .resolve(tableName.table + "-" + tableName.tableId)
                     .resolve(entry.objectKey.getFileName());
             }

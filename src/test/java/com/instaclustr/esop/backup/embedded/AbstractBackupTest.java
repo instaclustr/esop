@@ -29,7 +29,6 @@ import static org.testng.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -94,7 +93,7 @@ public abstract class AbstractBackupTest {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbstractBackupTest.class);
 
-    public static final String CASSANDRA_VERSION = System.getProperty("cassandra3.version", "3.11.11");
+    public static final String CASSANDRA_VERSION = System.getProperty("cassandra3.version", "3.11.10");
 
     public static final String CASSANDRA_4_VERSION = System.getProperty("cassandra4.version", "4.0-rc2");
 
@@ -117,7 +116,6 @@ public abstract class AbstractBackupTest {
     ////////// ARGUMENTS
 
     protected static final String BUCKET_NAME = UUID.randomUUID().toString();
-
     protected static final String SIDECAR_SECRET_NAME = "test-sidecar-secret";
 
     private String systemKeyspace(final String cassandraVersion) {
@@ -138,7 +136,12 @@ public abstract class AbstractBackupTest {
             "backup",
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket",
@@ -150,7 +153,12 @@ public abstract class AbstractBackupTest {
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
             "--snapshot-tag=" + snapshotName,
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket",
@@ -163,7 +171,12 @@ public abstract class AbstractBackupTest {
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
             "--snapshot-tag=" + snapshotName,
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket",
@@ -175,7 +188,7 @@ public abstract class AbstractBackupTest {
         final String[] commitlogBackupArgs = new String[]{
             "commitlog-backup",
             "--storage-location=" + getStorageLocation(),
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--commit-log-dir=" + cassandraDir.toAbsolutePath() + "/data/commitlog",
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             //"--online"
         };
@@ -185,6 +198,12 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgs = new String[]{
             "restore",
             "--data-directory=" + cassandraRestoredDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraRestoredDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraRestoredDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraRestoredDir.toAbsolutePath() + "/data/data3",
             "--config-directory=" + cassandraRestoredConfigDir.toAbsolutePath(),
             "--snapshot-tag=" + snapshotName,
             "--storage-location=" + getStorageLocation(),
@@ -203,7 +222,7 @@ public abstract class AbstractBackupTest {
 
         final String[] commitlogRestoreArgs = new String[]{
             "commitlog-restore",
-            "--data-directory=" + cassandraRestoredDir.toAbsolutePath() + "/data",
+            "--commit-log-dir=" + cassandraRestoredDir.toAbsolutePath() + "/data/commitlog",
             "--config-directory=" + cassandraRestoredConfigDir.toAbsolutePath(),
             "--storage-location=" + getStorageLocation(),
             "--commitlog-download-dir=" + target("commitlog_download_dir"),
@@ -232,7 +251,12 @@ public abstract class AbstractBackupTest {
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
             "--snapshot-tag=" + snapshotName1,
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
@@ -243,7 +267,12 @@ public abstract class AbstractBackupTest {
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
             "--snapshot-tag=" + snapshotName2,
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
@@ -254,6 +283,12 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase1 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
@@ -268,6 +303,12 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase2 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
@@ -281,6 +322,12 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase3 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
@@ -294,6 +341,12 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase4 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
@@ -334,7 +387,12 @@ public abstract class AbstractBackupTest {
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
             "--snapshot-tag=" + snapshotName1,
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
@@ -345,7 +403,12 @@ public abstract class AbstractBackupTest {
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
             "--snapshot-tag=" + snapshotName2,
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
@@ -356,6 +419,12 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase1 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
@@ -371,6 +440,12 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase2 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
@@ -386,6 +461,12 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase3 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
@@ -401,6 +482,12 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase4 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
@@ -433,7 +520,12 @@ public abstract class AbstractBackupTest {
             "backup",
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
@@ -444,7 +536,12 @@ public abstract class AbstractBackupTest {
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
             "--snapshot-tag=" + snapshotName,
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
@@ -455,7 +552,12 @@ public abstract class AbstractBackupTest {
                 "--jmx-service", "127.0.0.1:7199",
                 "--storage-location=" + getStorageLocationForAnotherCluster(),
                 "--snapshot-tag=" + snapshotName,
-                "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data2",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data3",
                 "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
                 "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
                 "--create-missing-bucket"
@@ -466,6 +568,12 @@ public abstract class AbstractBackupTest {
         final String[] downloadPhase = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--snapshot-tag=" + snapshotName,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
@@ -479,6 +587,12 @@ public abstract class AbstractBackupTest {
         final String[] truncatePhase = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--snapshot-tag=" + snapshotName,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
@@ -492,6 +606,12 @@ public abstract class AbstractBackupTest {
         final String[] importPhase = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--snapshot-tag=" + snapshotName,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
@@ -505,6 +625,12 @@ public abstract class AbstractBackupTest {
         final String[] cleanupPhase = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--snapshot-tag=" + snapshotName,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
@@ -540,7 +666,12 @@ public abstract class AbstractBackupTest {
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
             "--snapshot-tag=" + snapshotName1,
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
@@ -552,7 +683,12 @@ public abstract class AbstractBackupTest {
             "--jmx-service", "127.0.0.1:7199",
             "--storage-location=" + getStorageLocation(),
             "--snapshot-tag=" + snapshotName2,
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2,test3", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
@@ -566,6 +702,12 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase1 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--snapshot-tag=" + snapshotName1, // !!! important, we are restoring into the FIRST snapshot
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
@@ -579,6 +721,12 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase2 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--snapshot-tag=" + snapshotName1, // !!! important, we are restoring into the FIRST snapshot
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
@@ -592,6 +740,12 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase3 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--snapshot-tag=" + snapshotName1, // !!! important, we are restoring into the FIRST snapshot
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
@@ -605,6 +759,12 @@ public abstract class AbstractBackupTest {
         final String[] restoreArgsPhase4 = new String[]{
             "restore",
             "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data2",
+            "--data-dir",
+            cassandraDir.toAbsolutePath() + "/data/data3",
             "--snapshot-tag=" + snapshotName1, // !!! important, we are restoring into the FIRST snapshot
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
@@ -657,7 +817,13 @@ public abstract class AbstractBackupTest {
 
             // RESTORE VERIFICATION
             cassandra = getCassandra(cassandraRestoredDir, CASSANDRA_VERSION, (workingDirectory, version) -> {
-                Files.createDirectory(workingDirectory.resolve("data"));
+                try {
+                    FileUtils.createDirectory(workingDirectory.resolve("data").resolve("data"));
+                    FileUtils.createDirectory(workingDirectory.resolve("data").resolve("data2"));
+                    FileUtils.createDirectory(workingDirectory.resolve("data").resolve("data3"));
+                } catch (final Exception ex) {
+                    // ignore
+                }
                 restoreOnStoppedNode(insertionTimes, arguments);
             });
 
@@ -666,7 +832,7 @@ public abstract class AbstractBackupTest {
             waitForCql();
 
             try (CqlSession session = CqlSession.builder().build()) {
-                dumpTable(session, KEYSPACE, TABLE, NUMBER_OF_ROWS_AFTER_RESTORATION);
+                dumpTableAndAssertRowCount(session, KEYSPACE, TABLE, NUMBER_OF_ROWS_AFTER_RESTORATION);
             }
         } finally {
             if (cassandra != null) {
@@ -733,11 +899,11 @@ public abstract class AbstractBackupTest {
                 Esop.mainWithoutExit(arguments[5]);
 
                 // we expect 4 records to be there as 2 were there before the first backup and the second 2 before the second backup
-                dumpTable(session, KEYSPACE, TABLE, 4);
-                dumpTable(session, KEYSPACE_2, TABLE_2, 4);
+                dumpTableAndAssertRowCount(session, KEYSPACE, TABLE, 4);
+                dumpTableAndAssertRowCount(session, KEYSPACE_2, TABLE_2, 4);
                 // here we expect that table3 is same as table2
                 if (!crossKeyspaceRestore) {
-                    dumpTable(session, KEYSPACE_2, TABLE_3, 4);
+                    dumpTableAndAssertRowCount(session, KEYSPACE_2, TABLE_3, 4);
                 }
             }
         } finally {
@@ -793,8 +959,8 @@ public abstract class AbstractBackupTest {
                 Esop.mainWithoutExit(arguments[5]);
 
                 // we expect 4 records to be there as 2 were there before the first backup and the second 2 before the second backup
-                dumpTable(session, KEYSPACE, TABLE, 4);
-                dumpTable(session, KEYSPACE_2, TABLE_2, 4);
+                dumpTableAndAssertRowCount(session, KEYSPACE, TABLE, 4);
+                dumpTableAndAssertRowCount(session, KEYSPACE_2, TABLE_2, 4);
             }
         } finally {
             cassandra.stop();
@@ -870,9 +1036,9 @@ public abstract class AbstractBackupTest {
 
             // after truncating, we see that we have truncated just two tables which were
             // in snapshot from snapshot1, not the third one
-            dumpTable(session, KEYSPACE, TABLE, 0);
-            dumpTable(session, KEYSPACE_2, TABLE_2, 0);
-            dumpTable(session, KEYSPACE_3, TABLE_3, 2);
+            dumpTableAndAssertRowCount(session, KEYSPACE, TABLE, 0);
+            dumpTableAndAssertRowCount(session, KEYSPACE_2, TABLE_2, 0);
+            dumpTableAndAssertRowCount(session, KEYSPACE_3, TABLE_3, 2);
 
             // import
             Esop.mainWithoutExit(arguments[4]);
@@ -884,9 +1050,9 @@ public abstract class AbstractBackupTest {
 
             // here we check that table1 and table2 contains 2 rows each (as we restored it from the first snapshot) and table 3 will contain still 2
 
-            dumpTable(session, KEYSPACE, TABLE, 2);
-            dumpTable(session, KEYSPACE_2, TABLE_2, 2);
-            dumpTable(session, KEYSPACE_3, TABLE_3, 2);
+            dumpTableAndAssertRowCount(session, KEYSPACE, TABLE, 2);
+            dumpTableAndAssertRowCount(session, KEYSPACE_2, TABLE_2, 2);
+            dumpTableAndAssertRowCount(session, KEYSPACE_3, TABLE_3, 2);
         } finally {
             cassandra.stop();
             FileUtils.deleteDirectory(cassandraDir);
@@ -944,9 +1110,9 @@ public abstract class AbstractBackupTest {
 
             // after truncating, we see that we have truncated just two tables which were
             // in snapshot from snapshot1, not the third one
-            dumpTable(session, KEYSPACE, TABLE, 0);
-            dumpTable(session, KEYSPACE_2, TABLE_2, 0);
-            dumpTable(session, KEYSPACE_3, TABLE_3, 2);
+            dumpTableAndAssertRowCount(session, KEYSPACE, TABLE, 0);
+            dumpTableAndAssertRowCount(session, KEYSPACE_2, TABLE_2, 0);
+            dumpTableAndAssertRowCount(session, KEYSPACE_3, TABLE_3, 2);
 
             // import
             Esop.mainWithoutExit(arguments[4]);
@@ -958,9 +1124,9 @@ public abstract class AbstractBackupTest {
 
             // here we check that table1 and table2 contains 2 rows each (as we restored it from the first snapshot) and table 3 will contain still 2
 
-            dumpTable(session, KEYSPACE, TABLE, 2);
-            dumpTable(session, KEYSPACE_2, TABLE_2, 2);
-            dumpTable(session, KEYSPACE_3, TABLE_3, 2);
+            dumpTableAndAssertRowCount(session, KEYSPACE, TABLE, 2);
+            dumpTableAndAssertRowCount(session, KEYSPACE_2, TABLE_2, 2);
+            dumpTableAndAssertRowCount(session, KEYSPACE_3, TABLE_3, 2);
         } finally {
             cassandra.stop();
             FileUtils.deleteDirectory(cassandraDir);
@@ -1027,6 +1193,13 @@ public abstract class AbstractBackupTest {
         builder.version(Version.parse(version));
         builder.jvmOptions("-Dcassandra.ring_delay_ms=1000", "-Xms1g", "-Xmx1g");
         builder.workingDirectory(() -> cassandraHome);
+        builder.addConfigProperties(new HashMap<String, Object>() {{
+            put("data_file_directories", new ArrayList<String>() {{
+                add(cassandraHome.toAbsolutePath() + "/data/data");
+                add(cassandraHome.toAbsolutePath() + "/data/data2");
+                add(cassandraHome.toAbsolutePath() + "/data/data3");
+            }});
+        }});
 
         if (customizer != null) {
             builder.workingDirectoryCustomizers(customizer);
@@ -1061,14 +1234,17 @@ public abstract class AbstractBackupTest {
         return executionTimes;
     }
 
+    public int idInserted = 1;
+
     protected List<Long> insert(int records, CqlSession cqlSession, List<String[]> entities) {
         return range(0, records).mapToObj(i -> {
             for (String[] keyspaceTable : entities) {
                 cqlSession.execute(insertInto(keyspaceTable[0], keyspaceTable[1])
-                                       .value(ID, literal("1"))
+                                       .value(ID, literal(Integer.toString(idInserted)))
                                        .value(DATE, literal(timeBased()))
                                        .value(NAME, literal("stefan1"))
                                        .build());
+                ++idInserted;
             }
 
             Uninterruptibles.sleepUninterruptibly(2, SECONDS);
@@ -1155,10 +1331,10 @@ public abstract class AbstractBackupTest {
     }
 
 
-    protected void dumpTable(final CqlSession session,
-                             final String keyspace,
-                             final String table,
-                             int expectedLength) {
+    protected void dumpTableAndAssertRowCount(final CqlSession session,
+                                              final String keyspace,
+                                              final String table,
+                                              int expectedLength) {
         List<Row> rows = session.execute(selectFrom(keyspace, table).all().build()).all();
 
         logger.info(format("Dumping %s.%s", keyspace, table));

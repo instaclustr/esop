@@ -99,8 +99,8 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 Esop.mainWithoutExit(arguments[5]);
 
                 // we expect 4 records to be there as 2 were there before the first backup and the second 2 before the second backup
-                dumpTable(session, KEYSPACE, TABLE, 4);
-                dumpTable(session, KEYSPACE_2, TABLE_2, 4);
+                dumpTableAndAssertRowCount(session, KEYSPACE, TABLE, 4);
+                dumpTableAndAssertRowCount(session, KEYSPACE_2, TABLE_2, 4);
 
                 // listing
 

@@ -13,12 +13,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.instaclustr.esop.impl.RenamedEntities.Renamed;
 
@@ -36,6 +39,33 @@ public class CassandraData {
                          final Map<Path, List<Path>> fullPathsMap) {
         this.tableIdsMap.putAll(tableIdsMap);
         this.fullPathsMap.putAll(fullPathsMap);
+    }
+
+    public static Set<Path> getLocalDataFiles(final List<Path> dataDirs) {
+        return dataDirs.stream()
+                       .flatMap(dataDir -> getLocalDataFiles(dataDir).stream())
+                       .collect(Collectors.toSet());
+    }
+
+    public static Set<Path> getLocalDataFiles(final Path dataDir) {
+        final Set<Path> existingEntries = new HashSet<>();
+        final int skipBackupsAndSnapshotsFolders = 4;
+
+        if (dataDir.toFile().exists()) {
+            try (Stream<Path> paths = Files.walk(dataDir, skipBackupsAndSnapshotsFolders)) {
+                paths.filter(Files::isRegularFile).forEach(existingEntries::add);
+            } catch (final IOException ex) {
+                throw new IllegalStateException(format("Unable to walk through Cassandra data dir %s", dataDir), ex);
+            }
+        }
+
+        return existingEntries;
+    }
+
+    public static boolean containsFile(final Set<Path> localDataFiles,
+                                       final Path manifestLocalFile) {
+        return localDataFiles.stream()
+                             .anyMatch(p -> p.toAbsolutePath().endsWith(manifestLocalFile));
     }
 
     public boolean containsKeyspace(final String keyspace) {
@@ -245,7 +275,6 @@ public class CassandraData {
     }
 
     public static CassandraData parse(final Path cassandraDir) throws Exception {
-
         if (!Files.exists(cassandraDir)) {
             return CassandraData.empty();
         }

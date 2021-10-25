@@ -19,20 +19,18 @@ import com.instaclustr.esop.guice.StorageProviders;
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesDeserializer;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesSerializer;
+import com.instaclustr.esop.impl.ListPathSerializer;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.retry.RetrySpec;
+import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.measure.DataRate;
 import com.instaclustr.measure.Time;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationCoordinator;
 import com.instaclustr.operations.OperationFailureException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class BackupOperation extends Operation<BackupOperationRequest> implements Cloneable {
-
-    private static final Logger logger = LoggerFactory.getLogger(BackupOperation.class);
 
     private final Set<String> storageProviders;
     private final OperationCoordinator<BackupOperationRequest> coordinator;
@@ -61,7 +59,7 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
     private AtomicBoolean closeOperation = new AtomicBoolean(false);
 
     // this constructor is not meant to be instantiated manually
-    // and it fulfills the purpose of deserialisation from JSON string to an Operation object, currently just for testing purposes
+    // and it fulfills the purpose of deserialization from JSON string to an Operation object, currently just for testing purposes
     @JsonCreator
     private BackupOperation(@JsonProperty("type") final String type,
                             @JsonProperty("id") final UUID id,
@@ -75,7 +73,6 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonProperty("bandwidth") final DataRate bandwidth,
                             @JsonProperty("concurrentConnections") final Integer concurrentConnections,
                             @JsonProperty("metadataDirective") final MetadataDirective metadataDirective,
-                            @JsonProperty("cassandraDirectory") final Path cassandraDirectory,
                             @JsonProperty("entities")
                             @JsonSerialize(using = DatabaseEntitiesSerializer.class)
                             @JsonDeserialize(using = DatabaseEntitiesDeserializer.class) final DatabaseEntities entities,
@@ -92,14 +89,16 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonProperty("uploadClusterTopology") final boolean uploadClusterTopology,
                             @JsonProperty("proxySettings") final ProxySettings proxySettings,
                             @JsonProperty("retry") final RetrySpec retry,
-                            @JsonProperty("skipRefreshing") final boolean skipRefreshing) {
+                            @JsonProperty("skipRefreshing") final boolean skipRefreshing,
+                            @JsonSerialize(using = ListPathSerializer.class)
+                            @JsonDeserialize(contentUsing = PathDeserializer.class)
+                            @JsonProperty("dataDirs") final List<Path> dataDirs) {
         super(type, id, creationTime, state, errors, progress, startTime, new BackupOperationRequest(type,
                                                                                                      storageLocation,
                                                                                                      duration,
                                                                                                      bandwidth,
                                                                                                      concurrentConnections,
                                                                                                      metadataDirective,
-                                                                                                     cassandraDirectory,
                                                                                                      entities,
                                                                                                      snapshotTag,
                                                                                                      k8sNamespace,
@@ -114,7 +113,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                                                                                                      uploadClusterTopology,
                                                                                                      proxySettings,
                                                                                                      retry,
-                                                                                                     skipRefreshing));
+                                                                                                     skipRefreshing,
+                                                                                                     dataDirs));
         coordinator = null;
         storageProviders = null;
     }

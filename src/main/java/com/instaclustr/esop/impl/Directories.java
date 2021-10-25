@@ -1,6 +1,7 @@
 package com.instaclustr.esop.impl;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 
@@ -12,8 +13,8 @@ public class Directories {
         this.request = request;
     }
 
-    public Path data() {
-        return request.cassandraDirectory.resolve("data");
+    public List<Path> data() {
+        return request.dataDirs;
     }
 
     public Path hints() {
@@ -29,7 +30,7 @@ public class Directories {
     }
 
     public boolean dataDirExists() {
-        return data().toFile().exists();
+        return data().stream().allMatch(dataDir -> dataDir.toFile().exists());
     }
 
     public boolean hintsDirExists() {

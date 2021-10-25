@@ -22,13 +22,13 @@ import picocli.CommandLine.Option;
 
 public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationRequest {
 
-    @Option(names = {"--dd", "--data-directory"},
-        description = "Base directory that contains the Cassandra data, cache and commitlog directories",
-        converter = PathTypeConverter.class,
-        defaultValue = "/var/lib/cassandra/")
-    @JsonDeserialize(using = PathDeserializer.class)
+    @Option(names = {"--commit-log-dir"},
+            description = "Base directory that contains cassandra commit logs in node's runtime",
+            converter = PathTypeConverter.class,
+            defaultValue = "/var/lib/cassandra/data/commitlog")
     @JsonSerialize(using = PathSerializer.class)
-    public Path cassandraDirectory;
+    @JsonDeserialize(using = PathDeserializer.class)
+    public Path cassandraCommitLogDirectory;
 
     @Option(names = {"-p", "--shared-path"},
         description = "Shared Container path for pod",
@@ -75,7 +75,7 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
     @JsonCreator
     public RestoreCommitLogsOperationRequest(@JsonProperty("storageLocation") final StorageLocation storageLocation,
                                              @JsonProperty("concurrentConnections") final Integer concurrentConnections,
-                                             @JsonProperty("cassandraDirectory") final Path cassandraDirectory,
+                                             @JsonProperty("cassandraCommitLogDirectory") final Path cassandraCommitLogDirectory,
                                              @JsonProperty("sharedContainerPath") final Path sharedContainerPath,
                                              @JsonProperty("cassandraConfigDirectory") final Path cassandraConfigDirectory,
                                              @JsonProperty("commitlogDownloadDir") final Path commitlogDownloadDir,
@@ -89,7 +89,7 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
                                              @JsonProperty("proxySettings") final ProxySettings proxySettings,
                                              @JsonProperty("retry") final RetrySpec retry) {
         super(storageLocation, concurrentConnections, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
-        this.cassandraDirectory = cassandraDirectory == null ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
+        this.cassandraCommitLogDirectory = cassandraCommitLogDirectory == null ? Paths.get("/var/lib/cassandra/data/commitlog") : cassandraCommitLogDirectory;
         this.sharedContainerPath = sharedContainerPath == null ? Paths.get("/") : sharedContainerPath;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
         this.timestampStart = timestampStart;
@@ -104,7 +104,7 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
         return MoreObjects.toStringHelper(this)
             .add("storageLocation", storageLocation)
             .add("concurrentConnections", concurrentConnections)
-            .add("cassandraDirectory", cassandraDirectory)
+            .add("cassandraCommitLogDirectory", cassandraCommitLogDirectory)
             .add("sharedContainerPath", sharedContainerPath)
             .add("cassandraConfigDirectory", cassandraConfigDirectory)
             .add("timestampStart", timestampStart)

@@ -10,8 +10,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.Adler32;
 
@@ -19,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 import com.instaclustr.esop.impl.hash.HashService;
 import com.instaclustr.esop.impl.hash.HashServiceImpl;
 import com.instaclustr.io.FileUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.instaclustr.esop.impl.hash.HashSpec;
@@ -31,11 +38,12 @@ public class SSTableUtils {
     // Ver. 2.1 = lb-1-big-Data.db
     // Ver. 2.2 = lb-1-big-Data.db
     // Ver. 3.0 = mc-1-big-Data.db
-    private static final Pattern SSTABLE_RE = Pattern.compile("((?:[a-zA-Z0-9][a-zA-Z0-9_-]+[a-zA-Z0-9][a-zA-Z0-9_-]+-)?[a-z]{2}-(\\d+)(?:-big)?)-.*");
+    public static final Pattern SSTABLE_RE = Pattern.compile("((?:[a-zA-Z0-9][a-zA-Z0-9_-]+[a-zA-Z0-9][a-zA-Z0-9_-]+-)?[a-z]{2}-(\\d+)(?:-big)?)-.*");
     private static final ImmutableList<String> DIGESTS = ImmutableList.of("crc32", "adler32", "sha1");
     private static final int SSTABLE_PREFIX_IDX = 1;
     private static final int SSTABLE_GENERATION_IDX = 2;
     private static final Pattern CHECKSUM_RE = Pattern.compile("^([a-zA-Z0-9]+).*");
+    private static final HashService hashService = new HashServiceImpl(new HashSpec());
 
     public static String sstableHash(Path path) throws IOException {
         final Matcher matcher = SSTABLE_RE.matcher(path.getFileName().toString());
@@ -93,47 +101,69 @@ public class SSTableUtils {
         }
     }
 
-    public static Stream<ManifestEntry> ssTableManifest(String keyspace,
-                                                        String table,
-                                                        Path snapshotDirectory,
-                                                        Path tableBackupPath,
-                                                        HashSpec hashSpec) throws IOException {
+    public static Map<String, List<ManifestEntry>> getSSTables(String keyspace,
+                                                               String table,
+                                                               Path snapshotDirectory,
+                                                               Path tableBackupPath,
+                                                               HashSpec hashSpec) throws IOException {
         if (!Files.exists(snapshotDirectory)) {
-            return Stream.empty();
+            return Collections.emptyMap();
         }
 
         final HashService hashService = new HashServiceImpl(hashSpec);
 
         return Files.list(snapshotDirectory)
-            .flatMap(path -> {
-                if (isCassandra22SecIndex(path)) {
-                    return FileUtils.tryListFiles(path);
-                }
-                return Stream.of(path);
-            })
-            .filter(path -> SSTABLE_RE.matcher(path.getFileName().toString()).matches())
-            .sorted()
-            .map(localPath -> {
-                try {
-                    final String hash = sstableHash(localPath);
-                    final Path manifestComponentFileName = snapshotDirectory.relativize(localPath);
+                    .flatMap(path -> {
+                        if (isCassandra22SecIndex(path)) {
+                            return FileUtils.tryListFiles(path);
+                        }
+                        return Stream.of(path);
+                    })
+                    .filter(path -> SSTABLE_RE.matcher(path.getFileName().toString()).matches())
+                    .sorted()
+                    .collect(Collectors.groupingBy(path -> {
+                        final Matcher matcher = SSTABLE_RE.matcher(path.getFileName().toString());
+                        if (matcher.matches()) {
+                            return matcher.group(1);
+                        } else {
+                            return "";
+                        }
+                    }))
+                    .entrySet()
+                    .stream()
+                    .filter(entry -> !entry.getKey().equals(""))
+                    .map(entry -> {
+                        try {
+                            final String sstableBaseName = entry.getKey();
+                            final List<ManifestEntry> entries = new ArrayList<>();
 
-                    final Path parent = manifestComponentFileName.getParent();
+                            for (final Path sstableComponent : entry.getValue()) {
+                                final String hash = sstableHash(sstableComponent);
+                                final Path manifestComponentFileName = snapshotDirectory.relativize(sstableComponent);
 
-                    Path backupPath = tableBackupPath;
+                                final Path parent = manifestComponentFileName.getParent();
 
-                    if (parent != null) {
-                        backupPath = backupPath.resolve(parent);
-                    }
+                                Path backupPath = tableBackupPath;
 
-                    backupPath = backupPath.resolve(hash).resolve(manifestComponentFileName.getFileName());
+                                if (parent != null) {
+                                    backupPath = backupPath.resolve(parent);
+                                }
 
-                    final String hashOfFile = hashService.hash(localPath);
-                    return new ManifestEntry(backupPath, localPath, ManifestEntry.Type.FILE, hashOfFile, new KeyspaceTable(keyspace, table));
-                } catch (Exception e) {
-                    throw new UncheckedIOException(new IOException(e));
-                }
-            });
+                                backupPath = backupPath.resolve(hash).resolve(manifestComponentFileName.getFileName());
+                                final String hashOfFile = hashService.hash(sstableComponent);
+
+                                entries.add(new ManifestEntry(backupPath,
+                                                              sstableComponent,
+                                                              ManifestEntry.Type.FILE,
+                                                              hashOfFile,
+                                                              new KeyspaceTable(keyspace, table)));
+                            }
+
+                            return Pair.of(sstableBaseName, entries);
+                        } catch (Exception e) {
+                            throw new UncheckedIOException(new IOException(e));
+                        }
+                    }).collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 
     /**

@@ -82,7 +82,7 @@ public class RestoreCommitLogsOperation extends Operation<RestoreCommitLogsOpera
     private void backupCurrentCommitLogs() throws Exception {
         final Set<Path> existingCommitlogsList = new HashSet<>();
 
-        final Path commitlogsPath = request.cassandraDirectory.resolve(CASSANDRA_COMMIT_LOGS);
+        final Path commitlogsPath = request.cassandraCommitLogDirectory;
 
         if (commitlogsPath.toFile().exists()) {
             try (Stream<Path> paths = Files.list(commitlogsPath)) {
@@ -186,7 +186,7 @@ public class RestoreCommitLogsOperation extends Operation<RestoreCommitLogsOpera
             commitlogArchivingProperties.store(output, null);
 
             logger.info(format("file %s was updated. Please consult the content of this file before starting the node.",
-                               commitlogArchivingPropertiesPath.toAbsolutePath().toString()));
+                               commitlogArchivingPropertiesPath.toAbsolutePath()));
         } catch (final IOException e) {
             logger.warn("Failed to write to file \"{}\".", commitlogArchivingPropertiesPath, e);
         }

@@ -12,6 +12,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -212,8 +214,14 @@ public class LocalBackupTest extends AbstractBackupTest {
         final String snapshotName = UUID.randomUUID().toString();
         final String snapshotName2 = UUID.randomUUID().toString();
 
-        final BackupOperationRequest backupOperationRequest = getBackupOperationRequestForTracker(snapshotName, "test,test2");
-        final BackupOperationRequest backupOperationRequest2 = getBackupOperationRequestForTracker(snapshotName2, "test");
+        List<Path> dataDirs = Arrays.asList(
+                cassandraDir.toAbsolutePath().resolve("data").resolve("data"),
+                cassandraDir.toAbsolutePath().resolve("data").resolve("data2"),
+                cassandraDir.toAbsolutePath().resolve("data").resolve("data3")
+        );
+
+        final BackupOperationRequest backupOperationRequest = getBackupOperationRequestForTracker(snapshotName, "test,test2", dataDirs);
+        final BackupOperationRequest backupOperationRequest2 = getBackupOperationRequestForTracker(snapshotName2, "test", dataDirs);
 
         UploadTracker uploadTracker = null;
 
@@ -255,7 +263,7 @@ public class LocalBackupTest extends AbstractBackupTest {
                                                                        backupOperationRequest2.snapshotTag),
                                       cassandraVersionProvider).run();
 
-            final Snapshots snapshots = Snapshots.parse(cassandraDataDir);
+            final Snapshots snapshots = Snapshots.parse(dataDirs);
             final Optional<Snapshot> snapshot = snapshots.get(backupOperationRequest.snapshotTag);
             final Optional<Snapshot> snapshot2 = snapshots.get(backupOperationRequest2.snapshotTag);
 
@@ -344,7 +352,8 @@ public class LocalBackupTest extends AbstractBackupTest {
     }
 
     private BackupOperationRequest getBackupOperationRequestForTracker(final String snapshotName,
-                                                                       final String entities) throws Exception {
+                                                                       final String entities,
+                                                                       final List<Path> dataDirs) throws Exception {
         return new BackupOperationRequest(
             "backup",
             new StorageLocationTypeConverter().convert(getStorageLocation()),
@@ -352,7 +361,6 @@ public class LocalBackupTest extends AbstractBackupTest {
             null,
             null,
             null,
-            cassandraDir.resolve("data"),
             DatabaseEntities.parse(entities),
             snapshotName,
             null,
@@ -367,7 +375,8 @@ public class LocalBackupTest extends AbstractBackupTest {
             false,
             null, // proxy settings
             null, // retry
-            false // skipRefreshing
+            false, // skipRefreshing
+            dataDirs
         );
     }
 

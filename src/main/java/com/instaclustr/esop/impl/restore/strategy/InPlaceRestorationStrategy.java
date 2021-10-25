@@ -6,22 +6,16 @@ import static java.lang.String.format;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.instaclustr.esop.guice.BucketServiceFactory;
 import com.instaclustr.esop.impl.AbstractTracker.Session;
 import com.instaclustr.esop.impl.BucketService;
-import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.ManifestEntry;
-import com.instaclustr.esop.impl.ManifestEntry.Type;
-import com.instaclustr.esop.impl.SSTableUtils;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.restore.DownloadTracker;
 import com.instaclustr.esop.impl.restore.DownloadTracker.DownloadUnit;
@@ -29,6 +23,7 @@ import com.instaclustr.esop.impl.restore.RestorationStrategy;
 import com.instaclustr.esop.impl.restore.RestorationUtilities;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
+import com.instaclustr.esop.impl.restore.strategy.DataSynchronizator.ManifestEntrySSTableClassifier;
 import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology;
 import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology.NodeTopology;
 import com.instaclustr.io.FileUtils;
@@ -98,88 +93,33 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
             logger.info("Retrieving manifest for snapshot: {}", request.snapshotTag);
 
             final Manifest manifest = RestorationUtilities.downloadManifest(operation.request, restorer, null, objectMapper);
-            manifest.enrichManifestEntries(request.cassandraDirectory);
+            manifest.enrichManifestEntries();
 
-            final DatabaseEntities filteredManifestDatabaseEntities = manifest.getDatabaseEntities(true).filter(request.entities);
+            final DataSynchronizator synchronizator = new DataSynchronizator(manifest, request).execute();
 
-            logger.info("filtered entities from manifest: " + filteredManifestDatabaseEntities.toString());
+            // here we need to categorize into what data dir entries to download will be downloaded
+            // categorization will set "localFile" on manifest entry
+            // we need to do it in such a way that sstables belonging together will be placed into same dir
 
-            final List<ManifestEntry> manifestFiles = manifest.getManifestFiles(filteredManifestDatabaseEntities,
-                                                                                request.restoreSystemKeyspace,
-                                                                                request.restoreSystemAuth,
-                                                                                request.newCluster,
-                                                                                true);
-
-            // 3. Build a list of all SSTables currently present, that are candidates for deleting
-            final Set<Path> existingFiles = Manifest.getLocalExistingEntries(request.dirs.data());
-
-            final List<ManifestEntry> entriesToDownload = new ArrayList<>();
-            final List<Path> filesToDelete = new ArrayList<>();
-
-            logger.info("Restoring to existing cluster: {}", existingFiles.size() > 0);
-
-            // the first round, see what is in manifest and what is currently present,
-            // if it is not present, we will download it
-
-            for (final ManifestEntry manifestFile : manifestFiles) {
-                // do not download schemas
-                if (manifestFile.type == Type.CQL_SCHEMA) {
-                    continue;
-                }
-
-                if (Files.exists(manifestFile.localFile)) {
-                    // this file exists on a local disk as well as in manifest, there is nothing to download nor remove
-                    logger.info(String.format("%s found locally, not downloading", manifestFile.localFile));
-                } else {
-                    // if it does not exist locally, we have to download it
-                    entriesToDownload.add(manifestFile);
-                }
-            }
-
-            // the second round, see what is present locally but it is not in the manifest
-            // if it is not in the manifest, we need to remove it from disk
-
-            for (final Path localExistingFile : existingFiles) {
-                // if it is not in manifest
-
-                final Optional<ManifestEntry> first = manifestFiles.stream().filter(me -> me.localFile.equals(localExistingFile)).findFirst();
-
-                if (first.isPresent()) {
-                    // if it exists, hash has to be same, otherwise delete it
-                    if (!SSTableUtils.isExistingSStable(first.get().localFile, first.get().objectKey.getName(SSTableUtils.isSecondaryIndexManifest(first.get().objectKey) ? 4 : 3).toString())) {
-                        filesToDelete.add(localExistingFile);
-                    }
-                } else {
-                    filesToDelete.add(localExistingFile);
-                }
-            }
-
-            // 4. Download files in the manifest
+            final ManifestEntrySSTableClassifier classifier = new ManifestEntrySSTableClassifier();
+            final Map<String, List<ManifestEntry>> classified = classifier.classify(synchronizator.entriesToDownload());
+            classifier.map(classified, request);
 
             Session<DownloadUnit> downloadSession = null;
 
             try {
-                downloadSession = downloadTracker.submit(restorer, operation, entriesToDownload, operation.request.snapshotTag, operation.request.concurrentConnections);
+                downloadSession = downloadTracker.submit(restorer,
+                                                         operation,
+                                                         synchronizator.entriesToDownload(),
+                                                         operation.request.snapshotTag, operation.request.concurrentConnections);
                 downloadSession.waitUntilConsideredFinished();
                 downloadTracker.cancelIfNecessary(downloadSession);
             } finally {
                 downloadTracker.removeSession(downloadSession);
             }
 
-            // 5. Delete any entries left in existingSstableList
-            filesToDelete.forEach(sstablePath -> {
-                logger.info("Deleting existing sstable {}", sstablePath);
-                if (!sstablePath.toFile().delete()) {
-                    logger.warn("Failed to delete {}", sstablePath);
-                }
-            });
-
-            // 6. Clean out old data
-            cleanDirectory(request.dirs.hints());
-            cleanDirectory(request.dirs.savedCaches());
-            cleanDirectory(request.dirs.commitLogs());
-
-            // 7.
+            synchronizator.deleteUnnecessarySSTableFiles();
+            synchronizator.cleanData();
 
             // K8S will handle copying over tokens.yaml fragment and disabling bootstrap fragment to right directory to be picked up by Cassandra
             // "standalone / vanilla" Cassandra installations has to cover this manually for now.

@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -42,6 +43,7 @@ import com.instaclustr.esop.impl.interaction.FailureDetector;
 import com.instaclustr.esop.impl.refresh.RefreshOperation;
 import com.instaclustr.esop.impl.refresh.RefreshOperationRequest;
 import com.instaclustr.esop.impl.restore.DownloadTracker.DownloadUnit;
+import com.instaclustr.esop.impl.restore.strategy.DataSynchronizator.PathSSTableClassifier;
 import com.instaclustr.esop.impl.restore.strategy.RestorationContext;
 import com.instaclustr.esop.impl.truncate.TruncateOperation;
 import com.instaclustr.esop.impl.truncate.TruncateOperationRequest;
@@ -55,7 +57,7 @@ import picocli.CommandLine;
 /**
  * Phase of a cluster-wide restoration. Some phases are
  * meant to be run on one node only, other on all nodes.
- *
+ * <p>
  * It is responsibility of {@link RestorationStrategy}
  * to figure out when a phase should be run. The most probable place to
  * decide if a phase should be run is in {@link RestorationStrategy#restore(Restorer, Operation)}.
@@ -378,7 +380,7 @@ public abstract class RestorationPhase {
                 }
 
                 if (!truncateFailuresMap.isEmpty()) {
-                    throw new RestorationPhaseException(format("Some tables were unable to be truncated: %s", truncateFailuresMap.toString()));
+                    throw new RestorationPhaseException(format("Some tables were unable to be truncated: %s", truncateFailuresMap));
                 }
 
                 logger.info("Truncating phase was finished successfully");
@@ -415,7 +417,7 @@ public abstract class RestorationPhase {
 
                 if (!CassandraVersion.isFour(ctxt.cassandraVersion)) {
                     throw new OperationFailureException(format("Underlying version of Cassandra is not supported to import SSTables: %s. Use this method "
-                                                                   + "only if you run Cassandra 4 and above", ctxt.cassandraVersion));
+                                                               + "only if you run Cassandra 4 and above", ctxt.cassandraVersion));
                 }
 
                 final String schemaVersion = new CassandraSchemaVersion(ctxt.jmx).act();
@@ -427,24 +429,24 @@ public abstract class RestorationPhase {
                 final DataVerification dataVerification = new DataVerification(ctxt).verify(manifest, databaseEntitiesToVerify);
                 if (dataVerification.hasErrors()) {
                     throw new RestorationPhaseException("Some local files were corrupted or they are missing, "
-                                                            + "please consult the logs to see the details" + dataVerification.toString());
+                                                        + "please consult the logs to see the details" + dataVerification.toString());
                 }
 
                 final List<ImportOperationRequest> imports = databaseEntitiesToRestore
-                    .getKeyspacesAndTables()
-                    .entries()
-                    .stream()
-                    // it has table in cassandra
-                    .filter(entry -> ctxt.cassandraData.getTablePath(entry.getKey(), entry.getValue()).isPresent())
-                    .filter(entry -> ctxt.cassandraData.getTableId(entry.getKey(), entry.getValue()).isPresent())
-                    .map(entry -> {
-                        final String keyspace = entry.getKey();
-                        final String table = entry.getValue();
-                        final String tableWithId = format("%s-%s", table, ctxt.cassandraData.getTableId(entry.getKey(), entry.getValue()).get());
-                        final Path tablePath = ctxt.operation.request.importing.sourceDir.resolve(keyspace).resolve(tableWithId);
-                        return ctxt.operation.request.importing.copy(keyspace, table, tablePath);
-                    })
-                    .filter(request -> Files.isDirectory(request.tablePath)).collect(toList());
+                        .getKeyspacesAndTables()
+                        .entries()
+                        .stream()
+                        // it has table in cassandra
+                        .filter(entry -> ctxt.cassandraData.getTablePath(entry.getKey(), entry.getValue()).isPresent())
+                        .filter(entry -> ctxt.cassandraData.getTableId(entry.getKey(), entry.getValue()).isPresent())
+                        .map(entry -> {
+                            final String keyspace = entry.getKey();
+                            final String table = entry.getValue();
+                            final String tableWithId = format("%s-%s", table, ctxt.cassandraData.getTableId(entry.getKey(), entry.getValue()).get());
+                            final Path tablePath = ctxt.operation.request.importing.sourceDir.resolve(keyspace).resolve(tableWithId);
+                            return ctxt.operation.request.importing.copy(keyspace, table, tablePath);
+                        })
+                        .filter(request -> Files.isDirectory(request.tablePath)).collect(toList());
 
                 final Map<String, String> failedImports = new HashMap<>();
 
@@ -507,31 +509,43 @@ public abstract class RestorationPhase {
                 }
 
                 final List<Path> downloadedFiles = CassandraData.list(ctxt.operation.request.importing.sourceDir);
-
-                // make links
+                final PathSSTableClassifier pathSSTableClassifier = new PathSSTableClassifier(ctxt.operation.request);
+                final Map<String, List<Path>> classifiedDownloadedFiles = pathSSTableClassifier.classify(downloadedFiles);
+                final Map<String, List<Path>> classifiedLinks = new LinkedHashMap<>(classifiedDownloadedFiles);
+                pathSSTableClassifier.map(classifiedLinks, ctxt.operation.request);
 
                 boolean failedLinkage = false;
                 final List<Path> successfulLinks = new ArrayList<>();
 
-                for (final Path existing : downloadedFiles) {
+                for (final Map.Entry<String, List<Path>> classifiedDownloadedSStable : classifiedDownloadedFiles.entrySet()) {
+                    List<Path> downloads = classifiedDownloadedSStable.getValue();
+                    List<Path> links = classifiedLinks.get(classifiedDownloadedSStable.getKey());
 
                     if (failedLinkage) {
                         break;
                     }
 
-                    final Path link = ctxt.operation.request.cassandraDirectory.resolve("data").resolve(ctxt.operation.request.importing.sourceDir.relativize(existing));
+                    assert downloads.size() == links.size();
 
-                    try {
-                        logger.debug(format("linking from %s to %s", existing, link));
-                        Files.createLink(link, existing);
-                        successfulLinks.add(link);
-                    } catch (final Exception ex) {
-                        logger.error(format("Unable to create a hardlink from %s to %s, skipping the linking of all other resources and deleting already linked ones.",
-                                            existing.toAbsolutePath().toString(),
-                                            link.toAbsolutePath().toString()),
-                                     ex);
+                    for (int i = 0; i < downloads.size(); i++) {
+                        if (failedLinkage) {
+                            break;
+                        }
+                        Path existing = downloads.get(i);
+                        Path link = links.get(i);
 
-                        failedLinkage = true;
+                        try {
+                            logger.debug(format("linking from %s to %s", existing, link));
+                            Files.createLink(link, existing);
+                            successfulLinks.add(link);
+                        } catch (final Exception ex) {
+                            logger.error(format("Unable to create a hardlink from %s to %s, skipping the linking of all other resources and deleting already linked ones.",
+                                                existing.toAbsolutePath(),
+                                                link.toAbsolutePath()),
+                                         ex);
+
+                            failedLinkage = true;
+                        }
                     }
                 }
 
@@ -568,7 +582,7 @@ public abstract class RestorationPhase {
                     logger.info("Hardlinking phase was finished successfully.");
                 }
             } catch (
-                final Exception ex) {
+                    final Exception ex) {
                 logger.error("Hardlinking phase has failed: {}", ex.getMessage());
                 throw RestorationPhaseException.construct(ex, getRestorationPhaseType());
             }
@@ -596,10 +610,10 @@ public abstract class RestorationPhase {
                 } catch (final RestorationPhaseException ex) {
                     throw ex;
                 } catch (final Exception ex) {
-                    throw new RestorationPhaseException("Unable to clean trucate dirs!", ex);
+                    throw new RestorationPhaseException("Unable to clean directories for truncated snapshots!", ex);
                 }
             } else {
-                logger.info("Not deleting trucated files as noDeleteTruncates is true.");
+                logger.info("Not deleting truncated files as noDeleteTruncates is true.");
             }
 
             if (!ctxt.operation.request.noDeleteDownloads) {
@@ -639,7 +653,7 @@ public abstract class RestorationPhase {
 
             try {
                 final Path sourceDir = ctxt.operation.request.importing.sourceDir;
-                logger.info("Deleting {}", sourceDir.toAbsolutePath().toString());
+                logger.info("Deleting {}", sourceDir.toAbsolutePath());
                 FileUtils.deleteDirectory(ctxt.operation.request.importing.sourceDir);
             } catch (final Exception ex) {
                 throw RestorationPhaseException.construct(ex, getRestorationPhaseType());
@@ -668,24 +682,24 @@ public abstract class RestorationPhase {
                 return;
             }
 
-            final Path cassandraDataDir = ctxt.operation.request.cassandraDirectory.resolve("data");
+            for (final Path dataDir : ctxt.operation.request.dataDirs) {
+                try {
+                    final List<Path> truncateDirs = CassandraData.listDirs(dataDir, new Predicate<Path>() {
+                        @Override
+                        public boolean test(final Path dir) {
+                            return dir.getFileName().toString().startsWith("truncated-")
+                                   && dir.getParent().getFileName().toString().equals("snapshots");
+                        }
+                    });
 
-            try {
-                final List<Path> truncateDirs = CassandraData.listDirs(cassandraDataDir, new Predicate<Path>() {
-                    @Override
-                    public boolean test(final Path dir) {
-                        return dir.getFileName().toString().startsWith("truncated-")
-                            && dir.getParent().getFileName().toString().equals("snapshots");
+                    for (final Path truncateDir : truncateDirs) {
+                        logger.info("Deleting {}", truncateDir.toAbsolutePath());
+                        FileUtils.deleteDirectory(truncateDir);
                     }
-                });
-
-                for (final Path truncateDir : truncateDirs) {
-                    logger.info("Deleting {}", truncateDir.toAbsolutePath().toString());
-                    FileUtils.deleteDirectory(truncateDir);
+                } catch (final Exception ex) {
+                    logger.info("Deleting truncated directories has failed: {}", ex.getMessage());
+                    throw RestorationPhaseException.construct(ex, getRestorationPhaseType());
                 }
-            } catch (final Exception ex) {
-                logger.info("Deleting truncated directories has failed: {}", ex.getMessage());
-                throw RestorationPhaseException.construct(ex, getRestorationPhaseType());
             }
 
             logger.info("Deleting truncated directories has finished successfully.");
@@ -709,11 +723,11 @@ public abstract class RestorationPhase {
         }
 
         public DataVerification verify(final Manifest manifest, final DatabaseEntities entities) {
-            final List<ManifestEntry> entries = manifest.getManifestFiles(entities, false, false,false, false);
+            final List<ManifestEntry> entries = manifest.getManifestFiles(entities, false, false, false, false);
 
             for (final ManifestEntry entry : entries) {
                 if (!Files.exists(entry.localFile)) {
-                    logger.error("File to import does not exist: " + entry.localFile.toAbsolutePath().toString());
+                    logger.error("File to import does not exist: " + entry.localFile.toAbsolutePath());
                     nonExistingFiles.add(entry.localFile.toAbsolutePath().toString());
                     continue;
                 }
@@ -734,9 +748,9 @@ public abstract class RestorationPhase {
         @Override
         public String toString() {
             return MoreObjects.toStringHelper(this)
-                .add("nonExistingFiles", nonExistingFiles)
-                .add("corruptedFiles", corruptedFiles)
-                .toString();
+                              .add("nonExistingFiles", nonExistingFiles)
+                              .add("corruptedFiles", corruptedFiles)
+                              .toString();
         }
     }
 }
