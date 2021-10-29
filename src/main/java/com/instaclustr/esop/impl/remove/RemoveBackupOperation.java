@@ -47,7 +47,11 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
     private List<StorageLocation> getStorageLocations(final StorageInteractor restorer) throws Exception {
         if (request.globalRemoval) {
             return restorer.listNodes(request.dcs);
-        } else {
+        }
+        else if (request.clusterRemoval) {
+            return restorer.listNodes(restorer.listDcs());
+        }
+        else {
             return Collections.singletonList(request.storageLocation);
         }
     }
@@ -71,10 +75,10 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
 
         try (final StorageInteractor interactor = restorerFactoryMap.get(request.storageLocation.storageProvider).createDeletingInteractor(request)) {
             for (final StorageLocation nodeLocation : getStorageLocations(interactor)) {
+                System.out.println(nodeLocation.nodePath());
                 logger.info("Looking for backups to delete for node {}", nodeLocation.nodePath());
                 interactor.setStorageLocation(nodeLocation);
                 request.storageLocation = nodeLocation;
-
                 final Optional<AllManifestsReport> reportOptional = getReport(interactor);
 
                 if (!reportOptional.isPresent()) {
@@ -102,6 +106,7 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
                     interactor.delete(mr, request);
                 }
 
+
                 for (final ManifestReport mr : allBackupsToDelete) {
                     if (request.globalRemoval) {
                         if (!request.dry) {
@@ -123,6 +128,8 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
 
         if (request.removeOldest) {
             allManifestsReport.getOldest().map(manifestReports::add);
+        } else if (request.clusterRemoval){
+            manifestReports.addAll(allManifestsReport.reports);
         } else if (request.backupName != null) {
             allManifestsReport.get(request.backupName).map(manifestReports::add);
         } else if (request.olderThan.value > 0) {

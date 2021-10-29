@@ -52,6 +52,9 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
     @Option(names = {"--global-request"}, description = "If true, it will remove backups for all nodes in storage location, in datacenters based on --dcs option")
     public boolean globalRemoval = false;
 
+    @Option(names = {"--cluster-removal"}, description = "If true, it will remove backups for all nodes in cluster")
+    public boolean clusterRemoval = false;
+
     @Option(names = {"--cache-dir"}, description = "Directory where Esop caches downloaded manifests, defaults to a directory called '.esop' in user's home dir.")
     @JsonSerialize(using = PathSerializer.class)
     @JsonDeserialize(using = PathDeserializer.class)
@@ -74,10 +77,12 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
                                @JsonProperty("report") final ManifestReport report,
                                @JsonProperty("skipNodeCoordinatesResolution") final boolean skipNodeCoordinatesResolution,
                                @JsonProperty("olderThan") final Time olderThan,
+                               @JsonProperty("clusterRemoval") final boolean clusterRemoval,
                                @JsonProperty("cacheDir") final Path cacheDir) {
         super(storageLocation, 1, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
         this.backupName = backupName;
         this.dry = dry;
+        this.clusterRemoval = clusterRemoval;
         this.skipNodeCoordinatesResolution = skipNodeCoordinatesResolution;
         this.olderThan = olderThan == null ? Time.zeroTime() : olderThan;
         this.cacheDir = (cacheDir == null) ? Paths.get(System.getProperty("user.home"), ".esop") : cacheDir;
@@ -92,6 +97,7 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
                           .add("olderThan", olderThan)
                           .add("cacheDir", cacheDir)
                           .add("globalRemoval", globalRemoval)
+                          .add("clusterRemoval", clusterRemoval)
                           .add("dcs", dcs)
                           .toString();
     }
@@ -117,7 +123,7 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
                     throw new IllegalStateException(String.format("You have specified you want to remove backup %s but you specified olderThan too!", backupName));
                 }
             } else {
-                if (olderThan.value == 0) {
+                if (olderThan.value == 0 && !clusterRemoval) {
                     throw new IllegalStateException("You have not specified you want to remove any specific backup but you have not specified olderThan either!");
                 }
             }
