@@ -156,7 +156,14 @@ public class DataSynchronizator {
     public static class ManifestEntrySSTableClassifier extends SSTableClassifier<ManifestEntry> {
         @Override
         public String getPath(ManifestEntry entry) {
-            return entry.localFile.toString();
+            if (entry.localFile == null) {
+                // objectKey is "data/keyspace/table/gen-hash/entry.db
+                // and we want "keyspace/table/entry.db"
+                final int hashPathPart = SSTableUtils.isSecondaryIndexManifest(entry.objectKey) ? 4 : 3;
+                return entry.objectKey.subpath(1, hashPathPart).resolve(entry.objectKey.getFileName()).toString();
+            } else {
+                return entry.localFile.toString();
+            }
         }
 
         @Override

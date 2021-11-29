@@ -9,6 +9,7 @@ import com.google.common.collect.Multimap;
 import com.instaclustr.esop.impl.ManifestEntry.Type;
 import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace.Table;
 import com.instaclustr.esop.impl.hash.HashSpec;
+import com.instaclustr.esop.impl.restore.strategy.DataSynchronizator;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.FileNotFoundException;
@@ -24,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -568,10 +570,18 @@ public class Snapshots implements Cloneable {
 
                 @JsonCreator
                 public Table(final @JsonProperty("sstables") Map<String, List<ManifestEntry>> sstables,
+                             // this is here for backward compatibility with manifests before 2.0.0
+                             final @JsonProperty("entries") List<ManifestEntry> entries,
                              final @JsonProperty("schema") ManifestEntry schema,
                              final @JsonProperty("id") String id,
                              final @JsonProperty("schemaContent") String schemaContent) {
-                    this.sstables.putAll(sstables);
+                    if ((sstables == null || sstables.isEmpty())) {
+                        if (entries != null && !entries.isEmpty()) {
+                            this.sstables.putAll(new DataSynchronizator.ManifestEntrySSTableClassifier().classify(entries));
+                        }
+                    } else {
+                        this.sstables.putAll(sstables);
+                    }
                     this.schema = schema;
                     this.schemaContent = schemaContent;
                     this.id = id;
@@ -752,10 +762,7 @@ public class Snapshots implements Cloneable {
                     }
 
                     cloned.schemaContent = schemaContent;
-
-                    for (final ManifestEntry me : this.getEntries()) {
-                        cloned.getEntries().add(me.clone());
-                    }
+                    cloned.sstables = new LinkedHashMap<>(sstables);
 
                     return cloned;
                 }
