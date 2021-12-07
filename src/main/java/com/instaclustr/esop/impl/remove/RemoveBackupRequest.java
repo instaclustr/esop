@@ -98,8 +98,6 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
 
     @Override
     public void validate(final Set<String> storageProviders) {
-        //super.validate(storageProviders);
-
         if (olderThan == null) {
             olderThan = Time.zeroTime();
         }

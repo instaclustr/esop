@@ -41,11 +41,6 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
         converter = DataRateMeasureTypeConverter.class)
     public DataRate bandwidth;
 
-    @Option(names = {"--cc", "--concurrent-connections"},
-        description = "Number of files (or file parts) to upload concurrently. Higher values will increase throughput. Default is 10.",
-        defaultValue = "10")
-    public Integer concurrentConnections;
-
     @Option(names = {"--create-missing-bucket"},
         description = "Automatically creates a bucket if it does not exist. If a bucket does not exist, backup operation will fail.")
     public boolean createMissingBucket;
@@ -90,14 +85,10 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
                                       final RetrySpec retrySpec,
                                       final boolean skipRefreshing,
                                       final List<Path> dataDirs) {
-        super(storageLocation, k8sNamespace, k8sBackupSecretName, insecure, skipBucketVerification, proxySettings, retrySpec);
-        this.storageLocation = storageLocation;
+        super(storageLocation, k8sNamespace, k8sBackupSecretName, insecure, skipBucketVerification, proxySettings, retrySpec, concurrentConnections);
         this.duration = duration;
         this.bandwidth = bandwidth;
-        this.concurrentConnections = concurrentConnections == null ? 10 : concurrentConnections;
         this.metadataDirective = metadataDirective == null ? MetadataDirective.COPY : metadataDirective;
-        this.k8sNamespace = k8sNamespace;
-        this.k8sSecretName = k8sBackupSecretName;
         this.createMissingBucket = createMissingBucket;
         this.skipRefreshing = skipRefreshing;
         this.dataDirs = dataDirs;

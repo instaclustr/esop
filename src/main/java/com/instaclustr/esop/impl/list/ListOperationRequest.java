@@ -1,10 +1,12 @@
 package com.instaclustr.esop.impl.list;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.MoreObjects;
+import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.restore.BaseRestoreOperationRequest;
@@ -33,6 +35,10 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
     @Option(names = {"--to-file"}, description = "Dumps the result into file, not to standard output")
     public String toFile;
 
+    public boolean toRequest;
+
+    public Manifest.AllManifestsReport response;
+
     @Option(names = {"--simple-format"}, description = "If set, the output will consists of name of backups only and nothing else")
     public boolean simpleFormat = false;
 
@@ -56,7 +62,8 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
     }
 
     @JsonCreator
-    public ListOperationRequest(@JsonProperty("storageLocation") final StorageLocation storageLocation,
+    public ListOperationRequest(@JsonProperty("type") final String type,
+                                @JsonProperty("storageLocation") final StorageLocation storageLocation,
                                 @JsonProperty("k8sNamespace") final String k8sNamespace,
                                 @JsonProperty("k8sSecretName") final String k8sSecretName,
                                 @JsonProperty("insecure") final boolean insecure,
@@ -71,7 +78,10 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
                                 @JsonProperty("fromTimestamp") final Long fromTimestamp,
                                 @JsonProperty("lastN") final Integer lastN,
                                 @JsonProperty("skipDownload") final boolean skipDownload,
-                                @JsonProperty("cacheDir") final Path cacheDir) {
+                                @JsonProperty("cacheDir") final Path cacheDir,
+                                @JsonProperty("toRequest") final boolean toRequest,
+                                @JsonProperty("concurrentConnections") final Integer concurrentConnections,
+                                @JsonProperty("response") final Manifest.AllManifestsReport response) {
         super(storageLocation, 1, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
         this.json = json;
         this.skipNodeCoordinatesResolution = skipNodeCoordinatesResolution;
@@ -82,6 +92,9 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
         this.lastN = lastN == null ? 0 : lastN;
         this.skipDownload = skipDownload;
         this.cacheDir = (cacheDir == null) ? Paths.get(System.getProperty("user.home"), ".esop") : cacheDir;
+        this.response = response;
+        this.toRequest = toRequest;
+        this.type = type;
     }
 
     public static ListOperationRequest getForLocalListing(final BaseRestoreOperationRequest request,
@@ -96,6 +109,7 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
         final StorageLocation cacheLocation = new StorageLocation("file://" + localPathToNode);
 
         return new ListOperationRequest(
+                "list",
                 cacheLocation,
                 request.k8sNamespace,
                 request.k8sSecretName,
@@ -111,7 +125,10 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
                 null,
                 null,
                 true,
-                cacheDir);
+                cacheDir,
+                false,
+                null,
+                null);
     }
 
     @Override

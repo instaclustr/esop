@@ -64,6 +64,13 @@ public abstract class AbstractOperationRequest extends OperationRequest {
     @JsonProperty("retry")
     public RetrySpec retry = new RetrySpec();
 
+    @Option(names = {"--cc", "--concurrent-connections"},
+            description = "Number of files (or file parts) to download concurrently. Higher values will increase throughput. Default is 10.",
+            defaultValue = "10"
+    )
+    @JsonProperty("concurrentConnections")
+    public Integer concurrentConnections;
+
     public AbstractOperationRequest() {
         // for picocli
     }
@@ -74,7 +81,8 @@ public abstract class AbstractOperationRequest extends OperationRequest {
                                     final boolean insecure,
                                     final boolean skipBucketVerification,
                                     final ProxySettings proxySettings,
-                                    final RetrySpec retry) {
+                                    final RetrySpec retry,
+                                    final Integer concurrentConnections) {
         this.storageLocation = storageLocation;
         this.k8sNamespace = k8sNamespace;
         this.k8sSecretName = k8sSecretName;
@@ -82,6 +90,7 @@ public abstract class AbstractOperationRequest extends OperationRequest {
         this.skipBucketVerification = skipBucketVerification;
         this.proxySettings = proxySettings;
         this.retry = retry == null ? new RetrySpec() : retry;
+        this.concurrentConnections = concurrentConnections == null ? 10 : concurrentConnections;
     }
 
     @JsonIgnore

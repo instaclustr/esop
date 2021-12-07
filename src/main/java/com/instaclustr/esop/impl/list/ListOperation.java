@@ -9,7 +9,6 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.time.Instant;
@@ -23,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.assistedinject.Assisted;
 import com.instaclustr.esop.guice.RestorerFactory;
+import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.Manifest.AllManifestsReport;
 import com.instaclustr.esop.impl.Manifest.ManifestReporter.ManifestReport;
 import com.instaclustr.esop.impl.ProxySettings;
@@ -80,8 +80,12 @@ public class ListOperation extends Operation<ListOperationRequest> {
                           @JsonProperty("fromTimestamp") final Long fromTimestamp,
                           @JsonProperty("lastN") final Integer lastN,
                           @JsonProperty("skipDownload") final boolean skipDownload,
-                          @JsonProperty("cacheDir") final Path cacheDir) {
-        super(type, id, creationTime, state, errors, progress, startTime, new ListOperationRequest(storageLocation,
+                          @JsonProperty("cacheDir") final Path cacheDir,
+                          @JsonProperty("toRequest") final boolean toRequest,
+                          @JsonProperty("response") final Manifest.AllManifestsReport response,
+                          @JsonProperty("concurrentConnections") final Integer concurrentConnections) {
+        super(type, id, creationTime, state, errors, progress, startTime, new ListOperationRequest(type,
+                                                                                                   storageLocation,
                                                                                                    k8sNamespace,
                                                                                                    k8sSecretName,
                                                                                                    insecure,
@@ -96,7 +100,10 @@ public class ListOperation extends Operation<ListOperationRequest> {
                                                                                                    fromTimestamp,
                                                                                                    lastN,
                                                                                                    skipDownload,
-                                                                                                   cacheDir));
+                                                                                                   cacheDir,
+                                                                                                   toRequest,
+                                                                                                   concurrentConnections,
+                                                                                                   response));
         this.restorerFactoryMap = null;
         this.objectMapper = null;
         this.cassandraJMXService = null;
@@ -128,6 +135,9 @@ public class ListOperation extends Operation<ListOperationRequest> {
             final AllManifestsReport report = AllManifestsReport.report(interactor.listManifests());
             filterFromTimestamp(report, request.fromTimestamp);
             filterLastN(report, request.lastN);
+            if (request.toRequest) {
+                request.response = report;
+            }
             try (final PrintStream ps = getOutputStream(request)) {
                 print(report, request, ps);
             }
@@ -139,7 +149,7 @@ public class ListOperation extends Operation<ListOperationRequest> {
 
     private PrintStream getOutputStream(final ListOperationRequest request) throws Exception {
         if (request.toFile != null) {
-            return new PrintStream(new FileOutputStream(new File(request.toFile)));
+            return new PrintStream(new FileOutputStream(request.toFile));
         } else {
             return System.out;
         }
