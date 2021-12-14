@@ -70,7 +70,7 @@ public abstract class RestorationPhase {
         this.ctxt = ctxt;
 
         if (parseCassandraData) {
-            final CassandraData cassandraData = CassandraData.parse(ctxt.operation.request.cassandraDirectory.resolve("data"));
+            final CassandraData cassandraData = CassandraData.parse(ctxt.operation.request.dataDirs.get(0));
             cassandraData.setDatabaseEntitiesFromRequest(ctxt.operation.request.entities);
             cassandraData.setRenamedEntitiesFromRequest(ctxt.operation.request.rename);
             cassandraData.validate();

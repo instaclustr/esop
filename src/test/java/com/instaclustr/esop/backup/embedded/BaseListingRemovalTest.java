@@ -108,57 +108,44 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 final Path jsonSimpleFile = createTempFile("esop-backup-json-simple", null);
                 final Path tableComplexFile = createTempFile("esop-backup-table-complex", null);
                 final Path tableSimpleFile = createTempFile("esop-backup-table-simple", null);
-                // File for backup in different storage location
-                final Path jsonComplexFile2 = createTempFile("esop-backup-json-complex2", null);
-
 
                 final String[] jsonComplex = new String[]{
-                    "list",
-                    "--storage-location=" + getStorageLocation(),
-                    "--skip-node-resolution",
-                    "--human-units",
-                    "--json",
-                    "--to-file=" + jsonComplexFile.toAbsolutePath(),
-                    "--cache-dir=" + target(".esop")
+                        "list",
+                        "--storage-location=" + getStorageLocation(),
+                        "--skip-node-resolution",
+                        "--human-units",
+                        "--json",
+                        "--to-file=" + jsonComplexFile.toAbsolutePath(),
+                        "--cache-dir=" + target(".esop")
                 };
 
                 final String[] jsonSimple = new String[]{
-                    "list",
-                    "--storage-location=" + getStorageLocation(),
-                    "--skip-node-resolution",
-                    "--human-units",
-                    "--json",
-                    "--simple-format",
-                    "--to-file=" + jsonSimpleFile.toAbsolutePath(),
-                    "--cache-dir=" + target(".esop")
+                        "list",
+                        "--storage-location=" + getStorageLocation(),
+                        "--skip-node-resolution",
+                        "--human-units",
+                        "--json",
+                        "--simple-format",
+                        "--to-file=" + jsonSimpleFile.toAbsolutePath(),
+                        "--cache-dir=" + target(".esop")
                 };
 
                 final String[] tableComplex = new String[]{
-                    "list",
-                    "--storage-location=" + getStorageLocation(),
-                    "--skip-node-resolution",
-                    "--human-units",
-                    "--to-file=" + tableComplexFile.toAbsolutePath(),
-                    "--cache-dir=" + target(".esop")
+                        "list",
+                        "--storage-location=" + getStorageLocation(),
+                        "--skip-node-resolution",
+                        "--human-units",
+                        "--to-file=" + tableComplexFile.toAbsolutePath(),
+                        "--cache-dir=" + target(".esop")
                 };
 
                 final String[] tableSimple = new String[]{
-                    "list",
-                    "--storage-location=" + getStorageLocation(),
-                    "--skip-node-resolution",
-                    "--human-units",
-                    "--simple-format",
-                    "--to-file=" + tableSimpleFile.toAbsolutePath(),
-                    "--cache-dir=" + target(".esop")
-                };
-
-                final String[] jsonComplex2 = new String[]{
                         "list",
-                        "--storage-location=" + getStorageLocationForAnotherCluster(),
+                        "--storage-location=" + getStorageLocation(),
                         "--skip-node-resolution",
                         "--human-units",
                         "--simple-format",
-                        "--to-file=" + jsonComplexFile2.toAbsolutePath(),
+                        "--to-file=" + tableSimpleFile.toAbsolutePath(),
                         "--cache-dir=" + target(".esop")
                 };
 
@@ -170,8 +157,6 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 Esop.mainWithoutExit(tableComplex);
                 logger.info("Executing listing of table simple format: " + asList(tableSimple));
                 Esop.mainWithoutExit(tableSimple);
-                logger.info("Executing listing of json complex format (2): " + asList(jsonComplexFile2));
-                Esop.mainWithoutExit(jsonComplex2);
 
                 Manifest.AllManifestsReport report = objectMapper.readValue(Files.readAllBytes(jsonComplexFile), Manifest.AllManifestsReport.class);
 
@@ -190,11 +175,11 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 final String latestBackupName = latest.get().name;
 
                 final String[] delete1 = new String[]{
-                    "remove-backup",
-                    "--storage-location=" + getStorageLocation(),
-                    "--skip-node-resolution",
-                    "--backup-name=" + oldestBackupName,
-                    "--cache-dir=" + target(".esop")
+                        "remove-backup",
+                        "--storage-location=" + getStorageLocation(),
+                        "--skip-node-resolution",
+                        "--backup-name=" + oldestBackupName,
+                        "--cache-dir=" + target(".esop")
                 };
 
                 logger.info("Executing the first delete - {}", asList(delete1));
@@ -203,11 +188,11 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 Esop.mainWithoutExit(delete1);
 
                 final String[] delete2 = new String[]{
-                    "remove-backup",
-                    "--storage-location=" + getStorageLocation(),
-                    "--skip-node-resolution",
-                    "--backup-name=" + latestBackupName,
-                    "--cache-dir=" + target(".esop")
+                        "remove-backup",
+                        "--storage-location=" + getStorageLocation(),
+                        "--skip-node-resolution",
+                        "--backup-name=" + latestBackupName,
+                        "--cache-dir=" + target(".esop")
                 };
 
                 logger.info("Executing the second delete - {}", asList(delete2));
@@ -216,37 +201,8 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 Esop.mainWithoutExit(delete2);
 
                 // we basically deleted everything in the first storage location by deleting first two backups
-                assertEquals(Files.list(Paths.get(getStorageLocation().replaceAll(protocol() + "://", ""), "data")).count(), 0);
+                //assertEquals(Files.list(Paths.get(getStorageLocation().replaceAll(protocol(), ""), "data")).count(), 0);
                 assertEquals(Files.list(Paths.get(getStorageLocation().replaceAll(protocol() + "://", ""), "manifests")).count(), 0);
-
-                Manifest.AllManifestsReport report2 = objectMapper.readValue(Files.readAllBytes(jsonComplexFile2), Manifest.AllManifestsReport.class);
-
-                Optional<Manifest.ManifestReporter.ManifestReport> oldest2 = report2.getOldest();
-
-                if (oldest2.isPresent()) {
-                    Assert.fail("Not found the oldest report!");
-                }
-
-                final String oldestBackupName2 = oldest2.get().name;
-
-                final String[] delete3 = new String[]{
-                        "remove-backup",
-                        "--storage-location=" + getStorageLocationForAnotherCluster(),
-                        "--skip-node-resolution",
-                        "--backup-name=" + oldestBackupName2,
-                        "--cache-dir=" + target(".esop")
-                };
-
-                logger.info("Executing the third delete - {}", asList(delete3));
-
-                // delete backup in different storage location
-                Esop.mainWithoutExit(delete3);
-
-                // check if third backup was actually deleted
-                assertEquals(Files.list(Paths.get(getStorageLocationForAnotherCluster().replaceAll(protocol() + "://", ""), "data")).count(), 0);
-                assertEquals(Files.list(Paths.get(getStorageLocationForAnotherCluster().replaceAll(protocol() + "://", ""), "manifests")).count(), 0);
-
-
             } finally {
                 cassandra.stop();
             }
