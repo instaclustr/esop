@@ -173,6 +173,11 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
             this.entities = DatabaseEntities.empty();
         }
 
+        if (this.dataDirs == null || this.dataDirs.isEmpty()) {
+            throw new IllegalStateException("You have not specified any --data-dir on command line " +
+                                            "or respective field in JSON request.");
+        }
+
         try {
             DatabaseEntities.validateForRequest(this.entities);
         } catch (final Exception ex) {
