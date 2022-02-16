@@ -12,6 +12,7 @@ import com.instaclustr.operations.OperationRequest;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 import jmx.org.apache.cassandra.service.cassandra2.Cassandra2StorageServiceMBean;
 import jmx.org.apache.cassandra.service.cassandra3.StorageServiceMBean;
+import jmx.org.apache.cassandra.service.cassandra30.Cassandra30StorageServiceMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +35,11 @@ public class TakeSnapshotOperation extends Operation<TakeSnapshotOperationReques
 
     @Override
     protected void run0() throws Exception {
-        if (cassandraVersionProvider.get().getMajor() == 2) {
+        CassandraVersion cassandraVersion = cassandraVersionProvider.get();
+        if (cassandraVersion.getMajor() == 2) {
             takeSnapshotForCassandra2();
+        } else if (cassandraVersion.getMajor() == 3 && cassandraVersion.getMinor() == 0) {
+            takeSnapshotForCassandra30();
         } else {
             takeSnapshot();
         }
@@ -57,6 +61,31 @@ public class TakeSnapshotOperation extends Operation<TakeSnapshotOperationReques
                     } else {
                         logger.info("Taking snapshot '{}' on {}.", request.tag, request.entities);
                         object.takeMultipleColumnFamilySnapshot(request.tag, DatabaseEntities.forTakingSnapshot(request.entities));
+                        logger.info("Snapshot '{}' was taken on {}.", request.tag, request.entities);
+                    }
+                }
+
+                return null;
+            }
+        });
+    }
+
+    private void takeSnapshotForCassandra30() throws Exception {
+        cassandraJMXService.doWithCassandra30StorageServiceMBean(new FunctionWithEx<Cassandra30StorageServiceMBean, Void>() {
+            @Override
+            public Void apply(Cassandra30StorageServiceMBean ssMBean) throws Exception {
+                if (request.entities.areEmpty()) {
+                    logger.info("Taking snapshot '{}' on all keyspaces.", request.tag);
+                    ssMBean.takeSnapshot(request.tag);
+                    logger.info("Snapshot '{}' was taken on all keyspaces.", request.tag);
+                } else {
+                    if (request.entities.keyspacesOnly()) {
+                        logger.info("Taking snapshot '{}' on {}.", request.tag, String.join(",", request.entities.getKeyspaces()));
+                        ssMBean.takeSnapshot(request.tag, request.entities.getKeyspaces().toArray(new String[0]));
+                        logger.info("Snapshot '{}' was taken on {}.", request.tag, String.join(",", request.entities.getKeyspaces()));
+                    } else {
+                        logger.info("Taking snapshot '{}' on {}.", request.tag, request.entities);
+                        ssMBean.takeMultipleTableSnapshot(request.tag, DatabaseEntities.forTakingSnapshot(request.entities));
                         logger.info("Snapshot '{}' was taken on {}.", request.tag, request.entities);
                     }
                 }
