@@ -14,6 +14,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -186,7 +187,11 @@ public class LocalFileRestorer extends Restorer {
     @Override
     public List<Manifest> listManifests() throws Exception {
         assert objectMapper != null;
-        final List<Path> manifests = Files.list(Paths.get(storageLocation.rawLocation.replaceAll("file://", ""), "manifests"))
+        final Path path = Paths.get(storageLocation.rawLocation.replaceAll("file://", ""), "manifests");
+        if (!Files.exists(path))
+            return Collections.emptyList();
+
+        final List<Path> manifests = Files.list(path)
             .sorted(new ManifestAgePathComparator())
             .collect(toList());
 

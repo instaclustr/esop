@@ -1,20 +1,22 @@
 package com.instaclustr.esop.impl.remove;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.instaclustr.esop.guice.RestorerFactory;
 import com.instaclustr.esop.impl.Manifest.AllManifestsReport;
 import com.instaclustr.esop.impl.Manifest.ManifestReporter.ManifestReport;
+import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageInteractor;
 import com.instaclustr.esop.impl.StorageLocation;
+import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.esop.topology.CassandraSimpleTopology;
 import com.instaclustr.esop.topology.CassandraSimpleTopology.CassandraSimpleTopologyResult;
 import com.instaclustr.measure.Time;
@@ -42,6 +44,49 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
         this.restorerFactoryMap = restorerFactoryMap;
         this.objectMapper = objectMapper;
         this.cassandraJMXService = cassandraJMXService;
+    }
+
+    @JsonCreator
+    private RemoveBackupOperation(@JsonProperty("type") final String type,
+                                  @JsonProperty("id") final UUID id,
+                                  @JsonProperty("creationTime") final Instant creationTime,
+                                  @JsonProperty("state") final State state,
+                                  @JsonProperty("errors") final List<Error> errors,
+                                  @JsonProperty("progress") final float progress,
+                                  @JsonProperty("startTime") final Instant startTime,
+                                  @JsonProperty("storageLocation") final StorageLocation storageLocation,
+                                  @JsonProperty("k8sNamespace") final String k8sNamespace,
+                                  @JsonProperty("k8sSecretName") final String k8sSecretName,
+                                  @JsonProperty("insecure") final boolean insecure,
+                                  @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
+                                  @JsonProperty("proxySettings") final ProxySettings proxySettings,
+                                  @JsonProperty("retry") final RetrySpec retry,
+                                  @JsonProperty("backupName") final String backupName,
+                                  @JsonProperty("dry") final boolean dry,
+                                  @JsonProperty("skipNodeCoordinatesResolution") final boolean skipNodeCoordinatesResolution,
+                                  @JsonProperty("olderThan") final Time olderThan,
+                                  @JsonProperty("cacheDir") final Path cacheDir,
+                                  @JsonProperty("removeOldest") final boolean removeOldest,
+                                  @JsonProperty("concurrentConnections") final Integer concurrentConnections) {
+        super(type, id, creationTime, state, errors, progress, startTime, new RemoveBackupRequest(type,
+                                                                                                  storageLocation,
+                                                                                                  k8sNamespace,
+                                                                                                  k8sSecretName,
+                                                                                                  insecure,
+                                                                                                  skipBucketVerification,
+                                                                                                  proxySettings,
+                                                                                                  retry,
+                                                                                                  backupName,
+                                                                                                  dry,
+                                                                                                  skipNodeCoordinatesResolution,
+                                                                                                  olderThan,
+                                                                                                  cacheDir,
+                                                                                                  removeOldest,
+                                                                                                  concurrentConnections));
+        this.restorerFactoryMap = null;
+        this.objectMapper = null;
+        this.cassandraJMXService = null;
+        this.time = System.currentTimeMillis();
     }
 
     private List<StorageLocation> getStorageLocations(final StorageInteractor restorer) throws Exception {
@@ -126,8 +171,7 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
         } else if (request.backupName != null) {
             allManifestsReport.get(request.backupName).map(manifestReports::add);
         } else if (request.olderThan.value > 0) {
-            Time time = request.olderThan.asMilliseconds();
-            final long cut = this.time - time.value;
+            final long cut = this.time - request.olderThan.toMilliseconds();
             manifestReports.addAll(allManifestsReport.filter(report -> report.unixtimestamp < cut));
         }
 

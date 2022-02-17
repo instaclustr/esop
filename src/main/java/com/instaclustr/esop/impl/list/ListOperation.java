@@ -137,9 +137,10 @@ public class ListOperation extends Operation<ListOperationRequest> {
             filterLastN(report, request.lastN);
             if (request.toRequest) {
                 request.response = report;
-            }
-            try (final PrintStream ps = getOutputStream(request)) {
-                print(report, request, ps);
+            } else {
+                try (final PrintStream ps = getOutputStream(request)) {
+                    print(report, request, ps);
+                }
             }
         } catch (final Exception ex) {
             logger.error("Unable to perform listing! - " + ex.getMessage(), ex);

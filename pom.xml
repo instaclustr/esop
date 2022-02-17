@@ -12,7 +12,7 @@
     <url>https://github.com/instaclustr/instaclustr-esop</url>
     
     <properties>
-        <instaclustr.commons.version>1.4.9</instaclustr.commons.version>
+        <instaclustr.commons.version>1.5.0</instaclustr.commons.version>
         <azure-storage.version>8.6.6</azure-storage.version>
         <google-cloud-libraries.version>3.4.0</google-cloud-libraries.version>
         <aws-java-sdk.version>1.11.782</aws-java-sdk.version>

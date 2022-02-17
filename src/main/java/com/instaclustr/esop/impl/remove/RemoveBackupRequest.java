@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.MoreObjects;
-import com.instaclustr.esop.impl.Manifest.ManifestReporter.ManifestReport;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.restore.BaseRestoreOperationRequest;
@@ -47,9 +47,11 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
 
     @Option(names = {"--dcs"}, description = "Only in effect when --global-request is set, if not specified, it will "
                                              + "remove backup(s) for all datacenters")
+    @JsonIgnore
     public List<String> dcs = new ArrayList<>();
 
     @Option(names = {"--global-request"}, description = "If true, it will remove backups for all nodes in storage location, in datacenters based on --dcs option")
+    @JsonIgnore
     public boolean globalRemoval = false;
 
     @Option(names = {"--cache-dir"}, description = "Directory where Esop caches downloaded manifests, defaults to a directory called '.esop' in user's home dir.")
@@ -62,7 +64,8 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
     }
 
     @JsonCreator
-    public RemoveBackupRequest(@JsonProperty("storageLocation") final StorageLocation storageLocation,
+    public RemoveBackupRequest(@JsonProperty("type") final String type,
+                               @JsonProperty("storageLocation") final StorageLocation storageLocation,
                                @JsonProperty("k8sNamespace") final String k8sNamespace,
                                @JsonProperty("k8sSecretName") final String k8sSecretName,
                                @JsonProperty("insecure") final boolean insecure,
@@ -71,16 +74,20 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
                                @JsonProperty("retry") final RetrySpec retry,
                                @JsonProperty("backupName") final String backupName,
                                @JsonProperty("dry") final boolean dry,
-                               @JsonProperty("report") final ManifestReport report,
                                @JsonProperty("skipNodeCoordinatesResolution") final boolean skipNodeCoordinatesResolution,
                                @JsonProperty("olderThan") final Time olderThan,
-                               @JsonProperty("cacheDir") final Path cacheDir) {
+                               @JsonProperty("cacheDir") final Path cacheDir,
+                               @JsonProperty("removeOldest") final boolean removeOldest,
+                               @JsonProperty("concurrentConnections") final Integer concurrentConnections) {
         super(storageLocation, 1, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
+        this.type = type;
         this.backupName = backupName;
         this.dry = dry;
         this.skipNodeCoordinatesResolution = skipNodeCoordinatesResolution;
         this.olderThan = olderThan == null ? Time.zeroTime() : olderThan;
         this.cacheDir = (cacheDir == null) ? Paths.get(System.getProperty("user.home"), ".esop") : cacheDir;
+        this.removeOldest = removeOldest;
+        this.concurrentConnections = concurrentConnections;
     }
 
     @Override
