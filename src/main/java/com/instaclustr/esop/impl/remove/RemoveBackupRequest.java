@@ -51,8 +51,7 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
     public List<String> dcs = new ArrayList<>();
 
     @Option(names = {"--global-request"}, description = "If true, it will remove backups for all nodes in storage location, in datacenters based on --dcs option")
-    @JsonIgnore
-    public boolean globalRemoval = false;
+    public boolean globalRequest;
 
     @Option(names = {"--cache-dir"}, description = "Directory where Esop caches downloaded manifests, defaults to a directory called '.esop' in user's home dir.")
     @JsonSerialize(using = PathSerializer.class)
@@ -78,7 +77,8 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
                                @JsonProperty("olderThan") final Time olderThan,
                                @JsonProperty("cacheDir") final Path cacheDir,
                                @JsonProperty("removeOldest") final boolean removeOldest,
-                               @JsonProperty("concurrentConnections") final Integer concurrentConnections) {
+                               @JsonProperty("concurrentConnections") final Integer concurrentConnections,
+                               @JsonProperty("globalRequest") final boolean globalRequest) {
         super(storageLocation, 1, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
         this.type = type;
         this.backupName = backupName;
@@ -88,6 +88,7 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
         this.cacheDir = (cacheDir == null) ? Paths.get(System.getProperty("user.home"), ".esop") : cacheDir;
         this.removeOldest = removeOldest;
         this.concurrentConnections = concurrentConnections;
+        this.globalRequest = globalRequest;
     }
 
     @Override
@@ -98,7 +99,7 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
                           .add("skipNodeCoordinatesResolution", skipNodeCoordinatesResolution)
                           .add("olderThan", olderThan)
                           .add("cacheDir", cacheDir)
-                          .add("globalRemoval", globalRemoval)
+                          .add("globalRemoval", globalRequest)
                           .add("dcs", dcs)
                           .toString();
     }

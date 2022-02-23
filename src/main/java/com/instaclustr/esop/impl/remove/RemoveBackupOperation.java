@@ -67,7 +67,8 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
                                   @JsonProperty("olderThan") final Time olderThan,
                                   @JsonProperty("cacheDir") final Path cacheDir,
                                   @JsonProperty("removeOldest") final boolean removeOldest,
-                                  @JsonProperty("concurrentConnections") final Integer concurrentConnections) {
+                                  @JsonProperty("concurrentConnections") final Integer concurrentConnections,
+                                  @JsonProperty("globalRequest") final boolean globalRequest) {
         super(type, id, creationTime, state, errors, progress, startTime, new RemoveBackupRequest(type,
                                                                                                   storageLocation,
                                                                                                   k8sNamespace,
@@ -82,7 +83,8 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
                                                                                                   olderThan,
                                                                                                   cacheDir,
                                                                                                   removeOldest,
-                                                                                                  concurrentConnections));
+                                                                                                  concurrentConnections,
+                                                                                                  globalRequest));
         this.restorerFactoryMap = null;
         this.objectMapper = null;
         this.cassandraJMXService = null;
@@ -90,7 +92,7 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
     }
 
     private List<StorageLocation> getStorageLocations(final StorageInteractor restorer) throws Exception {
-        if (request.globalRemoval) {
+        if (request.globalRequest) {
             return restorer.listNodes(request.dcs);
         } else {
             return Collections.singletonList(request.storageLocation);
@@ -148,7 +150,7 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
                 }
 
                 for (final ManifestReport mr : allBackupsToDelete) {
-                    if (request.globalRemoval) {
+                    if (request.globalRequest) {
                         if (!request.dry) {
                             interactor.deleteTopology(mr.name);
                         } else {
