@@ -3,6 +3,7 @@ package com.instaclustr.esop.local;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
@@ -34,6 +35,7 @@ import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
+import com.instaclustr.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -207,12 +209,19 @@ public class LocalFileRestorer extends Restorer {
     }
 
     @Override
-    public void delete(final Path objectKey) throws Exception {
-        final RemoteObjectReference remoteObjectReference = objectKeyToNodeAwareRemoteReference(objectKey);
-        final Path fileToDelete = request.storageLocation.fileBackupDirectory
-            .resolve(request.storageLocation.bucket)
-            .resolve(remoteObjectReference.canonicalPath);
-        logger.info("Deleting file {}", fileToDelete);
+    public void delete(Path objectKey, boolean nodeAware) throws Exception {
+        Path fileToDelete;
+        if (nodeAware) {
+            RemoteObjectReference remoteObjectReference = objectKeyToNodeAwareRemoteReference(objectKey);
+            fileToDelete = request.storageLocation.fileBackupDirectory
+                    .resolve(request.storageLocation.bucket)
+                    .resolve(remoteObjectReference.canonicalPath);
+        } else {
+            fileToDelete = request.storageLocation.fileBackupDirectory
+                    .resolve(request.storageLocation.bucket)
+                    .resolve(objectKey);
+        }
+
         Files.deleteIfExists(fileToDelete);
     }
 
@@ -222,7 +231,7 @@ public class LocalFileRestorer extends Restorer {
         if (backupToDelete.reclaimableSpace > 0 && !backupToDelete.getRemovableEntries().isEmpty()) {
             for (final String removableEntry : backupToDelete.getRemovableEntries()) {
                 if (!request.dry) {
-                    delete(Paths.get(removableEntry));
+                    deleteNodeAwareKey(Paths.get(removableEntry));
                 } else {
                     logger.info("Deletion of {} was executed in dry mode.", removableEntry);
                 }
@@ -231,41 +240,41 @@ public class LocalFileRestorer extends Restorer {
 
         // manifest and topology as the last
         if (!request.dry) {
-            delete(backupToDelete.manifest.objectKey);
+            deleteNodeAwareKey(backupToDelete.manifest.objectKey);
         } else {
             logger.info("Deletion of manifest {} was executed in dry mode.", backupToDelete.manifest.objectKey);
         }
 
-        if (!request.dry && request.storageLocation.storageProvider.equals("file")) {
-            final List<Path> emptySSTableDirectories = getEmptyDirectories(request.storageLocation);
+        removeEmptyDirectories(storageLocation
+                                       .fileBackupDirectory
+                                       .resolve(request.storageLocation.bucket), request.dry);
+    }
 
-            for (final Path emptySSTableDir : emptySSTableDirectories) {
-                logger.info("Deleting empty sstable directory {}", emptySSTableDir.toAbsolutePath());
-                if (!request.dry) {
-                    Files.delete(emptySSTableDir);
+    @Override
+    public void deleteTopology(String name) throws Exception {
+        super.deleteTopology(name);
+        try {
+            Files.delete(storageLocation.fileBackupDirectory.resolve(storageLocation.bucket).resolve("topology"));
+        } catch (final Exception ex) {
+
+        }
+    }
+
+    private void removeEmptyDirectories(Path root, boolean dry) throws Exception {
+        if (!dry && request.storageLocation.storageProvider.equals("file")) {
+            List<Path> emptyDirectories = getEmptyDirectories(root);
+            while (!emptyDirectories.isEmpty()) {
+                for (final Path emptyDir : emptyDirectories) {
+                    if (emptyDir.equals(root))
+                        break;
+
+                    if (!dry) {
+                        logger.debug("Removing empty directory {}", emptyDir);
+                        Files.delete(emptyDir);
+                    }
                 }
-            }
 
-            // by deleting empty dirs after sstables, we might suddently have an empty table dir
-            // so run another round to get rid of them too
-            final List<Path> emptyTableDirectories = getEmptyDirectories(request.storageLocation);
-
-            for (final Path emptyTableDir : emptyTableDirectories) {
-                logger.info("Deleting empty table directory {}", emptyTableDir.toAbsolutePath());
-                if (!request.dry) {
-                    Files.delete(emptyTableDir);
-                }
-            }
-
-            // by deleting empty dirs of tables, we might suddenly have an empty keyspace dir
-            // so run another round to get rid of them too
-            final List<Path> emptyKeyspaceDirectories = getEmptyDirectories(request.storageLocation);
-
-            for (final Path emptyKeyspaceDir : emptyKeyspaceDirectories) {
-                logger.info("Deleting empty keyspace directory {}", emptyKeyspaceDir.toAbsolutePath());
-                if (!request.dry) {
-                    Files.delete(emptyKeyspaceDir);
-                }
+                emptyDirectories = getEmptyDirectories(root);
             }
         }
     }
@@ -284,7 +293,10 @@ public class LocalFileRestorer extends Restorer {
 
     @Override
     public List<StorageLocation> listNodes(final String dc) throws Exception {
-        return getDirectories(Paths.get(StorageLocation.updateDatacenter(storageLocation, dc).withoutNode().replace("file://", "")))
+        return getDirectories(Paths.get(StorageLocation
+                                                .updateDatacenter(storageLocation, dc)
+                                                .withoutNode()
+                                                .replace("file://", "")))
                 .stream()
                 .map(p -> new StorageLocation("file://" + p.toAbsolutePath())).collect(toList());
     }
@@ -309,23 +321,15 @@ public class LocalFileRestorer extends Restorer {
         return getDirectories(Paths.get(storageLocation.withoutNodeAndDc().replaceAll("file://", ""))).stream().map(p -> p.getFileName().toString()).collect(toList());
     }
 
-    private List<Path> getEmptyDirectories(final StorageLocation storageLocation) {
+    private List<Path> getEmptyDirectories(final Path root) {
         final List<Path> emptyDirectories = new ArrayList<>();
-
-        final Path root = storageLocation.fileBackupDirectory
-            .resolve(request.storageLocation.bucket)
-            .resolve(request.storageLocation.clusterId)
-            .resolve(request.storageLocation.datacenterId)
-            .resolve(request.storageLocation.nodeId)
-            .resolve("data");
-
         try {
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
                     if (attrs.isDirectory() && isDirectoryEmpty(dir)) {
                         emptyDirectories.add(dir);
-                        return FileVisitResult.SKIP_SUBTREE;
+                        return FileVisitResult.CONTINUE;
                     }
                     return FileVisitResult.CONTINUE;
                 }

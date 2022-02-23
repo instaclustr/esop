@@ -54,7 +54,6 @@ public class BaseS3Restorer extends Restorer {
 
     protected final AmazonS3 amazonS3;
     protected final TransferManager transferManager;
-    LocalFileRestorer localFileRestorer;
 
     public BaseS3Restorer(final TransferManagerFactory transferManagerFactory,
                           final RestoreOperationRequest request) {
@@ -76,8 +75,6 @@ public class BaseS3Restorer extends Restorer {
         super(request);
         this.transferManager = transferManagerFactory.build(request);
         this.amazonS3 = this.transferManager.getAmazonS3Client();
-        this.localFileRestorer = new LocalFileRestorer(getForLocalListing(request, request.cacheDir, request.storageLocation),
-                                                       objectMapper);
     }
 
     public BaseS3Restorer(final TransferManagerFactory transferManagerFactory,
@@ -86,8 +83,6 @@ public class BaseS3Restorer extends Restorer {
         super(request);
         this.transferManager = transferManagerFactory.build(request);
         this.amazonS3 = this.transferManager.getAmazonS3Client();
-        this.localFileRestorer = new LocalFileRestorer(getForLocalListing(request, request.cacheDir, request.storageLocation),
-                                                       objectMapper);
     }
 
     @Override
@@ -167,10 +162,15 @@ public class BaseS3Restorer extends Restorer {
     }
 
     @Override
-    public void delete(final Path objectKey) throws Exception {
-        final RemoteObjectReference remoteObjectReference = objectKeyToNodeAwareRemoteReference(objectKey);
+    public void delete(final Path objectKey, boolean nodeAware) throws Exception {
+        RemoteObjectReference remoteObjectReference;
+        if (nodeAware) {
+            remoteObjectReference = objectKeyToNodeAwareRemoteReference(objectKey);
+        } else {
+            remoteObjectReference = objectKeyToRemoteReference(objectKey);
+        }
         final Path fileToDelete = Paths.get(request.storageLocation.bucket,
-                remoteObjectReference.canonicalPath);
+                                            remoteObjectReference.canonicalPath);
         logger.info("Non dry: " + fileToDelete);
         amazonS3.deleteObject(new DeleteObjectRequest(request.storageLocation.bucket, remoteObjectReference.canonicalPath));
     }
@@ -205,10 +205,10 @@ public class BaseS3Restorer extends Restorer {
         if (!request.dry) {
             logger.info("Deleting file {} from S3" , key);
             //delete in S3
-            delete(key);
+            deleteNodeAwareKey(key);
             //delete in local cache
             logger.info("Deleting file {} from local cache" , key);
-            localFileRestorer.delete(key);
+            localFileRestorer.deleteNodeAwareKey(key);
         } else {
             logger.info("Deletion of {} was executed in dry mode.", key);
         }

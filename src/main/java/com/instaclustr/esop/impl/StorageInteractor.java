@@ -7,10 +7,12 @@ import java.util.List;
 
 import com.instaclustr.esop.impl.Manifest.ManifestReporter.ManifestReport;
 import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
+import com.instaclustr.esop.local.LocalFileRestorer;
 
 public abstract class StorageInteractor implements AutoCloseable {
 
     protected StorageLocation storageLocation;
+    protected LocalFileRestorer localFileRestorer;
 
     public abstract RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception;
 
@@ -34,7 +36,11 @@ public abstract class StorageInteractor implements AutoCloseable {
     }
 
     // currently works for file protocol only
-    public void delete(final Path objectKey) throws Exception {
+    public void deleteNodeAwareKey(final Path objectKey) throws Exception {
+        delete(objectKey, true);
+    }
+
+    public void delete(final Path objectKey, boolean nodeAware) throws Exception {
         throw new UnsupportedOperationException();
     }
 
@@ -65,15 +71,17 @@ public abstract class StorageInteractor implements AutoCloseable {
 
     // currently works for file protocol only
     public void deleteTopology(final String name) throws Exception {
-        delete(resolveRoot().resolve("topology").resolve(name + ".json"));
+        delete(Paths.get("topology").resolve(name + ".json"), false);
     }
 
     public StorageLocation getStorageLocation() {
         return this.storageLocation;
     }
 
-    public void setStorageLocation(final StorageLocation storageLocation) {
+    public void update(final StorageLocation storageLocation,
+                       final LocalFileRestorer restorer) {
         this.storageLocation = storageLocation;
+        this.localFileRestorer = restorer;
     }
 
     protected abstract void cleanup() throws Exception;

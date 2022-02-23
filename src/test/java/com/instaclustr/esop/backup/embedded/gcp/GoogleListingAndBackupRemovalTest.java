@@ -31,17 +31,17 @@ public class GoogleListingAndBackupRemovalTest extends BaseListingRemovalTest {
 
     @Override
     protected String getStorageLocation() {
-        return protocol() + "://" + BUCKET_NAME + "/cluster/datacenter1/node1";
+        return protocol() + BUCKET_NAME + "/cluster/datacenter1/node1";
     }
 
     protected String getStorageLocationForAnotherCluster() {
-        return protocol() + "://" + BUCKET_NAME + "/cluster2/datacenter1/node1";
+        return protocol() + BUCKET_NAME + "/cluster2/datacenter1/node1";
     }
 
 
     @Override
     protected String protocol() {
-        return "gcp";
+        return "gcp://";
     }
 
     @Override

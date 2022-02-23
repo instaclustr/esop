@@ -112,7 +112,6 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 final String[] jsonComplex = new String[]{
                         "list",
                         "--storage-location=" + getStorageLocation(),
-                        "--skip-node-resolution",
                         "--human-units",
                         "--json",
                         "--to-file=" + jsonComplexFile.toAbsolutePath(),
@@ -122,7 +121,6 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 final String[] jsonSimple = new String[]{
                         "list",
                         "--storage-location=" + getStorageLocation(),
-                        "--skip-node-resolution",
                         "--human-units",
                         "--json",
                         "--simple-format",
@@ -133,7 +131,6 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 final String[] tableComplex = new String[]{
                         "list",
                         "--storage-location=" + getStorageLocation(),
-                        "--skip-node-resolution",
                         "--human-units",
                         "--to-file=" + tableComplexFile.toAbsolutePath(),
                         "--cache-dir=" + target(".esop")
@@ -142,7 +139,6 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 final String[] tableSimple = new String[]{
                         "list",
                         "--storage-location=" + getStorageLocation(),
-                        "--skip-node-resolution",
                         "--human-units",
                         "--simple-format",
                         "--to-file=" + tableSimpleFile.toAbsolutePath(),
@@ -177,7 +173,6 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 final String[] delete1 = new String[]{
                         "remove-backup",
                         "--storage-location=" + getStorageLocation(),
-                        "--skip-node-resolution",
                         "--backup-name=" + oldestBackupName,
                         "--cache-dir=" + target(".esop")
                 };
@@ -190,7 +185,6 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 final String[] delete2 = new String[]{
                         "remove-backup",
                         "--storage-location=" + getStorageLocation(),
-                        "--skip-node-resolution",
                         "--backup-name=" + latestBackupName,
                         "--cache-dir=" + target(".esop")
                 };
@@ -202,7 +196,9 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
 
                 // we basically deleted everything in the first storage location by deleting first two backups
                 //assertEquals(Files.list(Paths.get(getStorageLocation().replaceAll(protocol(), ""), "data")).count(), 0);
-                assertEquals(Files.list(Paths.get(getStorageLocation().replaceAll(protocol() + "://", ""), "manifests")).count(), 0);
+                String s = getStorageLocation().replaceAll(protocol(), "");
+                Path manifests = Paths.get(target(".esop")).resolve(s).resolve("manifests");
+                assertEquals(0, Files.list(manifests).count());
             } finally {
                 cassandra.stop();
             }

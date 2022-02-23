@@ -125,26 +125,19 @@ public class Manifest implements Cloneable {
 
     @JsonIgnore
     public List<ManifestEntry> getManifestEntries() {
-        return getManifestEntries(true, true);
+        return getManifestEntries(true);
     }
 
     @JsonIgnore
     public long getTotalSize() {
-        return getManifestEntries(true, false).stream().map(e -> e.size).reduce(Long::sum).orElse(0L);
+        return getManifestEntries(false).stream().map(e -> e.size).reduce(Long::sum).orElse(0L);
     }
 
     @JsonIgnore
-    public List<ManifestEntry> getManifestEntries(final boolean withSchemas, final boolean withManifestItself) {
+    public List<ManifestEntry> getManifestEntries(final boolean withManifestItself) {
         final List<ManifestEntry> entries = new ArrayList<>();
 
-        snapshot.getKeyspaces().forEach((s, keyspace) -> keyspace.getTables().forEach((s1, table) -> {
-            if (withSchemas) {
-                // it contains schema already
-                entries.addAll(table.getEntries());
-            } else {
-                entries.addAll(table.getEntries().stream().filter(entry -> entry.type != Type.CQL_SCHEMA).collect(toList()));
-            }
-        }));
+        snapshot.getKeyspaces().forEach((s, keyspace) -> keyspace.getTables().forEach((s1, table) -> entries.addAll(table.getEntries())));
 
         if (withManifestItself && manifest != null) {
             entries.add(manifest);
@@ -447,7 +440,7 @@ public class Manifest implements Cloneable {
         public void add(final Manifest manifest) {
             final String manifestName = manifest.manifest.objectKey.getFileName().toString();
             // with schemas but without manifest itself
-            manifest.getManifestEntries(true, false).forEach(m -> add(manifestName, m));
+            manifest.getManifestEntries(false).forEach(m -> add(manifestName, m));
         }
 
         public int getNumberOfEntries() {
@@ -488,7 +481,7 @@ public class Manifest implements Cloneable {
 
         public ManifestReport report(final Manifest manifest) {
             final ManifestReport report = new ManifestReport();
-            report.files = manifest.getManifestEntries(true, false).size();
+            report.files = manifest.getManifestEntries(false).size();
             report.size = manifest.getTotalSize();
             report.name = manifest.getManifestName();
             report.manifest = manifest.manifest;
@@ -676,6 +669,7 @@ public class Manifest implements Cloneable {
                 .add("totalSize", totalSize)
                 .add("totalFiles", totalFiles)
                 .add("totalManifests", totalManifests)
+                .add("reports", reports)
                 .toString();
         }
     }

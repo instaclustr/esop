@@ -46,7 +46,6 @@ public class GCPRestorer extends Restorer {
     private static final Logger logger = LoggerFactory.getLogger(GCPRestorer.class);
 
     private final Storage storage;
-    LocalFileRestorer localFileRestorer;
 
     @AssistedInject
     public GCPRestorer(final GoogleStorageFactory storageFactory,
@@ -69,8 +68,8 @@ public class GCPRestorer extends Restorer {
         super(request);
         this.storage = storageFactory.build(request);
 
-        this.localFileRestorer = new LocalFileRestorer(getForLocalListing(request, request.cacheDir, request.storageLocation),
-                objectMapper);
+//        this.localFileRestorer = new LocalFileRestorer(getForLocalListing(request, request.cacheDir, request.storageLocation),
+//                objectMapper);
     }
 
     @AssistedInject
@@ -240,11 +239,14 @@ public class GCPRestorer extends Restorer {
     }
 
     @Override
-    public void delete(final Path objectKey) throws Exception {
-        final RemoteObjectReference remoteObjectReference = objectKeyToNodeAwareRemoteReference(objectKey);
-        final Path fileToDelete = Paths.get(request.storageLocation.bucket,
-                remoteObjectReference.canonicalPath);
-        logger.info("Non dry: " + fileToDelete);
+    public void delete(Path objectKey, boolean nodeAware) throws Exception {
+        RemoteObjectReference remoteObjectReference;
+        if (nodeAware) {
+            remoteObjectReference = objectKeyToNodeAwareRemoteReference(objectKey);
+        } else {
+            remoteObjectReference = objectKeyToRemoteReference(objectKey);
+        }
+        logger.info("Non dry: " + Paths.get(request.storageLocation.bucket, remoteObjectReference.canonicalPath));
         storage.delete(((GCPRemoteObjectReference) remoteObjectReference).blobId);
     }
 
@@ -254,7 +256,7 @@ public class GCPRestorer extends Restorer {
         if (backupToDelete.reclaimableSpace > 0 && !backupToDelete.getRemovableEntries().isEmpty()) {
             for (final String removableEntry : backupToDelete.getRemovableEntries()) {
                 if (!request.dry) {
-                    delete(Paths.get(removableEntry));
+                    deleteNodeAwareKey(Paths.get(removableEntry));
                 } else {
                     logger.info("Dry: " + removableEntry);
                 }
@@ -264,9 +266,9 @@ public class GCPRestorer extends Restorer {
         // manifest and topology as the last
         if (!request.dry) {
             //delete in GCP
-            delete(backupToDelete.manifest.objectKey);
+            deleteNodeAwareKey(backupToDelete.manifest.objectKey);
             //delete in local cache
-            localFileRestorer.delete(backupToDelete.manifest.objectKey);
+            localFileRestorer.deleteNodeAwareKey(backupToDelete.manifest.objectKey);
         } else {
             logger.info("Dry: " + backupToDelete.manifest.objectKey);
         }

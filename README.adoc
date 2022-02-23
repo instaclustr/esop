@@ -1120,7 +1120,6 @@ consist of and how much space they occupy as well as how much space we would rec
 ----
 $ java -jar esop.jar list \
     --storage-location=file:///backup1/cluster/datacenter1/node1 \
-    --skip-node-resolution \
     --human-units
 
 Timestamp               Name             Files Occupied space Reclaimable space
@@ -1156,10 +1155,9 @@ The same logic applies for Azure and GCP (`azure://` and `gcp://` respectively).
 |===
 |flag |explanation
 
-|--skip-node-resolution
-|Skips the resolution of cluster name, data center and host id of a node Esop is connected to, otherwise
-it will try to connect to that node and retrieve this information and it will replace respective placeholders
-in --storage-location property.
+|--resolve-nodes
+|Resolves cluster name, data center and host id of a node Esop is connected to, otherwise
+it will try skip connecting to that node and it will expect valid --storage-location property.
 
 |--simple-format
 |prints out just names of backups instead of all statistics
@@ -1210,7 +1208,6 @@ specifying `--from-timestamp` and then you can delete these backups one by one.
 ----
 $ java -jar esop.jar remove-backup \
     --storage-location=file:///backup1/cluster/datacenter1/node1 \
-    --skip-node-resolution \
     --backup-name=full-backup-name-from-listing-with-timestamp-etc
 ----
 
@@ -1228,7 +1225,7 @@ All flags:
 |--dry
 |it will not delete files for real, good for evaluation to see what it would do before shooting
 
-|--skip-node-resolution
+|--resolve-nodes
 |consult list command, same logic
 |===
 
@@ -1245,7 +1242,6 @@ For global removal of backups older than 14 days:
 ----
 $ esop remove-backup \
     --global-request \
-    --skip-node-resolution \
     --storage-location=file:///submit/backup/Test-Cluster/dc1/ab3f1d62-1a61-4f84-a2e2-97a626940d8d \
     --older-than=14day
 ----
@@ -1262,7 +1258,6 @@ execute it like this:
 ----
 $ esop remove-backup \
     --global-request \
-    --skip-node-resolution \
     --storage-location=file:///submit/backup/Test-Cluster/dc1/ab3f1d62-1a61-4f84-a2e2-97a626940d8d \
     --older-than=5minute \
     --rate=1minute

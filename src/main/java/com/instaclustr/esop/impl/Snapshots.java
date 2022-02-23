@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.instaclustr.esop.impl.ManifestEntry.Type;
 import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace.Table;
 import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.restore.strategy.DataSynchronizator;
@@ -216,13 +215,9 @@ public class Snapshots implements Cloneable {
             if (!containsTable(keyspace, table.name)) {
                 Table newTable = new Table(table.name, table.id);
                 newTable.schemaContent = table.schemaContent;
-                newTable.schema = table.schema;
                 this.keyspaces.get(keyspace).add(table.name, newTable);
             }
             Table t = getTable(keyspace, table.name).get();
-            if (table.schema != null) {
-                t.schema = table.schema;
-            }
             if (table.schemaContent != null) {
                 t.schemaContent = table.schemaContent;
             }
@@ -296,25 +291,6 @@ public class Snapshots implements Cloneable {
             }
 
             return snapshot;
-        }
-
-        @JsonIgnore
-        public List<ManifestEntry> getSchemas() {
-            return keyspaces.entrySet().stream()
-                            .flatMap(entry -> entry.getValue().getTables().values().stream().map(Table::getSchema))
-                            .filter(Objects::nonNull)
-                            .collect(toList());
-        }
-
-        @JsonIgnore
-        public Optional<ManifestEntry> getSchema(final String keyspace, final String table) {
-            final Optional<Keyspace> ks = Optional.ofNullable(keyspaces.get(keyspace));
-
-            if (!ks.isPresent()) {
-                return Optional.empty();
-            }
-
-            return ks.flatMap(ksOpt -> ksOpt.getTable(table)).map(Table::getSchema);
         }
 
         @Override
@@ -470,11 +446,6 @@ public class Snapshots implements Cloneable {
                 return tables.entrySet().stream().anyMatch(entry -> entry.getKey().equals(table));
             }
 
-            @JsonIgnore
-            public List<ManifestEntry> getAllSchemas() {
-                return tables.values().stream().map(Table::getSchema).collect(toList());
-            }
-
             public void add(final String name, final Table table) {
                 this.tables.put(name, table);
             }
@@ -510,10 +481,6 @@ public class Snapshots implements Cloneable {
                 }
 
                 return differentTables;
-            }
-
-            public List<String> getTablesNamesWithDifferentSchemas(final Keyspace otherKeyspace) {
-                return null;
             }
 
             @JsonIgnore
@@ -559,7 +526,6 @@ public class Snapshots implements Cloneable {
                 // simple name without id
                 public String name;
                 public String id;
-                private ManifestEntry schema;
                 private String schemaContent;
                 private Map<String, List<ManifestEntry>> sstables = new HashMap<>();
 
@@ -572,7 +538,6 @@ public class Snapshots implements Cloneable {
                 public Table(final @JsonProperty("sstables") Map<String, List<ManifestEntry>> sstables,
                              // this is here for backward compatibility with manifests before 2.0.0
                              final @JsonProperty("entries") List<ManifestEntry> entries,
-                             final @JsonProperty("schema") ManifestEntry schema,
                              final @JsonProperty("id") String id,
                              final @JsonProperty("schemaContent") String schemaContent) {
                     if ((sstables == null || sstables.isEmpty())) {
@@ -582,7 +547,6 @@ public class Snapshots implements Cloneable {
                     } else {
                         this.sstables.putAll(sstables);
                     }
-                    this.schema = schema;
                     this.schemaContent = schemaContent;
                     this.id = id;
                 }
@@ -611,12 +575,6 @@ public class Snapshots implements Cloneable {
                     final Optional<Path> schemaPath = value.stream().map(p -> p.resolve("schema.cql")).filter(Files::exists).findFirst();
 
                     if (schemaPath.isPresent()) {
-                        final Path schema = schemaPath.get();
-                        tb.schema = new ManifestEntry(tablePath.resolve("schema.cql"),
-                                                      schema,
-                                                      Type.CQL_SCHEMA,
-                                                      null,
-                                                      new KeyspaceTable(keyspace, table));
                         tb.schemaContent = new String(Files.readAllBytes(schemaPath.get()));
                     }
 
@@ -627,7 +585,7 @@ public class Snapshots implements Cloneable {
                     getEntries().forEach(entryConsumer);
                 }
 
-                public void setSTables(Map<String, List<ManifestEntry>> sstables) {
+                public void setSstables(Map<String, List<ManifestEntry>> sstables) {
                     this.sstables = sstables;
                 }
 
@@ -637,12 +595,7 @@ public class Snapshots implements Cloneable {
 
                 @JsonIgnore
                 public List<ManifestEntry> getEntries() {
-                    if (schema != null) {
-                        return Stream.concat(sstables.values().stream().flatMap(Collection::stream), Stream.of(schema))
-                                     .collect(toList());
-                    } else {
-                        return sstables.values().stream().flatMap(Collection::stream).collect(toList());
-                    }
+                    return sstables.values().stream().flatMap(Collection::stream).collect(toList());
                 }
 
                 @JsonIgnore
@@ -678,11 +631,6 @@ public class Snapshots implements Cloneable {
                     if (!manifestEntries.contains(manifestEntry)) {
                         manifestEntries.add(manifestEntry);
                     }
-                }
-
-                @JsonIgnore
-                public ManifestEntry getSchema() {
-                    return schema;
                 }
 
                 public String getSchemaContent() {
@@ -733,13 +681,12 @@ public class Snapshots implements Cloneable {
                     return com.google.common.base.Objects.equal(getEntries(), table.getEntries()) &&
                            com.google.common.base.Objects.equal(name, table.name) &&
                            com.google.common.base.Objects.equal(id, table.id) &&
-                           com.google.common.base.Objects.equal(schema, table.schema) &&
                            com.google.common.base.Objects.equal(schemaContent, table.schemaContent);
                 }
 
                 @Override
                 public int hashCode() {
-                    return com.google.common.base.Objects.hashCode(getEntries(), name, id, schema, schemaContent);
+                    return com.google.common.base.Objects.hashCode(getEntries(), name, id, schemaContent);
                 }
 
                 @Override
@@ -748,7 +695,6 @@ public class Snapshots implements Cloneable {
                            "entries=" + getEntries() +
                            ", name='" + name + '\'' +
                            ", id='" + id + '\'' +
-                           ", schema=" + schema +
                            ", schemaContent='" + schemaContent + '\'' +
                            '}';
                 }
@@ -756,10 +702,6 @@ public class Snapshots implements Cloneable {
                 @Override
                 public Table clone() throws CloneNotSupportedException {
                     final Table cloned = new Table(this.name, this.id);
-
-                    if (this.schema != null) {
-                        cloned.schema = this.schema.clone();
-                    }
 
                     cloned.schemaContent = schemaContent;
                     cloned.sstables = new LinkedHashMap<>(sstables);

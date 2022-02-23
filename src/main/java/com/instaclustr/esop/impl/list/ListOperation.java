@@ -1,10 +1,10 @@
 package com.instaclustr.esop.impl.list;
 
+import static com.instaclustr.esop.impl.list.ListOperationRequest.getForLocalListing;
 import static java.util.Collections.reverse;
 import static java.util.stream.Collectors.toList;
 
 import javax.inject.Inject;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
@@ -30,6 +30,7 @@ import com.instaclustr.esop.impl.StorageInteractor;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.TableBuilder;
 import com.instaclustr.esop.impl.retry.RetrySpec;
+import com.instaclustr.esop.local.LocalFileRestorer;
 import com.instaclustr.esop.topology.CassandraSimpleTopology;
 import com.instaclustr.esop.topology.CassandraSimpleTopology.CassandraSimpleTopologyResult;
 import com.instaclustr.io.FileUtils;
@@ -73,7 +74,7 @@ public class ListOperation extends Operation<ListOperationRequest> {
                           @JsonProperty("proxySettings") final ProxySettings proxySettings,
                           @JsonProperty("retry") final RetrySpec retry,
                           @JsonProperty("json") final boolean json,
-                          @JsonProperty("skipNodeCoordinatesResolution") final boolean skipNodeCoordinatesResolution,
+                          @JsonProperty("resolveNodes") final boolean resolveNodes,
                           @JsonProperty("humanUnits") final boolean humanUnits,
                           @JsonProperty("toFile") final String toFile,
                           @JsonProperty("simpleFormat") final boolean simpleFormat,
@@ -93,7 +94,7 @@ public class ListOperation extends Operation<ListOperationRequest> {
                                                                                                    proxySettings,
                                                                                                    retry,
                                                                                                    json,
-                                                                                                   skipNodeCoordinatesResolution,
+                                                                                                   resolveNodes,
                                                                                                    humanUnits,
                                                                                                    toFile,
                                                                                                    simpleFormat,
@@ -122,7 +123,7 @@ public class ListOperation extends Operation<ListOperationRequest> {
             FileUtils.createDirectory(localPath);
         }
 
-        if (!request.skipNodeCoordinatesResolution) {
+        if (request.resolveNodes) {
             assert cassandraJMXService != null;
             CassandraSimpleTopologyResult simpleTopology = new CassandraSimpleTopology(cassandraJMXService).act();
             request.storageLocation = StorageLocation.update(request.storageLocation,
@@ -132,6 +133,11 @@ public class ListOperation extends Operation<ListOperationRequest> {
         }
 
         try (final StorageInteractor interactor = restorerFactoryMap.get(request.storageLocation.storageProvider).createListingInteractor(request)) {
+            interactor.update(request.storageLocation, new LocalFileRestorer(getForLocalListing(request,
+                                                                                                request.cacheDir,
+                                                                                                request.storageLocation),
+                                                                             objectMapper));
+
             final AllManifestsReport report = AllManifestsReport.report(interactor.listManifests());
             filterFromTimestamp(report, request.fromTimestamp);
             filterLastN(report, request.lastN);

@@ -31,11 +31,11 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
     @Option(names = {"-d", "--dry"}, description = "If set, deletion is not performed but all processing leading up to it is.")
     public boolean dry;
 
-    @Option(names = {"--skip-node-resolution"}, description = "If set, we expect storage location to contain path to node, e.g. file:///my/path/cluster/dc/node1, "
+    @Option(names = {"--resolve-nodes"}, description = "If set, we expect storage location to contain path to node, e.g. file:///my/path/cluster/dc/node1, "
                                                               + "If this is not set, there will be automatic attempt to resolve cluster, dc and node names by connecting to "
                                                               + "a running node Esop / Icarus is connected to. This expects that node to be up as it uses JMX to resolve it. If this is not set, "
                                                               + "it is expected that storageLocation represents the correct path.")
-    public boolean skipNodeCoordinatesResolution = false;
+    public boolean resolveNodes = false;
 
     @Option(names = {"-o", "--oldest"}, description = "Removes oldest backup there is, backup names does not need to be specified then")
     public boolean removeOldest;
@@ -51,8 +51,7 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
     public List<String> dcs = new ArrayList<>();
 
     @Option(names = {"--global-request"}, description = "If true, it will remove backups for all nodes in storage location, in datacenters based on --dcs option")
-    @JsonIgnore
-    public boolean globalRemoval = false;
+    public boolean globalRequest;
 
     @Option(names = {"--cache-dir"}, description = "Directory where Esop caches downloaded manifests, defaults to a directory called '.esop' in user's home dir.")
     @JsonSerialize(using = PathSerializer.class)
@@ -74,20 +73,22 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
                                @JsonProperty("retry") final RetrySpec retry,
                                @JsonProperty("backupName") final String backupName,
                                @JsonProperty("dry") final boolean dry,
-                               @JsonProperty("skipNodeCoordinatesResolution") final boolean skipNodeCoordinatesResolution,
+                               @JsonProperty("resolveNodes") final boolean resolveNodes,
                                @JsonProperty("olderThan") final Time olderThan,
                                @JsonProperty("cacheDir") final Path cacheDir,
                                @JsonProperty("removeOldest") final boolean removeOldest,
-                               @JsonProperty("concurrentConnections") final Integer concurrentConnections) {
+                               @JsonProperty("concurrentConnections") final Integer concurrentConnections,
+                               @JsonProperty("globalRequest") final boolean globalRequest) {
         super(storageLocation, 1, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
         this.type = type;
         this.backupName = backupName;
         this.dry = dry;
-        this.skipNodeCoordinatesResolution = skipNodeCoordinatesResolution;
+        this.resolveNodes = resolveNodes;
         this.olderThan = olderThan == null ? Time.zeroTime() : olderThan;
         this.cacheDir = (cacheDir == null) ? Paths.get(System.getProperty("user.home"), ".esop") : cacheDir;
         this.removeOldest = removeOldest;
         this.concurrentConnections = concurrentConnections;
+        this.globalRequest = globalRequest;
     }
 
     @Override
@@ -95,10 +96,10 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
         return MoreObjects.toStringHelper(this)
                           .add("backupName", backupName)
                           .add("dry", dry)
-                          .add("skipNodeCoordinatesResolution", skipNodeCoordinatesResolution)
+                          .add("resolveNodes", resolveNodes)
                           .add("olderThan", olderThan)
                           .add("cacheDir", cacheDir)
-                          .add("globalRemoval", globalRemoval)
+                          .add("globalRemoval", globalRequest)
                           .add("dcs", dcs)
                           .toString();
     }

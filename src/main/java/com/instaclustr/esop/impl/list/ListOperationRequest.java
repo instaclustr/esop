@@ -1,7 +1,6 @@
 package com.instaclustr.esop.impl.list;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -23,11 +22,11 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
     @Option(names = {"--json"}, description = "Prints listing as a JSON, not as a table")
     public boolean json = false;
 
-    @Option(names = {"--skip-node-resolution"}, description = "If set, we expect storage location to contain path to node, e.g. file:///my/path/cluster/dc/node1, "
+    @Option(names = {"--resolve-nodes"}, description = "If set, we expect storage location to contain path to node, e.g. file:///my/path/cluster/dc/node1, "
                                                               + "If this is not set, there will be automatic attempt to resolve cluster, dc and node names by connecting to "
                                                               + "a running node Esop / Icarus is connected to. This expects that node to be up as it uses JMX to resolve it. If this is not set, "
                                                               + "it is expected that storageLocation represents the correct path.")
-    public boolean skipNodeCoordinatesResolution = false;
+    public boolean resolveNodes = false;
 
     @Option(names = {"--human-units"}, description = "Displays statistics for listing backups in a more human friendly output.")
     public boolean humanUnits = false;
@@ -71,7 +70,7 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
                                 @JsonProperty("proxySettings") final ProxySettings proxySettings,
                                 @JsonProperty("retry") final RetrySpec retry,
                                 @JsonProperty("json") final boolean json,
-                                @JsonProperty("skipNodeCoordinatesResolution") final boolean skipNodeCoordinatesResolution,
+                                @JsonProperty("resolveNodes") final boolean resolveNodes,
                                 @JsonProperty("humanUnits") final boolean humanUnits,
                                 @JsonProperty("toFile") final String toFile,
                                 @JsonProperty("simpleFormat") final boolean simpleFormat,
@@ -84,7 +83,7 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
                                 @JsonProperty("response") final Manifest.AllManifestsReport response) {
         super(storageLocation, 1, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
         this.json = json;
-        this.skipNodeCoordinatesResolution = skipNodeCoordinatesResolution;
+        this.resolveNodes = resolveNodes;
         this.humanUnits = humanUnits;
         this.toFile = toFile;
         this.simpleFormat = simpleFormat;
@@ -135,7 +134,7 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
     public String toString() {
         return MoreObjects.toStringHelper(this)
                           .add("json", json)
-                          .add("skipNodeCoordinatesResolution", skipNodeCoordinatesResolution)
+                          .add("resolveNodes", resolveNodes)
                           .add("humanUnits", humanUnits)
                           .add("toFile", toFile)
                           .add("simpleFormat", simpleFormat)

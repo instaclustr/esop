@@ -317,9 +317,6 @@ public class ManifestTest {
 
             assertFalse(ks2t1.isEmpty());
 
-            assertFalse(snapshot3.getSchemas().isEmpty());
-            assertTrue(snapshot3.getSchema("ks2", "ks2t1").isPresent());
-
             Manifest readManifest = Manifest.read(writtenManifestAsJson, objectMapper);
             assertNotNull(readManifest);
 

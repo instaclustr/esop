@@ -17,6 +17,7 @@ import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageInteractor;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.retry.RetrySpec;
+import com.instaclustr.esop.local.LocalFileRestorer;
 import com.instaclustr.esop.topology.CassandraSimpleTopology;
 import com.instaclustr.esop.topology.CassandraSimpleTopology.CassandraSimpleTopologyResult;
 import com.instaclustr.measure.Time;
@@ -24,6 +25,8 @@ import com.instaclustr.operations.Operation;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.instaclustr.esop.impl.list.ListOperationRequest.getForLocalListing;
 
 public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
 
@@ -63,11 +66,12 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
                                   @JsonProperty("retry") final RetrySpec retry,
                                   @JsonProperty("backupName") final String backupName,
                                   @JsonProperty("dry") final boolean dry,
-                                  @JsonProperty("skipNodeCoordinatesResolution") final boolean skipNodeCoordinatesResolution,
+                                  @JsonProperty("resolveNodes") final boolean resolveNodes,
                                   @JsonProperty("olderThan") final Time olderThan,
                                   @JsonProperty("cacheDir") final Path cacheDir,
                                   @JsonProperty("removeOldest") final boolean removeOldest,
-                                  @JsonProperty("concurrentConnections") final Integer concurrentConnections) {
+                                  @JsonProperty("concurrentConnections") final Integer concurrentConnections,
+                                  @JsonProperty("globalRequest") final boolean globalRequest) {
         super(type, id, creationTime, state, errors, progress, startTime, new RemoveBackupRequest(type,
                                                                                                   storageLocation,
                                                                                                   k8sNamespace,
@@ -78,11 +82,12 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
                                                                                                   retry,
                                                                                                   backupName,
                                                                                                   dry,
-                                                                                                  skipNodeCoordinatesResolution,
+                                                                                                  resolveNodes,
                                                                                                   olderThan,
                                                                                                   cacheDir,
                                                                                                   removeOldest,
-                                                                                                  concurrentConnections));
+                                                                                                  concurrentConnections,
+                                                                                                  globalRequest));
         this.restorerFactoryMap = null;
         this.objectMapper = null;
         this.cassandraJMXService = null;
@@ -90,7 +95,7 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
     }
 
     private List<StorageLocation> getStorageLocations(final StorageInteractor restorer) throws Exception {
-        if (request.globalRemoval) {
+        if (request.globalRequest) {
             return restorer.listNodes(request.dcs);
         } else {
             return Collections.singletonList(request.storageLocation);
@@ -104,21 +109,27 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
 
         request.validate(null);
 
-        if (!request.skipNodeCoordinatesResolution) {
+        if (request.resolveNodes) {
             assert cassandraJMXService != null;
             CassandraSimpleTopologyResult simpleTopology = new CassandraSimpleTopology(cassandraJMXService).act();
             request.storageLocation = StorageLocation.update(request.storageLocation,
                                                              simpleTopology.getClusterName(),
                                                              simpleTopology.getDc(),
                                                              simpleTopology.getHostId());
-
         }
 
         try (final StorageInteractor interactor = restorerFactoryMap.get(request.storageLocation.storageProvider).createDeletingInteractor(request)) {
+            interactor.update(request.storageLocation, new LocalFileRestorer(getForLocalListing(request,
+                                                                                                request.cacheDir,
+                                                                                                request.storageLocation),
+                                                                             objectMapper));
             for (final StorageLocation nodeLocation : getStorageLocations(interactor)) {
                 logger.info("Looking for backups to delete for node {}", nodeLocation.nodePath());
-                interactor.setStorageLocation(nodeLocation);
                 request.storageLocation = nodeLocation;
+                interactor.update(nodeLocation, new LocalFileRestorer(getForLocalListing(request,
+                                                                                         request.cacheDir,
+                                                                                         request.storageLocation),
+                                                                      objectMapper));
 
                 final Optional<AllManifestsReport> reportOptional = getReport(interactor);
 
@@ -128,15 +139,16 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
                 }
 
                 final AllManifestsReport report = reportOptional.get();
+                logger.debug(report.toString());
                 final List<ManifestReport> allBackupsToDelete = getBackupsToDelete(report);
 
                 if (allBackupsToDelete.isEmpty()) {
                     if (request.backupName != null) {
-                        logger.debug("There is not any {} backup to remove for node {}", request.backupName, nodeLocation);
+                        logger.info("There is not any {} backup to remove for node {}", request.backupName, nodeLocation);
                     } else {
-                        logger.debug("There is not any backup to remove for node {}", nodeLocation);
+                        logger.info("There is not any backup to remove for node {}", nodeLocation);
                     }
-                    return;
+                    continue;
                 }
 
                 logger.info("Removing backups for node {}: {}",
@@ -146,16 +158,12 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
                 for (final ManifestReport mr : allBackupsToDelete) {
                     interactor.delete(mr, request);
                 }
+            }
 
-                for (final ManifestReport mr : allBackupsToDelete) {
-                    if (request.globalRemoval) {
-                        if (!request.dry) {
-                            interactor.deleteTopology(mr.name);
-                        } else {
-                            logger.info("Deletion of topology for {} was executed in dry mode", mr.name);
-                        }
-                    }
-                }
+            if (!request.dry) {
+                interactor.deleteTopology(request.backupName);
+            } else {
+                logger.info("Deletion of topology for {} was executed in dry mode", request.backupName);
             }
         } catch (final Exception ex) {
             logger.error("Unable to perform backup deletion! - " + ex.getMessage(), ex);

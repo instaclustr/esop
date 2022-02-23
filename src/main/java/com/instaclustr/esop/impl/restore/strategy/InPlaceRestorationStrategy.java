@@ -85,7 +85,7 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
                 final NodeTopology nodeTopology = getNodeTopology(restorer, request);
                 // here, nodeTopology.nodeId is uuid, not hostname
                 operation.request.storageLocation = StorageLocation.updateNodeId(operation.request.storageLocation, nodeTopology.nodeId);
-                restorer.setStorageLocation(operation.request.storageLocation);
+                restorer.update(operation.request.storageLocation, null);
                 logger.info(format("Updated storage location to %s", operation.request.storageLocation));
             }
 

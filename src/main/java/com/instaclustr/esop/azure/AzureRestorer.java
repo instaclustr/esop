@@ -1,6 +1,5 @@
 package com.instaclustr.esop.azure;
 
-import static com.instaclustr.esop.impl.list.ListOperationRequest.getForLocalListing;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
@@ -28,7 +27,6 @@ import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
-import com.instaclustr.esop.local.LocalFileRestorer;
 import com.instaclustr.io.FileUtils;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageException;
@@ -47,7 +45,6 @@ public class AzureRestorer extends Restorer {
     private final CloudBlobContainer blobContainer;
     private final CloudBlobClient cloudBlobClient;
     private final CloudStorageAccount cloudStorageAccount;
-    private LocalFileRestorer localFileRestorer;
 
     @AssistedInject
     public AzureRestorer(final CloudStorageAccountFactory cloudStorageAccountFactory,
@@ -81,8 +78,6 @@ public class AzureRestorer extends Restorer {
         cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
 
         this.blobContainer = cloudBlobClient.getContainerReference(request.storageLocation.bucket);
-        this.localFileRestorer = new LocalFileRestorer(getForLocalListing(request, request.cacheDir, request.storageLocation),
-                objectMapper);
     }
 
     @AssistedInject
@@ -95,10 +90,7 @@ public class AzureRestorer extends Restorer {
         cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
 
         this.blobContainer = cloudBlobClient.getContainerReference(request.storageLocation.bucket);
-        this.localFileRestorer = new LocalFileRestorer(getForLocalListing(request, request.cacheDir, request.storageLocation),
-                                                       objectMapper);
     }
-
 
     @Override
     public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception {
@@ -241,11 +233,14 @@ public class AzureRestorer extends Restorer {
     }
 
     @Override
-    public void delete(final Path objectKey) throws Exception {
-        final RemoteObjectReference remoteObjectReference = objectKeyToNodeAwareRemoteReference(objectKey);
-        final Path fileToDelete = Paths.get(request.storageLocation.bucket,
-                remoteObjectReference.canonicalPath);
-        logger.info("Non dry: " + fileToDelete);
+    public void delete(Path objectKey, boolean nodeAware) throws Exception {
+        RemoteObjectReference remoteObjectReference;
+        if (nodeAware) {
+            remoteObjectReference = objectKeyToNodeAwareRemoteReference(objectKey);
+        } else {
+            remoteObjectReference = objectKeyToRemoteReference(objectKey);
+        }
+        logger.info("Non dry: " + Paths.get(request.storageLocation.bucket, remoteObjectReference.canonicalPath));
         ((AzureRemoteObjectReference) remoteObjectReference).blob.delete();
     }
 
@@ -255,7 +250,7 @@ public class AzureRestorer extends Restorer {
         if (backupToDelete.reclaimableSpace > 0 && !backupToDelete.getRemovableEntries().isEmpty()) {
             for (final String removableEntry : backupToDelete.getRemovableEntries()) {
                 if (!request.dry) {
-                    delete(Paths.get(removableEntry));
+                    deleteNodeAwareKey(Paths.get(removableEntry));
                 } else {
                     logger.info("Dry: " + removableEntry);
                 }
@@ -265,13 +260,12 @@ public class AzureRestorer extends Restorer {
         // manifest and topology as the last
         if (!request.dry) {
             //delete in Azure
-            delete(backupToDelete.manifest.objectKey);
+            deleteNodeAwareKey(backupToDelete.manifest.objectKey);
             //delete in local cache
-            localFileRestorer.delete(backupToDelete.manifest.objectKey);
+            localFileRestorer.deleteNodeAwareKey(backupToDelete.manifest.objectKey);
         } else {
             logger.info("Dry: " + backupToDelete.manifest.objectKey);
         }
-
     }
 
     @Override
