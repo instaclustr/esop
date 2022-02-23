@@ -202,7 +202,9 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
 
                 // we basically deleted everything in the first storage location by deleting first two backups
                 //assertEquals(Files.list(Paths.get(getStorageLocation().replaceAll(protocol(), ""), "data")).count(), 0);
-                assertEquals(Files.list(Paths.get(getStorageLocation().replaceAll(protocol() + "://", ""), "manifests")).count(), 0);
+                String s = getStorageLocation().replaceAll(protocol(), "");
+                Path manifests = Paths.get(target(".esop")).resolve(s).resolve("manifests");
+                assertEquals(0, Files.list(manifests).count());
             } finally {
                 cassandra.stop();
             }
