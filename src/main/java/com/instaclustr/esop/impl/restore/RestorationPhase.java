@@ -549,7 +549,7 @@ public abstract class RestorationPhase {
                     }
                 }
 
-                if (failedLinkage && !successfulLinks.isEmpty()) {
+                if (failedLinkage) {
                     for (final Path linked : successfulLinks) {
                         try {
                             Files.deleteIfExists(linked);
