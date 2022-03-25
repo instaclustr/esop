@@ -361,6 +361,7 @@
                                             <type>file</type>
                                             <mapper>
                                                 <type>perm</type>
+                                                <filemode>755</filemode>
                                                 <prefix>/usr/local/bin/</prefix>
                                             </mapper>
                                         </data>

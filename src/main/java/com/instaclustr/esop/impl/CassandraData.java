@@ -4,10 +4,7 @@ import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,6 +21,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.instaclustr.esop.impl.RenamedEntities.Renamed;
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CassandraData {
 
@@ -222,6 +222,8 @@ public class CassandraData {
             this.cassandraDir = cassandraDir;
         }
 
+        private static final Logger logger = LoggerFactory.getLogger(CassandraData.class);
+
         @Override
         public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
             // we hit keyspace
@@ -232,10 +234,32 @@ public class CassandraData {
             } else if (dir.getParent().getParent().equals(cassandraDir)) {
                 // detect if it is a dropped table
                 Path snapshotsDir = dir.resolve("snapshots");
+
                 if (Files.exists(snapshotsDir)) {
                     SnapshotsLister snapshotsLister = new SnapshotsLister();
                     Files.walkFileTree(snapshotsDir, snapshotsLister);
-                    if (!snapshotsLister.isDropped()) {
+                    if (snapshotsLister.isDropped()) {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                }
+
+                String foundTableDir = dir.getFileName().toString().split("-")[0];
+
+                // find tables with same names but different ids if we ever hit a case that
+                // there are two tables but one of them is active from Cassandra point of view and the other one
+                // is just sitting there being empty without dropped snapshot, we need to make a difference
+                // which one takes precedence and in most cases it is the one which has more recent modified timestamp
+                Optional<Path> existingDir = dataDirs.get(dir.getParent())
+                        .stream()
+                        .filter(p -> p.getFileName().toString().split("-")[0].equals(foundTableDir))
+                        .findFirst();
+
+                if (existingDir.isPresent()) {
+                    long existingLastModified = existingDir.get().toFile().lastModified();
+                    long foundLastModified = dir.toFile().lastModified();
+
+                    if (existingLastModified < foundLastModified) {
+                        dataDirs.get(dir.getParent()).remove(existingDir.get());
                         dataDirs.get(dir.getParent()).add(dir);
                     }
                 } else {
