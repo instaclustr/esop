@@ -190,29 +190,6 @@ public class CassandraData {
         return renamedEntities;
     }
 
-    public static class SnapshotsLister extends SimpleFileVisitor<Path> {
-
-        private boolean isDropped = false;
-
-        @Override
-        public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
-            if (dir.getParent().getFileName().toString().equals("snapshots")) {
-                if (dir.getFileName().toString().startsWith("dropped-")) {
-                    isDropped = true;
-                    return FileVisitResult.TERMINATE;
-                } else {
-                    return FileVisitResult.SKIP_SUBTREE;
-                }
-            } else {
-                return FileVisitResult.CONTINUE;
-            }
-        }
-
-        public boolean isDropped() {
-            return isDropped;
-        }
-    }
-
     public static class KeyspaceTableLister extends SimpleFileVisitor<Path> {
 
         private final Path cassandraDir;
@@ -222,27 +199,14 @@ public class CassandraData {
             this.cassandraDir = cassandraDir;
         }
 
-        private static final Logger logger = LoggerFactory.getLogger(CassandraData.class);
-
         @Override
-        public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
+        public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) {
             // we hit keyspace
             if (dir.getParent().equals(cassandraDir)) {
                 dataDirs.putIfAbsent(dir, new ArrayList<>());
                 return FileVisitResult.CONTINUE;
                 // we hit table
             } else if (dir.getParent().getParent().equals(cassandraDir)) {
-                // detect if it is a dropped table
-                Path snapshotsDir = dir.resolve("snapshots");
-
-                if (Files.exists(snapshotsDir)) {
-                    SnapshotsLister snapshotsLister = new SnapshotsLister();
-                    Files.walkFileTree(snapshotsDir, snapshotsLister);
-                    if (snapshotsLister.isDropped()) {
-                        return FileVisitResult.SKIP_SUBTREE;
-                    }
-                }
-
                 String foundTableDir = dir.getFileName().toString().split("-")[0];
 
                 // find tables with same names but different ids if we ever hit a case that
