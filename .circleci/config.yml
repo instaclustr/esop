@@ -5,7 +5,7 @@ jobs:
     working_directory: ~/esop
 
     docker:
-      - image: circleci/openjdk:8-jdk-stretch
+      - image: cimg/openjdk:8.0
 
     steps:
 
@@ -38,7 +38,7 @@ jobs:
 
   publish-github-release:
     docker:
-      - image: circleci/golang
+      - image: cimg/go
     steps:
       - attach_workspace:
           at: ./artifacts
