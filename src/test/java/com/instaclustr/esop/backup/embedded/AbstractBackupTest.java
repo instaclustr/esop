@@ -923,6 +923,7 @@ public abstract class AbstractBackupTest {
 
             createTable(session, KEYSPACE, TABLE);
             createTable(session, KEYSPACE_2, TABLE_2);
+            createIndex(session, KEYSPACE, TABLE);
 
             insertAndCallBackupCLI(2, session, arguments[0]); // stefansnapshot-1
             insertAndCallBackupCLI(2, session, arguments[1]); // stefansnapshot-2
@@ -1140,6 +1141,7 @@ public abstract class AbstractBackupTest {
 
         createTable(session, KEYSPACE, TABLE);
         createTable(session, KEYSPACE_2, TABLE_2);
+        createIndex(session, KEYSPACE, TABLE);
 
         // this will invoke backup 2 times, each time generating 2 records and taking a snapshot and backup
         List<Long> times = range(0, 2)
@@ -1282,6 +1284,16 @@ public abstract class AbstractBackupTest {
                             .withClusteringColumn(DATE, TIMEUUID)
                             .withColumn(NAME, TEXT)
                             .build());
+    }
+
+    protected void createIndex(CqlSession session, String keyspace, String table) {
+        createTable(session, keyspace, table);
+        Uninterruptibles.sleepUninterruptibly(2, SECONDS);
+        session.execute(SchemaBuilder.createIndex(table + "_idx")
+                                .ifNotExists()
+                                .onTable(keyspace, table)
+                                .andColumn("name")
+                                .build());
     }
 
     protected String target(final String path) {

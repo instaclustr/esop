@@ -5,25 +5,18 @@ import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.SSTableUtils;
-import com.instaclustr.esop.impl.Snapshots;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -112,7 +105,11 @@ public class DataSynchronizator {
                 String g1 = matcher.group(1);
                 String g2 = matcher.group(2);
                 String g3 = matcher.group(3);
-                return g1 + "/" + g2 + "/" + g3;
+                if (g2.startsWith(".")) {
+                    return g1 + "/" + g3;
+                } else {
+                    return g1 + "/" + g2 + "/" + g3;
+                }
             } else {
                 return "";
             }
@@ -125,7 +122,7 @@ public class DataSynchronizator {
         public Map<String, List<ENTRY_TYPE>> classify(final List<ENTRY_TYPE> entries) {
             final Map<String, List<ENTRY_TYPE>> classified = entries
                     .stream()
-                    .collect(Collectors.groupingBy(entryToDownload -> getSimplePath(entryToDownload),
+                    .collect(Collectors.groupingBy(this::getSimplePath,
                                                    LinkedHashMap::new,
                                                    Collectors.mapping(identity(), toList())))
                     .entrySet()

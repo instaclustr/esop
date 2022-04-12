@@ -535,9 +535,13 @@ public abstract class RestorationPhase {
                         Path link = links.get(i);
 
                         try {
-                            logger.debug(format("linking from %s to %s", existing, link));
-                            Files.createLink(link, existing);
-                            successfulLinks.add(link);
+                            if (Files.exists(link)) {
+                                logger.debug(format("not linking from %s to %s as target already exists", existing, link));
+                            } else {
+                                logger.debug(format("linking from %s to %s", existing, link));
+                                Files.createLink(link, existing);
+                                successfulLinks.add(link);
+                            }
                         } catch (final Exception ex) {
                             logger.error(format("Unable to create a hardlink from %s to %s, skipping the linking of all other resources and deleting already linked ones.",
                                                 existing.toAbsolutePath(),

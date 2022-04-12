@@ -69,7 +69,7 @@ public class SSTableUtils {
             logger.warn("No digest file found, generating checksum based on {}.", dataFilePath);
             return matcher.group(SSTABLE_GENERATION_IDX) + "-" + calculateChecksum(dataFilePath);
         } catch (IOException e) {
-            throw new IllegalStateException("Couldn't generate checksum for " + path.toString());
+            throw new IllegalStateException("Couldn't generate checksum for " + path);
         }
     }
 
