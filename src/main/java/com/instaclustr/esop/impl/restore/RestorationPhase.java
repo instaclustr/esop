@@ -570,8 +570,7 @@ public abstract class RestorationPhase {
                         try {
                             final RefreshOperation op = new RefreshOperation(ctxt.jmx, new RefreshOperationRequest(entry.getKey(), entry.getValue()));
                             op.run();
-
-                            if (!op.errors.isEmpty()) {
+                            if (!op.errors.isEmpty() && !op.errors.get(0).throwable.getMessage().contains("Unknown")) {
                                 throw op.errors.get(0).throwable;
                             }
                         } catch (final Throwable t) {
