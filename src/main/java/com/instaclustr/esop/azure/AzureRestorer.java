@@ -241,7 +241,16 @@ public class AzureRestorer extends Restorer {
             remoteObjectReference = objectKeyToRemoteReference(objectKey);
         }
         logger.info("Non dry: " + Paths.get(request.storageLocation.bucket, remoteObjectReference.canonicalPath));
-        ((AzureRemoteObjectReference) remoteObjectReference).blob.delete();
+        try {
+            ((AzureRemoteObjectReference) remoteObjectReference).blob.delete();
+        } catch (StorageException ex) {
+            if (!ex.getMessage().contains("The specified blob does not exist")) {
+                logger.warn("The specified blob does not exist: {}",
+                            Paths.get(request.storageLocation.bucket, remoteObjectReference.canonicalPath));
+            } else {
+                throw ex;
+            }
+        }
     }
 
     @Override

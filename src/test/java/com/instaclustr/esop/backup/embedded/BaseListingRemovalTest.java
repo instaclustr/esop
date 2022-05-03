@@ -3,8 +3,11 @@ package com.instaclustr.esop.backup.embedded;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.nosan.embedded.cassandra.Cassandra;
-import com.google.inject.*;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Provider;
 import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.cli.Esop;
 import com.instaclustr.esop.impl.Manifest;
@@ -19,7 +22,6 @@ import org.testng.annotations.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,7 +31,6 @@ import static com.instaclustr.esop.backup.embedded.TestEntity2.KEYSPACE_2;
 import static com.instaclustr.esop.backup.embedded.TestEntity2.TABLE_2;
 import static java.nio.file.Files.createTempFile;
 import static java.util.Arrays.asList;
-import static org.testng.Assert.assertEquals;
 
 public abstract class BaseListingRemovalTest extends AbstractBackupTest {
 
@@ -99,8 +100,8 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 Esop.mainWithoutExit(arguments[5]);
 
                 // we expect 4 records to be there as 2 were there before the first backup and the second 2 before the second backup
-                dumpTableAndAssertRowCount(session, KEYSPACE, TABLE, 4);
-                dumpTableAndAssertRowCount(session, KEYSPACE_2, TABLE_2, 4);
+                assertRowCount(session, KEYSPACE, TABLE, 4);
+                assertRowCount(session, KEYSPACE_2, TABLE_2, 4);
 
                 // listing
 
@@ -193,12 +194,6 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
 
                 // delete latest
                 Esop.mainWithoutExit(delete2);
-
-                // we basically deleted everything in the first storage location by deleting first two backups
-                //assertEquals(Files.list(Paths.get(getStorageLocation().replaceAll(protocol(), ""), "data")).count(), 0);
-                String s = getStorageLocation().replaceAll(protocol(), "");
-                Path manifests = Paths.get(target(".esop")).resolve(s).resolve("manifests");
-                assertEquals(0, Files.list(manifests).count());
             } finally {
                 cassandra.stop();
             }

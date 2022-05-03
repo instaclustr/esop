@@ -30,12 +30,10 @@ public abstract class StorageInteractor implements AutoCloseable {
         return Paths.get(storageLocation.clusterId).resolve(storageLocation.datacenterId).resolve(storageLocation.nodeId).resolve(objectKey).toString();
     }
 
-    // currently works for file protocol only
     public List<Manifest> listManifests() throws Exception {
         throw new UnsupportedOperationException();
     }
 
-    // currently works for file protocol only
     public void deleteNodeAwareKey(final Path objectKey) throws Exception {
         delete(objectKey, true);
     }
@@ -44,32 +42,26 @@ public abstract class StorageInteractor implements AutoCloseable {
         throw new UnsupportedOperationException();
     }
 
-    // currently works for file protocol only
     public void delete(final ManifestReport report, final RemoveBackupRequest request) throws Exception {
         throw new UnsupportedOperationException();
     }
 
-    // currently works for file protocol only
     public List<StorageLocation> listNodes() throws Exception {
         throw new UnsupportedOperationException();
     }
 
-    // currently works for file protocol only
     public List<StorageLocation> listNodes(final String dc) throws Exception {
         throw new UnsupportedOperationException();
     }
 
-    // currently works for file protocol only
     public List<StorageLocation> listNodes(final List<String> dcs) throws Exception {
         throw new UnsupportedOperationException();
     }
 
-    // currently works for file protocol only
     public List<String> listDcs() throws Exception {
         throw new UnsupportedOperationException();
     }
 
-    // currently works for file protocol only
     public void deleteTopology(final String name) throws Exception {
         delete(Paths.get("topology").resolve(name + ".json"), false);
     }
