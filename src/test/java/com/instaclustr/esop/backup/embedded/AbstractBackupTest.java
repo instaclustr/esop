@@ -17,9 +17,7 @@ import static com.instaclustr.esop.backup.embedded.TestEntity2.TABLE_2;
 import static com.instaclustr.esop.backup.embedded.TestEntity3.KEYSPACE_3;
 import static com.instaclustr.esop.backup.embedded.TestEntity3.TABLE_3;
 import static com.instaclustr.io.FileUtils.deleteDirectory;
-import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
@@ -33,13 +31,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import com.github.nosan.embedded.cassandra.Cassandra;
@@ -832,7 +828,7 @@ public abstract class AbstractBackupTest {
             waitForCql();
 
             try (CqlSession session = CqlSession.builder().build()) {
-                dumpTableAndAssertRowCount(session, KEYSPACE, TABLE, NUMBER_OF_ROWS_AFTER_RESTORATION);
+                assertRowCount(session, KEYSPACE, TABLE, NUMBER_OF_ROWS_AFTER_RESTORATION);
             }
         } finally {
             if (cassandra != null) {
@@ -899,11 +895,11 @@ public abstract class AbstractBackupTest {
                 Esop.mainWithoutExit(arguments[5]);
 
                 // we expect 4 records to be there as 2 were there before the first backup and the second 2 before the second backup
-                dumpTableAndAssertRowCount(session, KEYSPACE, TABLE, 4);
-                dumpTableAndAssertRowCount(session, KEYSPACE_2, TABLE_2, 4);
+                assertRowCount(session, KEYSPACE, TABLE, 4);
+                assertRowCount(session, KEYSPACE_2, TABLE_2, 4);
                 // here we expect that table3 is same as table2
                 if (!crossKeyspaceRestore) {
-                    dumpTableAndAssertRowCount(session, KEYSPACE_2, TABLE_3, 4);
+                    assertRowCount(session, KEYSPACE_2, TABLE_3, 4);
                 }
             }
         } finally {
@@ -923,10 +919,13 @@ public abstract class AbstractBackupTest {
 
             createTable(session, KEYSPACE, TABLE);
             createTable(session, KEYSPACE_2, TABLE_2);
-            createIndex(session, KEYSPACE, TABLE);
+            //createIndex(session, KEYSPACE, TABLE);
 
             insertAndCallBackupCLI(2, session, arguments[0]); // stefansnapshot-1
             insertAndCallBackupCLI(2, session, arguments[1]); // stefansnapshot-2
+
+            assertRowCount(session, KEYSPACE, TABLE, 4);
+            assertRowCount(session, KEYSPACE_2, TABLE_2, 4);
 
             // first round
 
@@ -948,8 +947,11 @@ public abstract class AbstractBackupTest {
 
                 Esop.mainWithoutExit(arguments[4]);
 
-                logger.info("Round " + i + " - Executing the third restoration phase for the second time - import {}", asList(arguments[4]));
-                Esop.mainWithoutExit(arguments[4]);
+                if (!cassandraVersion.startsWith("4")) {
+                    // second round would not pass for 4 because import deletes files in download
+                    logger.info("Round " + i + " - Executing the third restoration phase for the second time - import {}", asList(arguments[4]));
+                    Esop.mainWithoutExit(arguments[4]);
+                }
 
                 logger.info("Round " + i + " - Executing the fourth restoration phase - cleanup {}", asList(arguments[5]));
                 Esop.mainWithoutExit(arguments[5]);
@@ -957,8 +959,8 @@ public abstract class AbstractBackupTest {
                 Esop.mainWithoutExit(arguments[5]);
 
                 // we expect 4 records to be there as 2 were there before the first backup and the second 2 before the second backup
-                dumpTableAndAssertRowCount(session, KEYSPACE, TABLE, 4);
-                dumpTableAndAssertRowCount(session, KEYSPACE_2, TABLE_2, 4);
+                assertRowCount(session, KEYSPACE, TABLE, 4);
+                assertRowCount(session, KEYSPACE_2, TABLE_2, 4);
             }
         } finally {
             cassandra.stop();
@@ -1034,9 +1036,9 @@ public abstract class AbstractBackupTest {
 
             // after truncating, we see that we have truncated just two tables which were
             // in snapshot from snapshot1, not the third one
-            dumpTableAndAssertRowCount(session, KEYSPACE, TABLE, 0);
-            dumpTableAndAssertRowCount(session, KEYSPACE_2, TABLE_2, 0);
-            dumpTableAndAssertRowCount(session, KEYSPACE_3, TABLE_3, 2);
+            assertRowCount(session, KEYSPACE, TABLE, 0);
+            assertRowCount(session, KEYSPACE_2, TABLE_2, 0);
+            assertRowCount(session, KEYSPACE_3, TABLE_3, 2);
 
             // import
             Esop.mainWithoutExit(arguments[4]);
@@ -1048,9 +1050,9 @@ public abstract class AbstractBackupTest {
 
             // here we check that table1 and table2 contains 2 rows each (as we restored it from the first snapshot) and table 3 will contain still 2
 
-            dumpTableAndAssertRowCount(session, KEYSPACE, TABLE, 2);
-            dumpTableAndAssertRowCount(session, KEYSPACE_2, TABLE_2, 2);
-            dumpTableAndAssertRowCount(session, KEYSPACE_3, TABLE_3, 2);
+            assertRowCount(session, KEYSPACE, TABLE, 2);
+            assertRowCount(session, KEYSPACE_2, TABLE_2, 2);
+            assertRowCount(session, KEYSPACE_3, TABLE_3, 2);
         } finally {
             cassandra.stop();
             FileUtils.deleteDirectory(cassandraDir);
@@ -1108,9 +1110,9 @@ public abstract class AbstractBackupTest {
 
             // after truncating, we see that we have truncated just two tables which were
             // in snapshot from snapshot1, not the third one
-            dumpTableAndAssertRowCount(session, KEYSPACE, TABLE, 0);
-            dumpTableAndAssertRowCount(session, KEYSPACE_2, TABLE_2, 0);
-            dumpTableAndAssertRowCount(session, KEYSPACE_3, TABLE_3, 2);
+            assertRowCount(session, KEYSPACE, TABLE, 0);
+            assertRowCount(session, KEYSPACE_2, TABLE_2, 0);
+            assertRowCount(session, KEYSPACE_3, TABLE_3, 2);
 
             // import
             Esop.mainWithoutExit(arguments[4]);
@@ -1122,9 +1124,9 @@ public abstract class AbstractBackupTest {
 
             // here we check that table1 and table2 contains 2 rows each (as we restored it from the first snapshot) and table 3 will contain still 2
 
-            dumpTableAndAssertRowCount(session, KEYSPACE, TABLE, 2);
-            dumpTableAndAssertRowCount(session, KEYSPACE_2, TABLE_2, 2);
-            dumpTableAndAssertRowCount(session, KEYSPACE_3, TABLE_3, 2);
+            assertRowCount(session, KEYSPACE, TABLE, 2);
+            assertRowCount(session, KEYSPACE_2, TABLE_2, 2);
+            assertRowCount(session, KEYSPACE_3, TABLE_3, 2);
         } finally {
             cassandra.stop();
             FileUtils.deleteDirectory(cassandraDir);
@@ -1233,17 +1235,14 @@ public abstract class AbstractBackupTest {
         return executionTimes;
     }
 
-    public int idInserted = 1;
-
     protected List<Long> insert(int records, CqlSession cqlSession, List<String[]> entities) {
         return range(0, records).mapToObj(i -> {
             for (String[] keyspaceTable : entities) {
                 cqlSession.execute(insertInto(keyspaceTable[0], keyspaceTable[1])
-                                       .value(ID, literal(Integer.toString(idInserted)))
-                                       .value(DATE, literal(timeBased()))
-                                       .value(NAME, literal("stefan1"))
-                                       .build());
-                ++idInserted;
+                                           .value(ID, literal(UUID.randomUUID().toString()))
+                                           .value(DATE, literal(timeBased()))
+                                           .value(NAME, literal("stefan1"))
+                                           .build());
             }
 
             Uninterruptibles.sleepUninterruptibly(2, SECONDS);
@@ -1269,18 +1268,18 @@ public abstract class AbstractBackupTest {
 
     protected void createTable(CqlSession session, String keyspace, String table) {
         session.execute(SchemaBuilder.createKeyspace(keyspace)
-                            .ifNotExists()
-                            .withNetworkTopologyStrategy(of("datacenter1", 1))
-                            .build());
+                                .ifNotExists()
+                                .withNetworkTopologyStrategy(of("datacenter1", 1))
+                                .build());
 
         Uninterruptibles.sleepUninterruptibly(2, SECONDS);
 
         session.execute(SchemaBuilder.createTable(keyspace, table)
-                            .ifNotExists()
-                            .withPartitionKey(ID, TEXT)
-                            .withClusteringColumn(DATE, TIMEUUID)
-                            .withColumn(NAME, TEXT)
-                            .build());
+                                .ifNotExists()
+                                .withPartitionKey(ID, TEXT)
+                                .withClusteringColumn(DATE, TIMEUUID)
+                                .withColumn(NAME, TEXT)
+                                .build());
     }
 
     protected void createIndex(CqlSession session, String keyspace, String table) {
@@ -1327,42 +1326,25 @@ public abstract class AbstractBackupTest {
 
     protected void waitForCql() {
         await()
-            .pollInterval(10, SECONDS)
-            .pollInSameThread()
-            .timeout(1, MINUTES)
-            .until(() -> {
-                try (final CqlSession ignored = CqlSession.builder().build()) {
-                    return true;
-                } catch (Exception ex) {
-                    return false;
-                }
-            });
+                .pollInterval(10, SECONDS)
+                .pollInSameThread()
+                .timeout(1, MINUTES)
+                .until(() -> {
+                    try (final CqlSession ignored = CqlSession.builder().build()) {
+                        return true;
+                    } catch (Exception ex) {
+                        return false;
+                    }
+                });
     }
 
 
-    protected void dumpTableAndAssertRowCount(final CqlSession session,
-                                              final String keyspace,
-                                              final String table,
-                                              int expectedLength) {
-        List<Row> rows = session.execute(selectFrom(keyspace, table).all().build()).all();
+    protected void assertRowCount(final CqlSession session,
+                                  final String keyspace,
+                                  final String table,
+                                  int expectedLength) {
 
-        logger.info(format("Dumping %s.%s", keyspace, table));
-
-        for (Row row : rows) {
-
-            Date date = new Date(requireNonNull(row.getUuid(DATE)).timestamp() / 10000L - 12219292800000L);
-
-            if (row.getColumnDefinitions().contains(NAME)) {
-                logger.info(format("id: %s, date: %s, name: %s", row.getString(ID), date, row.getString(NAME)));
-            } else {
-                logger.info(format("id: %s, date: %s, name: not present in table", row.getString(ID), date));
-            }
-        }
-
-        if (rows.isEmpty()) {
-            logger.info(format("Table %s.%s is empty.", keyspace, table));
-        }
-
-        assertEquals(rows.size(), expectedLength);
+        long count = session.execute(selectFrom(keyspace, table).countAll().asCql()).one().getLong("count");
+        assertEquals(count, expectedLength);
     }
 }
