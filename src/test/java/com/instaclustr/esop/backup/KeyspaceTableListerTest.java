@@ -39,8 +39,6 @@ public class KeyspaceTableListerTest {
             }
         }
 
-        // keyspaces from no. 90 - 99 will have all tables dropped which renders them dropped too
-
         for (int i = 90; i < 99; i++) {
             Files.createDirectory(cassandrDir.resolve("ks" + i));
             for (int j = 0; j < 5; j++) {
@@ -58,10 +56,7 @@ public class KeyspaceTableListerTest {
         Map<Path, List<Path>> dataDirs = lister.getDataDirs();
         Assert.assertFalse(dataDirs.isEmpty());
 
-        Assert.assertEquals(90, dataDirs.size());
-
-        // 25 tables are dropped and 10 keyspaces, each having 10 tables, have all tables dropped: 1000 - 100 - 25 = 875
-        Assert.assertEquals(875, dataDirs.values().stream().map(List::size).reduce(0, Integer::sum).intValue());
+        Assert.assertEquals(dataDirs.size(), 99);
 
         FileUtils.deleteDirectory(cassandrDir);
     }

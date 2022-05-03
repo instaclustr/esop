@@ -948,11 +948,8 @@ public abstract class AbstractBackupTest {
 
                 Esop.mainWithoutExit(arguments[4]);
 
-                if (!cassandraVersion.startsWith("4")) {
-                    // second round would not pass for 4 because import deletes files in download
-                    logger.info("Round " + i + " - Executing the third restoration phase for the second time - import {}", asList(arguments[4]));
-                    Esop.mainWithoutExit(arguments[4]);
-                }
+                logger.info("Round " + i + " - Executing the third restoration phase for the second time - import {}", asList(arguments[4]));
+                Esop.mainWithoutExit(arguments[4]);
 
                 logger.info("Round " + i + " - Executing the fourth restoration phase - cleanup {}", asList(arguments[5]));
                 Esop.mainWithoutExit(arguments[5]);

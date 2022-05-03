@@ -30,6 +30,8 @@ import static com.instaclustr.esop.backup.embedded.TestEntity2.TABLE_2;
 import static java.nio.file.Files.createTempFile;
 import static java.util.Arrays.asList;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 public abstract class BaseListingRemovalTest extends AbstractBackupTest {
 
@@ -198,7 +200,7 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 //assertEquals(Files.list(Paths.get(getStorageLocation().replaceAll(protocol(), ""), "data")).count(), 0);
                 String s = getStorageLocation().replaceAll(protocol(), "");
                 Path manifests = Paths.get(target(".esop")).resolve(s).resolve("manifests");
-                assertEquals(0, Files.list(manifests).count());
+                assertFalse(Files.exists(manifests));
             } finally {
                 cassandra.stop();
             }
