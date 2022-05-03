@@ -38,7 +38,7 @@ jobs:
 
   publish-github-release:
     docker:
-      - image: cimg/go
+      - image: cimg/go:1.17
     steps:
       - attach_workspace:
           at: ./artifacts
@@ -46,7 +46,7 @@ jobs:
           name: "Publish Release on GitHub"
           command: |
             set -xue
-            go get github.com/tcnksm/ghr
+            go install github.com/tcnksm/ghr@latest
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} ./artifacts/
 
 workflows:
