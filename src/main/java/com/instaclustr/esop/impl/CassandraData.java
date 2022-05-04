@@ -282,6 +282,8 @@ public class CassandraData {
 
             for (final Path table : entry.getValue()) {
                 final String tableWithId = table.getFileName().toString();
+                if (!tableWithId.contains("-"))
+                    continue;
                 final String tableName = tableWithId.substring(0, tableWithId.lastIndexOf("-"));
                 final String tableId = tableWithId.substring(tableName.length() + 1);
 

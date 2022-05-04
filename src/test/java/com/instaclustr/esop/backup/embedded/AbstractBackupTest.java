@@ -91,7 +91,7 @@ public abstract class AbstractBackupTest {
 
     public static final String CASSANDRA_VERSION = System.getProperty("cassandra3.version", "3.11.10");
 
-    public static final String CASSANDRA_4_VERSION = System.getProperty("cassandra4.version", "4.0-rc2");
+    public static final String CASSANDRA_4_VERSION = System.getProperty("cassandra4.version", "4.0.3");
 
     // This is number of rows we inserted into Cassandra DB in total
     // we backed up first 6 rows. For the last two rows, they are stored in commit logs.
@@ -944,14 +944,11 @@ public abstract class AbstractBackupTest {
                 Esop.mainWithoutExit(arguments[3]);
 
                 logger.info("Round " + i + " - Executing the third restoration phase - import {}", asList(arguments[4]));
-
                 Esop.mainWithoutExit(arguments[4]);
 
-                if (!cassandraVersion.startsWith("4")) {
-                    // second round would not pass for 4 because import deletes files in download
-                    logger.info("Round " + i + " - Executing the third restoration phase for the second time - import {}", asList(arguments[4]));
-                    Esop.mainWithoutExit(arguments[4]);
-                }
+                // second round would not pass for 4 because import deletes files in download
+                logger.info("Round " + i + " - Executing the third restoration phase for the second time - import {}", asList(arguments[4]));
+                Esop.mainWithoutExit(arguments[4]);
 
                 logger.info("Round " + i + " - Executing the fourth restoration phase - cleanup {}", asList(arguments[5]));
                 Esop.mainWithoutExit(arguments[5]);
