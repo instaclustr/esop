@@ -5,6 +5,8 @@ import static com.instaclustr.esop.guice.BackupRestoreBindings.installBindings;
 import static java.lang.String.format;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -86,7 +88,16 @@ public class GCPModule extends AbstractModule {
                 throw new GCPModuleException(format("GCP credentials file %s does not exist!", googleAppCredentialsPath));
             }
 
-            return StorageOptions.getDefaultInstance().getService();
+            GoogleCredentials credentials = resolveGoogleCredentialsFromFile(googleAppCredentialsPath);
+            return StorageOptions.newBuilder().setCredentials(credentials).build().getService();
+        }
+
+        private GoogleCredentials resolveGoogleCredentialsFromFile(String googleAppCredentialsPath) {
+            try (InputStream is = new FileInputStream(googleAppCredentialsPath)) {
+                return GoogleCredentials.fromStream(is);
+            } catch (Exception ex) {
+                throw new RuntimeException("Unable to read credentials from " + googleAppCredentialsPath);
+            }
         }
 
         private GoogleCredentials resolveGoogleCredentials(final AbstractOperationRequest operationRequest) {
