@@ -132,7 +132,7 @@ public class BackupCommitLogsOperation extends Operation<BackupCommitLogsOperati
     private DirectoryStream<Path> getCommitLogs(final BackupCommitLogsOperationRequest request) throws Exception {
         if (request.commitLog != null && !request.commitLog.toFile().getAbsolutePath().equals("/")) {
             return Files.newDirectoryStream(request.commitLog.getParent(),
-                                            entry -> entry.getFileName().toString().equals(request.commitLogArchiveOverride.toFile().getName()));
+                                            entry -> entry.getFileName().equals(request.commitLog.getFileName()));
         } else {
             final Pattern pattern = Pattern.compile("CommitLog-\\d+-\\d+\\.log");
             return Files.newDirectoryStream(resolveCommitLogsPath(request),
