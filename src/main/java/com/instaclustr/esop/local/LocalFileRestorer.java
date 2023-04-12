@@ -35,7 +35,7 @@ import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
-import com.instaclustr.io.FileUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +59,7 @@ public class LocalFileRestorer extends Restorer {
                              ObjectMapper objectMapper) {
         super(request);
         this.objectMapper = objectMapper;
+        this.localFileRestorer = this;
     }
 
     @AssistedInject
@@ -66,6 +67,7 @@ public class LocalFileRestorer extends Restorer {
                              ObjectMapper objectMapper) {
         super(request);
         this.objectMapper = objectMapper;
+        this.localFileRestorer = this;
     }
 
     @Override
@@ -189,7 +191,12 @@ public class LocalFileRestorer extends Restorer {
     @Override
     public List<Manifest> listManifests() throws Exception {
         assert objectMapper != null;
-        final Path path = Paths.get(storageLocation.rawLocation.replaceAll("file://", ""), "manifests");
+        Path path;
+        if (!storageLocation.cloudLocation)
+             path = Paths.get(storageLocation.rawLocation.replaceAll("file://", ""), "manifests");
+        else
+            path = Paths.get(localFileRestorer.storageLocation.rawLocation.replaceAll("file://", ""), "manifests");
+
         if (!Files.exists(path))
             return Collections.emptyList();
 
