@@ -189,7 +189,7 @@ public class LocalFileRestorer extends Restorer {
     @Override
     public List<Manifest> listManifests() throws Exception {
         assert objectMapper != null;
-        final Path path = Paths.get(storageLocation.rawLocation.replaceAll("file://", ""), "manifests");
+        final Path path = Paths.get(localFileRestorer.storageLocation.rawLocation.replaceAll("file://", ""), "manifests");
         if (!Files.exists(path))
             return Collections.emptyList();
 
