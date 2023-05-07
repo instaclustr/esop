@@ -1,5 +1,10 @@
 package com.instaclustr.esop.backup.embedded;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.nosan.embedded.cassandra.Cassandra;
@@ -19,11 +24,6 @@ import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Optional;
 
 import static com.instaclustr.esop.backup.embedded.TestEntity.KEYSPACE;
 import static com.instaclustr.esop.backup.embedded.TestEntity.TABLE;

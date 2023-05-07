@@ -1,13 +1,13 @@
 package com.instaclustr.esop.s3.aws;
 
-import static com.instaclustr.esop.guice.BackupRestoreBindings.installBindings;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.instaclustr.esop.s3.TransferManagerFactory;
+import com.instaclustr.esop.s3.v1.TransferManagerFactory;
 import io.kubernetes.client.apis.CoreV1Api;
+
+import static com.instaclustr.esop.guice.BackupRestoreBindings.installBindings;
 
 public class S3Module extends AbstractModule {
 

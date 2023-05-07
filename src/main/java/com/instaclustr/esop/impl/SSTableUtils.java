@@ -1,7 +1,5 @@
 package com.instaclustr.esop.impl;
 
-import static java.lang.Math.toIntExact;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
@@ -9,12 +7,10 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -22,13 +18,18 @@ import java.util.stream.Stream;
 import java.util.zip.Adler32;
 
 import com.google.common.collect.ImmutableList;
-import com.instaclustr.esop.impl.hash.HashService;
-import com.instaclustr.esop.impl.hash.HashServiceImpl;
-import com.instaclustr.io.FileUtils;
+
 import org.apache.commons.lang3.tuple.Pair;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.instaclustr.esop.impl.hash.HashService;
+import com.instaclustr.esop.impl.hash.HashServiceImpl;
 import com.instaclustr.esop.impl.hash.HashSpec;
+import com.instaclustr.io.FileUtils;
+
+import static java.lang.Math.toIntExact;
 
 public class SSTableUtils {
 
@@ -156,7 +157,8 @@ public class SSTableUtils {
                                                               sstableComponent,
                                                               ManifestEntry.Type.FILE,
                                                               hashOfFile,
-                                                              new KeyspaceTable(keyspace, table)));
+                                                              new KeyspaceTable(keyspace, table),
+                                                              null));
                             }
 
                             return Pair.of(sstableBaseName, entries);

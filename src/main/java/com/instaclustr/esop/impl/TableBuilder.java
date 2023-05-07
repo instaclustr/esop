@@ -18,7 +18,6 @@ package com.instaclustr.esop.impl;
  * limitations under the License.
  */
 
-import javax.annotation.Nonnull;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,6 +25,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import javax.annotation.Nonnull;
 
 /**
  * This class is taken from upstream's Cassandra from package org.apache.cassandra.tools.nodetool.formatter

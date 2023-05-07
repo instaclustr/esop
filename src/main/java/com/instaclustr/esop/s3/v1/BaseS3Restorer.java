@@ -1,35 +1,4 @@
-package com.instaclustr.esop.s3;
-
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.event.ProgressEvent;
-import com.amazonaws.event.ProgressEventType;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.ObjectListing;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.amazonaws.services.s3.model.DeleteObjectRequest;
-import com.amazonaws.services.s3.model.DeleteObjectsRequest;
-import com.amazonaws.services.s3.transfer.PersistableTransfer;
-import com.amazonaws.services.s3.transfer.TransferManager;
-import com.amazonaws.services.s3.transfer.internal.S3ProgressListener;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.io.CharStreams;
-import com.instaclustr.esop.impl.Manifest;
-import com.instaclustr.esop.impl.RemoteObjectReference;
-import com.instaclustr.esop.impl.StorageLocation;
-import com.instaclustr.esop.impl.list.ListOperationRequest;
-import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
-import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
-import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
-import com.instaclustr.esop.impl.restore.Restorer;
-import com.instaclustr.esop.impl.retry.Retrier.RetriableException;
-import com.instaclustr.esop.impl.retry.RetrierFactory;
-import com.instaclustr.esop.local.LocalFileRestorer;
-import com.instaclustr.io.FileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package com.instaclustr.esop.s3.v1;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,7 +12,39 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static com.instaclustr.esop.impl.list.ListOperationRequest.getForLocalListing;
+import com.google.common.io.CharStreams;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.event.ProgressEvent;
+import com.amazonaws.event.ProgressEventType;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.transfer.PersistableTransfer;
+import com.amazonaws.services.s3.transfer.TransferManager;
+import com.amazonaws.services.s3.transfer.internal.S3ProgressListener;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.instaclustr.esop.impl.Manifest;
+import com.instaclustr.esop.impl.ManifestEntry;
+import com.instaclustr.esop.impl.RemoteObjectReference;
+import com.instaclustr.esop.impl.StorageLocation;
+import com.instaclustr.esop.impl.list.ListOperationRequest;
+import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
+import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
+import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
+import com.instaclustr.esop.impl.restore.Restorer;
+import com.instaclustr.esop.impl.retry.Retrier.RetriableException;
+import com.instaclustr.esop.impl.retry.RetrierFactory;
+import com.instaclustr.io.FileUtils;
+
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toCollection;
 
@@ -105,7 +106,7 @@ public class BaseS3Restorer extends Restorer {
     }
 
     @Override
-    public void downloadFile(final Path localPath, final RemoteObjectReference objectReference) throws Exception {
+    public void downloadFile(final Path localPath, ManifestEntry manifestEntry, final RemoteObjectReference objectReference) throws Exception {
         RetrierFactory.getRetrier(request.retry).submit(() -> {
             try {
                 Files.createDirectories(localPath.getParent());
@@ -137,13 +138,13 @@ public class BaseS3Restorer extends Restorer {
     }
 
     @Override
-    public String downloadFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+    public String downloadTopology(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
         final S3Object s3Object = getBlobItemPath(remotePrefix.toString(), keyFilter);
         return downloadFileToString(objectKeyToRemoteReference(Paths.get(s3Object.getKey())));
     }
 
     @Override
-    public String downloadManifestToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+    public String downloadManifest(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
         final S3Object manifestObject = getManifest(resolveNodeAwareRemotePath(remotePrefix), keyFilter);
         final String fileName = manifestObject.getKey().split("/")[manifestObject.getKey().split("/").length - 1];
         return downloadFileToString(objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
@@ -249,21 +250,10 @@ public class BaseS3Restorer extends Restorer {
     }
 
     @Override
-    public String downloadNodeFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+    public String downloadNodeFile(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
         final S3Object s3Object = getBlobItemPath(resolveNodeAwareRemotePath(remotePrefix), keyFilter);
         final String fileName = s3Object.getKey().split("/")[s3Object.getKey().split("/").length - 1];
         return downloadFileToString(objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
-    }
-
-    @Override
-    public Path downloadNodeFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
-        final S3Object s3Object = getBlobItemPath(resolveNodeAwareRemotePath(remotePrefix), keyFilter);
-        final String fileName = s3Object.getKey().split("/")[s3Object.getKey().split("/").length - 1];
-        final Path destination = destinationDir.resolve(fileName);
-
-        downloadFile(destination, objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
-
-        return destination;
     }
 
     private S3Object getManifest(final String remotePrefix, final Predicate<String> keyFilter) {
@@ -326,7 +316,7 @@ public class BaseS3Restorer extends Restorer {
         @Override
         public void progressChanged(final ProgressEvent progressEvent) {
             if (progressEvent.getEventType() == ProgressEventType.TRANSFER_COMPLETED_EVENT) {
-                logger.debug("Successfully downloaded {}.", objectReference.canonicalPath);
+                logger.info("Successfully downloaded {}.", objectReference.canonicalPath);
             }
         }
     }

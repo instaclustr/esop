@@ -1,8 +1,8 @@
 package com.instaclustr.esop.impl.remove;
 
-import static com.instaclustr.operations.OperationBindings.installOperationBindings;
-
 import com.google.inject.AbstractModule;
+
+import static com.instaclustr.operations.OperationBindings.installOperationBindings;
 
 public class RemoveBackupModule extends AbstractModule {
 

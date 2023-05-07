@@ -4,9 +4,11 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Multimap;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.KeyspaceTable.KeyspaceTables;
-import org.apache.commons.lang3.tuple.Pair;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

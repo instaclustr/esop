@@ -2,6 +2,7 @@ package com.instaclustr.esop.impl.backup;
 
 import java.io.InputStream;
 
+import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.StorageInteractor;
 import com.instaclustr.esop.impl.retry.Retrier;
@@ -23,11 +24,21 @@ public abstract class Backuper extends StorageInteractor {
         UPLOAD_REQUIRED
     }
 
-    public abstract FreshenResult freshenRemoteObject(final RemoteObjectReference object) throws Exception;
+    public abstract FreshenResult freshenRemoteObject(ManifestEntry manifestEntry, final RemoteObjectReference object) throws Exception;
 
-    public abstract void uploadFile(final long size,
+    public abstract void uploadFile(final ManifestEntry manifestEntry,
                                     final InputStream localFileStream,
                                     final RemoteObjectReference objectReference) throws Exception;
 
     public abstract void uploadText(final String text, final RemoteObjectReference objectReference) throws Exception;
+
+    public void uploadEncryptedFile(final ManifestEntry manifestEntry,
+                                    final InputStream localFileStream,
+                                    final RemoteObjectReference objectReference) throws Exception {
+        uploadFile(manifestEntry, localFileStream, objectReference);
+    }
+
+    public void uploadEncryptedText(final String plainText, final RemoteObjectReference objectReference) throws Exception {
+        uploadText(plainText, objectReference);
+    }
 }

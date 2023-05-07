@@ -1,14 +1,5 @@
 package com.instaclustr.esop.impl.restore.strategy;
 
-import com.instaclustr.esop.impl.CassandraData;
-import com.instaclustr.esop.impl.DatabaseEntities;
-import com.instaclustr.esop.impl.Manifest;
-import com.instaclustr.esop.impl.ManifestEntry;
-import com.instaclustr.esop.impl.SSTableUtils;
-import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -20,6 +11,16 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.instaclustr.esop.impl.CassandraData;
+import com.instaclustr.esop.impl.DatabaseEntities;
+import com.instaclustr.esop.impl.Manifest;
+import com.instaclustr.esop.impl.ManifestEntry;
+import com.instaclustr.esop.impl.SSTableUtils;
+import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 
 import static com.instaclustr.io.FileUtils.cleanDirectory;
 import static java.util.function.Function.identity;

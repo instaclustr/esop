@@ -1,13 +1,12 @@
-package com.instaclustr.esop.s3;
-
-import static com.amazonaws.event.ProgressEventType.TRANSFER_COMPLETED_EVENT;
-import static com.amazonaws.event.ProgressEventType.TRANSFER_FAILED_EVENT;
-import static java.lang.String.format;
+package com.instaclustr.esop.s3.v1;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
@@ -20,14 +19,17 @@ import com.amazonaws.services.s3.model.StorageClass;
 import com.amazonaws.services.s3.transfer.PersistableTransfer;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.internal.S3ProgressListener;
+import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.backup.Backuper;
 import com.instaclustr.esop.impl.retry.Retrier.RetriableException;
 import com.instaclustr.esop.impl.retry.RetrierFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static com.amazonaws.event.ProgressEventType.TRANSFER_COMPLETED_EVENT;
+import static com.amazonaws.event.ProgressEventType.TRANSFER_FAILED_EVENT;
+import static java.lang.String.format;
 
 public class BaseS3Backuper extends Backuper {
 
@@ -57,7 +59,7 @@ public class BaseS3Backuper extends Backuper {
     }
 
     @Override
-    public FreshenResult freshenRemoteObject(final RemoteObjectReference object) throws Exception {
+    public FreshenResult freshenRemoteObject(ManifestEntry manifestEntry, final RemoteObjectReference object) throws Exception {
         return RetrierFactory.getRetrier(request.retry).submit(new Callable<FreshenResult>() {
             @Override
             public FreshenResult call() throws Exception {
@@ -107,14 +109,14 @@ public class BaseS3Backuper extends Backuper {
     }
 
     @Override
-    public void uploadFile(final long size, final InputStream localFileStream, final RemoteObjectReference objectReference) throws Exception {
+    public void uploadFile(final ManifestEntry manifestEntry, final InputStream localFileStream, final RemoteObjectReference objectReference) throws Exception {
         final S3RemoteObjectReference s3RemoteObjectReference = (S3RemoteObjectReference) objectReference;
 
         final PutObjectRequest putObjectRequest = new PutObjectRequest(request.storageLocation.bucket,
                                                                        s3RemoteObjectReference.canonicalPath,
                                                                        localFileStream,
                                                                        new ObjectMetadata() {{
-                                                                           setContentLength(size);
+                                                                           setContentLength(manifestEntry.size);
                                                                        }});
 
         transferManager.upload(putObjectRequest, new UploadProgressListener(s3RemoteObjectReference)).waitForCompletion();
@@ -147,19 +149,19 @@ public class BaseS3Backuper extends Backuper {
             final ProgressEventType progressEventType = progressEvent.getEventType();
 
             if (progressEventType == ProgressEventType.TRANSFER_PART_COMPLETED_EVENT) {
-                logger.debug("Successfully uploaded part for {}.", s3RemoteObjectReference.canonicalPath);
+                logger.info("Successfully uploaded part for {}.", s3RemoteObjectReference.canonicalPath);
             }
 
             if (progressEventType == ProgressEventType.TRANSFER_PART_FAILED_EVENT) {
-                logger.debug("Failed to upload part for {}.", s3RemoteObjectReference.canonicalPath);
+                logger.info("Failed to upload part for {}.", s3RemoteObjectReference.canonicalPath);
             }
 
             if (progressEventType == TRANSFER_FAILED_EVENT) {
-                logger.debug("Failed to upload {}.", s3RemoteObjectReference.canonicalPath);
+                logger.info("Failed to upload {}.", s3RemoteObjectReference.canonicalPath);
             }
 
             if (progressEventType == TRANSFER_COMPLETED_EVENT) {
-                logger.debug("Successfully uploaded {}.", s3RemoteObjectReference.canonicalPath);
+                logger.info("Successfully uploaded {}.", s3RemoteObjectReference.canonicalPath);
             }
         }
 

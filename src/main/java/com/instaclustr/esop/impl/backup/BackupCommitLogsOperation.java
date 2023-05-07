@@ -1,7 +1,5 @@
 package com.instaclustr.esop.impl.backup;
 
-import static com.instaclustr.esop.impl.ManifestEntry.Type.COMMIT_LOG;
-
 import java.net.InetAddress;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -14,6 +12,9 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
@@ -30,8 +31,8 @@ import com.instaclustr.esop.topology.CassandraEndpointDC;
 import com.instaclustr.esop.topology.CassandraEndpoints;
 import com.instaclustr.operations.Operation;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static com.instaclustr.esop.impl.ManifestEntry.Type.COMMIT_LOG;
 
 public class BackupCommitLogsOperation extends Operation<BackupCommitLogsOperationRequest> {
 
@@ -83,7 +84,7 @@ public class BackupCommitLogsOperation extends Operation<BackupCommitLogsOperati
 
                 final Path bucketKey = CASSANDRA_COMMITLOG.resolve(commitLog.getFileName().toString() + "." + commitLogLastModified);
 
-                manifestEntries.add(new ManifestEntry(bucketKey, commitLog, COMMIT_LOG, null));
+                manifestEntries.add(new ManifestEntry(bucketKey, commitLog, COMMIT_LOG, null, request.kmsKeyId));
             }
 
             logger.info("{} files in manifest for commitlog backup.", manifestEntries.size());

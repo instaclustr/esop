@@ -1270,6 +1270,166 @@ execution will count down from the time this command was firstly executed.
 You have also possibility to specify datacenters to remove by `--dcs` flag (might be specified multiple times
 for each dc separately)
 
+## Client-side encryption with AWS KMS
+
+In order to perform the encryption of your SSTables, so they are stored in a remote AWS S3 bucket already encrypted,
+we leverage AWS KMS client-side encryption by https://github.com/aws/amazon-s3-encryption-client-java[this library].
+
+### s3v2 protocol
+
+*s3v2* protocol has to be used to use KMS client encryption.
+
+Historically, Esop was using AWS API of version 1, however the library which makes client-side encryption possible
+is using API of version 2. The version 1 and version 2 API can live in one project simultaneously. As AWS KMS encryption
+feature in Esop is rather new, we decided to code one additional S3 module which is using V2 API, and
+we left V1 API implementation untouched if users still prefer it for whatever reason. We might eventually switch to
+V2 API completely and drop the code using V1 API in the future.
+
+To use client-side encryption, the protocol needs to be set to `s3v2` instead of `s3` (which uses V1 API).
+A user also needs to supply KMS key id to encrypt data with. The creation of KMS key is out of scope of this document
+however keep in mind that such a key has to be symmetric.
+
+The example of encrypted backup is shown below:
+
+----
+java -jar esop.jar backup \
+    --storage-location=s3v2://instaclustr-oss-esop-bucket
+    --data-dir /my/installation/of/cassandra/data/data \
+    --entities=ks1 \
+    --snapshot-tag=snapshot-1 \
+    --kmsKeyId=3bbebd10-7e5f-4fad-997a-89b51040df4c
+----
+
+Notice we use `s3v2` as protocol. We also sed `kmsKeyId` referencing name of KMS key in AWS to use for encryption.
+
+KMS key ID is also read from system property `AWS_KMS_KEY_ID` or environment property of the same name.
+Key ID from the command line has precedence over system property which has precedence over environment property.
+
+If `--storage-location` is not fully specified, Esop will try to connect to a runnning node via JMX, and it resolves
+what cluster and datacenter it belongs to and what node ID it has.
+
+The uploading logic of a particular SSTable file is as follows. First we need
+to refresh the object to update its last modification date, the logic which leads
+to it is this:
+
+* try to list tags of a remote object / key in a bucket
+** if such key is not found, we need to upload a file
+* if we are using encrypting backup (by having `--kmsKeyId` set), we prepare a tag
+which has `kmsKey` as a key and KMS key ID as a value
+* if tags of a remote key are not set or if they are not containg `kmsKey` tag,
+that means that the remote object exists but it is not encrypted. Hence, we
+will need to upload it again, but encrypted this time
+* if we are not skipping the refresh, we will copy the file with `kmsKey` tag
+
+Upon the actual upload, we check if `kmsKeyId` is set from the command line (or system / env properties)
+and based on that we will use encrypting or non-encrypting S3 client. Encrypting S3
+client wraps non-encrypting client. If encrypting client is used, everything
+which it uploads will be encrypted on the client and sent to AWS S3 bucket
+already encrypted.
+
+By the nature of Esop's directory layout and uploading logic, we see that
+if there was a backup which was not encrypted, we may decide later on that
+we start to encrypt. Let's cover this logic in the following example:
+
+Let's have a backup consisting of 3 SSTables, S1, S2 and S3 respectively.
+
+----
+bucket:
+    S1
+    S2  - all tables are not encrypted
+    S3
+----
+
+Later, we inserted new data into SSTable S4 and S5, so we have S1 - S5 on disk. However, now we want to encrypt. We might end up having this in a bucket:
+
+----
+bucket:
+    S1
+    S2 - all tables are not encrypted
+    S3
+    S4 - encrypted
+    S5 - encrypted
+----
+
+If we did it like this, we would end up having a backup partly encrypted which is not desired. For
+this reason, if we see that there is an object in S3 bucket already, we need to read its _tags_
+to see what key it was encrypted with. If it was not encrypted (it is not tagged), we know
+that we need to upload it again, now encrypted. Hence, eventually, all SSTables of a new backup will be encrypted.
+
+If there is a backup which was not encrypted and some backup was, these two backups may have some
+SSTables common. Imagine this scenario:
+
+----
+bucket:
+    S1 not encrypted, backup 1
+    S2 not encrypted, backup 1
+    S3 not encrypted, backup 1
+----
+
+As we started to encrypt and we want to backup, now, imagine that S1 and S2 were compacted into S4 and there were additional S5 and S6 encrypted:
+
+----
+bucket:
+    S1 not encrypted, backup 1, compacted into S4
+    S2 not encrypted, backup 1, compacted into S4
+    S3 not encrypted, backup 1
+    S4 encrypted, backup 2 - compacted S1 and S2
+    S5 encrypted, backup 2
+    S6 encrypted, backup 2
+----
+
+We see that we are going to backup S3, S4 (compacted S1 and S2), S5 and S6. S3 is already uploaded,
+but it is not encrypted, so S3 will be re-uploaded and encrypted. S4, S5 and S6 are not present remotely yet so all of them will be encrypted and uploaded.
+
+After doing so, we see this in the bucket:
+
+----
+bucket:
+    S1 not encrypted, backup 1, compacted into S4
+    S2 not encrypted, backup 1, compacted into S4
+    S3 encrypted, backup 1 and backup 2     // S3 is encrypted from now on
+    S4 encrypted, backup 2 - compacted S1 and S2
+    S5 encrypted, backup 2
+    S6 encrypted, backup 2
+----
+
+Backup no.1 consists of SSTables S1, S2 (both non-encrypted) and S3 (encrypted). Backup no.2 consists of S3 - S6 all of which are encrypted.
+
+Now, if we remove backup 1, only S1 and S2 SSTables will be removed because S3 is part of
+the backup 2 as well. As we remove all non-encrypted backups, we will be left with backups which contain SSTables which are encrypted. Hence, we converted a bucket with non-encrypted backups to encrypted only.
+
+This logic introduces these questions:
+
+* What if I have already encrypted backup, and I want to use a different KMS key?
+* How would restore look like when my backup contains SSTables which are both encrypted and in plaintext? How it would look like when I want to restore but there are different keys used?
+
+To answer the first question is rather easy. If you want to use a different KMS key, that is the same
+situation as if we were going to upload but no key was used. If we detect that already uploaded
+object was encrypted with a different KMS key (by reading its tags) from a key we want to use now,
+we just need to re-upload such SSTable and encrypt it with a different KMS key.
+All other logic already exaplained is same.
+
+Restoration will read tags of a remote object to see what KMS key it was encrypted with. If remote
+object was stored as plaintext, no wrapping S3 encryption client is used. If KMS key
+used is same as we supplied on the command line, the already initialized S3 encrypting client is used.
+If a particular object was encrypted with a KMS key we do not have S3 encrypting client for yet,
+such client is dynamically created as part of the restoration process and it will be cached to be re-used
+for the decryption of any other object using same KMS key.
+The net result of this logic is that a backup may consist of SSTables encrypted with
+whatever KMS key and as long as such KMS key exists in AWS KMS and we
+can reference it, it will be decrypted just fine.
+
+We *do not* encrypt Esop's manifest files. This is purely practical. If we were encrypting a manifest as well,
+operators would need to decrypt downloaded manifest from a bucket on their own by some other tool. As manifest
+does not contain any sensitive information and it serves solely as a metadata file to see what a particular backup
+consists of, we chose to not encrypt it to make life for operators just easier. Manifest file is the only file
+which is not encrypted - all other files are.
+
+We also decided to not store kmsKeyId in a manifest. It is better if a particular object is tagged with its key id
+it was encrypted with rather than store it in a manifest. If we used different kmsKeys, manifests would start to
+be obsolete and restoration of such backup would not be possible as key was already changed. Tags will make
+restoration in this scenario possible.
+
 ## Logging
 
 We are using logback. There is already `logback.xml` embedded in the built JAR. However if you

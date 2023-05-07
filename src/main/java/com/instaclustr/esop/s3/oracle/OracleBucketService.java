@@ -7,8 +7,8 @@ import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
-import com.instaclustr.esop.s3.BaseS3BucketService;
 import com.instaclustr.esop.s3.oracle.OracleModule.OracleS3TransferManagerFactory;
+import com.instaclustr.esop.s3.v1.BaseS3BucketService;
 
 public class OracleBucketService extends BaseS3BucketService {
 

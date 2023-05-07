@@ -7,8 +7,8 @@ import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
-import com.instaclustr.esop.s3.BaseS3Restorer;
 import com.instaclustr.esop.s3.minio.MinioModule.MinioS3TransferManagerFactory;
+import com.instaclustr.esop.s3.v1.BaseS3Restorer;
 
 public class MinioRestorer extends BaseS3Restorer {
 

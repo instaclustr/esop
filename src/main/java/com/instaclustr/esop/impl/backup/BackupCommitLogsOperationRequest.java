@@ -5,13 +5,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
 
+import com.google.common.base.MoreObjects;
+
 import com.amazonaws.services.s3.model.MetadataDirective;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.common.base.MoreObjects;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.retry.RetrySpec;
@@ -75,7 +76,8 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
                                             @JsonProperty("online") boolean online,
                                             @JsonProperty("proxySettings") final ProxySettings proxySettings,
                                             @JsonProperty("retry") final RetrySpec retry,
-                                            @JsonProperty("skipRefreshing") final boolean skipRefreshing) {
+                                            @JsonProperty("skipRefreshing") final boolean skipRefreshing,
+                                            @JsonProperty("kmsKeyId") final String kmsKeyId) {
         super(storageLocation,
               duration,
               bandwidth,
@@ -89,7 +91,8 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
               proxySettings,
               retry,
               skipRefreshing,
-              null);
+              null,
+              kmsKeyId);
         this.type = "commitlog-backup";
         this.commitLogArchiveOverride = commitLogArchiveOverride;
         this.commitLog = commitLog;

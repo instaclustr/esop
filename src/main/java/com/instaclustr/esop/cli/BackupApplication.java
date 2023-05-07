@@ -1,12 +1,9 @@
 package com.instaclustr.esop.cli;
 
-import static com.instaclustr.operations.Operation.State.FAILED;
-import static com.instaclustr.picocli.CLIApplication.execute;
-import static java.lang.String.format;
-import static java.util.Collections.singletonList;
-import static org.awaitility.Awaitility.await;
-
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.google.inject.Module;
@@ -16,12 +13,16 @@ import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
 import com.instaclustr.picocli.CassandraJMXSpec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
+
+import static com.instaclustr.operations.Operation.State.FAILED;
+import static com.instaclustr.picocli.CLIApplication.execute;
+import static java.lang.String.format;
+import static java.util.Collections.singletonList;
+import static org.awaitility.Awaitility.await;
 
 @Command(name = "backup",
     description = "Take a snapshot of a Cassandra node and upload it to remote storage. " +
@@ -60,7 +61,7 @@ public class BackupApplication implements Runnable {
 
         final List<Module> appSpecificModules = singletonList(new BackupModule());
 
-        Esop.init(this, jmxSpec, hashSpec, request, logger, appSpecificModules);
+        Esop.init(this, jmxSpec, hashSpec, appSpecificModules);
 
         final Operation<?> operation = operationsService.submitOperationRequest(request);
 

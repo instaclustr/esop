@@ -1,5 +1,48 @@
 package com.instaclustr.esop.backup.embedded;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
+
+import com.google.common.util.concurrent.Uninterruptibles;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.type.DataType;
+import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
+import com.github.nosan.embedded.cassandra.Cassandra;
+import com.github.nosan.embedded.cassandra.CassandraBuilder;
+import com.github.nosan.embedded.cassandra.Version;
+import com.github.nosan.embedded.cassandra.WorkingDirectoryCustomizer;
+import com.google.inject.AbstractModule;
+import com.instaclustr.cassandra.CassandraModule;
+import com.instaclustr.esop.cli.Esop;
+import com.instaclustr.esop.impl.backup.BackupModules.BackupModule;
+import com.instaclustr.esop.impl.backup.BackupModules.UploadingModule;
+import com.instaclustr.esop.impl.hash.HashModule;
+import com.instaclustr.esop.impl.hash.HashSpec;
+import com.instaclustr.esop.impl.interaction.CassandraSchemaVersion;
+import com.instaclustr.esop.impl.list.ListModule;
+import com.instaclustr.esop.impl.remove.RemoveBackupModule;
+import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType;
+import com.instaclustr.esop.impl.restore.RestoreModules.DownloadingModule;
+import com.instaclustr.esop.impl.restore.RestoreModules.RestorationStrategyModule;
+import com.instaclustr.esop.impl.restore.RestoreModules.RestoreModule;
+import com.instaclustr.io.FileUtils;
+import com.instaclustr.operations.OperationsModule;
+import com.instaclustr.threading.ExecutorsModule;
+import io.kubernetes.client.ApiException;
+import jmx.org.apache.cassandra.CassandraJMXConnectionInfo;
+import jmx.org.apache.cassandra.service.CassandraJMXServiceImpl;
+
 import static com.datastax.oss.driver.api.core.type.DataTypes.TEXT;
 import static com.datastax.oss.driver.api.core.type.DataTypes.TIMEUUID;
 import static com.datastax.oss.driver.api.core.uuid.Uuids.timeBased;
@@ -24,47 +67,6 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
 import static org.awaitility.Awaitility.await;
 import static org.testng.Assert.assertEquals;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
-
-import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.type.DataType;
-import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
-import com.github.nosan.embedded.cassandra.Cassandra;
-import com.github.nosan.embedded.cassandra.CassandraBuilder;
-import com.github.nosan.embedded.cassandra.Version;
-import com.github.nosan.embedded.cassandra.WorkingDirectoryCustomizer;
-import com.google.common.util.concurrent.Uninterruptibles;
-import com.google.inject.AbstractModule;
-import com.instaclustr.cassandra.CassandraModule;
-import com.instaclustr.esop.cli.Esop;
-import com.instaclustr.esop.impl.backup.BackupModules.BackupModule;
-import com.instaclustr.esop.impl.backup.BackupModules.UploadingModule;
-import com.instaclustr.esop.impl.hash.HashModule;
-import com.instaclustr.esop.impl.hash.HashSpec;
-import com.instaclustr.esop.impl.interaction.CassandraSchemaVersion;
-import com.instaclustr.esop.impl.list.ListModule;
-import com.instaclustr.esop.impl.remove.RemoveBackupModule;
-import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType;
-import com.instaclustr.esop.impl.restore.RestoreModules.DownloadingModule;
-import com.instaclustr.esop.impl.restore.RestoreModules.RestorationStrategyModule;
-import com.instaclustr.esop.impl.restore.RestoreModules.RestoreModule;
-import com.instaclustr.io.FileUtils;
-import com.instaclustr.operations.OperationsModule;
-import com.instaclustr.threading.ExecutorsModule;
-import io.kubernetes.client.ApiException;
-import jmx.org.apache.cassandra.CassandraJMXConnectionInfo;
-import jmx.org.apache.cassandra.service.CassandraJMXServiceImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public abstract class AbstractBackupTest {
 
@@ -140,8 +142,7 @@ public abstract class AbstractBackupTest {
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
-            "--create-missing-bucket",
-            "--skip-refreshing"
+            "--create-missing-bucket"
         };
 
         final String[] backupArgsWithSnapshotName = new String[]{
@@ -157,8 +158,7 @@ public abstract class AbstractBackupTest {
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
-            "--create-missing-bucket",
-            "--skip-refreshing"
+            "--create-missing-bucket"
         };
 
         // one more backup to have there manifests with same snapshot name so the latest wins
@@ -176,7 +176,6 @@ public abstract class AbstractBackupTest {
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket",
-            "--skip-refreshing"
         };
 
         // COMMIT LOGS BACKUP
@@ -193,7 +192,7 @@ public abstract class AbstractBackupTest {
 
         final String[] restoreArgs = new String[]{
             "restore",
-            "--data-directory=" + cassandraRestoredDir.toAbsolutePath() + "/data",
+            "--cassandra-dir=" + cassandraRestoredDir.toAbsolutePath() + "/data",
             "--data-dir",
             cassandraRestoredDir.toAbsolutePath() + "/data/data",
             "--data-dir",
@@ -278,7 +277,7 @@ public abstract class AbstractBackupTest {
 
         final String[] restoreArgsPhase1 = new String[]{
             "restore",
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data",
             "--data-dir",
@@ -298,7 +297,7 @@ public abstract class AbstractBackupTest {
 
         final String[] restoreArgsPhase2 = new String[]{
             "restore",
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data",
             "--data-dir",
@@ -317,7 +316,7 @@ public abstract class AbstractBackupTest {
 
         final String[] restoreArgsPhase3 = new String[]{
             "restore",
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data",
             "--data-dir",
@@ -336,7 +335,7 @@ public abstract class AbstractBackupTest {
 
         final String[] restoreArgsPhase4 = new String[]{
             "restore",
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data",
             "--data-dir",
@@ -414,7 +413,7 @@ public abstract class AbstractBackupTest {
 
         final String[] restoreArgsPhase1 = new String[]{
             "restore",
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data",
             "--data-dir",
@@ -435,7 +434,7 @@ public abstract class AbstractBackupTest {
 
         final String[] restoreArgsPhase2 = new String[]{
             "restore",
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data",
             "--data-dir",
@@ -456,7 +455,7 @@ public abstract class AbstractBackupTest {
 
         final String[] restoreArgsPhase3 = new String[]{
             "restore",
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data",
             "--data-dir",
@@ -477,7 +476,7 @@ public abstract class AbstractBackupTest {
 
         final String[] restoreArgsPhase4 = new String[]{
             "restore",
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data",
             "--data-dir",
@@ -563,7 +562,7 @@ public abstract class AbstractBackupTest {
 
         final String[] downloadPhase = new String[]{
             "restore",
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data",
             "--data-dir",
@@ -582,7 +581,7 @@ public abstract class AbstractBackupTest {
 
         final String[] truncatePhase = new String[]{
             "restore",
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data",
             "--data-dir",
@@ -601,7 +600,7 @@ public abstract class AbstractBackupTest {
 
         final String[] importPhase = new String[]{
             "restore",
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data",
             "--data-dir",
@@ -620,7 +619,7 @@ public abstract class AbstractBackupTest {
 
         final String[] cleanupPhase = new String[]{
             "restore",
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data",
             "--data-dir",
@@ -697,7 +696,7 @@ public abstract class AbstractBackupTest {
 
         final String[] restoreArgsPhase1 = new String[]{
             "restore",
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data",
             "--data-dir",
@@ -716,7 +715,7 @@ public abstract class AbstractBackupTest {
 
         final String[] restoreArgsPhase2 = new String[]{
             "restore",
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data",
             "--data-dir",
@@ -735,7 +734,7 @@ public abstract class AbstractBackupTest {
 
         final String[] restoreArgsPhase3 = new String[]{
             "restore",
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data",
             "--data-dir",
@@ -754,7 +753,7 @@ public abstract class AbstractBackupTest {
 
         final String[] restoreArgsPhase4 = new String[]{
             "restore",
-            "--data-directory=" + cassandraDir.toAbsolutePath() + "/data",
+            "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data",
             "--data-dir",

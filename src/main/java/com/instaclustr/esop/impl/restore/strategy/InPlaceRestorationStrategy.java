@@ -1,13 +1,13 @@
 package com.instaclustr.esop.impl.restore.strategy;
 
-import static com.instaclustr.io.FileUtils.cleanDirectory;
-import static java.lang.String.format;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
@@ -30,8 +30,8 @@ import com.instaclustr.io.FileUtils;
 import com.instaclustr.kubernetes.KubernetesHelper;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.Operation.Error;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static java.lang.String.format;
 
 /**
  * In-place restoration strategy does not use phases because there is no need for it.
@@ -178,7 +178,7 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
     private NodeTopology getNodeTopology(final Restorer restorer, final RestoreOperationRequest request) {
         try {
             final String topologyFile = format("topology/%s", request.snapshotTag);
-            final String topology = restorer.downloadFileToString(Paths.get(topologyFile), fileName -> fileName.contains(topologyFile));
+            final String topology = restorer.downloadTopology(Paths.get(topologyFile), fileName -> fileName.contains(topologyFile));
             final ClusterTopology clusterTopology = objectMapper.readValue(topology, ClusterTopology.class);
             // nodeId here is propagated by Cassandra operator and it is "hostname"
             // by translating, we get proper node id (uuid) so we fetch the right node in remote bucket

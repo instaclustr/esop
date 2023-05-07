@@ -1,16 +1,16 @@
 package com.instaclustr.esop.impl.restore;
 
-import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.FAILED;
-import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.FINISHED;
-import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.RUNNING;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.util.concurrent.ListeningExecutorService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.inject.Inject;
 import com.instaclustr.esop.impl.AbstractTracker;
 import com.instaclustr.esop.impl.ManifestEntry;
@@ -24,8 +24,10 @@ import com.instaclustr.esop.impl.restore.DownloadTracker.DownloadUnit;
 import com.instaclustr.esop.impl.restore.RestoreModules.DownloadingFinisher;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.FAILED;
+import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.FINISHED;
+import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.RUNNING;
 
 public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSession, Restorer, BaseRestoreOperationRequest> {
 
@@ -86,12 +88,9 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
 
         @Override
         public Void call() {
-
-            state = RUNNING;
-
-            RemoteObjectReference remoteObjectReference = null;
             try {
-                remoteObjectReference = restorer.objectKeyToNodeAwareRemoteReference(manifestEntry.objectKey);
+                state = RUNNING;
+                RemoteObjectReference remoteObjectReference = restorer.objectKeyToNodeAwareRemoteReference(manifestEntry.objectKey);
 
                 Path localPath = manifestEntry.localFile;
 
@@ -100,9 +99,9 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
                 }
 
                 if (!Files.exists(localPath)) {
-                    logger.info(String.format("Downloading file %s to %s.", remoteObjectReference.getObjectKey(), manifestEntry.localFile));
+                    logger.debug(String.format("Downloading file %s to %s.", remoteObjectReference.getObjectKey(), manifestEntry.localFile));
 
-                    restorer.downloadFile(localPath, remoteObjectReference);
+                    restorer.downloadFile(localPath, manifestEntry, remoteObjectReference);
 
                     // hash upon downloading
                     try {
@@ -115,7 +114,7 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
                         throw ex;
                     }
 
-                    logger.info(String.format("Successfully downloaded file %s to %s.", remoteObjectReference.getObjectKey(), localPath));
+                    logger.debug(String.format("Successfully downloaded file %s to %s.", remoteObjectReference.getObjectKey(), localPath));
 
                     state = FINISHED;
 
@@ -131,12 +130,9 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
                     state = FINISHED;
                 }
             } catch (final Throwable t) {
-                if (remoteObjectReference != null) {
-                    logger.error(String.format("Failed to process the downloading of file %s: %s", manifestEntry.localFile, t.getMessage()));
-                }
-
-                throwable = t;
                 state = FAILED;
+                logger.error(String.format("Failed to download file %s", manifestEntry.localFile), t.getMessage());
+                throwable = t;
             }
 
             return null;

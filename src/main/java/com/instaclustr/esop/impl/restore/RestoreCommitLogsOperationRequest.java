@@ -1,16 +1,18 @@
 package com.instaclustr.esop.impl.restore;
 
-import javax.validation.constraints.NotNull;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import javax.validation.constraints.NotNull;
+
+import com.google.common.base.MoreObjects;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.common.base.MoreObjects;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.retry.RetrySpec;
@@ -87,8 +89,9 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
                                              @JsonProperty("insecure") final boolean insecure,
                                              @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
                                              @JsonProperty("proxySettings") final ProxySettings proxySettings,
-                                             @JsonProperty("retry") final RetrySpec retry) {
-        super(storageLocation, concurrentConnections, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
+                                             @JsonProperty("retry") final RetrySpec retry,
+                                             @JsonProperty("kmsKeyId") final String kmsKeyId) {
+        super(storageLocation, concurrentConnections, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry, kmsKeyId);
         this.cassandraCommitLogDirectory = cassandraCommitLogDirectory == null ? Paths.get("/var/lib/cassandra/data/commitlog") : cassandraCommitLogDirectory;
         this.sharedContainerPath = sharedContainerPath == null ? Paths.get("/") : sharedContainerPath;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;

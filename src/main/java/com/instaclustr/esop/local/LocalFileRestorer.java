@@ -1,9 +1,5 @@
 package com.instaclustr.esop.local;
 
-import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
-
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
@@ -19,6 +15,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.assistedinject.Assisted;
@@ -36,8 +35,8 @@ import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 
 public class LocalFileRestorer extends Restorer {
 
@@ -95,7 +94,7 @@ public class LocalFileRestorer extends Restorer {
     }
 
     @Override
-    public void downloadFile(final Path localFilePath, final RemoteObjectReference objectReference) throws Exception {
+    public void downloadFile(final Path localFilePath, ManifestEntry manifestEntry, final RemoteObjectReference objectReference) throws Exception {
         final Path remoteFilePath = request.storageLocation.fileBackupDirectory
             .resolve(request.storageLocation.bucket)
             .resolve(Paths.get(objectReference.canonicalPath));
@@ -107,7 +106,7 @@ public class LocalFileRestorer extends Restorer {
     }
 
     @Override
-    public String downloadFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+    public String downloadTopology(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
 
         Path pathToList = request.storageLocation.fileBackupDirectory.resolve(request.storageLocation.bucket);
 
@@ -123,26 +122,17 @@ public class LocalFileRestorer extends Restorer {
     }
 
     @Override
-    public String downloadManifestToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+    public String downloadManifest(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
         final Path pathToList = Paths.get(request.storageLocation.rawLocation.replaceAll("file://", "")).resolve(remotePrefix);
         final String blobItem = getManifest(pathToList, keyFilter, remotePrefix);
         return new String(Files.readAllBytes(Paths.get(blobItem)));
     }
 
     @Override
-    public String downloadNodeFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+    public String downloadNodeFile(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
         final Path pathToList = Paths.get(request.storageLocation.rawLocation.replaceAll("file://", "")).resolve(remotePrefix);
         final String blobItem = getFileToDownload(pathToList, keyFilter, remotePrefix);
         return new String(Files.readAllBytes(Paths.get(blobItem)));
-    }
-
-    @Override
-    public Path downloadNodeFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
-        final Path pathToList = Paths.get(request.storageLocation.rawLocation.replaceAll("file://", "")).resolve(remotePrefix);
-        final String fileName = getFileToDownload(pathToList, keyFilter, remotePrefix);
-        final Path destination = destinationDir.resolve(fileName);
-        downloadFile(destination, objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
-        return destination;
     }
 
     private String getManifest(final Path pathToList, final Predicate<String> keyFilter, final Path remotePrefix) throws Exception {
@@ -208,7 +198,7 @@ public class LocalFileRestorer extends Restorer {
 
         for (final Path manifest : manifests) {
             final Manifest read = Manifest.read(manifest, objectMapper);
-            read.setManifest(new ManifestEntry(Paths.get("manifests", manifest.getFileName().toString()), manifest, Type.FILE, null));
+            read.setManifest(new ManifestEntry(Paths.get("manifests", manifest.getFileName().toString()), manifest, Type.FILE, null, null));
             manifestsList.add(read);
         }
 

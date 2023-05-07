@@ -1,40 +1,39 @@
 package com.instaclustr.esop.impl;
 
-import static com.instaclustr.esop.impl.ManifestEntry.Type.MANIFEST_FILE;
-import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
-
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.instaclustr.esop.impl.Manifest.ManifestReporter.ManifestReport;
 import com.instaclustr.esop.impl.ManifestEntry.Type;
 import com.instaclustr.esop.impl.Snapshots.Snapshot;
 import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace;
 import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace.Table;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.instaclustr.esop.impl.backup.BaseBackupOperationRequest;
+
+import static com.instaclustr.esop.impl.ManifestEntry.Type.MANIFEST_FILE;
+import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 
 public class Manifest implements Cloneable {
 
@@ -207,11 +206,13 @@ public class Manifest implements Cloneable {
         return Objects.hashCode(snapshot, manifest, tokens, schemaVersion);
     }
 
-    public static ManifestEntry getManifestAsManifestEntry(final Path localManifestPath) {
+    public static ManifestEntry getManifestAsManifestEntry(final Path localManifestPath,
+                                                           BaseBackupOperationRequest request) {
         return new ManifestEntry(Paths.get("manifests").resolve(localManifestPath.getFileName()),
                                  localManifestPath,
                                  MANIFEST_FILE,
-                                 null);
+                                 null,
+                                 request.kmsKeyId);
     }
 
     public static void write(final Manifest manifest, final Path localManifestPath, final ObjectMapper objectMapper) throws Exception {

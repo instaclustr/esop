@@ -1,9 +1,10 @@
 package com.instaclustr.esop.impl;
 
-import static java.lang.String.format;
-
 import java.util.Arrays;
 import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -15,10 +16,10 @@ import com.instaclustr.esop.impl.StorageLocation.StorageLocationTypeConverter;
 import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.kubernetes.KubernetesSecretsReader;
 import com.instaclustr.operations.OperationRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
+
+import static java.lang.String.format;
 
 public abstract class AbstractOperationRequest extends OperationRequest {
 
@@ -71,6 +72,10 @@ public abstract class AbstractOperationRequest extends OperationRequest {
     @JsonProperty("concurrentConnections")
     public Integer concurrentConnections;
 
+    @Option(names = {"--kmsKeyId"}, description = "Amazon AWS KMS Key ID to use during backup / restore")
+    @JsonProperty("kmsKeyId")
+    public String kmsKeyId;
+
     public AbstractOperationRequest() {
         // for picocli
     }
@@ -82,7 +87,8 @@ public abstract class AbstractOperationRequest extends OperationRequest {
                                     final boolean skipBucketVerification,
                                     final ProxySettings proxySettings,
                                     final RetrySpec retry,
-                                    final Integer concurrentConnections) {
+                                    final Integer concurrentConnections,
+                                    final String kmsKeyId) {
         this.storageLocation = storageLocation;
         this.k8sNamespace = k8sNamespace;
         this.k8sSecretName = k8sSecretName;
@@ -91,6 +97,7 @@ public abstract class AbstractOperationRequest extends OperationRequest {
         this.proxySettings = proxySettings;
         this.retry = retry == null ? new RetrySpec() : retry;
         this.concurrentConnections = concurrentConnections == null ? 10 : concurrentConnections;
+        this.kmsKeyId = kmsKeyId;
     }
 
     @JsonIgnore

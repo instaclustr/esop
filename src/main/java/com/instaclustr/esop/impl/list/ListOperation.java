@@ -1,10 +1,5 @@
 package com.instaclustr.esop.impl.list;
 
-import static com.instaclustr.esop.impl.list.ListOperationRequest.getForLocalListing;
-import static java.util.Collections.reverse;
-import static java.util.stream.Collectors.toList;
-
-import javax.inject.Inject;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
@@ -16,6 +11,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import javax.inject.Inject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -36,8 +36,10 @@ import com.instaclustr.esop.topology.CassandraSimpleTopology.CassandraSimpleTopo
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.operations.Operation;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static com.instaclustr.esop.impl.list.ListOperationRequest.getForLocalListing;
+import static java.util.Collections.reverse;
+import static java.util.stream.Collectors.toList;
 
 public class ListOperation extends Operation<ListOperationRequest> {
 
@@ -121,6 +123,10 @@ public class ListOperation extends Operation<ListOperationRequest> {
 
         if (!request.skipDownload && !Files.exists(localPath)) {
             FileUtils.createDirectory(localPath);
+        }
+
+        if (request.storageLocation.incompleteNodeLocation() && !request.resolveNodes) {
+            throw new IllegalArgumentException("You have to specify full path to a node to list!");
         }
 
         if (request.resolveNodes) {

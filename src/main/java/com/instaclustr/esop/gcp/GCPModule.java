@@ -1,9 +1,5 @@
 package com.instaclustr.esop.gcp;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static com.instaclustr.esop.guice.BackupRestoreBindings.installBindings;
-import static java.lang.String.format;
-
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -11,10 +7,14 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
 
+import com.google.common.collect.Lists;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
-import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
@@ -23,8 +23,10 @@ import com.instaclustr.esop.impl.AbstractOperationRequest;
 import com.instaclustr.kubernetes.KubernetesHelper;
 import com.instaclustr.kubernetes.SecretReader;
 import io.kubernetes.client.apis.CoreV1Api;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static com.instaclustr.esop.guice.BackupRestoreBindings.installBindings;
+import static java.lang.String.format;
 
 public class GCPModule extends AbstractModule {
 

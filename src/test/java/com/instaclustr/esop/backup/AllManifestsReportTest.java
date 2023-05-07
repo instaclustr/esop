@@ -1,13 +1,13 @@
 package com.instaclustr.esop.backup;
 
+import java.nio.file.Paths;
+import java.util.Collections;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.instaclustr.esop.impl.KeyspaceTable;
 import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.ManifestEntry;
 import org.testng.annotations.Test;
-
-import java.nio.file.Paths;
-import java.util.Collections;
 
 public class AllManifestsReportTest {
 
@@ -30,7 +30,8 @@ public class AllManifestsReportTest {
                                                     ManifestEntry.Type.MANIFEST_FILE,
                                                     100,
                                                     new KeyspaceTable("ks1", "tb1"),
-                                                    "123");
+                                                    "123",
+                                                    null);
 
         report.reports = Collections.singletonList(manifestReport);
 

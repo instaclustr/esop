@@ -1,8 +1,5 @@
 package com.instaclustr.esop.impl.hash;
 
-import static java.lang.String.format;
-
-import javax.inject.Inject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -10,7 +7,11 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import javax.inject.Inject;
+
 import com.instaclustr.esop.impl.ManifestEntry;
+
+import static java.lang.String.format;
 
 public class HashServiceImpl implements HashService {
 

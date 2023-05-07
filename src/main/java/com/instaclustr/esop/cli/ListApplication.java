@@ -1,12 +1,10 @@
 package com.instaclustr.esop.cli;
 
-import static com.instaclustr.operations.Operation.State.FAILED;
-import static com.instaclustr.picocli.CLIApplication.execute;
-import static java.lang.String.format;
-import static org.awaitility.Awaitility.await;
-
 import java.util.Collections;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.google.inject.Module;
@@ -16,12 +14,15 @@ import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
 import com.instaclustr.picocli.CassandraJMXSpec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
+
+import static com.instaclustr.operations.Operation.State.FAILED;
+import static com.instaclustr.picocli.CLIApplication.execute;
+import static java.lang.String.format;
+import static org.awaitility.Awaitility.await;
 
 @Command(name = "list",
     description = "lists remote storage to see what backups there are",
@@ -55,7 +56,7 @@ public class ListApplication implements Runnable {
 
         final List<Module> modules = Collections.singletonList(new ListModule());
 
-        Esop.init(this, jmxSpec, new HashSpec(), request, logger, modules);
+        Esop.init(this, jmxSpec, new HashSpec(), modules);
 
         final Operation<?> operation = operationsService.submitOperationRequest(request);
 

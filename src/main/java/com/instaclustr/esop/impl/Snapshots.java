@@ -1,16 +1,5 @@
 package com.instaclustr.esop.impl;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace.Table;
-import com.instaclustr.esop.impl.hash.HashSpec;
-import com.instaclustr.esop.impl.restore.strategy.DataSynchronizator;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -37,6 +26,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+
+import org.apache.commons.lang3.tuple.Pair;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace.Table;
+import com.instaclustr.esop.impl.hash.HashSpec;
+import com.instaclustr.esop.impl.restore.strategy.DataSynchronizator;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.groupingBy;

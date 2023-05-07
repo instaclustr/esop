@@ -1,11 +1,5 @@
 package com.instaclustr.esop.impl.restore.strategy;
 
-import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.DOWNLOAD;
-import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.IMPORT;
-import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.TRUNCATE;
-import static java.util.stream.Collectors.toSet;
-import static java.util.stream.Stream.of;
-
 import java.util.Map;
 import java.util.Set;
 
@@ -24,6 +18,12 @@ import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.Operation.Error;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
+
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.DOWNLOAD;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.IMPORT;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.TRUNCATE;
+import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Stream.of;
 
 public abstract class AbstractRestorationStrategy implements RestorationStrategy {
 

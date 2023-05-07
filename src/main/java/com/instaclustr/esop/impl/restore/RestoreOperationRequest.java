@@ -1,11 +1,5 @@
 package com.instaclustr.esop.impl.restore;
 
-import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.HARDLINKS;
-import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.IMPORT;
-import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.IN_PLACE;
-import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.UNKNOWN;
-import static java.lang.String.format;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.google.common.base.MoreObjects;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -23,7 +19,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.UUIDDeserializer;
 import com.fasterxml.jackson.databind.ser.std.UUIDSerializer;
-import com.google.common.base.MoreObjects;
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesConverter;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesDeserializer;
@@ -45,12 +40,18 @@ import com.instaclustr.kubernetes.KubernetesHelper;
 import com.instaclustr.picocli.typeconverter.PathTypeConverter;
 import picocli.CommandLine.Option;
 
+import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.HARDLINKS;
+import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.IMPORT;
+import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.IN_PLACE;
+import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.UNKNOWN;
+import static java.lang.String.format;
+
 public class RestoreOperationRequest extends BaseRestoreOperationRequest {
 
     @JsonIgnore
     public final Directories dirs = new Directories(this);
 
-    @Option(names = {"--dd", "--data-directory"},
+    @Option(names = {"--dd", "--data-directory", "--cassandra-dir"},
         description = "Base directory that contains the Cassandra hints, cache and commitlog directories",
         converter = PathTypeConverter.class,
         defaultValue = "/var/lib/cassandra")
@@ -216,8 +217,9 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonProperty("singlePhase") final boolean singlePhase,
                                    @JsonProperty("dataDirs")
                                    @JsonSerialize(using = ListPathSerializer.class)
-                                   @JsonDeserialize(contentUsing = PathDeserializer.class) List<Path> dataDirs) {
-        super(storageLocation, concurrentConnections, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
+                                   @JsonDeserialize(contentUsing = PathDeserializer.class) List<Path> dataDirs,
+                                   @JsonProperty("kmsKeyId") final String kmsKeyId) {
+        super(storageLocation, concurrentConnections, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry, kmsKeyId);
         this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/")) ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
         this.restoreSystemKeyspace = restoreSystemKeyspace;

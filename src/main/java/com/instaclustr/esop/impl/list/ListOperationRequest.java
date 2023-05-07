@@ -1,10 +1,14 @@
 package com.instaclustr.esop.impl.list;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import com.google.common.base.MoreObjects;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.common.base.MoreObjects;
 import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
@@ -13,9 +17,6 @@ import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.jackson.PathSerializer;
 import picocli.CommandLine.Option;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class ListOperationRequest extends BaseRestoreOperationRequest {
 
@@ -81,7 +82,7 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
                                 @JsonProperty("toRequest") final boolean toRequest,
                                 @JsonProperty("concurrentConnections") final Integer concurrentConnections,
                                 @JsonProperty("response") final Manifest.AllManifestsReport response) {
-        super(storageLocation, 1, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
+        super(storageLocation, 1, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry, null);
         this.json = json;
         this.resolveNodes = resolveNodes;
         this.humanUnits = humanUnits;

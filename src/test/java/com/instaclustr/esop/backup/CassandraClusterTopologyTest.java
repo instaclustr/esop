@@ -1,10 +1,5 @@
 package com.instaclustr.esop.backup;
 
-import static java.net.InetAddress.getByName;
-import static java.util.stream.Collectors.toSet;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-
 import java.net.InetAddress;
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,6 +9,11 @@ import java.util.UUID;
 import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import static java.net.InetAddress.getByName;
+import static java.util.stream.Collectors.toSet;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 
 public class CassandraClusterTopologyTest {
 

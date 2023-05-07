@@ -4,8 +4,8 @@ import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
-import com.instaclustr.esop.s3.BaseS3Backuper;
 import com.instaclustr.esop.s3.oracle.OracleModule.OracleS3TransferManagerFactory;
+import com.instaclustr.esop.s3.v1.BaseS3Backuper;
 
 public class OracleBackuper extends BaseS3Backuper {
 

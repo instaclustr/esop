@@ -1,8 +1,8 @@
 package com.instaclustr.esop.local;
 
-import static com.instaclustr.esop.guice.BackupRestoreBindings.installBindings;
-
 import com.google.inject.AbstractModule;
+
+import static com.instaclustr.esop.guice.BackupRestoreBindings.installBindings;
 
 public class LocalFileModule extends AbstractModule {
 

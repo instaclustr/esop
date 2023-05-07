@@ -1,7 +1,5 @@
 package com.instaclustr.esop.guice;
 
-import static com.google.inject.multibindings.MapBinder.newMapBinder;
-
 import com.google.inject.Binder;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -11,6 +9,8 @@ import com.google.inject.util.Types;
 import com.instaclustr.esop.impl.BucketService;
 import com.instaclustr.esop.impl.backup.Backuper;
 import com.instaclustr.esop.impl.restore.Restorer;
+
+import static com.google.inject.multibindings.MapBinder.newMapBinder;
 
 public class BackupRestoreBindings {
 

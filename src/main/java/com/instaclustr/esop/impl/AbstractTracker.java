@@ -1,16 +1,5 @@
 package com.instaclustr.esop.impl;
 
-import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.CANCELLED;
-import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.FAILED;
-import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.FINISHED;
-import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.IGNORED;
-import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.NOT_STARTED;
-import static java.lang.String.format;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static java.util.stream.Collectors.toList;
-import static org.awaitility.Awaitility.await;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,11 +14,15 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.instaclustr.esop.impl.AbstractTracker.Session;
 import com.instaclustr.esop.impl.AbstractTracker.Unit;
 import com.instaclustr.esop.impl.hash.HashSpec;
@@ -37,8 +30,17 @@ import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationRequest;
 import com.instaclustr.operations.OperationsService;
 import com.instaclustr.threading.Executors.FixedTasksExecutorSupplier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.CANCELLED;
+import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.FAILED;
+import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.FINISHED;
+import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.IGNORED;
+import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.NOT_STARTED;
+import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.stream.Collectors.toList;
+import static org.awaitility.Awaitility.await;
 
 public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session<UNIT>, INTERACTOR extends StorageInteractor, REQUEST extends OperationRequest> extends AbstractIdleService {
 
@@ -152,7 +154,9 @@ public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session
                 sessions.stream().filter(s -> s.getUnits().contains(value)).forEach(s -> {
                     operationsService.operation(s.getId()).ifPresent(op -> {
                         s.finishedUnits.incrementAndGet();
-                        logger.debug(String.format("Progress of operation %s: %s", op.id, s.getProgress()));
+                        logger.info(String.format("Progress for snapshot %s: %s",
+                                                   s.snapshotTag,
+                                                   s.getProgress()));
                         op.progress = s.getProgress();
                     });
                 });

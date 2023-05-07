@@ -1,8 +1,5 @@
 package com.instaclustr.esop.backup;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -16,6 +13,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
+
 import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.SSTableUtils;
@@ -25,6 +23,9 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 public class BackupRestoreTest {
 

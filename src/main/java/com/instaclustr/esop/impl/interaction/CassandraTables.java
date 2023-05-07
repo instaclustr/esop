@@ -1,14 +1,15 @@
 package com.instaclustr.esop.impl.interaction;
 
-import static java.util.stream.Collectors.toMap;
-
 import java.util.Map.Entry;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+
 import com.instaclustr.cassandra.CassandraInteraction;
 import com.instaclustr.esop.impl.KeyspaceTable;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
+
+import static java.util.stream.Collectors.toMap;
 
 public class CassandraTables implements CassandraInteraction<Multimap<String, String>> {
 
