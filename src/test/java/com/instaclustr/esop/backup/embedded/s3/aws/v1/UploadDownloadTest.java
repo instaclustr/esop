@@ -1,78 +1,47 @@
-package com.instaclustr.esop.backup.embedded.s3.aws;
+package com.instaclustr.esop.backup.embedded.s3.aws.v1;
 
-import static com.instaclustr.io.FileUtils.deleteDirectory;
-import static org.testng.Assert.assertTrue;
-
-import java.io.IOException;
+import java.io.FileInputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.google.inject.Inject;
+import com.instaclustr.esop.backup.embedded.s3.aws.AbstractS3UploadDownloadTest;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.s3.aws.S3Backuper;
 import com.instaclustr.esop.s3.aws.S3BucketService;
+import com.instaclustr.esop.s3.aws.S3Module;
 import com.instaclustr.esop.s3.aws.S3Module.S3TransferManagerFactory;
 import com.instaclustr.esop.s3.aws.S3Restorer;
-import io.kubernetes.client.ApiException;
+import com.instaclustr.esop.s3.v1.S3RemoteObjectReference;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-@Test(groups = {
-        "s3Test",
-        "cloudTest",
-})
-public class AWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
+import static com.instaclustr.io.FileUtils.deleteDirectory;
+import static org.testng.Assert.assertTrue;
 
+public class UploadDownloadTest extends AbstractS3UploadDownloadTest
+{
     @Inject
     public S3TransferManagerFactory transferManagerFactory;
 
     @BeforeMethod
-    public void setup() throws ApiException, IOException {
-        inject();
+    public void setup() throws Exception {
+        inject(new S3Module());
         init();
     }
 
-    @AfterMethod
-    public void teardown() throws Exception {
-        destroy();
-    }
-
-    @Override
-    public S3TransferManagerFactory getTransferManagerFactory() {
-        return transferManagerFactory;
-    }
-
-    protected BackupOperationRequest getBackupOperationRequest() {
-        return new BackupOperationRequest();
-    }
-
     @Test
-    public void testInPlaceBackupRestore() throws Exception {
-        inPlaceTest(inPlaceArguments(CASSANDRA_VERSION));
-    }
+    public void testDownloadUpload() throws Exception {
 
-    @Test
-    public void testImportingBackupAndRestore() throws Exception {
-        liveCassandraTest(importArguments(CASSANDRA_4_VERSION), CASSANDRA_4_VERSION);
-    }
+        S3TransferManagerFactory factory = transferManagerFactory;
 
-    @Test
-    public void testHardlinkingBackupAndRestore() throws Exception {
-        liveCassandraTest(hardlinkingArguments(CASSANDRA_VERSION), CASSANDRA_VERSION);
-    }
-
-    @Test
-    public void testDownload() throws Exception {
-
-        S3TransferManagerFactory factory = getTransferManagerFactory();
-
-        S3BucketService s3BucketService = new S3BucketService(factory, getBackupOperationRequest());
+        S3BucketService s3BucketService = new S3BucketService(transferManagerFactory, new BackupOperationRequest());
 
         Path tmp = Files.createTempDirectory("tmp");
         tmp.toFile().deleteOnExit();
@@ -80,7 +49,7 @@ public class AWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
         try {
             s3BucketService.create(BUCKET_NAME);
 
-            AmazonS3 amazonS3Client = factory.build(getBackupOperationRequest()).getAmazonS3Client();
+            AmazonS3 amazonS3Client = factory.build(new BackupOperationRequest()).getAmazonS3Client();
 
             amazonS3Client.putObject(BUCKET_NAME, "cluster/dc/node/manifests/snapshot-name-" + BUCKET_NAME, "hello");
             amazonS3Client.putObject(BUCKET_NAME, "snapshot/in/dir/my-name-" + BUCKET_NAME, "hello world");
@@ -96,19 +65,14 @@ public class AWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
             final S3Restorer s3Restorer = new S3Restorer(factory, restoreOperationRequest);
             final S3Backuper s3Backuper = new S3Backuper(factory, backupOperationRequest);
 
-            // 1
-
-            final Path downloadedFile = s3Restorer.downloadNodeFileToDir(tmp, Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
-            assertTrue(Files.exists(downloadedFile));
-
             // 2
 
-            final String content = s3Restorer.downloadNodeFileToString(Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
+            final String content = s3Restorer.downloadNodeFile(Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
             Assert.assertEquals("hello", content);
 
             // 3
 
-            final String content2 = s3Restorer.downloadFileToString(Paths.get("snapshot/in/dir"), s -> s.endsWith("my-name-" + BUCKET_NAME));
+            final String content2 = s3Restorer.downloadTopology(Paths.get("snapshot/in/dir"), s -> s.endsWith("my-name-" + BUCKET_NAME));
             Assert.assertEquals("hello world", content2);
 
             // 4
@@ -118,14 +82,24 @@ public class AWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
             Assert.assertTrue(Files.exists(tmp.resolve("some-file")));
             Assert.assertEquals("hello world", new String(Files.readAllBytes(tmp.resolve("some-file"))));
 
-            // backup
+            // backup upload text
 
-            s3Backuper.uploadText("hello world", s3Backuper.objectKeyToRemoteReference(Paths.get("topology/some-file-in-here.txt")));
+            // these "encrypted" method are not always encrypting, that depends on aws kms key id set or not for a given test
+            s3Backuper.uploadEncryptedText("hello world", s3Backuper.objectKeyToRemoteReference(Paths.get("topology/some-file-in-here.txt")));
             String text = s3Restorer.downloadFileToString(s3Restorer.objectKeyToRemoteReference(Paths.get("topology/some-file-in-here.txt")));
 
             Assert.assertEquals("hello world", text);
+
+            // backup upload file
+
+            Path tempFile = Files.createTempFile("esop", ".txt");
+            Files.write(tempFile, "hello world".getBytes(StandardCharsets.UTF_8));
+
+            try (FileInputStream fis = new FileInputStream(tempFile.toFile())) {
+                s3Backuper.uploadEncryptedFile(Files.size(tempFile), fis, new S3RemoteObjectReference(tempFile, tempFile.toString()));
+            }
         } finally {
-            s3BucketService.delete(BUCKET_NAME);
+            new S3BucketService(transferManagerFactory, new BackupOperationRequest()).delete(BUCKET_NAME);
             deleteDirectory(Paths.get(target("commitlog_download_dir")));
             Files.deleteIfExists(tmp.resolve("some-file"));
         }

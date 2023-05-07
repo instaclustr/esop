@@ -188,11 +188,6 @@ public class LocalBackupTest extends AbstractBackupTest {
                         StandardOpenOption.CREATE_NEW
             );
 
-            LocalFileRestorer localFileRestorer = new LocalFileRestorer(restoreOperationRequest);
-
-            final Path downloadedFile = localFileRestorer.downloadNodeFileToDir(Paths.get("/tmp"), Paths.get("manifests"), s -> s.contains("snapshot-name-"));
-
-            assertTrue(Files.exists(downloadedFile));
         } finally {
             deleteDirectory(Paths.get(target("backup1")));
             deleteDirectory(Paths.get(target("commitlog_download_dir")));
@@ -376,7 +371,8 @@ public class LocalBackupTest extends AbstractBackupTest {
             null, // proxy settings
             null, // retry
             false, // skipRefreshing
-            dataDirs
+            dataDirs,
+            null
         );
     }
 

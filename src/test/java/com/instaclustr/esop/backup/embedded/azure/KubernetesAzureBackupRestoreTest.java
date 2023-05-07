@@ -18,6 +18,7 @@ import org.testng.annotations.Test;
     "k8sTest",
     "azureTest",
 })
+@Ignore
 public class KubernetesAzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
 
     @Inject

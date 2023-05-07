@@ -45,6 +45,9 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
         description = "Automatically creates a bucket if it does not exist. If a bucket does not exist, backup operation will fail.")
     public boolean createMissingBucket;
 
+    @Option(names = "--kmsKeyid", description = "Amazon AWS KMS Key ID to use during backup")
+    public String kmsKeyId;
+
     public static class MetadataDirectiveTypeConverter implements CommandLine.ITypeConverter<MetadataDirective> {
 
         @Override
@@ -84,7 +87,8 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
                                       final ProxySettings proxySettings,
                                       final RetrySpec retrySpec,
                                       final boolean skipRefreshing,
-                                      final List<Path> dataDirs) {
+                                      final List<Path> dataDirs,
+                                      final String kmsKeyId) {
         super(storageLocation, k8sNamespace, k8sBackupSecretName, insecure, skipBucketVerification, proxySettings, retrySpec, concurrentConnections);
         this.duration = duration;
         this.bandwidth = bandwidth;
@@ -92,5 +96,6 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
         this.createMissingBucket = createMissingBucket;
         this.skipRefreshing = skipRefreshing;
         this.dataDirs = dataDirs;
+        this.kmsKeyId = kmsKeyId;
     }
 }

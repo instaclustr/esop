@@ -44,22 +44,26 @@ public class ManifestEntry implements Cloneable {
 
     public String hash;
 
+    public String kmsKeyId;
+
     @JsonIgnore
     public KeyspaceTable keyspaceTable;
 
     public ManifestEntry(final Path objectKey,
                          final Path localFile,
                          final Type type,
-                         final String hash) {
-        this(objectKey, localFile, type, hash, null);
+                         final String hash,
+                         final String kmsKeyId) {
+        this(objectKey, localFile, type, hash, null, kmsKeyId);
     }
 
     public ManifestEntry(final Path objectKey,
                          final Path localFile,
                          final Type type,
                          final String hash,
-                         final KeyspaceTable keyspaceTable) {
-        this(objectKey, localFile, type, 0, keyspaceTable, hash);
+                         final KeyspaceTable keyspaceTable,
+                         final String kmsKeyId) {
+        this(objectKey, localFile, type, 0, keyspaceTable, hash, kmsKeyId);
     }
 
     @JsonCreator
@@ -68,12 +72,14 @@ public class ManifestEntry implements Cloneable {
                          @JsonProperty("type") final Type type,
                          @JsonProperty("size") final long size,
                          @JsonProperty("keyspaceTable") final KeyspaceTable keyspaceTable,
-                         @JsonProperty("hash") final String hash) {
+                         @JsonProperty("hash") final String hash,
+                         @JsonProperty("kmsKeyId") final String kmsKeyId) {
         this.objectKey = objectKey;
         this.localFile = localFile;
         this.type = type;
         this.keyspaceTable = keyspaceTable;
         this.hash = hash;
+        this.kmsKeyId = kmsKeyId;
 
         try {
             if (size == 0) {
@@ -97,6 +103,7 @@ public class ManifestEntry implements Cloneable {
             .add("type", type)
             .add("size", size)
             .add("hash", hash)
+            .add("kmsKeyId", kmsKeyId)
             .toString();
     }
 
@@ -114,12 +121,13 @@ public class ManifestEntry implements Cloneable {
             Objects.equal(localFile, that.localFile) &&
             Objects.equal(hash, that.hash) &&
             type == that.type &&
-            Objects.equal(keyspaceTable, that.keyspaceTable);
+            Objects.equal(keyspaceTable, that.keyspaceTable) &&
+            Objects.equal(kmsKeyId, that.kmsKeyId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(objectKey, localFile, type, keyspaceTable, hash);
+        return Objects.hashCode(objectKey, localFile, type, keyspaceTable, hash, kmsKeyId);
     }
 
     @Override
@@ -129,6 +137,7 @@ public class ManifestEntry implements Cloneable {
                                  this.type,
                                  this.size,
                                  this.keyspaceTable == null ? null : this.keyspaceTable.clone(),
-                                 this.hash);
+                                 this.hash,
+                                 this.kmsKeyId);
     }
 }

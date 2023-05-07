@@ -95,19 +95,14 @@ public class CephS3BackupRestoreTest extends BaseCephS3BackupRestoreTest {
             final CephRestorer s3Restorer = new CephRestorer(factory, restoreOperationRequest);
             final CephBackuper s3Backuper = new CephBackuper(factory, backupOperationRequest);
 
-            // 1
-
-            final Path downloadedFile = s3Restorer.downloadNodeFileToDir(tmp, Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
-            assertTrue(Files.exists(downloadedFile));
-
             // 2
 
-            final String content = s3Restorer.downloadNodeFileToString(Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
+            final String content = s3Restorer.downloadNodeFile(Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
             Assert.assertEquals("hello", content);
 
             // 3
 
-            final String content2 = s3Restorer.downloadFileToString(Paths.get("snapshot/in/dir"), s -> s.endsWith("my-name-" + BUCKET_NAME));
+            final String content2 = s3Restorer.downloadTopology(Paths.get("snapshot/in/dir"), s -> s.endsWith("my-name-" + BUCKET_NAME));
             Assert.assertEquals("hello world", content2);
 
             // 4

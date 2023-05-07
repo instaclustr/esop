@@ -1,4 +1,9 @@
-package com.instaclustr.esop.s3;
+package com.instaclustr.esop.s3.v1;
+
+import java.time.temporal.ChronoUnit;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.util.concurrent.Uninterruptibles;
 
 import static java.lang.String.format;
 
@@ -70,6 +75,7 @@ public class BaseS3BucketService extends BucketService {
                     }
                 }
             }
+            Uninterruptibles.sleepUninterruptibly(10, TimeUnit.SECONDS);
         } catch (final Exception ex) {
             throw new BucketServiceException(format("Unable to create the bucket %s", bucketName), ex);
         }

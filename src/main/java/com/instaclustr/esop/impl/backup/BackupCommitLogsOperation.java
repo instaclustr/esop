@@ -83,7 +83,7 @@ public class BackupCommitLogsOperation extends Operation<BackupCommitLogsOperati
 
                 final Path bucketKey = CASSANDRA_COMMITLOG.resolve(commitLog.getFileName().toString() + "." + commitLogLastModified);
 
-                manifestEntries.add(new ManifestEntry(bucketKey, commitLog, COMMIT_LOG, null));
+                manifestEntries.add(new ManifestEntry(bucketKey, commitLog, COMMIT_LOG, null, request.kmsKeyId));
             }
 
             logger.info("{} files in manifest for commitlog backup.", manifestEntries.size());

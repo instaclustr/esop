@@ -30,4 +30,14 @@ public abstract class Backuper extends StorageInteractor {
                                     final RemoteObjectReference objectReference) throws Exception;
 
     public abstract void uploadText(final String text, final RemoteObjectReference objectReference) throws Exception;
+
+    public void uploadEncryptedFile(final long size,
+                                    final InputStream localFileStream,
+                                    final RemoteObjectReference objectReference) throws Exception {
+        uploadFile(size, localFileStream, objectReference);
+    }
+
+    public void uploadEncryptedText(final String plainText, final RemoteObjectReference objectReference) throws Exception {
+        uploadText(plainText, objectReference);
+    }
 }

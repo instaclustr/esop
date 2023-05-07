@@ -128,7 +128,7 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
             // manifest
             final Path localManifestPath = getLocalManifestPath(request.snapshotTag);
             Manifest.write(manifest, localManifestPath, objectMapper);
-            manifest.setManifest(getManifestAsManifestEntry(localManifestPath));
+            manifest.setManifest(getManifestAsManifestEntry(localManifestPath, request));
 
             try (final Backuper backuper = backuperFactoryMap.get(request.storageLocation.storageProvider).createBackuper(request)) {
 

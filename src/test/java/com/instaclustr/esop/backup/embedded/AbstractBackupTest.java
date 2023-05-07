@@ -140,8 +140,7 @@ public abstract class AbstractBackupTest {
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
-            "--create-missing-bucket",
-            "--skip-refreshing"
+            "--create-missing-bucket"
         };
 
         final String[] backupArgsWithSnapshotName = new String[]{
@@ -157,8 +156,7 @@ public abstract class AbstractBackupTest {
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
-            "--create-missing-bucket",
-            "--skip-refreshing"
+            "--create-missing-bucket"
         };
 
         // one more backup to have there manifests with same snapshot name so the latest wins
@@ -176,7 +174,6 @@ public abstract class AbstractBackupTest {
             "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket",
-            "--skip-refreshing"
         };
 
         // COMMIT LOGS BACKUP

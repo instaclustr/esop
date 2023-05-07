@@ -102,7 +102,7 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
                 if (!Files.exists(localPath)) {
                     logger.info(String.format("Downloading file %s to %s.", remoteObjectReference.getObjectKey(), manifestEntry.localFile));
 
-                    restorer.downloadFile(localPath, remoteObjectReference);
+                    restorer.downloadFile(localPath, manifestEntry, remoteObjectReference);
 
                     // hash upon downloading
                     try {

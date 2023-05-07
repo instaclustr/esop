@@ -30,6 +30,7 @@ import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.esop.gcp.GCPModule.GoogleStorageFactory;
 import com.instaclustr.esop.impl.Manifest;
+import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
@@ -106,7 +107,7 @@ public class GCPRestorer extends Restorer {
     }
 
     @Override
-    public void downloadFile(final Path localFile, final RemoteObjectReference objectReference) throws Exception {
+    public void downloadFile(final Path localFile, ManifestEntry manifestEntry, final RemoteObjectReference objectReference) throws Exception {
         final BlobId blobId = ((GCPRemoteObjectReference) objectReference).blobId;
         Files.createDirectories(localFile.getParent());
 
@@ -116,7 +117,7 @@ public class GCPRestorer extends Restorer {
     }
 
     @Override
-    public String downloadFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+    public String downloadTopology(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
 
         // special case for GCP, here we take prefix as a parent dir of "remotePrefix" as it lists just these files from there
 
@@ -133,29 +134,17 @@ public class GCPRestorer extends Restorer {
     }
 
     @Override
-    public String downloadManifestToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+    public String downloadManifest(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
         final String blobItemPath = getManifest(nodeList(request.storageLocation.bucket, remotePrefix), keyFilter);
         final String fileName = blobItemPath.split("/")[blobItemPath.split("/").length - 1];
         return downloadFileToString(objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
     }
 
     @Override
-    public String downloadNodeFileToString(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
+    public String downloadNodeFile(final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
         final String blobItemPath = getBlobItemPath(nodeList(request.storageLocation.bucket, remotePrefix), keyFilter);
         final String fileName = blobItemPath.split("/")[blobItemPath.split("/").length - 1];
         return downloadFileToString(objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
-    }
-
-    @Override
-    public Path downloadNodeFileToDir(final Path destinationDir, final Path remotePrefix, final Predicate<String> keyFilter) throws Exception {
-        final String blobItemPath = getBlobItemPath(nodeList(request.storageLocation.bucket, remotePrefix), keyFilter);
-        final String fileName = blobItemPath.split("/")[blobItemPath.split("/").length - 1];
-
-        final Path destination = destinationDir.resolve(fileName);
-
-        downloadFile(destination, objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
-
-        return destination;
     }
 
     private String getManifest(final Page<Blob> blobItemsIterable, final Predicate<String> keyFilter) {

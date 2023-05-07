@@ -125,6 +125,7 @@ public class RestoreCommitLogsOperation extends Operation<RestoreCommitLogsOpera
                                                               COMMIT_LOG,
                                                               0,
                                                               null,
+                                                              null,
                                                               null));
                 } else if (commitlogTimestamp > request.timestampEnd && commitlogTimestamp < overhangingTimestamp.get()) {
                     // Make sure we also catch the first commitlog that goes past the end of the timestamp
@@ -133,6 +134,7 @@ public class RestoreCommitLogsOperation extends Operation<RestoreCommitLogsOpera
                                                                    request.commitlogDownloadDir.resolve(matcherCommitlog.group(1)),
                                                                    COMMIT_LOG,
                                                                    0,
+                                                                   null,
                                                                    null,
                                                                    null));
                 }

@@ -30,7 +30,8 @@ public class AllManifestsReportTest {
                                                     ManifestEntry.Type.MANIFEST_FILE,
                                                     100,
                                                     new KeyspaceTable("ks1", "tb1"),
-                                                    "123");
+                                                    "123",
+                                                    null);
 
         report.reports = Collections.singletonList(manifestReport);
 

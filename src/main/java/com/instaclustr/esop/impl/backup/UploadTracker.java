@@ -114,15 +114,15 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
             final RemoteObjectReference ref = getRemoteObjectReference(manifestEntry.objectKey);
 
             try {
-                final boolean freshened = getRetrier(backuper.request.retry).submit(() -> backuper.freshenRemoteObject(ref) == FRESHENED);
+                if (manifestEntry.type != MANIFEST_FILE) {
+                    if (getRetrier(backuper.request.retry).submit(() -> backuper.freshenRemoteObject(ref) == FRESHENED)) {
+                        logger.info(format("%sskipping the upload of already uploaded file %s",
+                                           snapshotTag != null ? "Snapshot " + snapshotTag + " - " : "",
+                                           ref.canonicalPath));
 
-                if (manifestEntry.type != MANIFEST_FILE && freshened) {
-                    logger.info(format("%sskipping the upload of already uploaded file %s",
-                                       snapshotTag != null ? "Snapshot " + snapshotTag + " - " : "",
-                                       ref.canonicalPath));
-
-                    state = State.FINISHED;
-                    return null;
+                        state = State.FINISHED;
+                        return null;
+                    }
                 }
 
                 getRetrier(backuper.request.retry).submit(new Runnable() {
@@ -135,11 +135,14 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
                                                snapshotTag != null ? "Snapshot " + snapshotTag + " - " : "",
                                                manifestEntry.objectKey,
                                                DataSize.bytesToHumanReadable(manifestEntry.size)));
-                            backuper.uploadFile(manifestEntry.size, rateLimitedStream, ref);
-                        } catch (final AmazonClientException ex) {
-                            throw new RetriableException(String.format("Retrying upload of %s", manifestEntry.objectKey), ex);
+                            // never encrypt manifest
+                            if (manifestEntry.type == MANIFEST_FILE) {
+                                backuper.uploadFile(manifestEntry.size, rateLimitedStream, ref);
+                            } else {
+                                backuper.uploadEncryptedFile(manifestEntry.size, rateLimitedStream, ref);
+                            }
                         } catch (final Exception ex) {
-                            throw new RuntimeException(ex);
+                            throw new RetriableException(String.format("Retrying upload of %s", manifestEntry.objectKey), ex);
                         }
                     }
                 });

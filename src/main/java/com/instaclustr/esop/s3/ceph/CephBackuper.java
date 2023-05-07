@@ -4,7 +4,7 @@ import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
-import com.instaclustr.esop.s3.BaseS3Backuper;
+import com.instaclustr.esop.s3.v1.BaseS3Backuper;
 import com.instaclustr.esop.s3.ceph.CephModule.CephS3TransferManagerFactory;
 
 public class CephBackuper extends BaseS3Backuper {

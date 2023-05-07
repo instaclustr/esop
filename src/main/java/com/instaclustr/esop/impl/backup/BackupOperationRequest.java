@@ -103,7 +103,8 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonProperty("skipRefreshing") final boolean skipRefreshing,
                                   @JsonSerialize(using = ListPathSerializer.class)
                                   @JsonDeserialize(contentUsing = PathDeserializer.class)
-                                  @JsonProperty("dataDirs") final List<Path> dataDirs) {
+                                  @JsonProperty("dataDirs") final List<Path> dataDirs,
+                                  @JsonProperty("kmsKeyId") final String kmsKeyId) {
         super(storageLocation,
               duration,
               bandwidth,
@@ -117,7 +118,8 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
               proxySettings,
               retry,
               skipRefreshing,
-              dataDirs);
+              dataDirs,
+              kmsKeyId);
         this.entities = entities == null ? DatabaseEntities.empty() : entities;
         this.snapshotTag = snapshotTag == null ? format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis())) : snapshotTag;
         this.globalRequest = globalRequest;
@@ -152,12 +154,16 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
             .add("proxySettings", proxySettings)
             .add("retry", retry)
             .add("skipRefreshing", skipRefreshing)
+            .add("kmsKeyId", kmsKeyId)
             .toString();
     }
 
     @JsonIgnore
     public void validate(final Set<String> storageProviders) {
         super.validate(storageProviders);
+
+        if (kmsKeyId != null && !"s3v2".equals(storageLocation.storageProvider))
+            throw new IllegalStateException("You can set kmsKeyId only when using s3v2 protocol");
 
         if ((isRunningInKubernetes() || isRunningAsClient())) {
             if (this.resolveKubernetesSecretName() == null) {

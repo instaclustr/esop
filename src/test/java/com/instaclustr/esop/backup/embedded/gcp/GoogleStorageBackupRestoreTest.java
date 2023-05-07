@@ -91,14 +91,9 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
             final GCPRestorer gcpRestorer = new GCPRestorer(googleStorageFactory, restoreOperationRequest);
             final GCPBackuper gcpBackuper = new GCPBackuper(googleStorageFactory, backupOperationRequest);
 
-            // 1
-
-            final Path downloadedFile = gcpRestorer.downloadNodeFileToDir(tmp, Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
-            assertTrue(Files.exists(downloadedFile));
-
             // 2
 
-            final String content = gcpRestorer.downloadNodeFileToString(Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
+            final String content = gcpRestorer.downloadNodeFile(Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
             Assert.assertEquals("hello", content);
 
             // 3
@@ -116,7 +111,7 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
             // backup
 
             gcpBackuper.uploadText("hello world", gcpBackuper.objectKeyToRemoteReference(Paths.get("topology/some-file-in-here.txt")));
-            String topology = gcpRestorer.downloadFileToString(Paths.get("topology/some-file-in"), fileName -> fileName.contains("topology/some-file-in"));
+            String topology = gcpRestorer.downloadTopology(Paths.get("topology/some-file-in"), fileName -> fileName.contains("topology/some-file-in"));
             Assert.assertEquals("hello world", topology);
         } finally {
             gcpBucketService.delete(BUCKET_NAME);

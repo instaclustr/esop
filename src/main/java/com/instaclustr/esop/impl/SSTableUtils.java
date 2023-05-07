@@ -156,7 +156,8 @@ public class SSTableUtils {
                                                               sstableComponent,
                                                               ManifestEntry.Type.FILE,
                                                               hashOfFile,
-                                                              new KeyspaceTable(keyspace, table)));
+                                                              new KeyspaceTable(keyspace, table),
+                                                              null));
                             }
 
                             return Pair.of(sstableBaseName, entries);

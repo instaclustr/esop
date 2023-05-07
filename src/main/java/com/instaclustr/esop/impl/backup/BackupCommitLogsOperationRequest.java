@@ -75,7 +75,8 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
                                             @JsonProperty("online") boolean online,
                                             @JsonProperty("proxySettings") final ProxySettings proxySettings,
                                             @JsonProperty("retry") final RetrySpec retry,
-                                            @JsonProperty("skipRefreshing") final boolean skipRefreshing) {
+                                            @JsonProperty("skipRefreshing") final boolean skipRefreshing,
+                                            @JsonProperty("kmsKeyId") final String kmsKeyId) {
         super(storageLocation,
               duration,
               bandwidth,
@@ -89,7 +90,8 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
               proxySettings,
               retry,
               skipRefreshing,
-              null);
+              null,
+              kmsKeyId);
         this.type = "commitlog-backup";
         this.commitLogArchiveOverride = commitLogArchiveOverride;
         this.commitLog = commitLog;

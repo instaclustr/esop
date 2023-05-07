@@ -67,7 +67,8 @@ public class ManifestComponentsTest {
                                                    Paths.get("local/file"),
                                                    Type.FILE,
                                                    null,
-                                                   new KeyspaceTable("keyspace", "table"));
+                                                   new KeyspaceTable("keyspace", "table"),
+                                                   null);
 
         ManifestEntry cloned = original.clone();
 
@@ -98,6 +99,7 @@ public class ManifestComponentsTest {
                                                          null,
                                                          Type.FILE,
                                                          50,
+                                                         null,
                                                          null,
                                                          null));
 

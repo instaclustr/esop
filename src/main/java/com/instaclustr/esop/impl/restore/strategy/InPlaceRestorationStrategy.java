@@ -178,7 +178,7 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
     private NodeTopology getNodeTopology(final Restorer restorer, final RestoreOperationRequest request) {
         try {
             final String topologyFile = format("topology/%s", request.snapshotTag);
-            final String topology = restorer.downloadFileToString(Paths.get(topologyFile), fileName -> fileName.contains(topologyFile));
+            final String topology = restorer.downloadTopology(Paths.get(topologyFile), fileName -> fileName.contains(topologyFile));
             final ClusterTopology clusterTopology = objectMapper.readValue(topology, ClusterTopology.class);
             // nodeId here is propagated by Cassandra operator and it is "hostname"
             // by translating, we get proper node id (uuid) so we fetch the right node in remote bucket

@@ -49,6 +49,7 @@ import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.Snapshots;
 import com.instaclustr.esop.impl.Snapshots.Snapshot;
 import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace;
+import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.backup.coordination.ClearSnapshotOperation;
 import com.instaclustr.esop.impl.backup.coordination.ClearSnapshotOperation.ClearSnapshotOperationRequest;
 import com.instaclustr.esop.impl.backup.coordination.TakeSnapshotOperation;
@@ -292,7 +293,7 @@ public class ManifestTest {
 
             // manifest itself, but it wont be serialised
             final Path localManifestPath = getLocalManifestPath("snapshot1");
-            manifest.setManifest(getManifestAsManifestEntry(localManifestPath));
+            manifest.setManifest(getManifestAsManifestEntry(localManifestPath, new BackupOperationRequest()));
 
             // tokens
             manifest.setTokens(tokens);

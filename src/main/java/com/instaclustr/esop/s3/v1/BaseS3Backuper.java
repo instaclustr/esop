@@ -1,4 +1,4 @@
-package com.instaclustr.esop.s3;
+package com.instaclustr.esop.s3.v1;
 
 import static com.amazonaws.event.ProgressEventType.TRANSFER_COMPLETED_EVENT;
 import static com.amazonaws.event.ProgressEventType.TRANSFER_FAILED_EVENT;
@@ -147,19 +147,19 @@ public class BaseS3Backuper extends Backuper {
             final ProgressEventType progressEventType = progressEvent.getEventType();
 
             if (progressEventType == ProgressEventType.TRANSFER_PART_COMPLETED_EVENT) {
-                logger.debug("Successfully uploaded part for {}.", s3RemoteObjectReference.canonicalPath);
+                logger.info("Successfully uploaded part for {}.", s3RemoteObjectReference.canonicalPath);
             }
 
             if (progressEventType == ProgressEventType.TRANSFER_PART_FAILED_EVENT) {
-                logger.debug("Failed to upload part for {}.", s3RemoteObjectReference.canonicalPath);
+                logger.info("Failed to upload part for {}.", s3RemoteObjectReference.canonicalPath);
             }
 
             if (progressEventType == TRANSFER_FAILED_EVENT) {
-                logger.debug("Failed to upload {}.", s3RemoteObjectReference.canonicalPath);
+                logger.info("Failed to upload {}.", s3RemoteObjectReference.canonicalPath);
             }
 
             if (progressEventType == TRANSFER_COMPLETED_EVENT) {
-                logger.debug("Successfully uploaded {}.", s3RemoteObjectReference.canonicalPath);
+                logger.info("Successfully uploaded {}.", s3RemoteObjectReference.canonicalPath);
             }
         }
 

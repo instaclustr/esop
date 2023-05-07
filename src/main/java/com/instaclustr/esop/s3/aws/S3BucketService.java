@@ -7,7 +7,7 @@ import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
-import com.instaclustr.esop.s3.BaseS3BucketService;
+import com.instaclustr.esop.s3.v1.BaseS3BucketService;
 import com.instaclustr.esop.s3.aws.S3Module.S3TransferManagerFactory;
 
 public class S3BucketService extends BaseS3BucketService {

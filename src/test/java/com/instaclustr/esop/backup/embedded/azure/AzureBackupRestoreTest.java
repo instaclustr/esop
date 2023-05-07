@@ -96,19 +96,14 @@ public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
             final AzureRestorer azureRestorer = new AzureRestorer(cloudStorageAccountFactory, restoreOperationRequest);
             final AzureBackuper azureBackuper = new AzureBackuper(cloudStorageAccountFactory, backupOperationRequest);
 
-            // 1
-
-            final Path downloadedFile = azureRestorer.downloadNodeFileToDir(tmp, Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
-            assertTrue(Files.exists(downloadedFile));
-
             // 2
 
-            final String content = azureRestorer.downloadNodeFileToString(Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
+            final String content = azureRestorer.downloadNodeFile(Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
             Assert.assertEquals("hello", content);
 
             // 3
 
-            final String content2 = azureRestorer.downloadFileToString(Paths.get("snapshot/in/dir"), s -> s.endsWith("name-" + BUCKET_NAME));
+            final String content2 = azureRestorer.downloadTopology(Paths.get("snapshot/in/dir"), s -> s.endsWith("name-" + BUCKET_NAME));
             Assert.assertEquals("hello world", content2);
 
             // 4
@@ -125,7 +120,7 @@ public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
 
             Assert.assertEquals("hello world", text);
 
-            String topology = azureRestorer.downloadFileToString(Paths.get("topology/some-file-in"), fileName -> fileName.contains("topology/some-file-in"));
+            String topology = azureRestorer.downloadTopology(Paths.get("topology/some-file-in"), fileName -> fileName.contains("topology/some-file-in"));
 
             Assert.assertEquals("hello world", topology);
         } finally {
