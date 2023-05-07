@@ -5,7 +5,7 @@ import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.instaclustr.esop.guice.BackupRestoreBindings;
-import com.instaclustr.esop.s3.TransferManagerFactory;
+import com.instaclustr.esop.s3.v1.TransferManagerFactory;
 import io.kubernetes.client.apis.CoreV1Api;
 
 public class MinioModule extends AbstractModule {

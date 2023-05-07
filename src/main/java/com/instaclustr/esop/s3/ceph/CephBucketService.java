@@ -7,7 +7,7 @@ import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
-import com.instaclustr.esop.s3.BaseS3BucketService;
+import com.instaclustr.esop.s3.v1.BaseS3BucketService;
 import com.instaclustr.esop.s3.ceph.CephModule.CephS3TransferManagerFactory;
 
 public class CephBucketService extends BaseS3BucketService {

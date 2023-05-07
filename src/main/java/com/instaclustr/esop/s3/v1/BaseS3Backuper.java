@@ -1,4 +1,4 @@
-package com.instaclustr.esop.s3;
+package com.instaclustr.esop.s3.v1;
 
 import static com.amazonaws.event.ProgressEventType.TRANSFER_COMPLETED_EVENT;
 import static com.amazonaws.event.ProgressEventType.TRANSFER_FAILED_EVENT;

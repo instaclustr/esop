@@ -7,7 +7,7 @@ import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
-import com.instaclustr.esop.s3.BaseS3BucketService;
+import com.instaclustr.esop.s3.v1.BaseS3BucketService;
 import com.instaclustr.esop.s3.minio.MinioModule.MinioS3TransferManagerFactory;
 
 public class MinioBucketService extends BaseS3BucketService {

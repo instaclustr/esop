@@ -1,4 +1,4 @@
-package com.instaclustr.esop.s3;
+package com.instaclustr.esop.s3.v1;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
@@ -26,7 +26,6 @@ import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.esop.impl.retry.Retrier.RetriableException;
 import com.instaclustr.esop.impl.retry.RetrierFactory;
-import com.instaclustr.esop.local.LocalFileRestorer;
 import com.instaclustr.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +42,6 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static com.instaclustr.esop.impl.list.ListOperationRequest.getForLocalListing;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toCollection;
 

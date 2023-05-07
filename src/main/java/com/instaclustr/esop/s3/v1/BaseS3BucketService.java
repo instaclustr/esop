@@ -1,4 +1,4 @@
-package com.instaclustr.esop.s3;
+package com.instaclustr.esop.s3.v1;
 
 import static java.lang.String.format;
 

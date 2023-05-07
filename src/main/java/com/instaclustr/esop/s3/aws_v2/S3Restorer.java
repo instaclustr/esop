@@ -1,4 +1,4 @@
-package com.instaclustr.esop.s3.aws;
+package com.instaclustr.esop.s3.aws_v2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.assistedinject.Assisted;
@@ -7,34 +7,34 @@ import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
-import com.instaclustr.esop.s3.v1.BaseS3Restorer;
-import com.instaclustr.esop.s3.aws.S3Module.S3TransferManagerFactory;
+import com.instaclustr.esop.s3.v2.BaseS3Restorer;
+import com.instaclustr.esop.s3.v2.S3ClientsFactory;
 
 public class S3Restorer extends BaseS3Restorer {
 
     @AssistedInject
-    public S3Restorer(final S3TransferManagerFactory transferManagerFactory,
+    public S3Restorer(final S3ClientsFactory s3ClientsFactory,
                       @Assisted final RestoreOperationRequest request) {
-        super(transferManagerFactory, request);
+        super(s3ClientsFactory, request);
     }
 
     @AssistedInject
-    public S3Restorer(final S3TransferManagerFactory transferManagerFactory,
+    public S3Restorer(final S3ClientsFactory s3ClientsFactory,
                       @Assisted final RestoreCommitLogsOperationRequest request) {
-        super(transferManagerFactory, request);
+        super(s3ClientsFactory, request);
     }
 
     @AssistedInject
-    public S3Restorer(final S3TransferManagerFactory transferManagerFactory,
+    public S3Restorer(final S3ClientsFactory s3ClientsFactory,
                       final ObjectMapper objectMapper,
                       @Assisted final ListOperationRequest request) {
-        super(transferManagerFactory, objectMapper, request);
+        super(s3ClientsFactory, objectMapper, request);
     }
 
     @AssistedInject
-    public S3Restorer(final S3TransferManagerFactory transferManagerFactory,
+    public S3Restorer(final S3ClientsFactory s3ClientsFactory,
                       final ObjectMapper objectMapper,
                       @Assisted final RemoveBackupRequest request) {
-        super(transferManagerFactory, objectMapper, request);
+        super(s3ClientsFactory, objectMapper, request);
     }
 }
