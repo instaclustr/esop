@@ -1,11 +1,13 @@
 package com.instaclustr.esop.s3.v2;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.instaclustr.esop.impl.RemoteObjectReference;
+import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
@@ -96,5 +98,25 @@ public class BaseS3Restorer extends Restorer
     @Override
     public void consumeFiles(RemoteObjectReference prefix, Consumer<RemoteObjectReference> consumer) throws Exception {
 
+    }
+
+    @Override
+    public List<StorageLocation> listNodes() throws Exception {
+        return localFileRestorer.listNodes();
+    }
+
+    @Override
+    public List<StorageLocation> listNodes(final String dc) throws Exception {
+        return localFileRestorer.listNodes(dc);
+    }
+
+    @Override
+    public List<StorageLocation> listNodes(final List<String> dcs) throws Exception {
+        return localFileRestorer.listNodes(dcs);
+    }
+
+    @Override
+    public List<String> listDcs() throws Exception {
+        return localFileRestorer.listDcs();
     }
 }
