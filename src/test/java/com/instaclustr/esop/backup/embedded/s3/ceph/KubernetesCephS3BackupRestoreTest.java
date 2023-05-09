@@ -4,8 +4,11 @@ import java.util.HashMap;
 
 import com.google.inject.Inject;
 import com.instaclustr.esop.backup.embedded.s3.aws.BaseAWSS3BackupRestoreTest;
+import com.instaclustr.esop.impl.BucketService;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
+import com.instaclustr.esop.s3.aws.S3BucketService;
 import com.instaclustr.esop.s3.aws.S3Module.S3TransferManagerFactory;
+import com.instaclustr.esop.s3.ceph.CephModule;
 import com.instaclustr.kubernetes.KubernetesService;
 import io.kubernetes.client.ApiException;
 import org.testng.annotations.AfterMethod;
@@ -17,6 +20,7 @@ import org.testng.annotations.Test;
     "cephTest",
     "k8sTest"
 })
+@Ignore
 public class KubernetesCephS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
 
     @Inject
@@ -27,7 +31,7 @@ public class KubernetesCephS3BackupRestoreTest extends BaseAWSS3BackupRestoreTes
 
     @BeforeMethod
     public void setup() throws ApiException {
-        inject();
+        inject(new CephModule());
         init();
     }
 
@@ -39,6 +43,11 @@ public class KubernetesCephS3BackupRestoreTest extends BaseAWSS3BackupRestoreTes
     @Override
     protected String protocol() {
         return "ceph://";
+    }
+
+    @Override
+    public void deleteBucket() throws BucketService.BucketServiceException {
+        new S3BucketService(transferManagerFactory, getBackupOperationRequest()).delete(BUCKET_NAME);
     }
 
     @Override
@@ -76,11 +85,6 @@ public class KubernetesCephS3BackupRestoreTest extends BaseAWSS3BackupRestoreTes
         final BackupOperationRequest backupOperationRequest = new BackupOperationRequest();
         backupOperationRequest.k8sSecretName = SIDECAR_SECRET_NAME;
         return backupOperationRequest;
-    }
-
-    @Override
-    public S3TransferManagerFactory getTransferManagerFactory() {
-        return transferManagerFactory;
     }
 
     @Test

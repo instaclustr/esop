@@ -9,6 +9,7 @@ import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
+import com.instaclustr.esop.s3.S3ConfigurationResolver;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory.S3Clients;
 import software.amazon.awssdk.services.s3.model.BucketAlreadyExistsException;
 import software.amazon.awssdk.services.s3.model.BucketAlreadyOwnedByYouException;
@@ -30,28 +31,33 @@ public class BaseS3BucketService extends BucketService {
     private final S3Clients s3Clients;
 
     public BaseS3BucketService(final S3ClientsFactory s3ClientsFactory,
+                               final S3ConfigurationResolver configurationResolver,
                                final BackupOperationRequest request) {
-        this.s3Clients = s3ClientsFactory.build(request);
+        this.s3Clients = s3ClientsFactory.build(request, configurationResolver);
     }
 
     public BaseS3BucketService(final S3ClientsFactory s3ClientsFactory,
+                               final S3ConfigurationResolver configurationResolver,
                                final BackupCommitLogsOperationRequest request) {
-        this.s3Clients = s3ClientsFactory.build(request);
+        this.s3Clients = s3ClientsFactory.build(request, configurationResolver);
     }
 
     public BaseS3BucketService(final S3ClientsFactory s3ClientsFactory,
+                               final S3ConfigurationResolver configurationResolver,
                                final RestoreOperationRequest request) {
-        this.s3Clients = s3ClientsFactory.build(request);
+        this.s3Clients = s3ClientsFactory.build(request, configurationResolver);
     }
 
     public BaseS3BucketService(final S3ClientsFactory s3ClientsFactory,
+                               final S3ConfigurationResolver configurationResolver,
                                final RestoreCommitLogsOperationRequest request) {
-        this.s3Clients = s3ClientsFactory.build(request);
+        this.s3Clients = s3ClientsFactory.build(request, configurationResolver);
     }
 
     public BaseS3BucketService(final S3ClientsFactory s3ClientsFactory,
+                               final S3ConfigurationResolver configurationResolver,
                                final ListOperationRequest request) {
-        this.s3Clients = s3ClientsFactory.build(request);
+        this.s3Clients = s3ClientsFactory.build(request, configurationResolver);
     }
 
     @Override

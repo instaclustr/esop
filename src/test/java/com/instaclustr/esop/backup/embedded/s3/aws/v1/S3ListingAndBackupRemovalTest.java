@@ -1,4 +1,4 @@
-package com.instaclustr.esop.backup.embedded.s3.aws;
+package com.instaclustr.esop.backup.embedded.s3.aws.v1;
 
 import com.google.inject.Inject;
 import com.google.inject.Module;
@@ -7,6 +7,7 @@ import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.esop.s3.aws.S3BucketService;
 import com.instaclustr.esop.s3.aws.S3Module;
+import com.instaclustr.esop.s3.aws.S3Module.S3TransferManagerFactory;
 import com.instaclustr.io.FileUtils;
 import org.testng.annotations.Test;
 
@@ -20,7 +21,7 @@ import java.util.List;
 public class S3ListingAndBackupRemovalTest extends BaseListingRemovalTest {
 
     @Inject
-    public S3Module.S3TransferManagerFactory transferManagerFactory;
+    public S3TransferManagerFactory transferManagerFactory;
 
     @Override
     protected List<Module> getModules() {

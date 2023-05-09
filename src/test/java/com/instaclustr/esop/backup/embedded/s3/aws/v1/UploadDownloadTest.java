@@ -1,78 +1,44 @@
-package com.instaclustr.esop.backup.embedded.s3.aws;
+package com.instaclustr.esop.backup.embedded.s3.aws.v1;
 
-import static com.instaclustr.io.FileUtils.deleteDirectory;
-import static org.testng.Assert.assertTrue;
-
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.google.inject.Inject;
+import com.instaclustr.esop.backup.embedded.s3.aws.AbstractS3UploadDownloadTest;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.s3.aws.S3Backuper;
 import com.instaclustr.esop.s3.aws.S3BucketService;
+import com.instaclustr.esop.s3.aws.S3Module;
 import com.instaclustr.esop.s3.aws.S3Module.S3TransferManagerFactory;
 import com.instaclustr.esop.s3.aws.S3Restorer;
-import io.kubernetes.client.ApiException;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-@Test(groups = {
-        "s3Test",
-        "cloudTest",
-})
-public class AWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
+import static com.instaclustr.io.FileUtils.deleteDirectory;
+import static org.testng.Assert.assertTrue;
 
+public class UploadDownloadTest extends AbstractS3UploadDownloadTest
+{
     @Inject
     public S3TransferManagerFactory transferManagerFactory;
 
     @BeforeMethod
-    public void setup() throws ApiException, IOException {
-        inject();
+    public void setup() throws Exception {
+        inject(new S3Module());
         init();
     }
 
-    @AfterMethod
-    public void teardown() throws Exception {
-        destroy();
-    }
-
-    @Override
-    public S3TransferManagerFactory getTransferManagerFactory() {
-        return transferManagerFactory;
-    }
-
-    protected BackupOperationRequest getBackupOperationRequest() {
-        return new BackupOperationRequest();
-    }
-
     @Test
-    public void testInPlaceBackupRestore() throws Exception {
-        inPlaceTest(inPlaceArguments(CASSANDRA_VERSION));
-    }
+    public void testDownloadUpload() throws Exception {
 
-    @Test
-    public void testImportingBackupAndRestore() throws Exception {
-        liveCassandraTest(importArguments(CASSANDRA_4_VERSION), CASSANDRA_4_VERSION);
-    }
+        S3TransferManagerFactory factory = transferManagerFactory;
 
-    @Test
-    public void testHardlinkingBackupAndRestore() throws Exception {
-        liveCassandraTest(hardlinkingArguments(CASSANDRA_VERSION), CASSANDRA_VERSION);
-    }
-
-    @Test
-    public void testDownload() throws Exception {
-
-        S3TransferManagerFactory factory = getTransferManagerFactory();
-
-        S3BucketService s3BucketService = new S3BucketService(factory, getBackupOperationRequest());
+        S3BucketService s3BucketService = new S3BucketService(transferManagerFactory, new BackupOperationRequest());
 
         Path tmp = Files.createTempDirectory("tmp");
         tmp.toFile().deleteOnExit();
@@ -80,7 +46,7 @@ public class AWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
         try {
             s3BucketService.create(BUCKET_NAME);
 
-            AmazonS3 amazonS3Client = factory.build(getBackupOperationRequest()).getAmazonS3Client();
+            AmazonS3 amazonS3Client = factory.build(new BackupOperationRequest()).getAmazonS3Client();
 
             amazonS3Client.putObject(BUCKET_NAME, "cluster/dc/node/manifests/snapshot-name-" + BUCKET_NAME, "hello");
             amazonS3Client.putObject(BUCKET_NAME, "snapshot/in/dir/my-name-" + BUCKET_NAME, "hello world");
@@ -125,7 +91,7 @@ public class AWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
 
             Assert.assertEquals("hello world", text);
         } finally {
-            s3BucketService.delete(BUCKET_NAME);
+            new S3BucketService(transferManagerFactory, new BackupOperationRequest()).delete(BUCKET_NAME);
             deleteDirectory(Paths.get(target("commitlog_download_dir")));
             Files.deleteIfExists(tmp.resolve("some-file"));
         }

@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
@@ -13,6 +12,7 @@ import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
+import com.instaclustr.esop.s3.S3ConfigurationResolver;
 import com.instaclustr.esop.s3.v1.S3RemoteObjectReference;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory.S3Clients;
 
@@ -21,33 +21,35 @@ public class BaseS3Restorer extends Restorer
     private final S3Clients s3Clients;
 
     public BaseS3Restorer(S3ClientsFactory s3ClientsFactory,
-                          RestoreOperationRequest request)
+                          RestoreOperationRequest request,
+                          S3ConfigurationResolver configurationResolver)
     {
         super(request);
-        s3Clients = s3ClientsFactory.build(request);
+        s3Clients = s3ClientsFactory.build(request, configurationResolver);
     }
 
     public BaseS3Restorer(S3ClientsFactory s3ClientsFactory,
-                          RestoreCommitLogsOperationRequest request)
+                          RestoreCommitLogsOperationRequest request,
+                          S3ConfigurationResolver configurationResolver)
     {
         super(request);
-        s3Clients = s3ClientsFactory.build(request);
+        s3Clients = s3ClientsFactory.build(request, configurationResolver);
     }
 
     public BaseS3Restorer(S3ClientsFactory s3ClientsFactory,
-                          ObjectMapper objectMapper,
-                          ListOperationRequest request)
+                          ListOperationRequest request,
+                          S3ConfigurationResolver configurationResolver)
     {
         super(request);
-        s3Clients = s3ClientsFactory.build(request);
+        s3Clients = s3ClientsFactory.build(request, configurationResolver);
     }
 
     public BaseS3Restorer(S3ClientsFactory s3ClientsFactory,
-                          ObjectMapper objectMapper,
-                          RemoveBackupRequest request)
+                          RemoveBackupRequest request,
+                          S3ConfigurationResolver configurationResolver)
     {
         super(request);
-        s3Clients = s3ClientsFactory.build(request);
+        s3Clients = s3ClientsFactory.build(request, configurationResolver);
     }
 
     @Override

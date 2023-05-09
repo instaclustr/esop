@@ -14,6 +14,12 @@ import com.instaclustr.kubernetes.SecretReader;
 import io.kubernetes.client.apis.CoreV1Api;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AWS_ACCESS_KEY_ID_PROPERTY;
+import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AWS_ENABLE_PATH_STYLE_ACCESS_PROPERTY;
+import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AWS_ENDPOINT_PROPERTY;
+import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AWS_KMS_KEY_ID_PROPERTY;
+import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AWS_REGION_PROPERTY;
+import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AWS_SECRET_KEY_PROPERTY;
 import static com.instaclustr.kubernetes.KubernetesHelper.isRunningAsClient;
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.String.format;
@@ -22,6 +28,14 @@ public class S3ConfigurationResolver {
     private static final Logger logger = LoggerFactory.getLogger(S3ConfigurationResolver.class);
 
     public static final class S3Configuration {
+        public static final String TEST_ESOP_AWS_KMS_WRAPPING_KEY = "TEST_ESOP_AWS_KMS_WRAPPING_KEY";
+        public static final String AWS_REGION_PROPERTY = "AWS_REGION";
+        public static final String AWS_ENDPOINT_PROPERTY = "AWS_ENDPOINT";
+        public static final String AWS_ACCESS_KEY_ID_PROPERTY = "AWS_ACCESS_KEY_ID";
+        public static final String AWS_SECRET_KEY_PROPERTY = "AWS_SECRET_KEY";
+        public static final String AWS_ENABLE_PATH_STYLE_ACCESS_PROPERTY = "AWS_ENABLE_PATH_STYLE_ACCESS";
+        public static final String AWS_KMS_KEY_ID_PROPERTY = "AWS_KMS_KEY_ID";
+
         public String awsRegion;
         public String awsEndpoint;
         public String awsAccessKeyId;
@@ -103,13 +117,16 @@ public class S3ConfigurationResolver {
     private S3Configuration resolveS3ConfigurationFromEnvProperties() {
         final S3Configuration s3Configuration = new S3Configuration();
 
-        s3Configuration.awsRegion = System.getenv("AWS_REGION");
-        s3Configuration.awsEndpoint = System.getenv("AWS_ENDPOINT");
-        s3Configuration.awsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
-        s3Configuration.awsSecretKey = System.getenv("AWS_SECRET_KEY");
-        String awsEnablePathStyleAccess = System.getenv("AWS_ENABLE_PATH_STYLE_ACCESS");
+        s3Configuration.awsRegion = System.getenv(AWS_REGION_PROPERTY);
+        s3Configuration.awsEndpoint = System.getenv(AWS_ENDPOINT_PROPERTY);
+        s3Configuration.awsAccessKeyId = System.getenv(AWS_ACCESS_KEY_ID_PROPERTY);
+        s3Configuration.awsSecretKey = System.getenv(AWS_SECRET_KEY_PROPERTY);
+        String awsEnablePathStyleAccess = System.getenv(AWS_ENABLE_PATH_STYLE_ACCESS_PROPERTY);
         s3Configuration.awsPathStyleAccessEnabled = awsEnablePathStyleAccess != null ? parseBoolean(awsEnablePathStyleAccess) : null;
-        s3Configuration.awsKmsKeyId = System.getenv("AWS_KMS_KEY_ID");
+        s3Configuration.awsKmsKeyId = System.getenv(AWS_KMS_KEY_ID_PROPERTY);
+
+        if (s3Configuration.awsKmsKeyId == null)
+            s3Configuration.awsKmsKeyId = System.getProperty(AWS_KMS_KEY_ID_PROPERTY);
 
         // accesskeyid and awssecretkey will be taken from normal configuration mechanism in ~/.aws/ ...
         // s3Configuration.awsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");

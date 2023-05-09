@@ -10,6 +10,7 @@ import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.backup.Backuper;
+import com.instaclustr.esop.s3.S3ConfigurationResolver;
 import com.instaclustr.esop.s3.v1.S3RemoteObjectReference;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory.S3Clients;
 import software.amazon.awssdk.core.waiters.WaiterOverrideConfiguration;
@@ -33,15 +34,17 @@ public class BaseS3Backuper extends Backuper {
     private final S3Clients s3Clients;
 
     public BaseS3Backuper(final S3ClientsFactory s3ClientsFactory,
+                          final S3ConfigurationResolver configurationResolver,
                           final BackupOperationRequest request) {
         super(request);
-        s3Clients = s3ClientsFactory.build(request);
+        s3Clients = s3ClientsFactory.build(request, configurationResolver);
     }
 
     public BaseS3Backuper(final S3ClientsFactory s3ClientsFactory,
+                          final S3ConfigurationResolver configurationResolver,
                           final BackupCommitLogsOperationRequest request) {
         super(request);
-        s3Clients = s3ClientsFactory.build(request);
+        s3Clients = s3ClientsFactory.build(request, configurationResolver);
     }
 
     @Override
