@@ -96,7 +96,7 @@ public class BaseS3Backuper extends Backuper {
     @Override
     public void uploadFile(long size, InputStream localFileStream, RemoteObjectReference objectReference) throws Exception {
         s3Clients.getNonEncryptingClient()
-                 .putObject(getPutObjectRequest(objectReference),
+                 .putObject(getPutObjectRequest(objectReference, size),
                             fromInputStream(localFileStream, size));
 
         waitForCompletion(objectReference);
@@ -110,7 +110,7 @@ public class BaseS3Backuper extends Backuper {
             return;
         }
 
-        s3Clients.getEncryptingClient().get().putObject(getPutObjectRequest(objectReference),
+        s3Clients.getEncryptingClient().get().putObject(getPutObjectRequest(objectReference, size),
                                                         fromInputStream(localFileStream, size));
 
         waitForCompletion(objectReference);
@@ -118,9 +118,12 @@ public class BaseS3Backuper extends Backuper {
 
     @Override
     public void uploadText(String text, RemoteObjectReference objectReference) throws Exception {
+
+        byte[] bytes = text.getBytes(UTF_8);
+
         s3Clients.getNonEncryptingClient()
-                 .putObject(getPutObjectRequest(objectReference),
-                            fromBytes(text.getBytes(UTF_8)));
+                 .putObject(getPutObjectRequest(objectReference, bytes.length),
+                            fromBytes(bytes));
 
         waitForCompletion(objectReference);
     }
@@ -133,9 +136,11 @@ public class BaseS3Backuper extends Backuper {
             return;
         }
 
+        byte[] bytes = plainText.getBytes(UTF_8);
+
         s3Clients.getEncryptingClient().get()
-                 .putObject(getPutObjectRequest(objectReference),
-                            fromBytes(plainText.getBytes(UTF_8)));
+                 .putObject(getPutObjectRequest(objectReference, bytes.length),
+                            fromBytes(bytes));
 
         waitForCompletion(objectReference);
     }
@@ -160,10 +165,12 @@ public class BaseS3Backuper extends Backuper {
         logger.debug("Successfully uploaded {}.", objectReference.canonicalPath);
     }
 
-    private PutObjectRequest getPutObjectRequest(RemoteObjectReference s3RemoteObjectReference) {
+    private PutObjectRequest getPutObjectRequest(RemoteObjectReference s3RemoteObjectReference, long size)
+    {
         return PutObjectRequest.builder()
                                .bucket(request.storageLocation.bucket)
                                .key(s3RemoteObjectReference.canonicalPath)
+                               .storageClass(StorageClass.STANDARD_IA)
                                .build();
     }
 }
