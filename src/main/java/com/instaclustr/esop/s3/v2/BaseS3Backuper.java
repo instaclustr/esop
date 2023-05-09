@@ -2,6 +2,7 @@ package com.instaclustr.esop.s3.v2;
 
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import com.instaclustr.esop.impl.backup.Backuper;
 import com.instaclustr.esop.s3.S3ConfigurationResolver;
 import com.instaclustr.esop.s3.v1.S3RemoteObjectReference;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory.S3Clients;
+import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.waiters.WaiterOverrideConfiguration;
 import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
@@ -22,61 +24,114 @@ import software.amazon.awssdk.services.s3.model.MetadataDirective;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.StorageClass;
+import software.amazon.awssdk.transfer.s3.S3TransferManager;
+import software.amazon.awssdk.transfer.s3.model.UploadFileRequest;
+import software.amazon.awssdk.transfer.s3.progress.TransferListener;
+import software.amazon.awssdk.utils.SdkAutoCloseable;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static software.amazon.awssdk.core.retry.RetryMode.STANDARD;
 import static software.amazon.awssdk.core.retry.backoff.BackoffStrategy.defaultStrategy;
-import static software.amazon.awssdk.core.sync.RequestBody.fromBytes;
-import static software.amazon.awssdk.core.sync.RequestBody.fromInputStream;
 
-public class BaseS3Backuper extends Backuper {
+public class BaseS3Backuper extends Backuper
+{
     private static final Logger logger = LoggerFactory.getLogger(BaseS3Backuper.class);
     private final S3Clients s3Clients;
 
-    public BaseS3Backuper(final S3ClientsFactory s3ClientsFactory,
-                          final S3ConfigurationResolver configurationResolver,
-                          final BackupOperationRequest request) {
-        super(request);
-        s3Clients = s3ClientsFactory.build(request, configurationResolver);
+    private S3TransferManager nonEncryptingTransferManager;
+    private Optional<S3TransferManager> encryptingTransferManager;
+
+    private void prepareTransferManager() {
+        nonEncryptingTransferManager = S3TransferManager.builder()
+                                                        .s3Client(s3Clients.getNonEncryptingClient())
+                                                        .build();
+
+        encryptingTransferManager = s3Clients.getEncryptingClient()
+                                             .map(c -> S3TransferManager.builder().s3Client(c).build());
     }
 
     public BaseS3Backuper(final S3ClientsFactory s3ClientsFactory,
                           final S3ConfigurationResolver configurationResolver,
-                          final BackupCommitLogsOperationRequest request) {
+                          final BackupOperationRequest request)
+    {
         super(request);
         s3Clients = s3ClientsFactory.build(request, configurationResolver);
+        prepareTransferManager();
+    }
+
+    public BaseS3Backuper(final S3ClientsFactory s3ClientsFactory,
+                          final S3ConfigurationResolver configurationResolver,
+                          final BackupCommitLogsOperationRequest request)
+    {
+        super(request);
+        s3Clients = s3ClientsFactory.build(request, configurationResolver);
+        prepareTransferManager();
+    }
+
+    private class UploadTransferListener implements TransferListener
+    {
+
+        private final String key;
+        public UploadTransferListener(String key) {
+            this.key = key;
+        }
+
+        @Override
+        public void transferInitiated(Context.TransferInitiated context) {
+            logger.info("Uploading " + key);
+        }
+
+        @Override
+        public void transferComplete(Context.TransferComplete context) {
+            logger.info("Finished uploading " + key);
+        }
+
+        @Override
+        public void transferFailed(Context.TransferFailed context) {
+            logger.error("Failed to upload " + key, context.exception().getMessage());
+        }
     }
 
     @Override
-    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) {
+    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey)
+    {
         return new S3RemoteObjectReference(objectKey, objectKey.toString());
     }
 
     @Override
-    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey) {
+    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey)
+    {
         return new S3RemoteObjectReference(objectKey, resolveNodeAwareRemotePath(objectKey));
     }
 
 
     @Override
-    protected void cleanup() throws Exception {
+    protected void cleanup() throws Exception
+    {
         s3Clients.close();
+        nonEncryptingTransferManager.close();
+        encryptingTransferManager.ifPresent(SdkAutoCloseable::close);
     }
 
     @Override
-    public FreshenResult freshenRemoteObject(RemoteObjectReference object) throws Exception {
+    public FreshenResult freshenRemoteObject(RemoteObjectReference object) throws Exception
+    {
 
-        try {
+        try
+        {
             s3Clients.getClient()
                      .headObject(HeadObjectRequest.builder()
                                                   .bucket(request.storageLocation.bucket)
                                                   .key(object.canonicalPath)
                                                   .build());
-        } catch (NoSuchKeyException e) {
+        }
+        catch (NoSuchKeyException e)
+        {
             return FreshenResult.UPLOAD_REQUIRED;
         }
 
-        if (!request.skipRefreshing) {
+        if (!request.skipRefreshing)
+        {
             CopyObjectRequest copyObjectRequest = CopyObjectRequest.builder()
                                                                    .sourceBucket(request.storageLocation.bucket)
                                                                    .destinationBucket(request.storageLocation.bucket)
@@ -94,36 +149,43 @@ public class BaseS3Backuper extends Backuper {
     }
 
     @Override
-    public void uploadFile(long size, InputStream localFileStream, RemoteObjectReference objectReference) throws Exception {
-        s3Clients.getNonEncryptingClient()
-                 .putObject(getPutObjectRequest(objectReference, size),
-                            fromInputStream(localFileStream, size));
-
+    public void uploadFile(long size, InputStream localFileStream, RemoteObjectReference objectReference) throws Exception
+    {
+        UploadFileRequest request = UploadFileRequest.builder()
+                                                     .putObjectRequest(getPutObjectRequest(objectReference, size))
+                                                     .addTransferListener(new UploadTransferListener(objectReference.canonicalPath))
+                                                     .build();
+        nonEncryptingTransferManager.uploadFile(request)
+                                    .completionFuture()
+                                    .get();
         waitForCompletion(objectReference);
     }
 
     @Override
     public void uploadEncryptedFile(long size, InputStream localFileStream, RemoteObjectReference objectReference) throws Exception
     {
-        if (!s3Clients.getEncryptingClient().isPresent()) {
+        if (!encryptingTransferManager.isPresent())
+        {
             uploadFile(size, localFileStream, objectReference);
             return;
         }
 
-        s3Clients.getEncryptingClient().get().putObject(getPutObjectRequest(objectReference, size),
-                                                        fromInputStream(localFileStream, size));
+        UploadFileRequest request = UploadFileRequest.builder()
+                                                     .putObjectRequest(getPutObjectRequest(objectReference, size))
+                                                     .addTransferListener(new UploadTransferListener(objectReference.canonicalPath))
+                                                     .build();
+        encryptingTransferManager.get().uploadFile(request).completionFuture().get();
 
         waitForCompletion(objectReference);
     }
 
     @Override
-    public void uploadText(String text, RemoteObjectReference objectReference) throws Exception {
-
+    public void uploadText(String text, RemoteObjectReference objectReference) throws Exception
+    {
         byte[] bytes = text.getBytes(UTF_8);
-
         s3Clients.getNonEncryptingClient()
                  .putObject(getPutObjectRequest(objectReference, bytes.length),
-                            fromBytes(bytes));
+                            AsyncRequestBody.fromBytes(bytes)).get();
 
         waitForCompletion(objectReference);
     }
@@ -140,7 +202,7 @@ public class BaseS3Backuper extends Backuper {
 
         s3Clients.getEncryptingClient().get()
                  .putObject(getPutObjectRequest(objectReference, bytes.length),
-                            fromBytes(bytes));
+                            AsyncRequestBody.fromBytes(bytes)).get();
 
         waitForCompletion(objectReference);
     }
@@ -155,9 +217,11 @@ public class BaseS3Backuper extends Backuper {
                                                                                                        .build(),
                                                                                       WaiterOverrideConfiguration.builder()
                                                                                                                  .backoffStrategy(defaultStrategy(STANDARD))
-                                                                                                                 .build());
+                                                                                                                 .build())
+                                                               .get();
 
-        if (response.matched().exception().isPresent()) {
+        if (response.matched().exception().isPresent())
+        {
             logger.debug("Failed to upload {}.", objectReference.canonicalPath);
             throw new RuntimeException(response.matched().exception().get());
         }

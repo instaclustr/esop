@@ -64,7 +64,10 @@ public class BaseS3BucketService extends BucketService {
     public boolean doesExist(final String bucketName) throws BucketServiceException {
         try
         {
-            s3Clients.getClient().headBucket(HeadBucketRequest.builder().bucket(bucketName).build());
+            s3Clients.getClient().headBucket(HeadBucketRequest.builder()
+                                                              .bucket(bucketName)
+                                                              .build())
+                     .get();
             return true;
         } catch (final NoSuchBucketException ex) {
             return false;
@@ -80,8 +83,8 @@ public class BaseS3BucketService extends BucketService {
                 try {
                     s3Clients.getClient().createBucket(CreateBucketRequest.builder()
                                                                           .bucket(bucketName)
-                                                                          .build());
-                    s3Clients.getClient().waiter().waitUntilBucketExists(HeadBucketRequest.builder().bucket(bucketName).build());
+                                                                          .build()).get();
+                    s3Clients.getClient().waiter().waitUntilBucketExists(HeadBucketRequest.builder().bucket(bucketName).build()).get();
                 } catch (final BucketAlreadyExistsException | BucketAlreadyOwnedByYouException ex) {
                     logger.warn(ex.getMessage());
                 }
@@ -109,25 +112,26 @@ public class BaseS3BucketService extends BucketService {
             ListObjectsV2Response listObjectsV2Response;
 
             do {
-                listObjectsV2Response = s3Clients.getClient().listObjectsV2(listObjectsV2Request);
+                listObjectsV2Response = s3Clients.getClient().listObjectsV2(listObjectsV2Request).get();
                 for (S3Object s3Object : listObjectsV2Response.contents()) {
                     DeleteObjectRequest request = DeleteObjectRequest.builder()
                                                                      .bucket(bucketName)
                                                                      .key(s3Object.key())
                                                                      .build();
-                    s3Clients.getClient().deleteObject(request);
+                    s3Clients.getClient().deleteObject(request).get();
                 }
             } while (listObjectsV2Response.isTruncated());
 
             s3Clients.getClient().deleteBucket(DeleteBucketRequest.builder()
                                                                   .bucket(bucketName)
-                                                                  .build());
+                                                                  .build()).get();
 
             s3Clients.getClient()
                      .waiter()
                      .waitUntilBucketNotExists(HeadBucketRequest.builder()
                                                                 .bucket(bucketName)
-                                                                .build());
+                                                                .build())
+                     .get();
         } catch (final Exception ex) {
             throw new BucketServiceException(format("Unable to delete the bucket %s", bucketName), ex);
         }

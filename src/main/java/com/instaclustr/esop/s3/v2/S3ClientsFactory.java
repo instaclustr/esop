@@ -12,12 +12,14 @@ import com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration;
 import io.kubernetes.client.apis.CoreV1Api;
 import org.apache.http.client.utils.URIBuilder;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
-import software.amazon.awssdk.http.apache.ApacheHttpClient;
-import software.amazon.awssdk.http.apache.ProxyConfiguration;
+import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
+import software.amazon.awssdk.http.nio.netty.ProxyConfiguration;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.S3ClientBuilder;
-import software.amazon.encryption.s3.S3EncryptionClient;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
+import software.amazon.awssdk.services.s3.S3AsyncClientBuilder;
+import software.amazon.encryption.s3.S3AsyncEncryptionClient;
+
+import static software.amazon.awssdk.http.nio.netty.ProxyConfiguration.Builder;
 
 public class S3ClientsFactory {
 
@@ -28,14 +30,14 @@ public class S3ClientsFactory {
 
         private static final Logger logger = LoggerFactory.getLogger(S3Clients.class);
 
-        private final S3Client defaultClient;
-        private final S3Client encryptingClient;
+        private final S3AsyncClient defaultClient;
+        private final S3AsyncClient encryptingClient;
 
-        public S3Clients(S3Client defaultClient) {
+        public S3Clients(S3AsyncClient defaultClient) {
             this(defaultClient, null);
         }
 
-        public S3Clients(S3Client defaultClient, S3Client encryptingClient) {
+        public S3Clients(S3AsyncClient defaultClient, S3AsyncClient encryptingClient) {
             this.defaultClient = defaultClient;
             this.encryptingClient = encryptingClient;
         }
@@ -44,15 +46,15 @@ public class S3ClientsFactory {
             return getEncryptingClient().isPresent();
         }
 
-        public Optional<S3Client> getEncryptingClient() {
+        public Optional<S3AsyncClient> getEncryptingClient() {
             return Optional.ofNullable(encryptingClient);
         }
 
-        public S3Client getClient() {
+        public S3AsyncClient getClient() {
             return Optional.ofNullable(encryptingClient).orElse(defaultClient);
         }
 
-        public S3Client getNonEncryptingClient() {
+        public S3AsyncClient getNonEncryptingClient() {
             return defaultClient;
         }
 
@@ -62,7 +64,7 @@ public class S3ClientsFactory {
             tryCloseClient(defaultClient);
         }
 
-        private void tryCloseClient(S3Client s3Client) {
+        private void tryCloseClient(S3AsyncClient s3Client) {
             if (s3Client == null)
                 return;
 
@@ -90,8 +92,8 @@ public class S3ClientsFactory {
     public S3Clients build(AbstractOperationRequest operationRequest, S3ConfigurationResolver configurationResolver) {
         final S3Configuration s3Conf = configurationResolver.resolveS3Configuration(coreV1ApiProvider, operationRequest);
 
-        S3Client defaultS3Client = getDefaultS3Client(operationRequest, s3Conf);
-        S3Client encryptingClient = null;
+        S3AsyncClient defaultS3Client = getDefaultS3Client(operationRequest, s3Conf);
+        S3AsyncClient encryptingClient = null;
 
         if (s3Conf.awsKmsKeyId != null) {
             encryptingClient = getEncryptingClient(defaultS3Client, s3Conf);
@@ -100,16 +102,15 @@ public class S3ClientsFactory {
         return new S3Clients(defaultS3Client, encryptingClient);
     }
 
-    private S3Client getEncryptingClient(S3Client wrappedClient, S3Configuration s3Conf) {
-        return S3EncryptionClient.builder()
-                                 .wrappedClient(wrappedClient)
-                                 .kmsKeyId(s3Conf.awsKmsKeyId)
-                                 .build();
+    private S3AsyncClient getEncryptingClient(S3AsyncClient wrappedClient, S3Configuration s3Conf) {
+        return S3AsyncEncryptionClient.builder()
+                                      .wrappedClient(wrappedClient)
+                                      .kmsKeyId(s3Conf.awsKmsKeyId)
+                                      .build();
     }
 
-    private S3Client getDefaultS3Client(AbstractOperationRequest operationRequest, S3Configuration s3Conf) {
-        S3ClientBuilder builder = S3Client.builder();
-
+    private S3AsyncClient getDefaultS3Client(AbstractOperationRequest operationRequest, S3Configuration s3Conf) {
+        S3AsyncClientBuilder builder = S3AsyncClient.builder();
         if (s3Conf.awsRegion != null)
             builder.region(Region.of(s3Conf.awsRegion));
 
@@ -117,9 +118,9 @@ public class S3ClientsFactory {
             builder.forcePathStyle(enablePathStyleAccess);
 
         if (operationRequest.proxySettings != null && operationRequest.proxySettings.useProxy) {
-            ApacheHttpClient.Builder clientBuilder = ApacheHttpClient.builder();
+            NettyNioAsyncHttpClient.Builder clientBuilder = NettyNioAsyncHttpClient.builder();
 
-            ProxyConfiguration.Builder proxyBuilder = ProxyConfiguration.builder();
+            Builder proxyBuilder = ProxyConfiguration.builder();
 
             try {
                 URIBuilder uriBuilder = new URIBuilder();
@@ -130,8 +131,6 @@ public class S3ClientsFactory {
                         .map(uriBuilder::setHost);
                 Optional.of(operationRequest.proxySettings.proxyProtocol)
                         .map(p -> uriBuilder.setScheme(p.toString()));
-
-                proxyBuilder.endpoint(uriBuilder.build());
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
