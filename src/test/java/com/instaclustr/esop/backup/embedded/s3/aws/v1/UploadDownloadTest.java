@@ -1,5 +1,7 @@
 package com.instaclustr.esop.backup.embedded.s3.aws.v1;
 
+import java.io.FileInputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,6 +17,8 @@ import com.instaclustr.esop.s3.aws.S3BucketService;
 import com.instaclustr.esop.s3.aws.S3Module;
 import com.instaclustr.esop.s3.aws.S3Module.S3TransferManagerFactory;
 import com.instaclustr.esop.s3.aws.S3Restorer;
+import com.instaclustr.esop.s3.v1.S3RemoteObjectReference;
+import com.instaclustr.io.FileUtils;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -84,12 +88,22 @@ public class UploadDownloadTest extends AbstractS3UploadDownloadTest
             Assert.assertTrue(Files.exists(tmp.resolve("some-file")));
             Assert.assertEquals("hello world", new String(Files.readAllBytes(tmp.resolve("some-file"))));
 
-            // backup
+            // backup upload text
 
-            s3Backuper.uploadText("hello world", s3Backuper.objectKeyToRemoteReference(Paths.get("topology/some-file-in-here.txt")));
+            // these "encrypted" method are not always encrypting, that depends on aws kms key id set or not for a given test
+            s3Backuper.uploadEncryptedText("hello world", s3Backuper.objectKeyToRemoteReference(Paths.get("topology/some-file-in-here.txt")));
             String text = s3Restorer.downloadFileToString(s3Restorer.objectKeyToRemoteReference(Paths.get("topology/some-file-in-here.txt")));
 
             Assert.assertEquals("hello world", text);
+
+            // backup upload file
+
+            Path tempFile = Files.createTempFile("esop", ".txt");
+            Files.write(tempFile, "hello world".getBytes(StandardCharsets.UTF_8));
+
+            try (FileInputStream fis = new FileInputStream(tempFile.toFile())) {
+                s3Backuper.uploadEncryptedFile(Files.size(tempFile), fis, new S3RemoteObjectReference(tempFile, tempFile.toString()));
+            }
         } finally {
             new S3BucketService(transferManagerFactory, new BackupOperationRequest()).delete(BUCKET_NAME);
             deleteDirectory(Paths.get(target("commitlog_download_dir")));

@@ -19,7 +19,7 @@ import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AW
 import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AWS_ENDPOINT_PROPERTY;
 import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AWS_KMS_KEY_ID_PROPERTY;
 import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AWS_REGION_PROPERTY;
-import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AWS_SECRET_KEY_PROPERTY;
+import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AWS_SECRET_ACCESS_KEY_PROPERTY;
 import static com.instaclustr.kubernetes.KubernetesHelper.isRunningAsClient;
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.String.format;
@@ -32,7 +32,7 @@ public class S3ConfigurationResolver {
         public static final String AWS_REGION_PROPERTY = "AWS_REGION";
         public static final String AWS_ENDPOINT_PROPERTY = "AWS_ENDPOINT";
         public static final String AWS_ACCESS_KEY_ID_PROPERTY = "AWS_ACCESS_KEY_ID";
-        public static final String AWS_SECRET_KEY_PROPERTY = "AWS_SECRET_KEY";
+        public static final String AWS_SECRET_ACCESS_KEY_PROPERTY = "AWS_SECRET_ACCESS_KEY";
         public static final String AWS_ENABLE_PATH_STYLE_ACCESS_PROPERTY = "AWS_ENABLE_PATH_STYLE_ACCESS";
         public static final String AWS_KMS_KEY_ID_PROPERTY = "AWS_KMS_KEY_ID";
 
@@ -120,7 +120,7 @@ public class S3ConfigurationResolver {
         s3Configuration.awsRegion = System.getenv(AWS_REGION_PROPERTY);
         s3Configuration.awsEndpoint = System.getenv(AWS_ENDPOINT_PROPERTY);
         s3Configuration.awsAccessKeyId = System.getenv(AWS_ACCESS_KEY_ID_PROPERTY);
-        s3Configuration.awsSecretKey = System.getenv(AWS_SECRET_KEY_PROPERTY);
+        s3Configuration.awsSecretKey = System.getenv(AWS_SECRET_ACCESS_KEY_PROPERTY);
         String awsEnablePathStyleAccess = System.getenv(AWS_ENABLE_PATH_STYLE_ACCESS_PROPERTY);
         s3Configuration.awsPathStyleAccessEnabled = awsEnablePathStyleAccess != null ? parseBoolean(awsEnablePathStyleAccess) : null;
         s3Configuration.awsKmsKeyId = System.getenv(AWS_KMS_KEY_ID_PROPERTY);
