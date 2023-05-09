@@ -2,6 +2,7 @@ package com.instaclustr.esop.s3.v2;
 
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -11,7 +12,6 @@ import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.backup.Backuper;
-import com.instaclustr.esop.s3.S3ConfigurationResolver;
 import com.instaclustr.esop.s3.v1.S3RemoteObjectReference;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory.S3Clients;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
@@ -41,6 +41,22 @@ public class BaseS3Backuper extends Backuper
     private S3TransferManager nonEncryptingTransferManager;
     private Optional<S3TransferManager> encryptingTransferManager;
 
+    public BaseS3Backuper(final S3Clients s3Clients,
+                          final BackupOperationRequest request)
+    {
+        super(request);
+        this.s3Clients = s3Clients;
+        prepareTransferManager();
+    }
+
+    public BaseS3Backuper(final S3Clients s3Clients,
+                          final BackupCommitLogsOperationRequest request)
+    {
+        super(request);
+        this.s3Clients = s3Clients;
+        prepareTransferManager();
+    }
+
     private void prepareTransferManager() {
         nonEncryptingTransferManager = S3TransferManager.builder()
                                                         .s3Client(s3Clients.getNonEncryptingClient())
@@ -50,25 +66,7 @@ public class BaseS3Backuper extends Backuper
                                              .map(c -> S3TransferManager.builder().s3Client(c).build());
     }
 
-    public BaseS3Backuper(final S3ClientsFactory s3ClientsFactory,
-                          final S3ConfigurationResolver configurationResolver,
-                          final BackupOperationRequest request)
-    {
-        super(request);
-        s3Clients = s3ClientsFactory.build(request, configurationResolver);
-        prepareTransferManager();
-    }
-
-    public BaseS3Backuper(final S3ClientsFactory s3ClientsFactory,
-                          final S3ConfigurationResolver configurationResolver,
-                          final BackupCommitLogsOperationRequest request)
-    {
-        super(request);
-        s3Clients = s3ClientsFactory.build(request, configurationResolver);
-        prepareTransferManager();
-    }
-
-    private class UploadTransferListener implements TransferListener
+    private static class UploadTransferListener implements TransferListener
     {
 
         private final String key;
@@ -153,11 +151,11 @@ public class BaseS3Backuper extends Backuper
     {
         UploadFileRequest request = UploadFileRequest.builder()
                                                      .putObjectRequest(getPutObjectRequest(objectReference, size))
+                                                     .source(Paths.get(objectReference.canonicalPath))
                                                      .addTransferListener(new UploadTransferListener(objectReference.canonicalPath))
                                                      .build();
-        nonEncryptingTransferManager.uploadFile(request)
-                                    .completionFuture()
-                                    .get();
+
+        nonEncryptingTransferManager.uploadFile(request).completionFuture().get();
         waitForCompletion(objectReference);
     }
 
@@ -172,10 +170,10 @@ public class BaseS3Backuper extends Backuper
 
         UploadFileRequest request = UploadFileRequest.builder()
                                                      .putObjectRequest(getPutObjectRequest(objectReference, size))
+                                                     .source(Paths.get(objectReference.canonicalPath))
                                                      .addTransferListener(new UploadTransferListener(objectReference.canonicalPath))
                                                      .build();
         encryptingTransferManager.get().uploadFile(request).completionFuture().get();
-
         waitForCompletion(objectReference);
     }
 
@@ -226,7 +224,7 @@ public class BaseS3Backuper extends Backuper
             throw new RuntimeException(response.matched().exception().get());
         }
 
-        logger.debug("Successfully uploaded {}.", objectReference.canonicalPath);
+        logger.info("Successfully uploaded {}.", objectReference.canonicalPath);
     }
 
     private PutObjectRequest getPutObjectRequest(RemoteObjectReference s3RemoteObjectReference, long size)

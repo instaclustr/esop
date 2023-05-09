@@ -1,12 +1,11 @@
 package com.instaclustr.esop.s3.aws_v2;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.instaclustr.esop.s3.S3ConfigurationResolver;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory;
-import io.kubernetes.client.apis.CoreV1Api;
+import com.instaclustr.esop.s3.v2.S3ClientsFactory.S3Clients;
 
 import static com.instaclustr.esop.guice.BackupRestoreBindings.installBindings;
 
@@ -23,13 +22,7 @@ public class S3V2Module extends AbstractModule {
 
     @Provides
     @Singleton
-    public S3ClientsFactory provideTransferManagerFactory(final Provider<CoreV1Api> coreV1ApiProvider) {
-        return new S3ClientsFactory(coreV1ApiProvider);
-    }
-
-    @Provides
-    @Singleton
-    public S3ConfigurationResolver provideS3ConfigurationResolver() {
-        return new S3ConfigurationResolver();
+    public S3Clients provideS3Clients() {
+        return new S3ClientsFactory().build(new S3ConfigurationResolver());
     }
 }

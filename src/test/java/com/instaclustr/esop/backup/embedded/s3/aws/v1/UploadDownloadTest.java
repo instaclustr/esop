@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.transfer.TransferManager;
 import com.google.inject.Inject;
 import com.instaclustr.esop.backup.embedded.s3.aws.AbstractS3UploadDownloadTest;
 import com.instaclustr.esop.impl.StorageLocation;

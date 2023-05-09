@@ -8,10 +8,9 @@ import com.google.inject.Module;
 import com.instaclustr.esop.backup.embedded.BaseListingRemovalTest;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
-import com.instaclustr.esop.s3.S3ConfigurationResolver;
 import com.instaclustr.esop.s3.aws_v2.S3BucketService;
 import com.instaclustr.esop.s3.aws_v2.S3V2Module;
-import com.instaclustr.esop.s3.v2.S3ClientsFactory;
+import com.instaclustr.esop.s3.v2.S3ClientsFactory.S3Clients;
 import com.instaclustr.io.FileUtils;
 import org.testng.annotations.Test;
 
@@ -22,10 +21,7 @@ import org.testng.annotations.Test;
 public class S3ListingAndBackupRemovalTest extends BaseListingRemovalTest {
 
     @Inject
-    public S3ClientsFactory s3ClientsFactory;
-
-    @Inject
-    public S3ConfigurationResolver s3ConfigurationResolver;
+    public S3Clients s3Clients;
 
     @Override
     protected List<Module> getModules() {
@@ -50,7 +46,7 @@ public class S3ListingAndBackupRemovalTest extends BaseListingRemovalTest {
         try {
             ListOperationRequest request = new ListOperationRequest();
             request.storageLocation = new StorageLocation(getStorageLocation());
-            new S3BucketService(s3ClientsFactory, s3ConfigurationResolver, request).delete(BUCKET_NAME);
+            new S3BucketService(s3Clients).delete(BUCKET_NAME);
         } catch (final Exception ex) {
             logger.error("Unable to remove bucket " + BUCKET_NAME);
         }

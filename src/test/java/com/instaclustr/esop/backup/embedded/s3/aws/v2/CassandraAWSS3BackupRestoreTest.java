@@ -4,10 +4,9 @@ import com.google.inject.Inject;
 import com.instaclustr.esop.backup.embedded.s3.aws.BaseAWSS3BackupRestoreTest;
 import com.instaclustr.esop.impl.BucketService.BucketServiceException;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
-import com.instaclustr.esop.s3.S3ConfigurationResolver;
 import com.instaclustr.esop.s3.aws_v2.S3BucketService;
 import com.instaclustr.esop.s3.aws_v2.S3V2Module;
-import com.instaclustr.esop.s3.v2.S3ClientsFactory;
+import com.instaclustr.esop.s3.v2.S3ClientsFactory.S3Clients;
 import org.testng.SkipException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -20,10 +19,9 @@ import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.TE
         "s3Test",
         "cloudTest",
 })
-public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest
-{
+public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
     @Inject
-    public S3ClientsFactory s3ClientsFactory;
+    public S3Clients s3Clients;
 
     @BeforeMethod
     public void setup() throws Exception {
@@ -38,7 +36,7 @@ public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest
 
     @Override
     public void deleteBucket() throws BucketServiceException {
-        new S3BucketService(s3ClientsFactory, new S3ConfigurationResolver(), getBackupOperationRequest()).delete(BUCKET_NAME);
+        new S3BucketService(s3Clients).delete(BUCKET_NAME);
     }
 
     @Override

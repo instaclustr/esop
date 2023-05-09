@@ -24,7 +24,6 @@ import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
-import com.instaclustr.esop.s3.S3ConfigurationResolver;
 import com.instaclustr.esop.s3.v1.S3RemoteObjectReference;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory.S3Clients;
 import software.amazon.awssdk.core.ResponseBytes;
@@ -50,39 +49,31 @@ public class BaseS3Restorer extends Restorer
     private S3TransferManager nonEncryptingTransferManager;
     private Optional<S3TransferManager> encryptingTransferManager;
 
-    public BaseS3Restorer(S3ClientsFactory s3ClientsFactory,
-                          RestoreOperationRequest request,
-                          S3ConfigurationResolver configurationResolver)
+    public BaseS3Restorer(S3Clients s3Clients, RestoreOperationRequest request)
     {
         super(request);
-        s3Clients = s3ClientsFactory.build(request, configurationResolver);
+        this.s3Clients = s3Clients;
         prepareTransferManager();
     }
 
-    public BaseS3Restorer(S3ClientsFactory s3ClientsFactory,
-                          RestoreCommitLogsOperationRequest request,
-                          S3ConfigurationResolver configurationResolver)
+    public BaseS3Restorer(S3Clients s3Clients, RestoreCommitLogsOperationRequest request)
     {
         super(request);
-        s3Clients = s3ClientsFactory.build(request, configurationResolver);
+        this.s3Clients = s3Clients;
         prepareTransferManager();
     }
 
-    public BaseS3Restorer(S3ClientsFactory s3ClientsFactory,
-                          ListOperationRequest request,
-                          S3ConfigurationResolver configurationResolver)
+    public BaseS3Restorer(S3Clients s3Clients, ListOperationRequest request)
     {
         super(request);
-        s3Clients = s3ClientsFactory.build(request, configurationResolver);
+        this.s3Clients = s3Clients;
         prepareTransferManager();
     }
 
-    public BaseS3Restorer(S3ClientsFactory s3ClientsFactory,
-                          RemoveBackupRequest request,
-                          S3ConfigurationResolver configurationResolver)
+    public BaseS3Restorer(S3Clients s3Clients, RemoveBackupRequest request)
     {
         super(request);
-        s3Clients = s3ClientsFactory.build(request, configurationResolver);
+        this.s3Clients = s3Clients;
         prepareTransferManager();
     }
 
@@ -95,7 +86,7 @@ public class BaseS3Restorer extends Restorer
                                              .map(c -> S3TransferManager.builder().s3Client(c).build());
     }
 
-    private class DownloadTransferListener implements TransferListener {
+    private static class DownloadTransferListener implements TransferListener {
 
         private final String key;
         public DownloadTransferListener(String key) {
@@ -212,8 +203,6 @@ public class BaseS3Restorer extends Restorer
                                                                         .build();
 
         ListObjectsV2Response listObjectsV2Response;
-
-        final List<S3Object> summaryList = new ArrayList<>();
 
         do {
             listObjectsV2Response = s3Clients.getClient().listObjectsV2(listObjectsV2Request).get();

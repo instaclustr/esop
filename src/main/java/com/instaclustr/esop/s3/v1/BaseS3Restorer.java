@@ -324,7 +324,7 @@ public class BaseS3Restorer extends Restorer {
         @Override
         public void progressChanged(final ProgressEvent progressEvent) {
             if (progressEvent.getEventType() == ProgressEventType.TRANSFER_COMPLETED_EVENT) {
-                logger.debug("Successfully downloaded {}.", objectReference.canonicalPath);
+                logger.info("Successfully downloaded {}.", objectReference.canonicalPath);
             }
         }
     }
