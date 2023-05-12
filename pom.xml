@@ -152,7 +152,6 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>kms</artifactId>
-            <scope>test</scope>
         </dependency>
         
         <dependency>

@@ -86,12 +86,9 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
 
         @Override
         public Void call() {
-
-            state = RUNNING;
-
-            RemoteObjectReference remoteObjectReference = null;
             try {
-                remoteObjectReference = restorer.objectKeyToNodeAwareRemoteReference(manifestEntry.objectKey);
+                state = RUNNING;
+                RemoteObjectReference remoteObjectReference = restorer.objectKeyToNodeAwareRemoteReference(manifestEntry.objectKey);
 
                 Path localPath = manifestEntry.localFile;
 
@@ -100,7 +97,7 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
                 }
 
                 if (!Files.exists(localPath)) {
-                    logger.info(String.format("Downloading file %s to %s.", remoteObjectReference.getObjectKey(), manifestEntry.localFile));
+                    logger.debug(String.format("Downloading file %s to %s.", remoteObjectReference.getObjectKey(), manifestEntry.localFile));
 
                     restorer.downloadFile(localPath, manifestEntry, remoteObjectReference);
 
@@ -115,7 +112,7 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
                         throw ex;
                     }
 
-                    logger.info(String.format("Successfully downloaded file %s to %s.", remoteObjectReference.getObjectKey(), localPath));
+                    logger.debug(String.format("Successfully downloaded file %s to %s.", remoteObjectReference.getObjectKey(), localPath));
 
                     state = FINISHED;
 
@@ -131,12 +128,9 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
                     state = FINISHED;
                 }
             } catch (final Throwable t) {
-                if (remoteObjectReference != null) {
-                    logger.error(String.format("Failed to process the downloading of file %s: %s", manifestEntry.localFile, t.getMessage()));
-                }
-
-                throwable = t;
                 state = FAILED;
+                logger.error(String.format("Failed to download file %s", manifestEntry.localFile), t.getMessage());
+                throwable = t;
             }
 
             return null;

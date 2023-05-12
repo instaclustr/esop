@@ -44,6 +44,7 @@ public class ManifestEntry implements Cloneable {
 
     public String hash;
 
+    @JsonIgnore
     public String kmsKeyId;
 
     @JsonIgnore

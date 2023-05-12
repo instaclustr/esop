@@ -5,11 +5,15 @@ import static com.instaclustr.esop.impl.Manifest.getManifestAsManifestEntry;
 import static java.lang.String.format;
 
 import javax.inject.Provider;
+
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,17 +27,22 @@ import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.Snapshots;
 import com.instaclustr.esop.impl.Snapshots.Snapshot;
+import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.backup.Backuper;
+import com.instaclustr.esop.impl.backup.BaseBackupOperationRequest;
 import com.instaclustr.esop.impl.backup.UploadTracker;
 import com.instaclustr.esop.impl.backup.UploadTracker.UploadUnit;
 import com.instaclustr.esop.impl.backup.coordination.ClearSnapshotOperation.ClearSnapshotOperationRequest;
 import com.instaclustr.esop.impl.backup.coordination.TakeSnapshotOperation.TakeSnapshotOperationRequest;
 import com.instaclustr.esop.impl.hash.HashSpec;
+import com.instaclustr.esop.impl.interaction.CassandraKeyspaces;
 import com.instaclustr.esop.impl.interaction.CassandraSchemaVersion;
 import com.instaclustr.esop.impl.interaction.CassandraTokens;
 import com.instaclustr.esop.topology.CassandraClusterTopology;
 import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology;
+import com.instaclustr.esop.topology.CassandraSimpleTopology;
+import com.instaclustr.esop.topology.CassandraSimpleTopology.CassandraSimpleTopologyResult;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.Operation.Error;
 import com.instaclustr.operations.OperationCoordinator;
@@ -95,6 +104,16 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
             final CassandraData cassandraData = CassandraData.parse(request.dataDirs.get(0));
             cassandraData.setDatabaseEntitiesFromRequest(request.entities);
 
+            if (request.storageLocation.incompleteNodeLocation()) {
+                CassandraSimpleTopologyResult result = new CassandraSimpleTopology(cassandraJMXService).act();
+                request.storageLocation = StorageLocation.update(request.storageLocation,
+                                                                 result.getClusterName(),
+                                                                 result.getDc(),
+                                                                 result.getHostId());
+
+                logger.info("Storage location was updated to " + request.storageLocation.rawLocation);
+            }
+
             final List<String> tokens = new CassandraTokens(cassandraJMXService).act();
 
             logger.info("Tokens {}", tokens);
@@ -127,40 +146,21 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
 
             // manifest
             final Path localManifestPath = getLocalManifestPath(request.snapshotTag);
-            Manifest.write(manifest, localManifestPath, objectMapper);
             manifest.setManifest(getManifestAsManifestEntry(localManifestPath, request));
 
             try (final Backuper backuper = backuperFactoryMap.get(request.storageLocation.storageProvider).createBackuper(request)) {
 
-                final List<ManifestEntry> manifestEntries = manifest.getManifestEntries();
+                performUpload(manifest.getManifestEntries(false), backuper, operation, request);
 
-                Session<UploadUnit> uploadSession = null;
-
-                try {
-                    uploadSession = uploadTracker.submit(backuper, operation, manifestEntries, request.snapshotTag, operation.request.concurrentConnections);
-
-                    uploadSession.waitUntilConsideredFinished();
-                    uploadTracker.cancelIfNecessary(uploadSession);
-
-                    final List<UploadUnit> failedUnits = uploadSession.getFailedUnits();
-
-                    if (!failedUnits.isEmpty()) {
-                        final String message = failedUnits.stream().map(unit -> unit.getManifestEntry().objectKey.toString()).collect(Collectors.joining(","));
-                        logger.error(message);
-                        throw new IOException(format("Unable to upload some files successfully: %s", message));
-                    }
-                } finally {
-                    uploadTracker.removeSession(uploadSession);
-                    uploadSession = null;
-                }
+                // upload manifest as the last, possibly with updated file sizes as they were encrypted
+                backuper.uploadText(objectMapper.writeValueAsString(manifest),
+                                    backuper.objectKeyToNodeAwareRemoteReference(manifest.getManifest().objectKey));
 
                 if (operation.request.uploadClusterTopology) {
                     // here we will upload all topology because we do not know what restore might look like (what dc a restorer will restore against if any)
                     final ClusterTopology topology = new CassandraClusterTopology(cassandraJMXService, null).act();
                     ClusterTopology.upload(backuper, topology, objectMapper, operation.request.snapshotTag);
                 }
-            } finally {
-                manifest.cleanup();
             }
         } catch (final Exception ex) {
             operation.addError(Error.from(ex));
@@ -171,6 +171,34 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
             } catch (final Exception ex) {
                 operation.addErrors(cso.errors);
             }
+        }
+    }
+
+    private void performUpload(List<ManifestEntry> manifestEntries,
+                               Backuper backuper,
+                               Operation<? extends BaseBackupOperationRequest> operation,
+                               BackupOperationRequest request) throws Exception {
+        Session<UploadUnit> uploadSession = null;
+
+        try {
+            uploadSession = uploadTracker.submit(backuper,
+                                                 operation,
+                                                 manifestEntries,
+                                                 request.snapshotTag,
+                                                 operation.request.concurrentConnections);
+
+            uploadSession.waitUntilConsideredFinished();
+            uploadTracker.cancelIfNecessary(uploadSession);
+
+            final List<UploadUnit> failedUnits = uploadSession.getFailedUnits();
+
+            if (!failedUnits.isEmpty()) {
+                final String message = failedUnits.stream().map(unit -> unit.getManifestEntry().objectKey.toString()).collect(Collectors.joining(","));
+                logger.error(message);
+                throw new IOException(format("Unable to upload some files successfully: %s", message));
+            }
+        } finally {
+            uploadTracker.removeSession(uploadSession);
         }
     }
 }

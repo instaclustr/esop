@@ -152,7 +152,9 @@ public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session
                 sessions.stream().filter(s -> s.getUnits().contains(value)).forEach(s -> {
                     operationsService.operation(s.getId()).ifPresent(op -> {
                         s.finishedUnits.incrementAndGet();
-                        logger.debug(String.format("Progress of operation %s: %s", op.id, s.getProgress()));
+                        logger.info(String.format("Progress for snapshot %s: %s",
+                                                   s.snapshotTag,
+                                                   s.getProgress()));
                         op.progress = s.getProgress();
                     });
                 });

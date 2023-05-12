@@ -7,6 +7,8 @@ import java.nio.file.Paths;
 
 import com.instaclustr.esop.backup.embedded.s3.aws.AbstractS3UploadDownloadTest;
 import com.instaclustr.esop.impl.BucketService;
+import com.instaclustr.esop.impl.KeyspaceTable;
+import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
@@ -168,9 +170,16 @@ public class UploadDownloadTest extends AbstractS3UploadDownloadTest {
         Files.write(tempFile, "hello world".getBytes(UTF_8));
 
         try (FileInputStream fis = new FileInputStream(tempFile.toFile())) {
-            s3Backuper.uploadEncryptedFile(Files.size(tempFile), fis, new S3RemoteObjectReference(tempFile, tempFile.toString()));
+            ManifestEntry manifestEntry = new ManifestEntry(tempFile,
+                                                            tempFile,
+                                                            ManifestEntry.Type.FILE,
+                                                            Files.size(tempFile),
+                                                            new KeyspaceTable("ks", "tb"),
+                                                            "123",
+                                                            null);
+            s3Backuper.uploadEncryptedFile(manifestEntry, fis, new S3RemoteObjectReference(tempFile, tempFile.toString()));
         }
 
-        s3Backuper.freshenRemoteObject(new S3RemoteObjectReference(tempFile, tempFile.toString() + "abc"));
+        s3Backuper.freshenRemoteObject(null, new S3RemoteObjectReference(tempFile, tempFile.toString() + "abc"));
     }
 }

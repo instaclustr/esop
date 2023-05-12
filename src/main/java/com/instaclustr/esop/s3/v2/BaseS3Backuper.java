@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.instaclustr.esop.impl.BucketService;
+import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
@@ -21,11 +22,14 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.waiters.WaiterOverrideConfiguration;
 import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectAttributesRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectAttributesResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectTaggingRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.MetadataDirective;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.ObjectAttributes;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.StorageClass;
 import software.amazon.awssdk.services.s3.model.Tag;
@@ -83,7 +87,7 @@ public class BaseS3Backuper extends Backuper
     }
 
     @Override
-    public FreshenResult freshenRemoteObject(RemoteObjectReference object) throws Exception
+    public FreshenResult freshenRemoteObject(ManifestEntry manifestEntry, RemoteObjectReference object) throws Exception
     {
         List<Tag> tags;
         try
@@ -101,16 +105,40 @@ public class BaseS3Backuper extends Backuper
                                                                      .key(object.canonicalPath)
                                                                      .build()).tagSet();
         }
-        catch (NoSuchKeyException ex)
-        {
+        catch (NoSuchKeyException ex) {
             return FreshenResult.UPLOAD_REQUIRED;
         }
 
         Tagging.Builder taggingBuilder = Tagging.builder();
 
-        if (s3Clients.getEncryptingClient().isPresent()) {
-            taggingBuilder.tagSet(Tag.builder().key("kmsKey").value(s3Clients.getKMSKeyOfEncryptedClient().get()).build());
+        // If kms key was specified, it means we want to encrypt
+        // however if remote tag is not equal to the local one,
+        // we for sure need to re-upload because we are going to
+        // basically re-encrypt it with a new key.
+        if (s3Clients.getKMSKeyOfEncryptedClient().isPresent()) {
+            String kmsKey = s3Clients.getKMSKeyOfEncryptedClient().get();
+            Tag kmsKeyTag = Tag.builder().key("kmsKey").value(kmsKey).build();
+            if (!tags.contains(kmsKeyTag)) {
+                return FreshenResult.UPLOAD_REQUIRED;
+            }
+        // However, if we have not set kmsKey as we do not want to encrypt
+        // but remote tag contains kmsKey, then we need to basically re-upload
+        // a file, but it will not be encrypted.
+        } else if (!tags.isEmpty()) {
+            if (tags.stream().anyMatch(t -> t.key().equals("kmsKey"))) {
+                return FreshenResult.UPLOAD_REQUIRED;
+            }
         }
+
+        // if we reached here, it means that
+        // either local kms key equals to remote one
+        // or there is no local kms key nor remote one
+
+        // in this case, we just want to refresh a file by copying it into itself
+        // which changes last modification date
+
+        // we want to preserve whatever tags it had
+        Tagging tagging = taggingBuilder.tagSet(tags).build();
 
         if (!request.skipRefreshing)
         {
@@ -119,52 +147,67 @@ public class BaseS3Backuper extends Backuper
                                                                    .destinationBucket(request.storageLocation.bucket)
                                                                    .sourceKey(object.canonicalPath)
                                                                    .destinationKey(object.canonicalPath)
-                                                                   .tagging(taggingBuilder.build())
+                                                                   .tagging(tagging)
                                                                    // we need to translate this because request is still working with api v1
                                                                    .metadataDirective(MetadataDirective.fromValue(request.metadataDirective.toString()))
                                                                    .storageClass(StorageClass.STANDARD)
                                                                    .build();
             s3Clients.getClient().copyObject(copyObjectRequest);
-            waitForCompletion(object);
+
+            GetObjectAttributesResponse objectAttributes = s3Clients.getNonEncryptingClient()
+                                                                    .getObjectAttributes(GetObjectAttributesRequest
+                                                                                         .builder()
+                                                                                         .bucket(request.storageLocation.bucket)
+                                                                                         .key(object.canonicalPath)
+                                                                                         .objectAttributes(ObjectAttributes.OBJECT_SIZE)
+                                                                                         .build());
+            manifestEntry.size = objectAttributes.objectSize();
         }
 
         return FreshenResult.FRESHENED;
     }
 
     @Override
-    public void uploadFile(long size, InputStream localFileStream, RemoteObjectReference objectReference) throws Exception
+    public void uploadFile(ManifestEntry manifestEntry, InputStream localFileStream, RemoteObjectReference objectReference) throws Exception
     {
         logger.info("Uploading {}", objectReference.canonicalPath);
         s3Clients.getNonEncryptingClient()
-                 .putObject(getPutObjectRequest(objectReference, size),
-                            RequestBody.fromInputStream(localFileStream, size));
-
-        waitForCompletion(objectReference);
+                 .putObject(getPutObjectRequest(objectReference, manifestEntry.size),
+                            RequestBody.fromInputStream(localFileStream, manifestEntry.size));
     }
 
     @Override
-    public void uploadEncryptedFile(long size, InputStream localFileStream, RemoteObjectReference objectReference) throws Exception
+    public void uploadEncryptedFile(ManifestEntry manifestEntry, InputStream localFileStream, RemoteObjectReference objectReference) throws Exception
     {
         if (!s3Clients.getEncryptingClient().isPresent())
         {
-            uploadFile(size, localFileStream, objectReference);
+            uploadFile(manifestEntry, localFileStream, objectReference);
             return;
         }
 
         logger.info("Uploading encrypted file {}", objectReference.canonicalPath);
 
-        assert s3Clients.getEncryptingClient().isPresent() : "kms key is not present!";
+        assert s3Clients.getEncryptingClient().isPresent() : "encrypting client is not present!";
+        assert s3Clients.getKMSKeyOfEncryptedClient().isPresent() : "kms key is not present!";
 
         s3Clients.getEncryptingClient()
                  .get()
-                 .putObject(getPutObjectRequest(objectReference, size,
+                 .putObject(getPutObjectRequest(objectReference, manifestEntry.size,
                                                 Tag.builder()
                                                    .key("kmsKey")
                                                    .value(s3Clients.getKMSKeyOfEncryptedClient().get())
                                                    .build()),
-                            RequestBody.fromInputStream(localFileStream, size));
+                            RequestBody.fromInputStream(localFileStream, manifestEntry.size));
 
-        waitForCompletion(objectReference);
+        GetObjectAttributesResponse objectAttributes = s3Clients.getNonEncryptingClient()
+                                                                .getObjectAttributes(GetObjectAttributesRequest
+                                                                                     .builder()
+                                                                                     .bucket(request.storageLocation.bucket)
+                                                                                     .key(objectReference.canonicalPath)
+                                                                                     .objectAttributes(ObjectAttributes.OBJECT_SIZE)
+                                                                                     .build());
+        manifestEntry.kmsKeyId = s3Clients.getKMSKeyOfEncryptedClient().get();
+        manifestEntry.size = objectAttributes.objectSize();
     }
 
     @Override
@@ -176,8 +219,6 @@ public class BaseS3Backuper extends Backuper
         s3Clients.getNonEncryptingClient()
                  .putObject(getPutObjectRequest(objectReference, bytes.length),
                             RequestBody.fromBytes(bytes));
-
-        waitForCompletion(objectReference);
     }
 
     @Override
@@ -194,8 +235,6 @@ public class BaseS3Backuper extends Backuper
         s3Clients.getEncryptingClient().get()
                  .putObject(getPutObjectRequest(objectReference, bytes.length),
                             RequestBody.fromBytes(bytes));
-
-        waitForCompletion(objectReference);
     }
 
     private void waitForCompletion(RemoteObjectReference objectReference) throws Exception
@@ -220,7 +259,7 @@ public class BaseS3Backuper extends Backuper
     }
 
     private PutObjectRequest getPutObjectRequest(RemoteObjectReference s3RemoteObjectReference,
-                                                 long size,
+                                                 long unencryptedSize,
                                                  Tag... tags)
     {
         return PutObjectRequest.builder()

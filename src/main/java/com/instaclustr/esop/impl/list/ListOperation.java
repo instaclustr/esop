@@ -123,6 +123,10 @@ public class ListOperation extends Operation<ListOperationRequest> {
             FileUtils.createDirectory(localPath);
         }
 
+        if (request.storageLocation.incompleteNodeLocation() && !request.resolveNodes) {
+            throw new IllegalArgumentException("You have to specify full path to a node to list!");
+        }
+
         if (request.resolveNodes) {
             assert cassandraJMXService != null;
             CassandraSimpleTopologyResult simpleTopology = new CassandraSimpleTopology(cassandraJMXService).act();

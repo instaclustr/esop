@@ -45,7 +45,8 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
         description = "Automatically creates a bucket if it does not exist. If a bucket does not exist, backup operation will fail.")
     public boolean createMissingBucket;
 
-    @Option(names = "--kmsKeyid", description = "Amazon AWS KMS Key ID to use during backup")
+    @Option(names = {"--kmsKeyId"},
+        description = "Amazon AWS KMS Key ID to use during backup")
     public String kmsKeyId;
 
     public static class MetadataDirectiveTypeConverter implements CommandLine.ITypeConverter<MetadataDirective> {

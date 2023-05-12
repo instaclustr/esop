@@ -20,6 +20,7 @@ import com.amazonaws.services.s3.model.StorageClass;
 import com.amazonaws.services.s3.transfer.PersistableTransfer;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.internal.S3ProgressListener;
+import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
@@ -57,7 +58,7 @@ public class BaseS3Backuper extends Backuper {
     }
 
     @Override
-    public FreshenResult freshenRemoteObject(final RemoteObjectReference object) throws Exception {
+    public FreshenResult freshenRemoteObject(ManifestEntry manifestEntry, final RemoteObjectReference object) throws Exception {
         return RetrierFactory.getRetrier(request.retry).submit(new Callable<FreshenResult>() {
             @Override
             public FreshenResult call() throws Exception {
@@ -107,14 +108,14 @@ public class BaseS3Backuper extends Backuper {
     }
 
     @Override
-    public void uploadFile(final long size, final InputStream localFileStream, final RemoteObjectReference objectReference) throws Exception {
+    public void uploadFile(final ManifestEntry manifestEntry, final InputStream localFileStream, final RemoteObjectReference objectReference) throws Exception {
         final S3RemoteObjectReference s3RemoteObjectReference = (S3RemoteObjectReference) objectReference;
 
         final PutObjectRequest putObjectRequest = new PutObjectRequest(request.storageLocation.bucket,
                                                                        s3RemoteObjectReference.canonicalPath,
                                                                        localFileStream,
                                                                        new ObjectMetadata() {{
-                                                                           setContentLength(size);
+                                                                           setContentLength(manifestEntry.size);
                                                                        }});
 
         transferManager.upload(putObjectRequest, new UploadProgressListener(s3RemoteObjectReference)).waitForCompletion();

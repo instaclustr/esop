@@ -108,14 +108,13 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
 
         @Override
         public Void call() {
-
-            state = State.RUNNING;
-
-            final RemoteObjectReference ref = getRemoteObjectReference(manifestEntry.objectKey);
-
             try {
+                state = State.RUNNING;
+
+                final RemoteObjectReference ref = getRemoteObjectReference(manifestEntry.objectKey);
+
                 if (manifestEntry.type != MANIFEST_FILE) {
-                    if (getRetrier(backuper.request.retry).submit(() -> backuper.freshenRemoteObject(ref) == FRESHENED)) {
+                    if (getRetrier(backuper.request.retry).submit(() -> backuper.freshenRemoteObject(manifestEntry, ref) == FRESHENED)) {
                         logger.info(format("%sskipping the upload of already uploaded file %s",
                                            snapshotTag != null ? "Snapshot " + snapshotTag + " - " : "",
                                            ref.canonicalPath));
@@ -131,15 +130,15 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
                         try (final InputStream fileStream = new BufferedInputStream(new FileInputStream(manifestEntry.localFile.toFile()))) {
                             final InputStream rateLimitedStream = getUploadingInputStreamFunction(backuper.request).apply(fileStream);
 
-                            logger.info(format("%suploading file '%s' (%s).",
+                            logger.debug(format("%suploading file '%s' (%s).",
                                                snapshotTag != null ? "Snapshot " + snapshotTag + " - " : "",
                                                manifestEntry.objectKey,
                                                DataSize.bytesToHumanReadable(manifestEntry.size)));
                             // never encrypt manifest
                             if (manifestEntry.type == MANIFEST_FILE) {
-                                backuper.uploadFile(manifestEntry.size, rateLimitedStream, ref);
+                                backuper.uploadFile(manifestEntry, rateLimitedStream, ref);
                             } else {
-                                backuper.uploadEncryptedFile(manifestEntry.size, rateLimitedStream, ref);
+                                backuper.uploadEncryptedFile(manifestEntry, rateLimitedStream, ref);
                             }
                         } catch (final Exception ex) {
                             throw new RetriableException(String.format("Retrying upload of %s", manifestEntry.objectKey), ex);
@@ -150,9 +149,10 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
                 state = State.FINISHED;
             } catch (final Throwable t) {
                 state = State.FAILED;
-                logger.error(format("Failed to upload file '%s", manifestEntry.objectKey), t);
+                t.printStackTrace();
+                logger.error(format("Failed to upload file '%s", manifestEntry.objectKey), t.getMessage());
                 shouldCancel.set(true);
-                this.throwable = t;
+                throwable = t;
             }
 
             return null;

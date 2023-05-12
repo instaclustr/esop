@@ -7,6 +7,7 @@ import java.nio.file.Path;
 
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
+import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
@@ -44,7 +45,7 @@ public class LocalFileBackuper extends Backuper {
     }
 
     @Override
-    public FreshenResult freshenRemoteObject(final RemoteObjectReference object) throws Exception {
+    public FreshenResult freshenRemoteObject(ManifestEntry manifestEntry, final RemoteObjectReference object) throws Exception {
         final File fullRemoteObject = resolveFullRemoteObjectPath(object).toFile();
         if (fullRemoteObject.exists()) {
             if (request.skipRefreshing) {
@@ -60,7 +61,7 @@ public class LocalFileBackuper extends Backuper {
     }
 
     @Override
-    public synchronized void uploadFile(final long size,
+    public synchronized void uploadFile(final ManifestEntry manifestEntry,
                            final InputStream localFileStream,
                            final RemoteObjectReference objectReference) throws Exception {
         Path remotePath = resolveFullRemoteObjectPath(objectReference);

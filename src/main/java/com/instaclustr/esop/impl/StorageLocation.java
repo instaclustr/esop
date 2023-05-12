@@ -97,6 +97,10 @@ public class StorageLocation {
         }
     }
 
+    public boolean incompleteNodeLocation() {
+        return clusterId == null || datacenterId == null || nodeId == null;
+    }
+
     public void validate() throws IllegalStateException {
         if (cloudLocation) {
             if (!globalRequest) {

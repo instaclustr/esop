@@ -17,6 +17,7 @@ import com.google.common.io.ByteStreams;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.esop.gcp.GCPModule.GoogleStorageFactory;
+import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
@@ -51,7 +52,7 @@ public class GCPBackuper extends Backuper {
     }
 
     @Override
-    public FreshenResult freshenRemoteObject(final RemoteObjectReference object) {
+    public FreshenResult freshenRemoteObject(ManifestEntry manifestEntry, final RemoteObjectReference object) {
         final BlobId blobId = ((GCPRemoteObjectReference) object).blobId;
 
         try {
@@ -80,7 +81,7 @@ public class GCPBackuper extends Backuper {
     }
 
     @Override
-    public void uploadFile(final long size,
+    public void uploadFile(final ManifestEntry manifestEntry,
                            final InputStream localFileStream,
                            final RemoteObjectReference objectReference) throws Exception {
         final BlobId blobId = ((GCPRemoteObjectReference) objectReference).blobId;

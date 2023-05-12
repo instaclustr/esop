@@ -50,7 +50,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
     @JsonIgnore
     public final Directories dirs = new Directories(this);
 
-    @Option(names = {"--dd", "--data-directory"},
+    @Option(names = {"--dd", "--data-directory", "--cassandra-dir"},
         description = "Base directory that contains the Cassandra hints, cache and commitlog directories",
         converter = PathTypeConverter.class,
         defaultValue = "/var/lib/cassandra")
