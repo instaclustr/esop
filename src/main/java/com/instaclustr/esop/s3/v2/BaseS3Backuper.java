@@ -19,14 +19,10 @@ import com.instaclustr.esop.s3.v1.S3RemoteObjectReference;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory.S3Clients;
 import com.instaclustr.threading.Executors;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.core.waiters.WaiterOverrideConfiguration;
-import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectAttributesRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectAttributesResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectTaggingRequest;
-import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
-import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.MetadataDirective;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.ObjectAttributes;
@@ -36,11 +32,8 @@ import software.amazon.awssdk.services.s3.model.Tag;
 import software.amazon.awssdk.services.s3.model.Tagging;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static software.amazon.awssdk.core.retry.RetryMode.STANDARD;
-import static software.amazon.awssdk.core.retry.backoff.BackoffStrategy.defaultStrategy;
 
-public class BaseS3Backuper extends Backuper
-{
+public class BaseS3Backuper extends Backuper {
     private static final Logger logger = LoggerFactory.getLogger(BaseS3Backuper.class);
     private ExecutorService executorService;
 
@@ -48,8 +41,7 @@ public class BaseS3Backuper extends Backuper
     public final BucketService s3BucketService;
 
     public BaseS3Backuper(final S3Clients s3Clients,
-                          final BackupOperationRequest request)
-    {
+                          final BackupOperationRequest request) {
         super(request);
         this.s3Clients = s3Clients;
         this.executorService = new Executors.FixedTasksExecutorSupplier().get(100);
@@ -57,8 +49,7 @@ public class BaseS3Backuper extends Backuper
     }
 
     public BaseS3Backuper(final S3Clients s3Clients,
-                          final BackupCommitLogsOperationRequest request)
-    {
+                          final BackupCommitLogsOperationRequest request) {
         super(request);
         this.s3Clients = s3Clients;
         this.executorService = new Executors.FixedTasksExecutorSupplier().get(100);
@@ -66,32 +57,27 @@ public class BaseS3Backuper extends Backuper
     }
 
     @Override
-    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey)
-    {
+    public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) {
         return new S3RemoteObjectReference(objectKey, objectKey.toString());
     }
 
     @Override
-    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey)
-    {
+    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey) {
         return new S3RemoteObjectReference(objectKey, resolveNodeAwareRemotePath(objectKey));
     }
 
 
     @Override
-    protected void cleanup() throws Exception
-    {
+    protected void cleanup() throws Exception {
         s3Clients.close();
         executorService.shutdown();
         executorService.awaitTermination(1, TimeUnit.MINUTES);
     }
 
     @Override
-    public FreshenResult freshenRemoteObject(ManifestEntry manifestEntry, RemoteObjectReference object) throws Exception
-    {
+    public FreshenResult freshenRemoteObject(ManifestEntry manifestEntry, RemoteObjectReference object) {
         List<Tag> tags;
-        try
-        {
+        try {
             tags = s3Clients.getNonEncryptingClient()
                             .getObjectTagging(GetObjectTaggingRequest.builder()
                                                                      .bucket(request.storageLocation.bucket)
@@ -133,8 +119,7 @@ public class BaseS3Backuper extends Backuper
         // we want to preserve whatever tags it had
         Tagging tagging = taggingBuilder.tagSet(tags).build();
 
-        if (!request.skipRefreshing)
-        {
+        if (!request.skipRefreshing) {
             CopyObjectRequest copyObjectRequest = CopyObjectRequest.builder()
                                                                    .sourceBucket(request.storageLocation.bucket)
                                                                    .destinationBucket(request.storageLocation.bucket)
@@ -161,8 +146,7 @@ public class BaseS3Backuper extends Backuper
     }
 
     @Override
-    public void uploadFile(ManifestEntry manifestEntry, InputStream localFileStream, RemoteObjectReference objectReference) throws Exception
-    {
+    public void uploadFile(ManifestEntry manifestEntry, InputStream localFileStream, RemoteObjectReference objectReference) {
         logger.info("Uploading {}", objectReference.canonicalPath);
         s3Clients.getNonEncryptingClient()
                  .putObject(getPutObjectRequest(objectReference, manifestEntry.size),
@@ -170,10 +154,8 @@ public class BaseS3Backuper extends Backuper
     }
 
     @Override
-    public void uploadEncryptedFile(ManifestEntry manifestEntry, InputStream localFileStream, RemoteObjectReference objectReference) throws Exception
-    {
-        if (!s3Clients.getEncryptingClient().isPresent())
-        {
+    public void uploadEncryptedFile(ManifestEntry manifestEntry, InputStream localFileStream, RemoteObjectReference objectReference) {
+        if (!s3Clients.getEncryptingClient().isPresent()) {
             uploadFile(manifestEntry, localFileStream, objectReference);
             return;
         }
@@ -204,8 +186,7 @@ public class BaseS3Backuper extends Backuper
     }
 
     @Override
-    public void uploadText(String text, RemoteObjectReference objectReference) throws Exception
-    {
+    public void uploadText(String text, RemoteObjectReference objectReference) throws Exception {
         logger.info("Uploading {}", objectReference.canonicalPath);
         byte[] bytes = text.getBytes(UTF_8);
 
@@ -215,8 +196,7 @@ public class BaseS3Backuper extends Backuper
     }
 
     @Override
-    public void uploadEncryptedText(String plainText, RemoteObjectReference objectReference) throws Exception
-    {
+    public void uploadEncryptedText(String plainText, RemoteObjectReference objectReference) throws Exception {
         if (!s3Clients.getEncryptingClient().isPresent()) {
             uploadText(plainText, objectReference);
             return;
@@ -230,31 +210,9 @@ public class BaseS3Backuper extends Backuper
                             RequestBody.fromBytes(bytes));
     }
 
-    private void waitForCompletion(RemoteObjectReference objectReference) throws Exception
-    {
-        WaiterResponse<HeadObjectResponse> response = s3Clients.getClient()
-                                                               .waiter()
-                                                               .waitUntilObjectExists(HeadObjectRequest.builder()
-                                                                                                       .bucket(request.storageLocation.bucket)
-                                                                                                       .key(objectReference.canonicalPath)
-                                                                                                       .build(),
-                                                                                      WaiterOverrideConfiguration.builder()
-                                                                                                                 .backoffStrategy(defaultStrategy(STANDARD))
-                                                                                                                 .build());
-
-        if (response.matched().exception().isPresent())
-        {
-            logger.debug("Failed to upload {}.", objectReference.canonicalPath);
-            throw new RuntimeException(response.matched().exception().get());
-        }
-
-        logger.info("Finished uploading {}.", objectReference.canonicalPath);
-    }
-
     private PutObjectRequest getPutObjectRequest(RemoteObjectReference s3RemoteObjectReference,
                                                  long unencryptedSize,
-                                                 Tag... tags)
-    {
+                                                 Tag... tags) {
         return PutObjectRequest.builder()
                                .bucket(request.storageLocation.bucket)
                                .key(s3RemoteObjectReference.canonicalPath)
