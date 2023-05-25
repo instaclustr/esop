@@ -7,7 +7,6 @@ import java.util.Set;
 
 import com.google.common.base.MoreObjects;
 
-import com.amazonaws.services.s3.model.MetadataDirective;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -23,6 +22,7 @@ import com.instaclustr.measure.DataRate;
 import com.instaclustr.measure.Time;
 import com.instaclustr.picocli.typeconverter.PathTypeConverter;
 import picocli.CommandLine.Option;
+import software.amazon.awssdk.services.s3.model.MetadataDirective;
 
 public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest {
 

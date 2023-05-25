@@ -7,7 +7,6 @@ import com.google.common.base.MoreObjects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.amazonaws.Protocol;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -22,8 +21,7 @@ import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import picocli.CommandLine.ITypeConverter;
 import picocli.CommandLine.Option;
-
-import static com.amazonaws.Protocol.HTTPS;
+import software.amazon.awssdk.services.s3.model.Protocol;
 
 public class ProxySettings {
 
@@ -88,14 +86,14 @@ public class ProxySettings {
         @Override
         public Protocol convert(final String value) {
             if (value == null) {
-                return HTTPS;
+                return Protocol.HTTPS;
             }
 
             try {
                 return Protocol.valueOf(value.toLowerCase());
             } catch (final Exception ex) {
-                logger.warn(String.format("Unable to parse protocol of value '%s', using %s", value, HTTPS));
-                return HTTPS;
+                logger.warn(String.format("Unable to parse protocol of value '%s', using %s", value, Protocol.HTTPS));
+                return Protocol.HTTPS;
             }
         }
     }

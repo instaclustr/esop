@@ -6,7 +6,6 @@ import java.util.Set;
 
 import com.google.common.base.MoreObjects;
 
-import com.amazonaws.services.s3.model.MetadataDirective;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,6 +23,7 @@ import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.measure.DataRate;
 import com.instaclustr.measure.Time;
 import picocli.CommandLine.Option;
+import software.amazon.awssdk.services.s3.model.MetadataDirective;
 
 import static com.instaclustr.kubernetes.KubernetesHelper.isRunningAsClient;
 import static com.instaclustr.kubernetes.KubernetesHelper.isRunningInKubernetes;

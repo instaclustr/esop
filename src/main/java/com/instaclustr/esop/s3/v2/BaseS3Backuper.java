@@ -15,7 +15,7 @@ import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.backup.Backuper;
-import com.instaclustr.esop.s3.v1.S3RemoteObjectReference;
+import com.instaclustr.esop.s3.S3RemoteObjectReference;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory.S3Clients;
 import com.instaclustr.threading.Executors;
 import software.amazon.awssdk.core.sync.RequestBody;

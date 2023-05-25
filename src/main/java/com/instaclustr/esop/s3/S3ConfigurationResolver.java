@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.inject.Provider;
 import com.instaclustr.esop.impl.AbstractOperationRequest;
-import com.instaclustr.esop.s3.v1.S3ModuleException;
 import com.instaclustr.kubernetes.KubernetesHelper;
 import com.instaclustr.kubernetes.KubernetesSecretsReader;
 import com.instaclustr.kubernetes.SecretReader;
@@ -105,13 +104,13 @@ public class S3ConfigurationResolver {
                                                    if (awsaccesskeyid != null)
                                                        s3Configuration.awsAccessKeyId = new String(awsaccesskeyid);
                                                    else
-                                                       throw new S3ModuleException(format("Secret %s does not contain any entry with key 'awsaccesskeyid'.",
+                                                       throw new RuntimeException(format("Secret %s does not contain any entry with key 'awsaccesskeyid'.",
                                                                                           secret.getMetadata().getName()));
 
                                                    if (awssecretaccesskey != null)
                                                        s3Configuration.awsSecretKey = new String(awssecretaccesskey);
                                                    else
-                                                       throw new S3ModuleException(format("Secret %s does not contain any entry with key 'awssecretaccesskey'.",
+                                                       throw new RuntimeException(format("Secret %s does not contain any entry with key 'awssecretaccesskey'.",
                                                                                           secret.getMetadata().getName()));
 
                                                    if (awsKmsKeyId != null)
@@ -121,7 +120,7 @@ public class S3ConfigurationResolver {
                                                });
         }
         catch (final Exception ex) {
-            throw new S3ModuleException("Unable to resolve S3 credentials for backup / restores from Kubernetes secret " + secretName, ex);
+            throw new RuntimeException("Unable to resolve S3 credentials for backup / restores from Kubernetes secret " + secretName, ex);
         }
     }
 

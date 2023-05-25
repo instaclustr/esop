@@ -1,4 +1,4 @@
-package com.instaclustr.esop.s3.v1;
+package com.instaclustr.esop.s3;
 
 import java.nio.file.Path;
 

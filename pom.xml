@@ -15,7 +15,7 @@
         <instaclustr.commons.version>1.5.0</instaclustr.commons.version>
         <azure-storage.version>8.6.6</azure-storage.version>
         <google-cloud-libraries.version>26.0.0</google-cloud-libraries.version>
-        <aws-java-sdk.version>1.12.441</aws-java-sdk.version>
+        <aws-java-sdk.version>2.20.45</aws-java-sdk.version>
         <s3.encryption.client.version>3.0.0</s3.encryption.client.version>
         <slf4j.version>1.7.30</slf4j.version>
         <logback.version>1.2.3</logback.version>
@@ -96,16 +96,9 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>com.amazonaws</groupId>
-                <artifactId>aws-java-sdk-bom</artifactId>
-                <version>${aws-java-sdk.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
                 <groupId>software.amazon.awssdk</groupId>
                 <artifactId>bom</artifactId>
-                <version>2.20.45</version>
+                <version>${aws-java-sdk.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -137,12 +130,12 @@
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
         </dependency>
-        
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-s3</artifactId>
-        </dependency>
 
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>${aws-java-sdk.version}</version>
+        </dependency>
         <dependency>
             <groupId>software.amazon.encryption.s3</groupId>
             <artifactId>amazon-s3-encryption-client-java</artifactId>
@@ -152,6 +145,7 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>kms</artifactId>
+            <version>2.20.45</version>
         </dependency>
 
         <dependency>

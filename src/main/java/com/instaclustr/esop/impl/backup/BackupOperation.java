@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.amazonaws.services.s3.model.MetadataDirective;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -29,6 +28,7 @@ import com.instaclustr.measure.Time;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationCoordinator;
 import com.instaclustr.operations.OperationFailureException;
+import software.amazon.awssdk.services.s3.model.MetadataDirective;
 
 public class BackupOperation extends Operation<BackupOperationRequest> implements Cloneable {
 

@@ -2,24 +2,19 @@ package com.instaclustr.esop.s3.v2;
 
 import java.net.URI;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.amazonaws.Protocol;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.s3.S3ConfigurationResolver;
 import com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
-import software.amazon.awssdk.endpoints.Endpoint;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.apache.ProxyConfiguration;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
-import software.amazon.awssdk.services.s3.endpoints.S3EndpointParams;
-import software.amazon.awssdk.services.s3.endpoints.S3EndpointProvider;
 import software.amazon.encryption.s3.S3EncryptionClient;
 
 public class S3ClientsFactory {

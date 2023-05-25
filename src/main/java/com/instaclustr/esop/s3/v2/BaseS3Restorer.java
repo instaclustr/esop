@@ -27,7 +27,7 @@ import com.instaclustr.esop.impl.remove.RemoveBackupRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
-import com.instaclustr.esop.s3.v1.S3RemoteObjectReference;
+import com.instaclustr.esop.s3.S3RemoteObjectReference;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory.S3Clients;
 import com.instaclustr.io.FileUtils;
 import software.amazon.awssdk.services.s3.S3Client;

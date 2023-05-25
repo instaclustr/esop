@@ -3,7 +3,6 @@ package com.instaclustr.esop.impl.backup;
 import java.nio.file.Path;
 import java.util.List;
 
-import com.amazonaws.services.s3.model.MetadataDirective;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -20,6 +19,7 @@ import com.instaclustr.picocli.typeconverter.PathTypeConverter;
 import com.instaclustr.picocli.typeconverter.TimeMeasureTypeConverter;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
+import software.amazon.awssdk.services.s3.model.MetadataDirective;
 
 public class BaseBackupOperationRequest extends AbstractOperationRequest {
 
