@@ -30,6 +30,7 @@ import com.instaclustr.measure.DataRate.DataRateUnit;
 import com.instaclustr.measure.DataSize;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
+import software.amazon.awssdk.core.exception.SdkException;
 
 import static com.instaclustr.esop.impl.ManifestEntry.Type.MANIFEST_FILE;
 import static com.instaclustr.esop.impl.backup.Backuper.FreshenResult.FRESHENED;
