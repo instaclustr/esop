@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.s3.S3ConfigurationResolver;
 import com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvider;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.apache.ProxyConfiguration;
 import software.amazon.awssdk.regions.Region;
@@ -99,7 +99,7 @@ public class S3ClientsFactory {
 
     private S3Client getDefaultS3Client(S3Configuration s3Conf, ProxySettings proxySettings) {
         S3ClientBuilder builder = S3Client.builder()
-                                          .credentialsProvider(DefaultCredentialsProvider.create());
+                                          .credentialsProvider(InstanceProfileCredentialsProvider.create());
         if (s3Conf.awsRegion != null)
             builder.region(Region.of(s3Conf.awsRegion));
 
