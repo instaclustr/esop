@@ -1,6 +1,8 @@
 package com.instaclustr.esop.s3.v2;
 
 import java.net.URI;
+import java.security.Provider;
+import java.security.Security;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -9,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.s3.S3ConfigurationResolver;
 import com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvider;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.apache.ProxyConfiguration;
@@ -18,6 +22,14 @@ import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.encryption.s3.S3EncryptionClient;
 
 public class S3ClientsFactory {
+    private static volatile Provider PROVIDER;
+
+    public S3ClientsFactory() {
+        if (PROVIDER == null) {
+            Security.addProvider(new BouncyCastleProvider());
+            PROVIDER = Security.getProvider("BC");
+        }
+    }
 
     public static class S3Clients implements AutoCloseable {
 
@@ -94,7 +106,11 @@ public class S3ClientsFactory {
     }
 
     public S3Client getEncryptingClient(S3Client wrappedClient, String kmsKeyId) {
-        return S3EncryptionClient.builder().wrappedClient(wrappedClient).kmsKeyId(kmsKeyId).build();
+        return S3EncryptionClient.builder()
+                                 .wrappedClient(wrappedClient)
+                                 .kmsKeyId(kmsKeyId)
+                                 .cryptoProvider(PROVIDER)
+                                 .build();
     }
 
     private S3Client getDefaultS3Client(S3Configuration s3Conf, ProxySettings proxySettings) {
@@ -123,7 +139,7 @@ public class S3ClientsFactory {
             }
         }
 
-        builder.httpClient(httpClientBuilder.build());
+        builder.httpClient(httpClientBuilder.maxConnections(1000).build());
 
         return builder.build();
     }

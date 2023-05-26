@@ -17,6 +17,7 @@
         <google-cloud-libraries.version>26.0.0</google-cloud-libraries.version>
         <aws-java-sdk.version>2.20.45</aws-java-sdk.version>
         <s3.encryption.client.version>3.0.0</s3.encryption.client.version>
+        <bouncy.castle.version>1.72</bouncy.castle.version>
         <slf4j.version>1.7.30</slf4j.version>
         <logback.version>1.2.3</logback.version>
         
@@ -152,7 +153,13 @@
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>apache-client</artifactId>
         </dependency>
-        
+
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>${bouncy.castle.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>com.microsoft.azure</groupId>
             <artifactId>azure-storage</artifactId>
