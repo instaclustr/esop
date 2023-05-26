@@ -174,7 +174,8 @@ public class BaseS3Backuper extends Backuper {
                                                    .build()),
                             RequestBody.fromInputStream(localFileStream, manifestEntry.size));
 
-        GetObjectAttributesResponse objectAttributes = s3Clients.getNonEncryptingClient()
+        GetObjectAttributesResponse objectAttributes = s3Clients.getEncryptingClient()
+                                                                .get()
                                                                 .getObjectAttributes(GetObjectAttributesRequest
                                                                                      .builder()
                                                                                      .bucket(request.storageLocation.bucket)
