@@ -1,7 +1,9 @@
 package com.instaclustr.esop.s3.v2;
 
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -19,7 +21,15 @@ import com.instaclustr.esop.s3.S3RemoteObjectReference;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory.S3Clients;
 import com.instaclustr.threading.Executors;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.AbortMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadResponse;
+import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload;
+import software.amazon.awssdk.services.s3.model.CompletedPart;
 import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
+import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectAttributesRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectAttributesResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectTaggingRequest;
@@ -27,9 +37,13 @@ import software.amazon.awssdk.services.s3.model.MetadataDirective;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.ObjectAttributes;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.SdkPartType;
 import software.amazon.awssdk.services.s3.model.StorageClass;
 import software.amazon.awssdk.services.s3.model.Tag;
 import software.amazon.awssdk.services.s3.model.Tagging;
+import software.amazon.awssdk.services.s3.model.UploadPartRequest;
+import software.amazon.awssdk.services.s3.model.UploadPartResponse;
+import software.amazon.encryption.s3.S3EncryptionClient;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -148,9 +162,11 @@ public class BaseS3Backuper extends Backuper {
     @Override
     public void uploadFile(ManifestEntry manifestEntry, InputStream localFileStream, RemoteObjectReference objectReference) {
         logger.info("Uploading {}", objectReference.canonicalPath);
-        s3Clients.getNonEncryptingClient()
-                 .putObject(getPutObjectRequest(objectReference, manifestEntry.size),
-                            RequestBody.fromInputStream(localFileStream, manifestEntry.size));
+        uploadFile(s3Clients.getNonEncryptingClient(),
+                   manifestEntry.size,
+                   localFileStream,
+                   objectReference,
+                   Tagging.builder().build());
     }
 
     @Override
@@ -165,14 +181,16 @@ public class BaseS3Backuper extends Backuper {
         assert s3Clients.getEncryptingClient().isPresent() : "encrypting client is not present!";
         assert s3Clients.getKMSKeyOfEncryptedClient().isPresent() : "kms key is not present!";
 
-        s3Clients.getEncryptingClient()
-                 .get()
-                 .putObject(getPutObjectRequest(objectReference, manifestEntry.size,
-                                                Tag.builder()
-                                                   .key("kmsKey")
-                                                   .value(s3Clients.getKMSKeyOfEncryptedClient().get())
-                                                   .build()),
-                            RequestBody.fromInputStream(localFileStream, manifestEntry.size));
+        uploadFile(s3Clients.getEncryptingClient().get(),
+                   manifestEntry.size,
+                   localFileStream,
+                   objectReference,
+                   Tagging.builder()
+                             .tagSet(Tag.builder()
+                                        .key("kmsKey")
+                                        .value(s3Clients.getKMSKeyOfEncryptedClient().get())
+                                        .build())
+                             .build());
 
         GetObjectAttributesResponse objectAttributes = s3Clients.getEncryptingClient()
                                                                 .get()
@@ -221,4 +239,84 @@ public class BaseS3Backuper extends Backuper {
                                .tagging(Tagging.builder().tagSet(tags).build())
                                .build();
     }
+
+
+    private void uploadFile(S3Client s3Client,
+                            long size,
+                            InputStream localFileStream,
+                            RemoteObjectReference objectReference,
+                            Tagging tagging) {
+
+        CreateMultipartUploadRequest multipartUploadRequest = CreateMultipartUploadRequest.builder()
+                                                                                          .bucket(request.storageLocation.bucket)
+                                                                                          .key(objectReference.canonicalPath)
+                                                                                          .tagging(tagging)
+                                                                                          .build();
+
+        CreateMultipartUploadResponse multipartUploadResponse = s3Client.createMultipartUpload(multipartUploadRequest);
+
+        String uploadId = multipartUploadResponse.uploadId();
+
+        try
+        {
+            double partSize = Double.parseDouble(System.getProperty("upload.max.part.size", Double.toString(100 * 1024 * 1024)));
+
+            if (s3Client instanceof S3EncryptionClient)
+                partSize = (partSize / 16) * 16;
+
+            int numberOfParts = (int) Math.ceil((double) size / partSize);
+            List<CompletedPart> completedParts = new ArrayList<>();
+
+            byte[] buffer = new byte[(int) partSize];
+
+            for (int partNumber = 1; partNumber <= numberOfParts; partNumber++)
+            {
+                int bytesRead = localFileStream.read(buffer);
+                ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, 0, bytesRead);
+                UploadPartRequest partRequest = UploadPartRequest.builder()
+                                                                 .bucket(request.storageLocation.bucket)
+                                                                 .key(objectReference.canonicalPath)
+                                                                 .uploadId(uploadId)
+                                                                 .partNumber(partNumber)
+                                                                 .sdkPartType(partNumber == numberOfParts ? SdkPartType.LAST : SdkPartType.DEFAULT)
+                                                                 .build();
+
+                logger.info("Uploading part #{} of {}", partNumber, objectReference.canonicalPath);
+                UploadPartResponse partResponse = s3Client.uploadPart(partRequest, RequestBody.fromByteBuffer(byteBuffer));
+
+                completedParts.add(CompletedPart.builder()
+                                                .partNumber(partNumber)
+                                                .eTag(partResponse.eTag())
+                                                .build());
+            }
+
+            // Complete the multipart upload
+            CompleteMultipartUploadRequest completeRequest = CompleteMultipartUploadRequest.builder()
+                                                                                           .bucket(request.storageLocation.bucket)
+                                                                                           .key(objectReference.canonicalPath)
+                                                                                           .uploadId(uploadId)
+                                                                                           .multipartUpload(CompletedMultipartUpload.builder().parts(completedParts).build())
+                                                                                           .build();
+
+            CompleteMultipartUploadResponse completeResponse = s3Client.completeMultipartUpload(completeRequest);
+            logger.info("Multipart upload of {} completed. ETag: {}", objectReference.canonicalPath, completeResponse.eTag());
+        } catch (Throwable t) {
+            t.printStackTrace();
+            abortMultipartUpload(s3Client, uploadId, objectReference);
+        }
+    }
+
+    private void abortMultipartUpload(S3Client s3Client, String uploadId, RemoteObjectReference objectReference) {
+        // Abort the multipart upload if an exception occurs or if it's not completed
+        if (uploadId != null) {
+            AbortMultipartUploadRequest abortRequest = AbortMultipartUploadRequest.builder()
+                                                                                  .bucket(request.storageLocation.bucket)
+                                                                                  .key(objectReference.canonicalPath)
+                                                                                  .uploadId(uploadId)
+                                                                                  .build();
+            s3Client.abortMultipartUpload(abortRequest);
+            logger.info("Aborted multipart upload of {}, uploadId: {}", objectReference.canonicalPath, uploadId);
+        }
+    }
+
 }

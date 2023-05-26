@@ -8,14 +8,12 @@
     </encoder>
   </appender>
 
-  <logger name="com.amazonaws.request" level="DEBUG"/>
-  <logger name="com.amazonaws.latency" level="DEBUG"/>
-  <logger name="org.apache.http.wire" level="DEBUG"/>
-  <logger name="software.amazon" level="DEBUG"/>
+  <logger name="org.apache.http.wire" level="INFO"/>
+  <logger name="software.amazon" level="INFO"/>
 
   <!-- end -->
 
-  <root level="DEBUG">
+  <root level="INFO">
     <appender-ref ref="STDOUT"/>
   </root>
 </configuration>
