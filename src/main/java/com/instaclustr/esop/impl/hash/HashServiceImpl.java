@@ -9,11 +9,16 @@ import java.security.NoSuchAlgorithmException;
 
 import javax.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.instaclustr.esop.impl.ManifestEntry;
 
 import static java.lang.String.format;
 
 public class HashServiceImpl implements HashService {
+
+    private static final Logger logger = LoggerFactory.getLogger(HashServiceImpl.class);
 
     private final HashSpec hashSpec;
 
@@ -79,7 +84,7 @@ public class HashServiceImpl implements HashService {
 
     private String getHash(final File file) throws IOException, NoSuchAlgorithmException {
         try (final FileInputStream fis = new FileInputStream(file)) {
-
+            logger.info("Getting {} hash of {} ", hashSpec.algorithm.toString(), file.getAbsolutePath());
             final MessageDigest digest = MessageDigest.getInstance(hashSpec.algorithm.toString());
 
             // Create byte array to read data in chunks
