@@ -104,7 +104,7 @@ public class BaseS3Backuper extends Backuper {
     public FreshenResult freshenRemoteObject(ManifestEntry manifestEntry, RemoteObjectReference object) {
         List<Tag> tags;
         try {
-            tags = s3Clients.getNonEncryptingClient()
+            tags = s3Clients.getClient()
                             .getObjectTagging(GetObjectTaggingRequest.builder()
                                                                      .bucket(request.storageLocation.bucket)
                                                                      .key(object.canonicalPath)
@@ -196,7 +196,7 @@ public class BaseS3Backuper extends Backuper {
                                                                                                .multipartUpload(CompletedMultipartUpload.builder()
                                                                                                                                         .parts(completedParts.toArray(new CompletedPart[0]))
                                                                                                                                         .build()).build();
-                CompleteMultipartUploadResponse completeMultipartUploadResponse = s3Clients.getNonEncryptingClient().completeMultipartUpload(completeRequest);
+                CompleteMultipartUploadResponse completeMultipartUploadResponse = s3Clients.getClient().completeMultipartUpload(completeRequest);
 
                 if (!completeMultipartUploadResponse.sdkHttpResponse().isSuccessful()) {
                     throw new RuntimeException(String.format("Unsuccessful multipart copying of %s, upload id %s", object.canonicalPath, uploadId));
