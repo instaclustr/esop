@@ -147,6 +147,7 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
 
             try (final Backuper backuper = backuperFactoryMap.get(request.storageLocation.storageProvider).createBackuper(request)) {
 
+                backuper.init(manifest.getManifestEntries(true));
                 performUpload(manifest.getManifestEntries(false), backuper, operation, request);
 
                 // upload manifest as the last, possibly with updated file sizes as they were encrypted

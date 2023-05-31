@@ -142,33 +142,37 @@ public class BaseS3Restorer extends Restorer
     @Override
     public void downloadFile(Path localPath, ManifestEntry manifestEntry, RemoteObjectReference objectReference) throws Exception {
 
-        GetObjectTaggingResponse taggingResponse = s3Clients.getNonEncryptingClient()
-                                                            .getObjectTagging(GetObjectTaggingRequest.builder()
-                                                                                                     .bucket(request.storageLocation.bucket)
-                                                                                                     .key(objectReference.canonicalPath)
-                                                                                                     .build());
+        try {
+            GetObjectTaggingResponse taggingResponse = s3Clients.getNonEncryptingClient()
+                                                                .getObjectTagging(GetObjectTaggingRequest.builder()
+                                                                                                         .bucket(request.storageLocation.bucket)
+                                                                                                         .key(objectReference.canonicalPath)
+                                                                                                         .build());
 
-        String kmsKey = taggingResponse.tagSet()
-                                       .stream()
-                                       .filter(t -> t.key().equals("kmsKey"))
-                                       .findFirst()
-                                       .map(Tag::value)
-                                       .orElse(null);
+            String kmsKey = taggingResponse.tagSet()
+                                           .stream()
+                                           .filter(t -> t.key().equals("kmsKey"))
+                                           .findFirst()
+                                           .map(Tag::value)
+                                           .orElse(null);
 
-        // We need to resolve S3 manager which uses kms key which remote file is encrypted with,
-        // so we have the right one for decryption.
-        // It is expected that every file in a logical backup will be encrypted with same KMS key
-        // however we need to resolve it per manifest entry anyway
-        S3Client s3Client = resolveS3Client(kmsKey);
+            // We need to resolve S3 manager which uses kms key which remote file is encrypted with,
+            // so we have the right one for decryption.
+            // It is expected that every file in a logical backup will be encrypted with same KMS key
+            // however we need to resolve it per manifest entry anyway
+            S3Client s3Client = resolveS3Client(kmsKey);
 
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                                                            .bucket(request.storageLocation.bucket)
-                                                            .key(objectReference.canonicalPath)
-                                                            .build();
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                                                                .bucket(request.storageLocation.bucket)
+                                                                .key(objectReference.canonicalPath)
+                                                                .build();
 
-        FileUtils.createDirectory(localPath.getParent());
+            FileUtils.createDirectory(localPath.getParent());
 
-        Files.copy(s3Client.getObject(getObjectRequest), localPath, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(s3Client.getObject(getObjectRequest), localPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
     }
 
     @Override

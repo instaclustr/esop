@@ -80,6 +80,8 @@ public abstract class StorageInteractor implements AutoCloseable {
 
     private boolean isClosed = false;
 
+    public void init(List<ManifestEntry> manifestEntries) {}
+
     public void close() throws IOException {
         if (isClosed) {
             return;
