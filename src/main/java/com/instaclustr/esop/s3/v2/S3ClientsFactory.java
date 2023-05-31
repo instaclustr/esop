@@ -116,7 +116,7 @@ public class S3ClientsFactory {
 
     private S3Client getDefaultS3Client(S3Configuration s3Conf, ProxySettings proxySettings) {
         S3ClientBuilder builder = S3Client.builder()
-                                          .credentialsProvider(DefaultCredentialsProvider.create());
+                                          .credentialsProvider(InstanceProfileCredentialsProvider.create());
         if (s3Conf.awsRegion != null)
             builder.region(Region.of(s3Conf.awsRegion));
 
