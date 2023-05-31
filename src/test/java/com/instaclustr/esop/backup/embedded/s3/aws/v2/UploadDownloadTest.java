@@ -82,6 +82,9 @@ public class UploadDownloadTest extends AbstractS3UploadDownloadTest {
             s3Clients = s3Backuper.s3Clients;
 
             testExecution();
+
+            System.clearProperty(AWS_KMS_KEY_ID_PROPERTY);
+            s3BucketService.delete(BUCKET_NAME);
         }
         finally {
             System.clearProperty(AWS_KMS_KEY_ID_PROPERTY);

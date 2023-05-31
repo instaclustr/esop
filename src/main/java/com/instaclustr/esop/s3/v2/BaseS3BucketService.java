@@ -17,6 +17,8 @@ import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.DeleteBucketRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
+import software.amazon.awssdk.services.s3.model.ListBucketsRequest;
+import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
@@ -38,12 +40,8 @@ public class BaseS3BucketService extends BucketService {
     public boolean doesExist(final String bucketName) throws BucketServiceException {
         try
         {
-            s3Clients.getNonEncryptingClient().headBucket(HeadBucketRequest.builder()
-                                                                           .bucket(bucketName)
-                                                                           .build());
-            return true;
-        } catch (final NoSuchBucketException ex) {
-            return false;
+            ListBucketsResponse listBucketsResponse = s3Clients.getClient().listBuckets(ListBucketsRequest.builder().build());
+            return listBucketsResponse.buckets().stream().filter(bucket -> bucket.name().equals(bucketName)).count() == 1;
         } catch (Exception ex) {
             throw new BucketServiceException(format("Unable to determine if the bucket %s exists.", bucketName), ex);
         }

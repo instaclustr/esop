@@ -4,6 +4,8 @@ package com.instaclustr.esop.s3.v2;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,13 +23,13 @@ import com.instaclustr.esop.impl.backup.BaseBackupOperationRequest;
 import com.instaclustr.esop.s3.S3RemoteObjectReference;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory.S3Clients;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.waiters.WaiterOverrideConfiguration;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.AbortMultipartUploadRequest;
 import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest;
 import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadResponse;
 import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload;
 import software.amazon.awssdk.services.s3.model.CompletedPart;
-import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectAttributesRequest;
@@ -37,7 +39,6 @@ import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListMultipartUploadsRequest;
 import software.amazon.awssdk.services.s3.model.ListMultipartUploadsResponse;
-import software.amazon.awssdk.services.s3.model.MetadataDirective;
 import software.amazon.awssdk.services.s3.model.MultipartUpload;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.NoSuchUploadException;
@@ -104,7 +105,7 @@ public class BaseS3Backuper extends Backuper {
     public FreshenResult freshenRemoteObject(ManifestEntry manifestEntry, RemoteObjectReference object) {
         List<Tag> tags;
         try {
-            tags = s3Clients.getClient()
+            tags = s3Clients.getNonEncryptingClient()
                             .getObjectTagging(GetObjectTaggingRequest.builder()
                                                                      .bucket(request.storageLocation.bucket)
                                                                      .key(object.canonicalPath)
@@ -145,15 +146,16 @@ public class BaseS3Backuper extends Backuper {
         // we want to preserve whatever tags it had
         Tagging tagging = taggingBuilder.tagSet(tags).build();
 
-        if (!request.skipRefreshing) {
+        if (false) {
+        //if (!request.skipRefreshing) {
             // Get the source object's metadata to determine the part size
             HeadObjectRequest headRequest = HeadObjectRequest.builder()
                                                              .bucket(request.storageLocation.bucket)
                                                              .key(object.canonicalPath)
                                                              .build();
-            HeadObjectResponse headResponse = s3Clients.getClient().headObject(headRequest);
+            HeadObjectResponse headResponse = s3Clients.getNonEncryptingClient().headObject(headRequest);
             long objectSize = headResponse.contentLength();
-            long partSize = Long.parseLong(System.getProperty("upload.max.part.size", Double.toString(100 * 1024 * 1024)));
+            long partSize = Long.parseLong(System.getProperty("upload.max.part.size", Long.toString(100 * 1024 * 1024)));
 
             CreateMultipartUploadRequest createRequest = CreateMultipartUploadRequest.builder()
                                                                                      .bucket(request.storageLocation.bucket)
@@ -204,14 +206,26 @@ public class BaseS3Backuper extends Backuper {
                     logger.info("Completed multipart copying of {}, upload id {}", object.canonicalPath, uploadId);
                 }
 
-                GetObjectAttributesResponse objectAttributes = s3Clients.getClient()
-                                                                        .getObjectAttributes(GetObjectAttributesRequest
-                                                                                             .builder()
-                                                                                             .bucket(request.storageLocation.bucket)
-                                                                                             .key(object.canonicalPath)
-                                                                                             .objectAttributes(ObjectAttributes.OBJECT_SIZE)
-                                                                                             .build());
-                manifestEntry.size = objectAttributes.objectSize();
+                logger.info("Waiting for " + object.canonicalPath + " to exist");
+
+                s3Clients.getNonEncryptingClient().waiter().waitUntilObjectExists(HeadObjectRequest.builder()
+                                                                                                   .bucket(request.storageLocation.bucket)
+                                                                                                   .key(object.canonicalPath)
+                                                                                                   .build(),
+                                                                                  WaiterOverrideConfiguration.builder()
+                                                                                                             .waitTimeout(Duration.of(1, ChronoUnit.MINUTES))
+                                                                                                             .build());
+
+                logger.info("Object under key " + object.canonicalPath + " exists");
+
+//                GetObjectAttributesResponse objectAttributes = s3Clients.getNonEncryptingClient()
+//                                                                        .getObjectAttributes(GetObjectAttributesRequest
+//                                                                                             .builder()
+//                                                                                             .bucket(request.storageLocation.bucket)
+//                                                                                             .key(object.canonicalPath)
+//                                                                                             .objectAttributes(ObjectAttributes.OBJECT_SIZE)
+//                                                                                             .build());
+//                manifestEntry.size = objectAttributes.objectSize();
             } catch (Throwable t) {
                 t.printStackTrace();
                 multipartAbortionService.abortMultipartUpload(uploadId, request, object);
@@ -226,7 +240,7 @@ public class BaseS3Backuper extends Backuper {
     public void uploadFile(ManifestEntry manifestEntry, InputStream localFileStream, RemoteObjectReference objectReference) {
         logger.info("Uploading {}", objectReference.canonicalPath);
         uploadFile(s3Clients.getNonEncryptingClient(),
-                   manifestEntry.size,
+                   manifestEntry,
                    localFileStream,
                    objectReference,
                    Tagging.builder().build());
@@ -245,7 +259,7 @@ public class BaseS3Backuper extends Backuper {
         assert s3Clients.getKMSKeyOfEncryptedClient().isPresent() : "kms key is not present!";
 
         uploadFile(s3Clients.getEncryptingClient().get(),
-                   manifestEntry.size,
+                   manifestEntry,
                    localFileStream,
                    objectReference,
                    Tagging.builder()
@@ -255,16 +269,8 @@ public class BaseS3Backuper extends Backuper {
                                      .build())
                           .build());
 
-        GetObjectAttributesResponse objectAttributes = s3Clients.getEncryptingClient()
-                                                                .get()
-                                                                .getObjectAttributes(GetObjectAttributesRequest
-                                                                                     .builder()
-                                                                                     .bucket(request.storageLocation.bucket)
-                                                                                     .key(objectReference.canonicalPath)
-                                                                                     .objectAttributes(ObjectAttributes.OBJECT_SIZE)
-                                                                                     .build());
         manifestEntry.kmsKeyId = s3Clients.getKMSKeyOfEncryptedClient().get();
-        manifestEntry.size = objectAttributes.objectSize();
+
     }
 
     @Override
@@ -305,7 +311,7 @@ public class BaseS3Backuper extends Backuper {
 
 
     private void uploadFile(S3Client s3Client,
-                            long size,
+                            ManifestEntry manifestEntry,
                             InputStream localFileStream,
                             RemoteObjectReference objectReference,
                             Tagging tagging) {
@@ -322,12 +328,12 @@ public class BaseS3Backuper extends Backuper {
 
         try
         {
-            double partSize = Double.parseDouble(System.getProperty("upload.max.part.size", Double.toString(100 * 1024 * 1024)));
+            long partSize = Long.parseLong(System.getProperty("upload.max.part.size", Long.toString(100 * 1024 * 1024)));
 
             if (s3Client instanceof S3EncryptionClient)
                 partSize = (partSize / 16) * 16;
 
-            int numberOfParts = (int) Math.ceil((double) size / partSize);
+            int numberOfParts = (int) Math.ceil((double) manifestEntry.size / partSize);
             List<CompletedPart> completedParts = new ArrayList<>();
 
             byte[] buffer = new byte[(int) partSize];
@@ -368,6 +374,28 @@ public class BaseS3Backuper extends Backuper {
             } else {
                 logger.info("Completed multipart upload of {}, upload id {}, etag {}", objectReference.canonicalPath, uploadId, completeResponse.eTag());
             }
+
+            logger.info("Waiting for " + objectReference.canonicalPath + " to exist");
+
+            s3Clients.getNonEncryptingClient().waiter().waitUntilObjectExists(HeadObjectRequest.builder()
+                                                                                               .bucket(request.storageLocation.bucket)
+                                                                                               .key(objectReference.canonicalPath)
+                                                                                               .build(),
+                                                                              WaiterOverrideConfiguration.builder()
+                                                                                                         .waitTimeout(Duration.of(1, ChronoUnit.MINUTES))
+                                                                                                         .build());
+
+            logger.info("Object under key " + objectReference.canonicalPath + " exists");
+
+//            GetObjectAttributesResponse objectAttributes = s3Clients.getNonEncryptingClient()
+//                                                                    .getObjectAttributes(GetObjectAttributesRequest
+//                                                                                         .builder()
+//                                                                                         .bucket(request.storageLocation.bucket)
+//                                                                                         .key(objectReference.canonicalPath)
+//                                                                                         .objectAttributes(ObjectAttributes.OBJECT_SIZE)
+//                                                                                         .build());
+//
+//            manifestEntry.size = objectAttributes.objectSize();
         } catch (Throwable t) {
             t.printStackTrace();
             multipartAbortionService.abortMultipartUpload(uploadId, request, objectReference);
