@@ -99,7 +99,7 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
                 }
 
                 if (!Files.exists(localPath)) {
-                    logger.debug(String.format("Downloading file %s to %s.", remoteObjectReference.getObjectKey(), manifestEntry.localFile));
+                    logger.info(String.format("Downloading file %s to %s.", remoteObjectReference.getObjectKey(), manifestEntry.localFile));
 
                     restorer.downloadFile(localPath, manifestEntry, remoteObjectReference);
 
@@ -114,7 +114,7 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
                         throw ex;
                     }
 
-                    logger.debug(String.format("Successfully downloaded file %s to %s.", remoteObjectReference.getObjectKey(), localPath));
+                    logger.info(String.format("Successfully downloaded file %s to %s.", remoteObjectReference.getObjectKey(), localPath));
 
                     state = FINISHED;
 
@@ -131,7 +131,7 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
                 }
             } catch (final Throwable t) {
                 state = FAILED;
-                logger.error(String.format("Failed to download file %s", manifestEntry.localFile), t.getMessage());
+                logger.error(String.format("Failed to download file %s: %s", manifestEntry.localFile, t.getMessage()), t);
                 throwable = t;
             }
 
