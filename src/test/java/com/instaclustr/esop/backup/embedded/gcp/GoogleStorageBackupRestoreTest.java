@@ -75,7 +75,7 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
         try {
             gcpBucketService.create(BUCKET_NAME);
 
-            Storage storage = googleStorageFactory.build(getBackupOperationRequest());
+            Storage storage = googleStorageFactory.build();
             Bucket bucket = storage.get(BUCKET_NAME);
 
             bucket.create("cluster/dc/node/manifests/snapshot-name-" + BUCKET_NAME, "hello".getBytes());

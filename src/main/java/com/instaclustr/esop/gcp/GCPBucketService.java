@@ -29,31 +29,31 @@ public class GCPBucketService extends BucketService {
     @AssistedInject
     public GCPBucketService(final GoogleStorageFactory storageFactory,
                             @Assisted final BackupOperationRequest request) {
-        this.storage = storageFactory.build(request);
+        this.storage = storageFactory.build();
     }
 
     @AssistedInject
     public GCPBucketService(final GoogleStorageFactory storageFactory,
                             @Assisted final BackupCommitLogsOperationRequest request) {
-        this.storage = storageFactory.build(request);
+        this.storage = storageFactory.build();
     }
 
     @AssistedInject
     public GCPBucketService(final GoogleStorageFactory storageFactory,
                             @Assisted final RestoreOperationRequest request) {
-        this.storage = storageFactory.build(request);
+        this.storage = storageFactory.build();
     }
 
     @AssistedInject
     public GCPBucketService(final GoogleStorageFactory storageFactory,
                             @Assisted final RestoreCommitLogsOperationRequest request) {
-        this.storage = storageFactory.build(request);
+        this.storage = storageFactory.build();
     }
 
     @AssistedInject
     public GCPBucketService(final GoogleStorageFactory storageFactory,
                             @Assisted final ListOperationRequest request) {
-        this.storage = storageFactory.build(request);
+        this.storage = storageFactory.build();
     }
 
     @Override

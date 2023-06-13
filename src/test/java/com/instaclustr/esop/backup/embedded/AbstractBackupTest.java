@@ -39,7 +39,6 @@ import com.instaclustr.esop.impl.restore.RestoreModules.RestoreModule;
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.operations.OperationsModule;
 import com.instaclustr.threading.ExecutorsModule;
-import io.kubernetes.client.ApiException;
 import jmx.org.apache.cassandra.CassandraJMXConnectionInfo;
 import jmx.org.apache.cassandra.service.CassandraJMXServiceImpl;
 
@@ -1214,7 +1213,7 @@ public abstract class AbstractBackupTest {
         return builder.build();
     }
 
-    protected void init() throws ApiException, IOException {
+    protected void init() {
 
     }
 

@@ -54,14 +54,14 @@ public class GCPRestorer extends Restorer {
     public GCPRestorer(final GoogleStorageFactory storageFactory,
                        @Assisted final RestoreOperationRequest request) {
         super(request);
-        this.storage = storageFactory.build(request);
+        this.storage = storageFactory.build();
     }
 
     @AssistedInject
     public GCPRestorer(final GoogleStorageFactory storageFactory,
                        @Assisted final RestoreCommitLogsOperationRequest request) {
         super(request);
-        this.storage = storageFactory.build(request);
+        this.storage = storageFactory.build();
     }
 
     @AssistedInject
@@ -69,7 +69,7 @@ public class GCPRestorer extends Restorer {
                        @Assisted final ListOperationRequest request,
                        final ObjectMapper objectMapper) {
         super(request);
-        this.storage = storageFactory.build(request);
+        this.storage = storageFactory.build();
 
 //        this.localFileRestorer = new LocalFileRestorer(getForLocalListing(request, request.cacheDir, request.storageLocation),
 //                objectMapper);
@@ -80,7 +80,7 @@ public class GCPRestorer extends Restorer {
                        @Assisted final RemoveBackupRequest request,
                        ObjectMapper objectMapper) {
         super(request);
-        this.storage = storageFactory.build(request);
+        this.storage = storageFactory.build();
 
         this.localFileRestorer = new LocalFileRestorer(getForLocalListing(request, request.cacheDir, request.storageLocation),
                 objectMapper);

@@ -8,7 +8,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.instaclustr.esop.backup.embedded.AbstractBackupTest;
-import com.instaclustr.kubernetes.KubernetesApiModule;
 
 public abstract class AbstractS3UploadDownloadTest extends AbstractBackupTest {
     @Override
@@ -18,7 +17,6 @@ public abstract class AbstractS3UploadDownloadTest extends AbstractBackupTest {
 
     public void inject(AbstractModule s3Module) {
         final List<Module> modules = new ArrayList<Module>() {{
-            add(new KubernetesApiModule());
             add(s3Module);
         }};
 

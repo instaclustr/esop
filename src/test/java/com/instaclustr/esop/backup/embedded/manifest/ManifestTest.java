@@ -41,7 +41,6 @@ import com.instaclustr.esop.impl.interaction.CassandraSchemaVersion;
 import com.instaclustr.esop.impl.interaction.CassandraTokens;
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.jackson.JacksonModule;
-import com.instaclustr.kubernetes.KubernetesApiModule;
 import com.instaclustr.operations.FunctionWithEx;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.Operation.State;
@@ -354,7 +353,6 @@ public class ManifestTest {
     public void setup() throws Exception {
 
         final List<Module> modules = new ArrayList<Module>() {{
-            add(new KubernetesApiModule());
             add(new ExecutorsModule());
             add(new CassandraModule());
             add(new JacksonModule());

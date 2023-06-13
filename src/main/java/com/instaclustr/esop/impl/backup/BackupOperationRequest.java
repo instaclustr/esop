@@ -25,8 +25,6 @@ import com.instaclustr.measure.Time;
 import picocli.CommandLine.Option;
 import software.amazon.awssdk.services.s3.model.MetadataDirective;
 
-import static com.instaclustr.kubernetes.KubernetesHelper.isRunningAsClient;
-import static com.instaclustr.kubernetes.KubernetesHelper.isRunningInKubernetes;
 import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -165,16 +163,6 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
 
         if (kmsKeyId != null && !"s3v2".equals(storageLocation.storageProvider))
             throw new IllegalStateException("You can set kmsKeyId only when using s3v2 protocol");
-
-        if ((isRunningInKubernetes() || isRunningAsClient())) {
-            if (this.resolveKubernetesSecretName() == null) {
-                throw new IllegalStateException("This code is running in Kubernetes or as a Kubernetes client but it is not possible to resolve k8s secret name for backups!");
-            }
-
-            if (this.resolveKubernetesNamespace() == null) {
-                throw new IllegalStateException("This code is running in Kubernetes or as a Kubernetes client but it is not possible to resolve k8s namespace for backups!");
-            }
-        }
 
         if (this.entities == null) {
             this.entities = DatabaseEntities.empty();

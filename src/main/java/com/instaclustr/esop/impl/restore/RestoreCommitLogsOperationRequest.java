@@ -3,8 +3,6 @@ package com.instaclustr.esop.impl.restore;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import javax.validation.constraints.NotNull;
-
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
@@ -51,13 +49,11 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
     @Option(names = {"--ts", "--timestamp-start"},
         description = "When the base snapshot was taken. Only relevant if archived commitlogs are available.",
         required = true)
-    @NotNull
     public long timestampStart;
 
     @Option(names = {"--te", "--timestamp-end"},
         description = "Point-in-time to restore up to. Only relevant if archived commitlogs are available.",
         required = true)
-    @NotNull
     public long timestampEnd;
 
     @Option(names = {"--kt", "--keyspace-tables"},

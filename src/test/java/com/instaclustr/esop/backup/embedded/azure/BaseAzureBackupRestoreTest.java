@@ -11,7 +11,6 @@ import com.instaclustr.esop.azure.AzureModule;
 import com.instaclustr.esop.azure.AzureModule.CloudStorageAccountFactory;
 import com.instaclustr.esop.backup.embedded.AbstractBackupTest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
-import com.instaclustr.kubernetes.KubernetesApiModule;
 
 public abstract class BaseAzureBackupRestoreTest extends AbstractBackupTest {
 
@@ -21,7 +20,6 @@ public abstract class BaseAzureBackupRestoreTest extends AbstractBackupTest {
 
     public void inject() {
         final List<Module> modules = new ArrayList<Module>() {{
-            add(new KubernetesApiModule());
             add(new AzureModule());
         }};
 

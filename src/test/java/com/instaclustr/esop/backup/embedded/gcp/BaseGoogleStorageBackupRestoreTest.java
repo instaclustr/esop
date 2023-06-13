@@ -11,7 +11,6 @@ import com.instaclustr.esop.gcp.GCPBucketService;
 import com.instaclustr.esop.gcp.GCPModule;
 import com.instaclustr.esop.gcp.GCPModule.GoogleStorageFactory;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
-import com.instaclustr.kubernetes.KubernetesApiModule;
 
 public abstract class BaseGoogleStorageBackupRestoreTest extends AbstractBackupTest {
 
@@ -21,7 +20,6 @@ public abstract class BaseGoogleStorageBackupRestoreTest extends AbstractBackupT
 
     public void inject() {
         final List<Module> modules = new ArrayList<Module>() {{
-            add(new KubernetesApiModule());
             add(new GCPModule());
         }};
 

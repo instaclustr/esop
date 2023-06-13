@@ -17,7 +17,6 @@ import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.jackson.PathSerializer;
-import com.instaclustr.kubernetes.KubernetesHelper;
 import com.instaclustr.measure.DataRate;
 import com.instaclustr.measure.Time;
 import com.instaclustr.picocli.typeconverter.PathTypeConverter;
@@ -132,10 +131,6 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
 
         if (!Files.exists(this.cassandraCommitLogDirectory)) {
             throw new IllegalStateException(String.format("cassandraCommitLogDirectory %s does not exist", cassandraCommitLogDirectory));
-        }
-
-        if (KubernetesHelper.isRunningInKubernetes() && this.resolveKubernetesSecretName() == null) {
-            throw new IllegalStateException("This code is running in Kubernetes but there is not 'k8sSecretName' field set on backup request!");
         }
     }
 }

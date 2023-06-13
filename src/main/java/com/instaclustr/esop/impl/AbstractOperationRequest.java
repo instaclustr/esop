@@ -14,7 +14,6 @@ import com.instaclustr.esop.impl.StorageLocation.StorageLocationDeserializer;
 import com.instaclustr.esop.impl.StorageLocation.StorageLocationSerializer;
 import com.instaclustr.esop.impl.StorageLocation.StorageLocationTypeConverter;
 import com.instaclustr.esop.impl.retry.RetrySpec;
-import com.instaclustr.kubernetes.KubernetesSecretsReader;
 import com.instaclustr.operations.OperationRequest;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -113,21 +112,6 @@ public abstract class AbstractOperationRequest extends OperationRequest {
         logger.info("Resolved secret name {}", resolvedSecretName);
 
         return resolvedSecretName;
-    }
-
-    @JsonIgnore
-    public String resolveKubernetesNamespace() {
-        String resolvedNamespace;
-
-        if (k8sNamespace != null) {
-            resolvedNamespace = k8sNamespace;
-        } else {
-            resolvedNamespace = KubernetesSecretsReader.readNamespace();
-        }
-
-        logger.info("Resolved k8s namespace {}", resolvedNamespace);
-
-        return resolvedNamespace;
     }
 
     public void validate(final Set<String> storageProviders) {

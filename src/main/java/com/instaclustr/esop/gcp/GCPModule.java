@@ -1,13 +1,9 @@
 package com.instaclustr.esop.gcp;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Optional;
-
-import com.google.common.collect.Lists;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,15 +12,9 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.inject.AbstractModule;
-import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.instaclustr.esop.impl.AbstractOperationRequest;
-import com.instaclustr.kubernetes.KubernetesHelper;
-import com.instaclustr.kubernetes.SecretReader;
-import io.kubernetes.client.apis.CoreV1Api;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.instaclustr.esop.guice.BackupRestoreBindings.installBindings;
 import static java.lang.String.format;
 
@@ -41,36 +31,16 @@ public class GCPModule extends AbstractModule {
 
     @Provides
     @Singleton
-    GoogleStorageFactory provideGoogleStorageFactory(final Provider<CoreV1Api> coreV1ApiProvider) {
-        return new GoogleStorageFactory(coreV1ApiProvider);
+    GoogleStorageFactory provideGoogleStorageFactory() {
+        return new GoogleStorageFactory();
     }
 
     public static class GoogleStorageFactory {
 
         private static final Logger logger = LoggerFactory.getLogger(GoogleStorageFactory.class);
 
-        private final Provider<CoreV1Api> coreV1ApiProvider;
-
-        public GoogleStorageFactory(final Provider<CoreV1Api> coreV1ApiProvider) {
-            this.coreV1ApiProvider = coreV1ApiProvider;
-        }
-
-        public Storage build(final AbstractOperationRequest operationRequest) {
-            if (KubernetesHelper.isRunningInKubernetes() || KubernetesHelper.isRunningAsClient()) {
-                if (isNullOrEmpty(operationRequest.resolveKubernetesSecretName())) {
-                    logger.warn("Kubernetes secret name for resolving GCP credentials was not specified, going to resolve them from file.");
-                    return resolveStorageFromEnvProperties();
-                } else {
-                    return resolveStorageFromKubernetesSecret(operationRequest);
-                }
-            } else {
-                return resolveStorageFromEnvProperties();
-            }
-        }
-
-        private Storage resolveStorageFromKubernetesSecret(final AbstractOperationRequest operationRequest) {
-            final GoogleCredentials credentials = resolveGoogleCredentials(operationRequest);
-            return StorageOptions.newBuilder().setCredentials(credentials).build().getService();
+        public Storage build() {
+            return resolveStorageFromEnvProperties();
         }
 
         private Storage resolveStorageFromEnvProperties() {
@@ -97,32 +67,9 @@ public class GCPModule extends AbstractModule {
         private GoogleCredentials resolveGoogleCredentialsFromFile(String googleAppCredentialsPath) {
             try (InputStream is = new FileInputStream(googleAppCredentialsPath)) {
                 return GoogleCredentials.fromStream(is);
-            } catch (Exception ex) {
-                throw new RuntimeException("Unable to read credentials from " + googleAppCredentialsPath);
             }
-        }
-
-        private GoogleCredentials resolveGoogleCredentials(final AbstractOperationRequest operationRequest) {
-            final String secretName = operationRequest.resolveKubernetesSecretName();
-            final String dataKey = "gcp";
-            final String namespace = operationRequest.resolveKubernetesNamespace();
-
-            try {
-                Optional<byte[]> gcpCredentials = new SecretReader(coreV1ApiProvider).read(namespace,
-                                                                                           secretName,
-                                                                                           dataKey);
-
-                if (!gcpCredentials.isPresent()) {
-                    throw new GCPModuleException(format("GCP credentials from Kubernetes namespace %s from secret %s under key %s were not set.",
-                                                        namespace,
-                                                        secretName,
-                                                        dataKey));
-                }
-
-                return GoogleCredentials.fromStream(new ByteArrayInputStream(gcpCredentials.get()))
-                    .createScoped(Lists.newArrayList("https://www.googleapis.com/auth/cloud-platform"));
-            } catch (final Exception ex) {
-                throw new GCPModuleException(format("Unable to resolve data for key %s on secret %s", dataKey, secretName), ex);
+            catch (Exception ex) {
+                throw new RuntimeException("Unable to read credentials from " + googleAppCredentialsPath);
             }
         }
     }

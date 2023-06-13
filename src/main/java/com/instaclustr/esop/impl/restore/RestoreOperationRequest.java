@@ -36,7 +36,6 @@ import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategy
 import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.jackson.PathSerializer;
-import com.instaclustr.kubernetes.KubernetesHelper;
 import com.instaclustr.picocli.typeconverter.PathTypeConverter;
 import picocli.CommandLine.Option;
 
@@ -316,16 +315,6 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
 
         if (!Files.exists(this.cassandraDirectory)) {
             throw new IllegalStateException(format("cassandraDirectory %s does not exist", this.cassandraDirectory));
-        }
-
-        if ((KubernetesHelper.isRunningInKubernetes() || KubernetesHelper.isRunningAsClient())) {
-            if (this.resolveKubernetesSecretName() == null) {
-                throw new IllegalStateException("This code is running in Kubernetes or as a Kubernetes client but it is not possible to resolve k8s secret name for restores!");
-            }
-
-            if (this.resolveKubernetesNamespace() == null) {
-                throw new IllegalStateException("This code is running in Kubernetes or as a Kubernetes client but it is not possible to resolve k8s namespace for restores!");
-            }
         }
 
         if (this.entities == null) {

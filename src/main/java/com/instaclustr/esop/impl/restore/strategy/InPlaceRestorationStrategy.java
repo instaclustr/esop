@@ -27,7 +27,6 @@ import com.instaclustr.esop.impl.restore.strategy.DataSynchronizator.ManifestEnt
 import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology;
 import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology.NodeTopology;
 import com.instaclustr.io.FileUtils;
-import com.instaclustr.kubernetes.KubernetesHelper;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.Operation.Error;
 
@@ -129,15 +128,10 @@ public class InPlaceRestorationStrategy implements RestorationStrategy {
                 Path fileToAppendTo;
                 boolean shouldAppend = true;
 
-                if (KubernetesHelper.isRunningInKubernetes()) {
-                    // Cassandra operator specific dir
-                    fileToAppendTo = Paths.get("/var/lib/cassandra/tokens.yaml");
-                } else {
-                    fileToAppendTo = request.cassandraConfigDirectory.resolve("cassandra.yaml");
-                    if (!Files.exists(fileToAppendTo)) {
-                        logger.info(String.format("File %s does not exist, not going to append to it!", fileToAppendTo));
-                        shouldAppend = false;
-                    }
+                fileToAppendTo = request.cassandraConfigDirectory.resolve("cassandra.yaml");
+                if (!Files.exists(fileToAppendTo)) {
+                    logger.info(String.format("File %s does not exist, not going to append to it!", fileToAppendTo));
+                    shouldAppend = false;
                 }
 
                 if (shouldAppend) {

@@ -1,7 +1,5 @@
 package com.instaclustr.esop.impl.truncate;
 
-import javax.validation.constraints.NotEmpty;
-
 import com.google.common.base.MoreObjects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -10,13 +8,11 @@ import com.instaclustr.operations.OperationRequest;
 
 public class TruncateOperationRequest extends OperationRequest {
 
-    @NotEmpty
     public String keyspace;
 
-    @NotEmpty
     public String table;
 
-    public TruncateOperationRequest(@NotEmpty final String keyspace, @NotEmpty final String table) {
+    public TruncateOperationRequest(final String keyspace, final String table) {
         this("truncate", keyspace, table);
     }
 

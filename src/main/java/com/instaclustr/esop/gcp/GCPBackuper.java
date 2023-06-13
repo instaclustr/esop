@@ -32,14 +32,14 @@ public class GCPBackuper extends Backuper {
     public GCPBackuper(final GoogleStorageFactory storageFactory,
                        @Assisted final BackupOperationRequest backupOperationRequest) {
         super(backupOperationRequest);
-        this.storage = storageFactory.build(backupOperationRequest);
+        this.storage = storageFactory.build();
     }
 
     @AssistedInject
     public GCPBackuper(final GoogleStorageFactory storageFactory,
                        @Assisted final BackupCommitLogsOperationRequest backupOperationRequest) {
         super(backupOperationRequest);
-        this.storage = storageFactory.build(backupOperationRequest);
+        this.storage = storageFactory.build();
     }
 
     @Override
