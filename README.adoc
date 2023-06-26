@@ -54,10 +54,14 @@ node—it needs to see the whole directory structure of a node (data dir etc.) a
 upload these files during a backup and download them on a restore. If you want to be able to
 restore and backup remotely, use Icarus which embeds this project.
 
-## Supporter Cassandra Versions
+## Supported Cassandra Versions
 
 Since we are talking to Cassandra via JMX, almost any Cassandra version is supported.
 We are testing this tool with Cassandra 3.11.8, 4.0-beta3, and 2.2.18.
+
+## Supported Java Environments
+
+Java 8 and 11 are supported currently by ESOP. If you require a newer version of Java, please raise an issue on the project, as a general rule we'll usually target support of Long Term Stable (LTS) releases of Java.
 
 ## Usage
 
