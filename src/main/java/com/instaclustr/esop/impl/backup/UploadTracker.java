@@ -30,7 +30,10 @@ import com.instaclustr.measure.DataRate.DataRateUnit;
 import com.instaclustr.measure.DataSize;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
+import software.amazon.awssdk.awscore.exception.AwsErrorDetails;
 import software.amazon.awssdk.core.exception.SdkException;
+import software.amazon.awssdk.http.SdkHttpResponse;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import static com.instaclustr.esop.impl.ManifestEntry.Type.MANIFEST_FILE;
 import static com.instaclustr.esop.impl.backup.Backuper.FreshenResult.FRESHENED;
@@ -152,7 +155,19 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
             } catch (final Throwable t) {
                 state = State.FAILED;
                 t.printStackTrace();
-                logger.error(format("Failed to upload file '%s", manifestEntry.objectKey), t.getMessage());
+                if (t instanceof S3Exception) {
+
+                    AwsErrorDetails awsErrorDetails = ((S3Exception) t).awsErrorDetails();
+
+                    String errorDetail = null;
+                    if (awsErrorDetails != null) {
+                        errorDetail = awsErrorDetails.toString();
+                    }
+
+                    logger.error(format("Failed to upload file '%s', error detail: %s", manifestEntry.objectKey, errorDetail), t.getMessage());
+                } else {
+                    logger.error(format("Failed to upload file '%s'", manifestEntry.objectKey), t.getMessage());
+                }
                 shouldCancel.set(true);
                 throwable = t;
             }
