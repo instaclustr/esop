@@ -391,7 +391,7 @@ public class ManifestTest {
     private void waitForOperation(final Operation<?> operation) {
         operationsService.submitOperation(operation);
         await().timeout(1, MINUTES).until(() -> {
-            Optional<Operation> op = operationsService.operation(operation.id);
+            Optional<Operation<?>> op = operationsService.operation(operation.id);
             return op.isPresent() && op.get().state == State.COMPLETED;
         });
     }
