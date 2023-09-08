@@ -14,6 +14,7 @@ import com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvider;
+import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.apache.ProxyConfiguration;
 import software.amazon.awssdk.regions.Region;
@@ -122,26 +123,38 @@ public class S3ClientsFactory {
 
         ApacheHttpClient.Builder httpClientBuilder = ApacheHttpClient.builder();
 
-        if (proxySettings != null) {
+        ProxyConfiguration proxyConfiguration = null;
+
+        if (proxySettings != null && proxySettings.proxyHost != null && proxySettings.proxyPort != null) {
             ProxyConfiguration.Builder configuration = ProxyConfiguration.builder();
-            if (proxySettings.proxyHost != null && proxySettings.proxyPort != null) {
-                try {
-                    String proxyProtocol = proxySettings.proxyProtocol == null ? "https" : proxySettings.proxyProtocol.toString();
-                    String proxyPort = proxySettings.proxyPort.toString();
-                    URI uri = URI.create(String.format("%s://%s:%s", proxyProtocol, proxySettings.proxyHost, proxyPort));
-                    configuration.endpoint(uri);
-                } catch (Throwable t) {
-                    throw new IllegalArgumentException("Unable to set proxy", t);
-                }
+
+            try {
+                String proxyProtocol = proxySettings.proxyProtocol == null ? "https" : proxySettings.proxyProtocol.toString();
+                String proxyPort = proxySettings.proxyPort.toString();
+                URI uri = URI.create(String.format("%s://%s:%s", proxyProtocol, proxySettings.proxyHost, proxyPort));
+                configuration.endpoint(uri);
+            } catch (Throwable t) {
+                throw new IllegalArgumentException("Unable to set proxy", t);
             }
+
             if (proxySettings.proxyUsername != null && proxySettings.proxyPassword != null) {
                 configuration.username(proxySettings.proxyUsername);
                 configuration.password(proxySettings.proxyPassword);
             }
+
+            proxyConfiguration = configuration.build();
         }
 
-        builder.httpClient(httpClientBuilder.maxConnections(1000).build());
+        httpClientBuilder = httpClientBuilder.maxConnections(1000);
 
-        return builder.build();
+        SdkHttpClient sdkHttpClient = null;
+
+        if (proxyConfiguration == null) {
+            sdkHttpClient = httpClientBuilder.build();
+        } else {
+            sdkHttpClient = httpClientBuilder.proxyConfiguration(proxyConfiguration).build();
+        }
+
+        return builder.httpClient(sdkHttpClient).build();
     }
 }
