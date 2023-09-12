@@ -61,7 +61,7 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
     @Option(names = {"--skip-refreshing"},
         description = "Skip refreshing files on their last modification date in remote storage upon backup. When turned on, "
             + "there will be no attempt to change the last modification time, there will be just a check done on their presence "
-            + "based on which a respective local file will be upload or not, defaults to false.")
+            + "based on which a respective local file will be upload or not, defaults to false, does not work with s3.")
     public boolean skipRefreshing;
 
     public BaseBackupOperationRequest() {

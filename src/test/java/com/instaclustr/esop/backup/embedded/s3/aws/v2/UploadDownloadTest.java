@@ -15,7 +15,7 @@ import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.s3.S3RemoteObjectReference;
 import com.instaclustr.esop.s3.aws_v2.S3Backuper;
 import com.instaclustr.esop.s3.aws_v2.S3Restorer;
-import com.instaclustr.esop.s3.aws_v2.S3V2Module;
+import com.instaclustr.esop.s3.aws_v2.S3Module;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory.S3Clients;
 import org.testng.SkipException;
 import org.testng.annotations.AfterMethod;
@@ -49,7 +49,7 @@ public class UploadDownloadTest extends AbstractS3UploadDownloadTest {
     public void setup() throws Exception {
         tempDir = Files.createTempDirectory("tmp");
         Files.deleteIfExists(tempDir.resolve("some-file"));
-        inject(new S3V2Module());
+        inject(new S3Module());
     }
 
     @AfterMethod
@@ -60,7 +60,7 @@ public class UploadDownloadTest extends AbstractS3UploadDownloadTest {
 
     @Override
     protected String protocol() {
-        return "s3v2://";
+        return "s3://";
     }
 
     @Test
@@ -72,8 +72,8 @@ public class UploadDownloadTest extends AbstractS3UploadDownloadTest {
         try {
             backupOperationRequest.kmsKeyId = System.getProperty(AWS_KMS_KEY_ID_PROPERTY);
 
-            restoreOperationRequest.storageLocation = new StorageLocation("s3v2://" + BUCKET_NAME + "/cluster/dc/node");
-            backupOperationRequest.storageLocation = new StorageLocation("s3v2://" + BUCKET_NAME + "/cluster/dc/node");
+            restoreOperationRequest.storageLocation = new StorageLocation("s3://" + BUCKET_NAME + "/cluster/dc/node");
+            backupOperationRequest.storageLocation = new StorageLocation("s3://" + BUCKET_NAME + "/cluster/dc/node");
 
             s3Backuper = new S3Backuper(backupOperationRequest);
             s3Restorer = new S3Restorer(restoreOperationRequest);
@@ -95,8 +95,8 @@ public class UploadDownloadTest extends AbstractS3UploadDownloadTest {
     @Test
     public void testUnencrypted() throws Exception {
         try {
-            restoreOperationRequest.storageLocation = new StorageLocation("s3v2://" + BUCKET_NAME + "/cluster/dc/node");
-            backupOperationRequest.storageLocation = new StorageLocation("s3v2://" + BUCKET_NAME + "/cluster/dc/node");
+            restoreOperationRequest.storageLocation = new StorageLocation("s3://" + BUCKET_NAME + "/cluster/dc/node");
+            backupOperationRequest.storageLocation = new StorageLocation("s3://" + BUCKET_NAME + "/cluster/dc/node");
             backupOperationRequest.kmsKeyId = null;
 
             s3Backuper = new S3Backuper(backupOperationRequest);

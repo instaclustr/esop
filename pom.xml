@@ -47,10 +47,9 @@
         <git.build.time/>
         
         <outputDirectory>${project.build.directory}</outputDirectory>
-        
-        <!-- Cassandra 3 does not work with Java 11 -->
-        <java.source.version>8</java.source.version>
-        <java.target.version>8</java.target.version>
+
+        <java.source.version>11</java.source.version>
+        <java.target.version>11</java.target.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     
@@ -588,25 +587,6 @@
                         <version>${maven.surefire.plugin.version}</version>
                         <configuration>
                             <groups>s3Test</groups>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        
-        <profile>
-            <id>cephTests</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>${maven.surefire.plugin.version}</version>
-                        <configuration>
-                            <groups>cephTest</groups>
                         </configuration>
                     </plugin>
                 </plugins>

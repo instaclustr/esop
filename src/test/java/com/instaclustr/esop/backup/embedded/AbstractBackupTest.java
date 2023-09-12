@@ -1,7 +1,6 @@
 package com.instaclustr.esop.backup.embedded;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -69,6 +68,12 @@ import static org.testng.Assert.assertEquals;
 
 public abstract class AbstractBackupTest {
 
+    protected static final Logger logger = LoggerFactory.getLogger(AbstractBackupTest.class);
+
+    public String getCassandraVersion() {
+        return CASSANDRA_5_VERSION;
+    }
+
     public List<AbstractModule> defaultModules = new ArrayList<AbstractModule>() {{
         add(new ExecutorsModule());
         add(new BackupModule());
@@ -88,11 +93,9 @@ public abstract class AbstractBackupTest {
         add(new OperationsModule());
     }};
 
-    protected static final Logger logger = LoggerFactory.getLogger(AbstractBackupTest.class);
+    public static final String CASSANDRA_5_VERSION = System.getProperty("cassandra5.version", "5.0-alpha1");
 
-    public static final String CASSANDRA_VERSION = System.getProperty("cassandra3.version", "3.11.14");
-
-    public static final String CASSANDRA_4_VERSION = System.getProperty("cassandra4.version", "4.1.0");
+    public static final String CASSANDRA_4_VERSION = System.getProperty("cassandra4.version", "4.1.2");
 
     // This is number of rows we inserted into Cassandra DB in total
     // we backed up first 6 rows. For the last two rows, they are stored in commit logs.
@@ -123,7 +126,7 @@ public abstract class AbstractBackupTest {
         }
     }
 
-    protected String[][] inPlaceArguments(final String cassandraVersion) {
+    protected String[][] inPlaceArguments() {
 
         final String snapshotName = UUID.randomUUID().toString();
 
@@ -139,7 +142,7 @@ public abstract class AbstractBackupTest {
             cassandraDir.toAbsolutePath() + "/data/data2",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -155,7 +158,7 @@ public abstract class AbstractBackupTest {
             cassandraDir.toAbsolutePath() + "/data/data2",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -172,7 +175,7 @@ public abstract class AbstractBackupTest {
             cassandraDir.toAbsolutePath() + "/data/data2",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket",
         };
@@ -203,7 +206,7 @@ public abstract class AbstractBackupTest {
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
             "--restore-system-keyspace",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2",
             // this will import systema_schema, normally, it wont happen without setting --restore-system-keyspace
             // that would import all of them which is not always what we really want as other system tables
             // would be regenerated, only schema should be as it was.
@@ -233,7 +236,7 @@ public abstract class AbstractBackupTest {
         };
     }
 
-    protected String[][] importArguments(final String cassandraVersion) {
+    protected String[][] importArguments() {
 
         final String snapshotName1 = "snapshot1";
         final String snapshotName2 = "snapshot2";
@@ -251,7 +254,7 @@ public abstract class AbstractBackupTest {
             cassandraDir.toAbsolutePath() + "/data/data2",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -267,7 +270,7 @@ public abstract class AbstractBackupTest {
             cassandraDir.toAbsolutePath() + "/data/data2",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -286,7 +289,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2",
             "--restoration-strategy-type=import",
             "--restoration-phase-type=download", /// DOWNLOAD
             //"--import-source-dir=" + target("downloaded"),
@@ -306,7 +309,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2",
             "--restoration-strategy-type=import",
             "--restoration-phase-type=truncate", // TRUNCATE
             "--import-source-dir=" + cassandraDir.toAbsolutePath() + "/data/downloads",
@@ -325,7 +328,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2",
             "--restoration-strategy-type=import",
             "--restoration-phase-type=import", // IMPORT
             "--import-source-dir=" + cassandraDir.toAbsolutePath() + "/data/downloads",
@@ -344,7 +347,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName2,
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2",
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2",
             "--restoration-strategy-type=import",
             "--restoration-phase-type=cleanup", // CLEANUP
             "--import-source-dir=" + cassandraDir.toAbsolutePath() + "/data/downloads",
@@ -361,7 +364,7 @@ public abstract class AbstractBackupTest {
         };
     }
 
-    protected String[][] importArgumentsRenamedTable(final String cassandraVersion, final RestorationStrategyType strategyType, final boolean crossKeyspaceRename) {
+    protected String[][] importArgumentsRenamedTable(final RestorationStrategyType strategyType, final boolean crossKeyspaceRename) {
 
         final String snapshotName1 = "snapshot1";
         final String snapshotName2 = "snapshot2";
@@ -387,7 +390,7 @@ public abstract class AbstractBackupTest {
             cassandraDir.toAbsolutePath() + "/data/data2",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -403,7 +406,7 @@ public abstract class AbstractBackupTest {
             cassandraDir.toAbsolutePath() + "/data/data2",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -504,7 +507,7 @@ public abstract class AbstractBackupTest {
         };
     }
 
-    protected String[][] hardlinkingArguments(final String cassandraVersion) {
+    protected String[][] hardlinkingArguments() {
 
         final String snapshotName = UUID.randomUUID().toString();
 
@@ -520,7 +523,7 @@ public abstract class AbstractBackupTest {
             cassandraDir.toAbsolutePath() + "/data/data2",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -536,7 +539,7 @@ public abstract class AbstractBackupTest {
             cassandraDir.toAbsolutePath() + "/data/data2",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -552,7 +555,7 @@ public abstract class AbstractBackupTest {
                 cassandraDir.toAbsolutePath() + "/data/data2",
                 "--data-dir",
                 cassandraDir.toAbsolutePath() + "/data/data3",
-                "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
+                "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
                 "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
                 "--create-missing-bucket"
         };
@@ -646,8 +649,7 @@ public abstract class AbstractBackupTest {
         };
     }
 
-    protected String[][] restoreByImportingIntoDifferentSchemaArguments(final String cassandraVersion,
-                                                                        final RestorationStrategyType type) {
+    protected String[][] restoreByImportingIntoDifferentSchemaArguments(final RestorationStrategyType type) {
 
         String snapshotName1 = "snapshot1";
         String snapshotName2 = "snapshot2";
@@ -666,7 +668,7 @@ public abstract class AbstractBackupTest {
             cassandraDir.toAbsolutePath() + "/data/data2",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // keyspaces
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -683,7 +685,7 @@ public abstract class AbstractBackupTest {
             cassandraDir.toAbsolutePath() + "/data/data2",
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2,test3", // keyspaces
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2,test3", // keyspaces
             "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
@@ -705,7 +707,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName1, // !!! important, we are restoring into the FIRST snapshot
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // here we want to restore only to test and test2
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // here we want to restore only to test and test2
             "--restoration-strategy-type=" + type.toString(),
             "--restoration-phase-type=download", /// DOWNLOAD
             "--import-source-dir=" + target("downloaded"),
@@ -724,7 +726,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName1, // !!! important, we are restoring into the FIRST snapshot
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // here we want to restore only to test and test2 which were not altered (test3 was)
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // here we want to restore only to test and test2 which were not altered (test3 was)
             "--restoration-strategy-type=" + type,
             "--restoration-phase-type=truncate", // TRUNCATE
             "--import-source-dir=" + target("downloaded"),
@@ -743,7 +745,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName1, // !!! important, we are restoring into the FIRST snapshot
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // here we want to restore only to test and test2
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // here we want to restore only to test and test2
             "--restoration-strategy-type=" + type,
             "--restoration-phase-type=import", // IMPORT
             "--import-source-dir=" + target("downloaded"),
@@ -762,7 +764,7 @@ public abstract class AbstractBackupTest {
             "--snapshot-tag=" + snapshotName1, // !!! important, we are restoring into the FIRST snapshot
             "--storage-location=" + getStorageLocation(),
             "--update-cassandra-yaml=true",
-            "--entities=" + systemKeyspace(cassandraVersion) + ",test,test2", // here we want to restore only to test and test2
+            "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // here we want to restore only to test and test2
             "--restoration-strategy-type=" + type,
             "--restoration-phase-type=cleanup", // CLEANUP
             "--import-source-dir=" + target("downloaded"),
@@ -794,7 +796,7 @@ public abstract class AbstractBackupTest {
         Cassandra cassandra = null;
 
         try {
-            cassandra = getCassandra(cassandraDir, CASSANDRA_VERSION);
+            cassandra = getCassandra(cassandraDir, getCassandraVersion());
             cassandra.start();
 
             List<Long> insertionTimes;
@@ -810,7 +812,7 @@ public abstract class AbstractBackupTest {
             cassandra.stop();
 
             // RESTORE VERIFICATION
-            cassandra = getCassandra(cassandraRestoredDir, CASSANDRA_VERSION, (workingDirectory, version) -> {
+            cassandra = getCassandra(cassandraRestoredDir, getCassandraVersion(), (workingDirectory, version) -> {
                 try {
                     FileUtils.createDirectory(workingDirectory.resolve("data").resolve("data"));
                     FileUtils.createDirectory(workingDirectory.resolve("data").resolve("data2"));
@@ -839,10 +841,9 @@ public abstract class AbstractBackupTest {
     }
 
     public void liveBackupRestoreTestRenamedEntities(final String[][] arguments,
-                                                     final String cassandraVersion,
                                                      int rounds,
                                                      boolean crossKeyspaceRestore) throws Exception {
-        Cassandra cassandra = getCassandra(cassandraDir, cassandraVersion);
+        Cassandra cassandra = getCassandra(cassandraDir, getCassandraVersion());
         cassandra.start();
 
         waitForCql();
@@ -880,7 +881,7 @@ public abstract class AbstractBackupTest {
                 logger.info("Round " + i + " - Executing the third restoration phase - import {}", asList(arguments[4]));
                 Esop.mainWithoutExit(arguments[4]);
 
-                if (!cassandraVersion.startsWith("4")) {
+                if (!getCassandraVersion().startsWith("4") && !getCassandraVersion().startsWith("5")) {
                     // second round would not pass for 4 because import deletes files in download
                     logger.info("Round " + i + " - Executing the third restoration phase for the second time - import {}", asList(arguments[4]));
                     Esop.mainWithoutExit(arguments[4]);
@@ -907,8 +908,8 @@ public abstract class AbstractBackupTest {
         }
     }
 
-    public void liveBackupRestoreTest(final String[][] arguments, final String cassandraVersion, int rounds) throws Exception {
-        Cassandra cassandra = getCassandra(cassandraDir, cassandraVersion);
+    public void liveBackupRestoreTest(final String[][] arguments, int rounds) throws Exception {
+        Cassandra cassandra = getCassandra(cassandraDir, getCassandraVersion());
         cassandra.start();
 
         waitForCql();
@@ -964,8 +965,8 @@ public abstract class AbstractBackupTest {
         }
     }
 
-    public void liveBackupRestoreTest(final String[][] arguments, final String cassandraVersion) throws Exception {
-        liveBackupRestoreTest(arguments, cassandraVersion, 1);
+    public void liveBackupRestoreTest(final String[][] arguments) throws Exception {
+        liveBackupRestoreTest(arguments, 1);
     }
 
     private void waitUntilSchemaChanged(final String firstSchemaVersion) {
@@ -976,10 +977,8 @@ public abstract class AbstractBackupTest {
         });
     }
 
-    public void liveBackupWithRestoreOnDifferentTableSchema(final String[][] arguments,
-                                                            final String cassandraVersion,
-                                                            final boolean tableAddition) throws Exception {
-        Cassandra cassandra = getCassandra(cassandraDir, cassandraVersion);
+    public void liveBackupWithRestoreOnDifferentTableSchema(final String[][] arguments, final boolean tableAddition) throws Exception {
+        Cassandra cassandra = getCassandra(cassandraDir, getCassandraVersion());
         cassandra.start();
 
         waitForCql();
@@ -1055,8 +1054,8 @@ public abstract class AbstractBackupTest {
         }
     }
 
-    public void liveBackupWithRestoreOnDifferentSchema(final String[][] arguments, final String cassandraVersion) throws Exception {
-        Cassandra cassandra = getCassandra(cassandraDir, cassandraVersion);
+    public void liveBackupWithRestoreOnDifferentSchema(final String[][] arguments) throws Exception {
+        Cassandra cassandra = getCassandra(cassandraDir, getCassandraVersion());
         cassandra.start();
 
         waitForCql();

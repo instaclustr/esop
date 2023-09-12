@@ -1,6 +1,11 @@
 package com.instaclustr.esop.impl.hash;
 
+import java.io.InputStream;
+import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.function.Supplier;
+import java.util.zip.CRC32;
+import java.util.zip.Checksum;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,20 +39,82 @@ public class HashSpec {
         }
     }
 
+    public interface Hasher {
+
+        String getHash(InputStream is) throws Exception;
+    }
+
+    private static class SHAHasher implements Hasher {
+        private final String algorithm;
+        public SHAHasher(String algorithm) {
+            this.algorithm = algorithm;
+        }
+
+        @Override
+        public String getHash(InputStream is) throws Exception
+        {
+            final MessageDigest digest = MessageDigest.getInstance(algorithm);
+
+            // Create byte array to read data in chunks
+            byte[] byteArray = new byte[1024];
+            int bytesCount = 0;
+
+            // Read file data and update in message digest
+            while ((bytesCount = is.read(byteArray)) != -1) {
+                digest.update(byteArray, 0, bytesCount);
+            }
+
+            byte[] bytes = digest.digest();
+
+            final StringBuilder sb = new StringBuilder();
+
+            //This bytes[] has bytes in decimal format, convert it to hexadecimal format
+            for (final byte aByte : bytes) {
+                sb.append(Integer.toString((aByte & 0xff) + 0x100, 16).substring(1));
+            }
+
+            return sb.toString();
+        }
+    }
+
+    public static class CRCHasher implements Hasher {
+        @Override
+        public String getHash(InputStream is) throws Exception
+        {
+            byte[] byteArray = new byte[1024];
+            int bytesCount = 0;
+
+            Checksum checksum = new CRC32();
+
+            while ((bytesCount = is.read(byteArray)) != -1) {
+                checksum.update(byteArray, 0, bytesCount);
+            }
+
+            return Long.toString(checksum.getValue());
+        }
+    }
+
     public enum HashAlgorithm {
-        SHA_256("SHA-256");
+        SHA_256("SHA-256", () -> new SHAHasher("SHA-256")),
+        CRC("CRC", () -> new CRCHasher());
 
         private static final Logger logger = LoggerFactory.getLogger(HashAlgorithm.class);
         public static final HashAlgorithm DEFAULT_ALGORITHM = HashAlgorithm.SHA_256;
 
         private final String name;
+        private final Supplier<Hasher> hasherSupplier;
 
-        HashAlgorithm(final String name) {
+        HashAlgorithm(final String name, final Supplier<Hasher> hasherSupplier) {
             this.name = name;
+            this.hasherSupplier = hasherSupplier;
         }
 
         public String toString() {
             return name;
+        }
+
+        public Hasher getHasher() {
+            return hasherSupplier.get();
         }
 
         public static HashAlgorithm parse(final String value) {

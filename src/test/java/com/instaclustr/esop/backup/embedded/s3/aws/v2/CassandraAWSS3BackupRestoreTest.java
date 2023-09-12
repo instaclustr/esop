@@ -4,7 +4,7 @@ import com.instaclustr.esop.backup.embedded.s3.aws.BaseAWSS3BackupRestoreTest;
 import com.instaclustr.esop.impl.BucketService.BucketServiceException;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.s3.S3ConfigurationResolver;
-import com.instaclustr.esop.s3.aws_v2.S3V2Module;
+import com.instaclustr.esop.s3.aws_v2.S3Module;
 import com.instaclustr.esop.s3.v2.BaseS3BucketService;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory;
 import org.testng.SkipException;
@@ -23,14 +23,14 @@ import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.TE
 public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
 
     @BeforeMethod
-    public void setup() throws Exception {
-        inject(new S3V2Module());
+    public void setup() {
+        inject(new S3Module());
         init();
     }
 
     @Override
     protected String protocol() {
-        return "s3v2://";
+        return "s3://";
     }
 
     @AfterMethod
@@ -51,17 +51,17 @@ public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest 
 
     @Test
     public void testInPlaceBackupRestore() throws Exception {
-        inPlaceTest(inPlaceArguments(CASSANDRA_VERSION));
+        inPlaceTest(inPlaceArguments());
     }
 
     @Test
     public void testImportingBackupAndRestore() throws Exception {
-        liveCassandraTest(importArguments(CASSANDRA_4_VERSION), CASSANDRA_4_VERSION);
+        liveCassandraTest(importArguments());
     }
 
     @Test
     public void testHardlinkingBackupAndRestore() throws Exception {
-        liveCassandraTest(hardlinkingArguments(CASSANDRA_VERSION), CASSANDRA_VERSION);
+        liveCassandraTest(hardlinkingArguments());
     }
 
     @Test
@@ -70,7 +70,7 @@ public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest 
             @Override
             public void run() throws Exception
             {
-                inPlaceTest(inPlaceArguments(CASSANDRA_VERSION));
+                inPlaceTest(inPlaceArguments());
             }
         });
     }
@@ -80,7 +80,7 @@ public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest 
         runWithEncryption(new ThrowingRunnable() {
             @Override
             public void run() throws Exception {
-                liveCassandraTest(importArguments(CASSANDRA_4_VERSION), CASSANDRA_4_VERSION);
+                liveCassandraTest(importArguments());
             }
         });
     }
@@ -90,7 +90,7 @@ public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest 
         runWithEncryption(new ThrowingRunnable() {
             @Override
             public void run() throws Exception {
-                liveCassandraTest(hardlinkingArguments(CASSANDRA_VERSION), CASSANDRA_VERSION);
+                liveCassandraTest(hardlinkingArguments());
             }
         });
     }

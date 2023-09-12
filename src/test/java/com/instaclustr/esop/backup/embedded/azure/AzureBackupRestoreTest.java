@@ -32,7 +32,7 @@ public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
     public CloudStorageAccountFactory cloudStorageAccountFactory;
 
     @BeforeMethod
-    public void setup() throws Exception {
+    public void setup() {
         inject();
         init();
     }
@@ -53,17 +53,17 @@ public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
 
     @Test
     public void testInPlaceBackupRestore() throws Exception {
-        inPlaceTest(inPlaceArguments(CASSANDRA_VERSION));
+        inPlaceTest(inPlaceArguments());
     }
 
     @Test
     public void testImportingBackupAndRestore() throws Exception {
-        liveCassandraTest(importArguments(CASSANDRA_4_VERSION), CASSANDRA_4_VERSION);
+        liveCassandraTest(importArguments());
     }
 
     @Test
     public void testHardlinkingBackupAndRestore() throws Exception {
-        liveCassandraTest(hardlinkingArguments(CASSANDRA_VERSION), CASSANDRA_VERSION);
+        liveCassandraTest(hardlinkingArguments());
     }
 
     @Test

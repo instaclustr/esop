@@ -13,7 +13,6 @@ import com.instaclustr.esop.s3.S3ConfigurationResolver;
 import com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvider;
 import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.apache.ProxyConfiguration;

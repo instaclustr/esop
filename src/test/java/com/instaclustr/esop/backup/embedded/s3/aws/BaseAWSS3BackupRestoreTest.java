@@ -39,9 +39,9 @@ public abstract class BaseAWSS3BackupRestoreTest extends AbstractBackupTest {
         }
     }
 
-    public void liveCassandraTest(final String[][] programArguments, final String cassandraVersion) throws Exception {
+    public void liveCassandraTest(final String[][] programArguments) throws Exception {
         try {
-            liveBackupRestoreTest(programArguments, cassandraVersion);
+            liveBackupRestoreTest(programArguments, 1);
         } finally {
             deleteBucket();
         }

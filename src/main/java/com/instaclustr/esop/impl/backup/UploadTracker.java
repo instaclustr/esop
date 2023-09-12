@@ -31,8 +31,6 @@ import com.instaclustr.measure.DataSize;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
 import software.amazon.awssdk.awscore.exception.AwsErrorDetails;
-import software.amazon.awssdk.core.exception.SdkException;
-import software.amazon.awssdk.http.SdkHttpResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import static com.instaclustr.esop.impl.ManifestEntry.Type.MANIFEST_FILE;

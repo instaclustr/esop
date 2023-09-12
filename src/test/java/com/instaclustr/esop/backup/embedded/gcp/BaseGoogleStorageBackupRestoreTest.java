@@ -42,9 +42,9 @@ public abstract class BaseGoogleStorageBackupRestoreTest extends AbstractBackupT
         }
     }
 
-    public void liveCassandraTest(final String[][] programArguments, final String cassandraVersion) throws Exception {
+    public void liveCassandraTest(final String[][] programArguments) throws Exception {
         try {
-            liveBackupRestoreTest(programArguments, cassandraVersion);
+            liveBackupRestoreTest(programArguments, 1);
         } finally {
             new GCPBucketService(getGoogleStorageFactory(), getBackupOperationRequest()).delete(BUCKET_NAME);
         }

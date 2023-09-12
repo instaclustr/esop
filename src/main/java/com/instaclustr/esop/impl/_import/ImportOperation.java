@@ -96,7 +96,7 @@ public class ImportOperation extends Operation<ImportOperationRequest> {
         assert cassandraJMXService != null;
         assert cassandraVersion != null;
 
-        if (!CassandraVersion.isFour(cassandraVersion)) {
+        if (!CassandraVersion.isNewerOrEqualTo4(cassandraVersion)) {
             throw new OperationFailureException(format("Underlying version of Cassandra is not supported to import SSTables: %s. Use this method "
                                                            + "only if you run Cassandra 4 and above", cassandraVersion));
         }

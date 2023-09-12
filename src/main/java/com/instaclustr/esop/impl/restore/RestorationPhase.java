@@ -417,7 +417,7 @@ public abstract class RestorationPhase {
             try {
                 logger.info("Importing phase has started.");
 
-                if (!CassandraVersion.isFour(ctxt.cassandraVersion)) {
+                if (!CassandraVersion.isNewerOrEqualTo4(ctxt.cassandraVersion)) {
                     throw new OperationFailureException(format("Underlying version of Cassandra is not supported to import SSTables: %s. Use this method "
                                                                + "only if you run Cassandra 4 and above", ctxt.cassandraVersion));
                 }

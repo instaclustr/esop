@@ -72,12 +72,12 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
 
     @Test
     public void testListingAndBackup() throws Exception {
-        Cassandra cassandra = getCassandra(cassandraDir, CASSANDRA_VERSION);
+        Cassandra cassandra = getCassandra(cassandraDir, getCassandraVersion());
         cassandra.start();
 
         waitForCql();
 
-        String[][] arguments = hardlinkingArguments(CASSANDRA_VERSION);
+        String[][] arguments = hardlinkingArguments();
 
         try (CqlSession session = CqlSession.builder().build()) {
 

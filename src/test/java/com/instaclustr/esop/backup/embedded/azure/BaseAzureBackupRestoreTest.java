@@ -42,9 +42,9 @@ public abstract class BaseAzureBackupRestoreTest extends AbstractBackupTest {
         }
     }
 
-    public void liveCassandraTest(final String[][] programArguments, String cassandraVersion) throws Exception {
+    public void liveCassandraTest(final String[][] programArguments) throws Exception {
         try {
-            liveBackupRestoreTest(programArguments, cassandraVersion);
+            liveBackupRestoreTest(programArguments, 1);
         } finally {
             new AzureBucketService(getStorageAccountFactory(), getBackupOperationRequest()).delete(BUCKET_NAME);
         }

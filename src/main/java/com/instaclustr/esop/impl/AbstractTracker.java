@@ -154,9 +154,9 @@ public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session
                 sessions.stream().filter(s -> s.getUnits().contains(value)).forEach(s -> {
                     operationsService.operation(s.getId()).ifPresent(op -> {
                         s.finishedUnits.incrementAndGet();
-                        logger.info(String.format("Progress for snapshot %s: %s",
+                        logger.info(String.format("Progress for snapshot %s: %.2f",
                                                    s.snapshotTag,
-                                                   s.getProgress()));
+                                                   s.getProgress() * 100));
                         op.progress = s.getProgress();
                     });
                 });
@@ -207,12 +207,12 @@ public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session
         // the most probably because it waits until it fits into pool
         session.getNonFailedUnits().forEach(unit -> {
             if (unit.getState() == NOT_STARTED) {
-                logger.info(format("Ignoring %s from processing because there was an errorneous unit in a session %s",
+                logger.info(format("Ignoring %s from processing because there was an erroneous unit in a session %s",
                                    unit.getManifestEntry().localFile,
                                    session.id));
                 unit.setState(IGNORED);
             } else if (unit.getState() == Unit.State.RUNNING) {
-                logger.info(format("Cancelling %s because there was an errorneous unit in a session %s",
+                logger.info(format("Cancelling %s because there was an erroneous unit in a session %s",
                                    unit.getManifestEntry().localFile,
                                    session.id));
                 unit.setState(CANCELLED);
@@ -381,7 +381,7 @@ public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session
             logger.info(format("%sSession %s has finished %s",
                                snapshotTag != null ? "Snapshot " + snapshotTag + " - " : "",
                                id,
-                               isSuccessful() ? "successfully" : "errorneously"));
+                               isSuccessful() ? "successfully" : "erroneously"));
         }
 
         public void addUnit(final U unit) {

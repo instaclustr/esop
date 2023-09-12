@@ -57,7 +57,7 @@ restore and backup remotely, use Icarus which embeds this project.
 ## Supporter Cassandra Versions
 
 Since we are talking to Cassandra via JMX, almost any Cassandra version is supported.
-We are testing this tool with Cassandra 3.11.8, 4.0-beta3, and 2.2.18.
+We are testing this tool with Cassandra 5.x and 4.x.
 
 ## Usage
 
@@ -128,7 +128,7 @@ _from scratch_ or if you use <<In-place restoration strategy>>.
 Data to backup and restore from, are located in a remote storage. This setting is controlled by flag
 `--storage-location`. The storage location flag has very specific structure which also indicates where data will be
 uploaded. Locations consist of a storage _protocol_ and path. Please keep in mind that the protocol we are using is not a
-_real_ protocol. It is merely a mnemonic. Use either `s3`, `gcp`, `azure`, `oracle`, `minio`, `ceph` or `file`.
+_real_ protocol. It is merely a mnemonic. Use either `s3`, `gcp`, `azure` or `file`.
 
 The format is:
 
@@ -178,37 +178,7 @@ The most notable fact is that if no credentials are set explicitly, it will try 
 properties of the node it runs on. If that node runs in AWS EC2, it will resolve them by help of that particular instance.
 
 S3 connectors will expect to find environment properties `AWS_ACCESS_KEY_ID` and `AWS_SECRET_KEY`.
-They will also accept `AWS_REGION` and `AWS_ENDPOINT` environment properties—however they are not required.
-If `AWS_ENDPOINT` is set, `AWS_REGION` has to be set too.
-
-S3 currently supports two different addressing models: path-style and virtual-hosted style (https://docs.aws.amazon.com/AmazonS3/latest/userguide/RESTAPI.html).
-
-Esop supports different S3 providers and applies the following default addressing models.
-
-.default settings per provider
-|===
-|provider |addressing model
-
-|AWS
-|virtual
-
-|Ceph
-|virtual
-
-|Minio
-|path
-
-|Oracle
-|path
-|===
-
-Providing the AWS_ENABLE_PATH_STYLE_ACCESS environment variable with `true` or `false` overrides this default setting. Note that this applies to each provider, except when running in Kubernetes.
-
-|provider|model|
-|Minio|path|
-
-The communication with S3 might be insecure, this is controlled by `--insecure-http` flag on the command line. By default,
-it uses HTTPS.
+They will also accept `AWS_REGION`.
 
 It is possible to connect to S3 via proxy; please consult "--use-proxy" flag and "--proxy-*" family of settings on command line.
 
@@ -219,74 +189,6 @@ Azure module expects `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` environment
 #### GCP
 
 GCP module expects `GOOGLE_APPLICATION_CREDENTIALS` environment property or `google.application.credentials` to be set with the path to service account credentials.
-
-#### Oracle
-
-Oracle module behaves same way as S3 when it comes to credentials.
-
-#### Ceph
-
-CEPH module uses https://docs.ceph.com/en/latest/radosgw/s3/java/[Amazon S3 driver] for
-https://docs.ceph.com/en/latest/radosgw/[Ceph Object Gateway]. Credentials-wise,
-it behaves same way as "normal" S3. **You are required to set endpoint to AmazonS3 client.**
-In that case, be sure `AWS_ENDPOINT` environment property is set or `awsendpoint` property in Kubernetes
-secret is specified. You need to provide typical access key and secret key too.
-Please consult the following section to know more about Kubernetes-related
-authentication properties resolution. Setting protocol to HTTP might be achieved similarly as for normal
-S3 module, by specifying `--insecure-http` flag.
-
-#### Minio
-
-`minio` is alias of `oracle`. Oracle nor Minio uses path-style requests which S3 module does not.
-
-#### Authentication in Kubernetes
-
-If this tooling is run in the context of Kubernetes, we need to inject these credentials dynamically upon every request.
-If these credentials are not set statically, e.g. as environment or system properties, we may have an
-application like Cassandra Sidecar which resolves these credentials on every backup or restore request so
-they may change over time by Kubernetes operators (as person). By dynamic injecting, we are separating the lifecycle
-of a credential from the lifecycle of a backup/restore/Sidecar application.
-
-Credentials are stored as a secret. Namespace to read that secret from is specified by flag `--k8s-namespace` and
-the secret to read credentials from is specified by flag `--k8s-secret-name`. If namespace flag is not used,
-it defaults to `default`. If the secret name is not used, it is resolved as `cassandra-backup-restore-secret-cluster-\{cluterId\}` where
-`clusterId` is taken from cluster name in `--storage-location`.
-
-The secret has to contain these fields:
-
-```
-apiVersion: v1
-kind: Secret
-metadata:
-  name: cassandra-backup-restore-secret-cluster-my-cluster
-type: Opaque
-stringData:
-  awssecretaccesskey: _AWS secret key_
-  awsaccesskeyid: _AWS access id_
-  awsregion: e.g. eu-central-1
-  awsendpoint: endpoint
-  azurestorageaccount: _Azure storage account_
-  azurestoragekey: _Azure storage key_
-  gcp: 'whole json with service account'
-```
-
-Of course, if we do not plan to use other storage providers, feel free to omit the properties for them.
-
-For S3, only the secret key and access key are required.
-
-The fact that the code is running in the context of Kubernetes is derived from two facts:
-
-* there are environment properties `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` in a respective
-container this tool is invoked in
-* This tool runs outside of Kubernetes but as _a client_ meaning it will resolve credentials from there but it
-does not run in any container. This is helpful for example during tests where we do not run it inside Kubernetes
-but we want to be sure that the logic dealing with the credentials resolution works properly. This is controlled by
-system property `kubernetes.client` which is by default false.
-
-There might be the third (rather special) case—we want to run this tool in Kubernetes (so env properties would be there) but
-we want to run it as a client. Normally, the first condition would be fulfilled. There is a property called `pretend.not.running.in.kubernetes`,
-defaults to `false`. If set to true, even we run our tool in Kubernetes, it will act as a client, so it will not
-retrieve credentials from Kubernetes secret but from system and environment variables.
 
 ### Directory Structure of a Remote Destination
 
@@ -1048,12 +950,14 @@ consisting of a set of SSTables, all SSTables which were previously a part of th
 a part of the current backup would not be touched - hence no modification date would be refreshed - so they would expire.
 
 For cases there is a versioning enabled (currently known to be an issue for S3 backups only),
-our attempt to refresh it would create new, versioned, file. This is not desired. Hence we
-have the possibility to skip refreshment and we just detect if a file is there or not, but you would
+our attempt to refresh it would create new, versioned, file. This is not desired. Hence, we
+have the possibility to skip refreshment, and we just detect if a file is there or not, but you would
 lose the ability to expire objects as described above.
 
 This behavior is controlled by flag called `--skip-refreshing` on backup command. By default, when
 not specified, it is evaluated to `false`, so skipping would not happen.
+
+Currently, this functionality is not working for s3 protocol.
 
 ### Retry of upload / download operations
 
@@ -1275,17 +1179,12 @@ for each dc separately)
 In order to perform the encryption of your SSTables, so they are stored in a remote AWS S3 bucket already encrypted,
 we leverage AWS KMS client-side encryption by https://github.com/aws/amazon-s3-encryption-client-java[this library].
 
-### s3v2 protocol
-
-*s3v2* protocol has to be used to use KMS client encryption.
-
 Historically, Esop was using AWS API of version 1, however the library which makes client-side encryption possible
 is using API of version 2. The version 1 and version 2 API can live in one project simultaneously. As AWS KMS encryption
 feature in Esop is rather new, we decided to code one additional S3 module which is using V2 API, and
 we left V1 API implementation untouched if users still prefer it for whatever reason. We might eventually switch to
 V2 API completely and drop the code using V1 API in the future.
 
-To use client-side encryption, the protocol needs to be set to `s3v2` instead of `s3` (which uses V1 API).
 A user also needs to supply KMS key id to encrypt data with. The creation of KMS key is out of scope of this document
 however keep in mind that such a key has to be symmetric.
 
@@ -1293,19 +1192,19 @@ The example of encrypted backup is shown below:
 
 ----
 java -jar esop.jar backup \
-    --storage-location=s3v2://instaclustr-oss-esop-bucket
+    --storage-location=s3://instaclustr-oss-esop-bucket
     --data-dir /my/installation/of/cassandra/data/data \
     --entities=ks1 \
     --snapshot-tag=snapshot-1 \
     --kmsKeyId=3bbebd10-7e5f-4fad-997a-89b51040df4c
 ----
 
-Notice we use `s3v2` as protocol. We also sed `kmsKeyId` referencing name of KMS key in AWS to use for encryption.
+Notice we also set `kmsKeyId` referencing name of KMS key in AWS to use for encryption.
 
 KMS key ID is also read from system property `AWS_KMS_KEY_ID` or environment property of the same name.
 Key ID from the command line has precedence over system property which has precedence over environment property.
 
-If `--storage-location` is not fully specified, Esop will try to connect to a runnning node via JMX, and it resolves
+If `--storage-location` is not fully specified, Esop will try to connect to a running node via JMX, and it resolves
 what cluster and datacenter it belongs to and what node ID it has.
 
 The uploading logic of a particular SSTable file is as follows. First we need
@@ -1316,8 +1215,8 @@ to it is this:
 ** if such key is not found, we need to upload a file
 * if we are using encrypting backup (by having `--kmsKeyId` set), we prepare a tag
 which has `kmsKey` as a key and KMS key ID as a value
-* if tags of a remote key are not set or if they are not containg `kmsKey` tag,
-that means that the remote object exists but it is not encrypted. Hence, we
+* if tags of a remote key are not set or if they are not contain `kmsKey` tag,
+that means that the remote object exists, but it is not encrypted. Hence, we
 will need to upload it again, but encrypted this time
 * if we are not skipping the refresh, we will copy the file with `kmsKey` tag
 
@@ -1378,7 +1277,7 @@ bucket:
     S6 encrypted, backup 2
 ----
 
-We see that we are going to backup S3, S4 (compacted S1 and S2), S5 and S6. S3 is already uploaded,
+We see that we are going to back up S3, S4 (compacted S1 and S2), S5 and S6. S3 is already uploaded,
 but it is not encrypted, so S3 will be re-uploaded and encrypted. S4, S5 and S6 are not present remotely yet so all of them will be encrypted and uploaded.
 
 After doing so, we see this in the bucket:
@@ -1407,7 +1306,7 @@ To answer the first question is rather easy. If you want to use a different KMS 
 situation as if we were going to upload but no key was used. If we detect that already uploaded
 object was encrypted with a different KMS key (by reading its tags) from a key we want to use now,
 we just need to re-upload such SSTable and encrypt it with a different KMS key.
-All other logic already exaplained is same.
+All other logic already explained is same.
 
 Restoration will read tags of a remote object to see what KMS key it was encrypted with. If remote
 object was stored as plaintext, no wrapping S3 encryption client is used. If KMS key
@@ -1432,7 +1331,7 @@ restoration in this scenario possible.
 
 ## Logging
 
-We are using logback. There is already `logback.xml` embedded in the built JAR. However if you
+We are using logback. There is already `logback.xml` embedded in the built JAR. However, if you
 want to configure it, feel free to provide your own `logback.xml` and configure it like this:
 
 ----
@@ -1453,28 +1352,14 @@ Here are the test groups/profiles:
 * googleTest
 * s3Tests
 * cloudTest—runs tests which will be using cloud "buckets" for backup / restore
-* k8sTest—same as `cloudTest` above, but credentials will be fetched from Kubernetes.
 
 There is no need to create buckets in a cloud beforehand as they will be created and deleted
 as part of a test automatically, per cloud provider.
-
-If a test is "Kubernetes-aware", before every test credentials are created as a Secret
-which will be used by backup/restore tooling during a test. We are simulating here how
-this tooling can be easily embedded into for example Cassandra Sidecar (part of Cassandra operator).
-We are avoiding the need to specify credentials upfront when a Kubernetes pod is starting as a part
-of that spec, by dynamically fetching all credentials from a Secret whose name is passed to a
-backup request and is read every time. The side-effect of this is that we can change our credentials
-without restarting a pod to re-read them because they will be read dynamically upon every backup request.
 
 Cloud tests are executed like this:
 
 ----
 $ mvn clean install -PcloudTests
-----
-
-Kubernetes tests are executed like this:
-----
-$ mvn clean install -Pk8sTests
 ----
 
 By default, `mvn install` is invoked with `noCloudTests` which will skip all tests dealing with

@@ -31,7 +31,7 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
     public GoogleStorageFactory googleStorageFactory;
 
     @BeforeMethod
-    public void setup() throws Exception {
+    public void setup() {
         inject();
         init();
     }
@@ -52,17 +52,17 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
 
     @Test
     public void testInPlaceBackupRestore() throws Exception {
-        inPlaceTest(inPlaceArguments(CASSANDRA_VERSION));
+        inPlaceTest(inPlaceArguments());
     }
 
     @Test
     public void testImportingBackupAndRestore() throws Exception {
-        liveCassandraTest(importArguments(CASSANDRA_4_VERSION), CASSANDRA_4_VERSION);
+        liveCassandraTest(importArguments());
     }
 
     @Test
     public void testHardlinkingBackupAndRestore() throws Exception {
-        liveCassandraTest(hardlinkingArguments(CASSANDRA_VERSION), CASSANDRA_VERSION);
+        liveCassandraTest(hardlinkingArguments());
     }
 
     @Test

@@ -32,24 +32,18 @@ import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload;
 import software.amazon.awssdk.services.s3.model.CompletedPart;
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse;
-import software.amazon.awssdk.services.s3.model.GetObjectAttributesRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectAttributesResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectTaggingRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
-import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListMultipartUploadsRequest;
 import software.amazon.awssdk.services.s3.model.ListMultipartUploadsResponse;
 import software.amazon.awssdk.services.s3.model.MultipartUpload;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.NoSuchUploadException;
-import software.amazon.awssdk.services.s3.model.ObjectAttributes;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.SdkPartType;
 import software.amazon.awssdk.services.s3.model.StorageClass;
 import software.amazon.awssdk.services.s3.model.Tag;
 import software.amazon.awssdk.services.s3.model.Tagging;
-import software.amazon.awssdk.services.s3.model.UploadPartCopyRequest;
-import software.amazon.awssdk.services.s3.model.UploadPartCopyResponse;
 import software.amazon.awssdk.services.s3.model.UploadPartRequest;
 import software.amazon.awssdk.services.s3.model.UploadPartResponse;
 import software.amazon.encryption.s3.S3EncryptionClient;
@@ -98,7 +92,6 @@ public class BaseS3Backuper extends Backuper {
     @Override
     public void init(List<ManifestEntry> manifestEntries) {
         multipartAbortionService.abortOrphanedMultiparts(manifestEntries, request);
-
     }
 
     @Override
@@ -114,8 +107,6 @@ public class BaseS3Backuper extends Backuper {
         catch (NoSuchKeyException ex) {
             return FreshenResult.UPLOAD_REQUIRED;
         }
-
-        Tagging.Builder taggingBuilder = Tagging.builder();
 
         // If kms key was specified, it means we want to encrypt
         // however if remote tag is not equal to the local one,
@@ -133,103 +124,6 @@ public class BaseS3Backuper extends Backuper {
         } else if (!tags.isEmpty()) {
             if (tags.stream().anyMatch(t -> t.key().equals("kmsKey"))) {
                 return FreshenResult.UPLOAD_REQUIRED;
-            }
-        }
-
-        // if we reached here, it means that
-        // either local kms key equals to remote one
-        // or there is no local kms key nor remote one
-
-        // in this case, we just want to refresh a file by copying it into itself
-        // which changes last modification date
-
-        // we want to preserve whatever tags it had
-        Tagging tagging = taggingBuilder.tagSet(tags).build();
-
-        if (false) {
-        //if (!request.skipRefreshing) {
-            // Get the source object's metadata to determine the part size
-            HeadObjectRequest headRequest = HeadObjectRequest.builder()
-                                                             .bucket(request.storageLocation.bucket)
-                                                             .key(object.canonicalPath)
-                                                             .build();
-            HeadObjectResponse headResponse = s3Clients.getNonEncryptingClient().headObject(headRequest);
-            long objectSize = headResponse.contentLength();
-            long partSize = Long.parseLong(System.getProperty("upload.max.part.size", Long.toString(100 * 1024 * 1024)));
-
-            CreateMultipartUploadRequest createRequest = CreateMultipartUploadRequest.builder()
-                                                                                     .bucket(request.storageLocation.bucket)
-                                                                                     .key(object.canonicalPath)
-                                                                                     .tagging(tagging)
-                                                                                     .build();
-            CreateMultipartUploadResponse createResponse = s3Clients.getClient().createMultipartUpload(createRequest);
-            String uploadId = createResponse.uploadId();
-
-            try
-            {
-                int totalParts = (int) Math.ceil((double) objectSize / partSize);
-
-                List<CompletedPart> completedParts = new ArrayList<>();
-
-                for (int partNumber = 1; partNumber <= totalParts; partNumber++)
-                {
-                    // Calculate the range for the current part
-                    long startOffset = (partNumber - 1) * partSize;
-                    long endOffset = Math.min(partNumber * partSize - 1, objectSize - 1);
-
-                    UploadPartCopyResponse copyResponse = s3Clients.getClient()
-                                                                   .uploadPartCopy(UploadPartCopyRequest.builder()
-                                                                                                        .sourceBucket(request.storageLocation.bucket)
-                                                                                                        .sourceKey(object.canonicalPath)
-                                                                                                        .destinationBucket(request.storageLocation.bucket)
-                                                                                                        .destinationKey(object.canonicalPath)
-                                                                                                        .uploadId(uploadId)
-                                                                                                        .partNumber(partNumber)
-                                                                                                        .copySourceRange("bytes=" + startOffset + "-" + endOffset)
-                                                                                                        .build());
-                    completedParts.add(CompletedPart.builder().partNumber(partNumber).eTag(copyResponse.copyPartResult().eTag()).build());
-                    logger.info("Part {} of {} copied. ETag: {}", partNumber, object.canonicalPath, copyResponse.copyPartResult().eTag());
-                }
-
-                CompleteMultipartUploadRequest completeRequest = CompleteMultipartUploadRequest.builder()
-                                                                                               .bucket(request.storageLocation.bucket)
-                                                                                               .key(object.canonicalPath)
-                                                                                               .uploadId(uploadId)
-                                                                                               .multipartUpload(CompletedMultipartUpload.builder()
-                                                                                                                                        .parts(completedParts.toArray(new CompletedPart[0]))
-                                                                                                                                        .build()).build();
-                CompleteMultipartUploadResponse completeMultipartUploadResponse = s3Clients.getClient().completeMultipartUpload(completeRequest);
-
-                if (!completeMultipartUploadResponse.sdkHttpResponse().isSuccessful()) {
-                    throw new RuntimeException(String.format("Unsuccessful multipart copying of %s, upload id %s", object.canonicalPath, uploadId));
-                } else {
-                    logger.info("Completed multipart copying of {}, upload id {}", object.canonicalPath, uploadId);
-                }
-
-                logger.info("Waiting for " + object.canonicalPath + " to exist");
-
-                s3Clients.getNonEncryptingClient().waiter().waitUntilObjectExists(HeadObjectRequest.builder()
-                                                                                                   .bucket(request.storageLocation.bucket)
-                                                                                                   .key(object.canonicalPath)
-                                                                                                   .build(),
-                                                                                  WaiterOverrideConfiguration.builder()
-                                                                                                             .waitTimeout(Duration.of(1, ChronoUnit.MINUTES))
-                                                                                                             .build());
-
-                logger.info("Object under key " + object.canonicalPath + " exists");
-
-//                GetObjectAttributesResponse objectAttributes = s3Clients.getNonEncryptingClient()
-//                                                                        .getObjectAttributes(GetObjectAttributesRequest
-//                                                                                             .builder()
-//                                                                                             .bucket(request.storageLocation.bucket)
-//                                                                                             .key(object.canonicalPath)
-//                                                                                             .objectAttributes(ObjectAttributes.OBJECT_SIZE)
-//                                                                                             .build());
-//                manifestEntry.size = objectAttributes.objectSize();
-            } catch (Throwable t) {
-                t.printStackTrace();
-                multipartAbortionService.abortMultipartUpload(uploadId, request, object);
-                throw new RuntimeException(t);
             }
         }
 
@@ -308,7 +202,6 @@ public class BaseS3Backuper extends Backuper {
                                .tagging(Tagging.builder().tagSet(tags).build())
                                .build();
     }
-
 
     private void uploadFile(S3Client s3Client,
                             ManifestEntry manifestEntry,

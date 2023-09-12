@@ -2,10 +2,8 @@ package com.instaclustr.esop.impl.hash;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 import javax.inject.Inject;
 
@@ -82,30 +80,11 @@ public class HashServiceImpl implements HashService {
         }
     }
 
-    private String getHash(final File file) throws IOException, NoSuchAlgorithmException {
-        try (final FileInputStream fis = new FileInputStream(file)) {
+    private String getHash(final File file) throws Exception
+    {
+        try (final InputStream is = new FileInputStream(file)) {
             logger.info("Getting {} hash of {} ", hashSpec.algorithm.toString(), file.getAbsolutePath());
-            final MessageDigest digest = MessageDigest.getInstance(hashSpec.algorithm.toString());
-
-            // Create byte array to read data in chunks
-            byte[] byteArray = new byte[1024];
-            int bytesCount = 0;
-
-            // Read file data and update in message digest
-            while ((bytesCount = fis.read(byteArray)) != -1) {
-                digest.update(byteArray, 0, bytesCount);
-            }
-
-            byte[] bytes = digest.digest();
-
-            final StringBuilder sb = new StringBuilder();
-
-            //This bytes[] has bytes in decimal format, convert it to hexadecimal format
-            for (final byte aByte : bytes) {
-                sb.append(Integer.toString((aByte & 0xff) + 0x100, 16).substring(1));
-            }
-
-            return sb.toString();
+            return hashSpec.algorithm.getHasher().getHash(is);
         }
     }
 }
