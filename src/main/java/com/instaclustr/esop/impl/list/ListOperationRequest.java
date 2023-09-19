@@ -64,8 +64,6 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
     @JsonCreator
     public ListOperationRequest(@JsonProperty("type") final String type,
                                 @JsonProperty("storageLocation") final StorageLocation storageLocation,
-                                @JsonProperty("k8sNamespace") final String k8sNamespace,
-                                @JsonProperty("k8sSecretName") final String k8sSecretName,
                                 @JsonProperty("insecure") final boolean insecure,
                                 @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
                                 @JsonProperty("proxySettings") final ProxySettings proxySettings,
@@ -82,7 +80,7 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
                                 @JsonProperty("toRequest") final boolean toRequest,
                                 @JsonProperty("concurrentConnections") final Integer concurrentConnections,
                                 @JsonProperty("response") final Manifest.AllManifestsReport response) {
-        super(storageLocation, 1, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry, null);
+        super(storageLocation, 1, insecure, skipBucketVerification, proxySettings, retry, null);
         this.json = json;
         this.resolveNodes = resolveNodes;
         this.humanUnits = humanUnits;
@@ -111,8 +109,6 @@ public class ListOperationRequest extends BaseRestoreOperationRequest {
         return new ListOperationRequest(
                 "list",
                 cacheLocation,
-                request.k8sNamespace,
-                request.k8sSecretName,
                 request.insecure,
                 request.skipBucketVerification,
                 request.proxySettings,

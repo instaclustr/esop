@@ -2,6 +2,7 @@ package com.instaclustr.esop.backup.embedded;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +19,10 @@ import com.google.common.util.concurrent.Uninterruptibles;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.github.nosan.embedded.cassandra.Cassandra;
+import com.google.inject.Guice;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.impl.AbstractTracker.Session;
@@ -35,11 +39,13 @@ import com.instaclustr.esop.impl.backup.coordination.ClearSnapshotOperation;
 import com.instaclustr.esop.impl.backup.coordination.TakeSnapshotOperation;
 import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.local.LocalFileBackuper;
+import com.instaclustr.esop.local.LocalFileModule;
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.operations.OperationCoordinator;
 import com.instaclustr.operations.OperationsService;
 import com.instaclustr.threading.Executors;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -62,6 +68,26 @@ public class UploadTrackerTest extends AbstractBackupTest {
     @Override
     protected String protocol() {
         return "file://";
+    }
+
+    @Override
+    protected String getStorageLocation() {
+        return "file://" + target("backup1") + "/cluster/datacenter1/node1";
+    }
+
+    @BeforeMethod
+    public void setup() {
+
+        final List<Module> modules = new ArrayList<Module>() {{
+            add(new LocalFileModule());
+        }};
+
+        modules.addAll(defaultModules);
+
+        final Injector injector = Guice.createInjector(modules);
+        injector.injectMembers(this);
+
+        init();
     }
 
     @Test
@@ -224,8 +250,6 @@ public class UploadTrackerTest extends AbstractBackupTest {
         null,
         DatabaseEntities.parse(entities),
         snapshotName,
-        null,
-        null,
         false,
         null,
         null, // timeout

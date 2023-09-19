@@ -491,7 +491,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>${maven.surefire.plugin.version}</version>
                         <configuration>
-                            <excludedGroups>cloudTest,azureTest,googleTest,s3Test,cephTest</excludedGroups>
+                            <excludedGroups>cloudTest,azureTest,googleTest,s3Test</excludedGroups>
                         </configuration>
                     </plugin>
                 </plugins>

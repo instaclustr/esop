@@ -201,8 +201,6 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonProperty("schemaVersion")
                                    @JsonDeserialize(using = UUIDDeserializer.class)
                                    @JsonSerialize(using = UUIDSerializer.class) final UUID schemaVersion,
-                                   @JsonProperty("k8sNamespace") final String k8sNamespace,
-                                   @JsonProperty("k8sSecretName") final String k8sSecretName,
                                    @JsonProperty("globalRequest") final boolean globalRequest,
                                    @JsonProperty("dc") final String dc,
                                    @JsonProperty("timeout") final Integer timeout,
@@ -218,7 +216,7 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
                                    @JsonSerialize(using = ListPathSerializer.class)
                                    @JsonDeserialize(contentUsing = PathDeserializer.class) List<Path> dataDirs,
                                    @JsonProperty("kmsKeyId") final String kmsKeyId) {
-        super(storageLocation, concurrentConnections, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry, kmsKeyId);
+        super(storageLocation, concurrentConnections, insecure, skipBucketVerification, proxySettings, retry, kmsKeyId);
         this.cassandraDirectory = (cassandraDirectory == null || cassandraDirectory.toFile().getAbsolutePath().equals("/")) ? Paths.get("/var/lib/cassandra") : cassandraDirectory;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
         this.restoreSystemKeyspace = restoreSystemKeyspace;
@@ -264,8 +262,6 @@ public class RestoreOperationRequest extends BaseRestoreOperationRequest {
             .add("schemaVersion", schemaVersion)
             .add("exactSchemaVersion", exactSchemaVersion)
             .add("updateCassandraYaml", updateCassandraYaml)
-            .add("k8sNamespace", k8sNamespace)
-            .add("k8sSecretName", k8sSecretName)
             .add("globalRequest", globalRequest)
             .add("dc", dc)
             .add("timeout", timeout)

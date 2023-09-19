@@ -83,8 +83,6 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                              @JsonProperty("schemaVersion")
                              @JsonDeserialize(using = UUIDDeserializer.class)
                              @JsonSerialize(using = UUIDSerializer.class) final UUID schemaVersion,
-                             @JsonProperty("k8sNamespace") final String k8sNamespace,
-                             @JsonProperty("k8sSecretName") final String k8sSecretName,
                              @JsonProperty("globalRequest") final boolean globalRequest,
                              @JsonProperty("dc") final String dc,
                              @JsonProperty("timeout") final Integer timeout,
@@ -118,8 +116,6 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                                                                                                       noDownloadData,
                                                                                                       exactSchemaVersion,
                                                                                                       schemaVersion,
-                                                                                                      k8sNamespace,
-                                                                                                      k8sSecretName,
                                                                                                       globalRequest,
                                                                                                       dc,
                                                                                                       timeout,

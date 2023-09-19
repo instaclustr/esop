@@ -66,8 +66,6 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
     @JsonCreator
     public RemoveBackupRequest(@JsonProperty("type") final String type,
                                @JsonProperty("storageLocation") final StorageLocation storageLocation,
-                               @JsonProperty("k8sNamespace") final String k8sNamespace,
-                               @JsonProperty("k8sSecretName") final String k8sSecretName,
                                @JsonProperty("insecure") final boolean insecure,
                                @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
                                @JsonProperty("proxySettings") final ProxySettings proxySettings,
@@ -80,7 +78,7 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
                                @JsonProperty("removeOldest") final boolean removeOldest,
                                @JsonProperty("concurrentConnections") final Integer concurrentConnections,
                                @JsonProperty("globalRequest") final boolean globalRequest) {
-        super(storageLocation, 1, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry, null);
+        super(storageLocation, 1, insecure, skipBucketVerification, proxySettings, retry, null);
         this.type = type;
         this.backupName = backupName;
         this.dry = dry;

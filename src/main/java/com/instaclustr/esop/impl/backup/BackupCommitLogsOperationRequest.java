@@ -66,8 +66,6 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
                                             @JsonProperty("metadataDirective") final MetadataDirective metadataDirective,
                                             @JsonProperty("cassandraCommitLogDirectory") final Path cassandraCommitLogDirectory,
                                             @JsonProperty("commitLogArchiveOverride") final Path commitLogArchiveOverride,
-                                            @JsonProperty("k8sNamespace") final String k8sNamespace,
-                                            @JsonProperty("k8sSecretName") final String k8sSecretName,
                                             @JsonProperty("insecure") final boolean insecure,
                                             @JsonProperty("createMissingBucket") final boolean createMissingBucket,
                                             @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
@@ -82,8 +80,6 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
               bandwidth,
               concurrentConnections,
               metadataDirective,
-              k8sNamespace,
-              k8sSecretName,
               insecure,
               createMissingBucket,
               skipBucketVerification,
@@ -111,8 +107,6 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
             .add("commitLogArchiveOverride", commitLogArchiveOverride)
             .add("commitLog", commitLog)
             .add("online", online)
-            .add("k8sNamespace", k8sNamespace)
-            .add("k8sSecretName", k8sSecretName)
             .add("createMissingBucket", createMissingBucket)
             .add("skipBucketVerification", skipBucketVerification)
             .add("insecure", insecure)

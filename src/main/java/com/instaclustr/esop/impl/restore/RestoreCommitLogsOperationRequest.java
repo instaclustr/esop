@@ -80,14 +80,12 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
                                              @JsonProperty("timestampStart") final long timestampStart,
                                              @JsonProperty("timestampEnd") final long timestampEnd,
                                              @JsonProperty("keyspaceTables") final Multimap<String, String> keyspaceTables,
-                                             @JsonProperty("k8sNamespace") final String k8sNamespace,
-                                             @JsonProperty("k8sSecretName") final String k8sSecretName,
                                              @JsonProperty("insecure") final boolean insecure,
                                              @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
                                              @JsonProperty("proxySettings") final ProxySettings proxySettings,
                                              @JsonProperty("retry") final RetrySpec retry,
                                              @JsonProperty("kmsKeyId") final String kmsKeyId) {
-        super(storageLocation, concurrentConnections, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry, kmsKeyId);
+        super(storageLocation, concurrentConnections, insecure, skipBucketVerification, proxySettings, retry, kmsKeyId);
         this.cassandraCommitLogDirectory = cassandraCommitLogDirectory == null ? Paths.get("/var/lib/cassandra/data/commitlog") : cassandraCommitLogDirectory;
         this.sharedContainerPath = sharedContainerPath == null ? Paths.get("/") : sharedContainerPath;
         this.cassandraConfigDirectory = cassandraConfigDirectory == null ? Paths.get("/etc/cassandra") : cassandraConfigDirectory;
@@ -110,8 +108,6 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
             .add("timestampEnd", timestampEnd)
             .add("keyspaceTables", keyspaceTables)
             .add("commitlogDownloadDir", commitlogDownloadDir)
-            .add("k8sNamespace", k8sNamespace)
-            .add("k8sSecretName", k8sSecretName)
             .add("insecure", insecure)
             .add("skipBucketVerification", skipBucketVerification)
             .add("proxySettings", proxySettings)

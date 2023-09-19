@@ -69,8 +69,6 @@ public class ListOperation extends Operation<ListOperationRequest> {
                           @JsonProperty("progress") final float progress,
                           @JsonProperty("startTime") final Instant startTime,
                           @JsonProperty("storageLocation") final StorageLocation storageLocation,
-                          @JsonProperty("k8sNamespace") final String k8sNamespace,
-                          @JsonProperty("k8sSecretName") final String k8sSecretName,
                           @JsonProperty("insecure") final boolean insecure,
                           @JsonProperty("skipBucketVerification") final boolean skipBucketVerification,
                           @JsonProperty("proxySettings") final ProxySettings proxySettings,
@@ -89,8 +87,6 @@ public class ListOperation extends Operation<ListOperationRequest> {
                           @JsonProperty("concurrentConnections") final Integer concurrentConnections) {
         super(type, id, creationTime, state, errors, progress, startTime, new ListOperationRequest(type,
                                                                                                    storageLocation,
-                                                                                                   k8sNamespace,
-                                                                                                   k8sSecretName,
                                                                                                    insecure,
                                                                                                    skipBucketVerification,
                                                                                                    proxySettings,

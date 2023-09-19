@@ -30,8 +30,7 @@ providing they are easily implementable
 any subsequent backups will upload and restores will download only the difference
 * When used in connection with https://github.com/instaclustr/icarus[Instaclustr Icarus] it is possible to backup **simultaneously** so there
 might be more concurrent backups which may overlap what they backup
-* Used as backup/restore solution in https://github.com/instaclustr/cassandra-operator[Instaclustr Cassandra Operator] for Kubernetes
-* Possible to restore whole node _from scratch_ (or whole cluster from scratch in cases where Kubernetes Operator is used)
+* Possible to restore whole node / cluster _from scratch_
 * In connection with Icarus, it is possible to **restore on a running cluster**  so no
 downtime is necessary
 * It takes care of details such as initial tokens, auto bootstrapping, and so on...
@@ -243,8 +242,7 @@ The content of that hypothetical bucket with same data will look like this:
 
 ```
 
-. When this tool is used in connection with Instaclustr Cassandra Sidecar, it also creates a _topology_ file. Topology file
-is needed for restoration into a Kubernetes cluster.
+. When this tool is used in connection with Instaclustr Cassandra Sidecar, it also creates a _topology_ file.
 . Data for each node are stored under that very node, here we used UUID identifier which is host ID as Cassandra sees it, and it is unique.
 Hence, it is impossible to accidentally store data for a different node as each node will have unique UUID. It may happen
 that over time we will have a cluster of same name and data center of same name but the node id would be still different
@@ -512,7 +510,6 @@ In more detail, in-place strategy does the following:
 
 . Checks that a remote bucket to download data from exists and errors out if it does not
 . In case `--resolve-host-id-from-topology` flag is used, it will resolve a host to restore from topology file.
-This is handy for cases we want to restore e.g. in the context of Kubernetes by our operator.
 . Downloads a manifest—manifest contains the list of files which are logically related to a snapshot.
 . Filters out the files which need to be downloaded, as some files which are present locally might be
 also a part of a taken snapshot so we would download them unnecessarily.
@@ -528,7 +525,7 @@ Normally, system keyspaces are not restored and one has to set this explicitly b
 
 In-place strategy uses also `--restore-into-new-cluster` flag. If specified, it will restore only system
 keyspaces needed for successful restoring (`system_schema`) but it will not attempt to restore anything else.
-In an environment like Kubernetes, we do not want to restore _everything_ because system keyspaces
+We do not always want to restore _everything_ because system keyspaces
 contain details like tokens, peers with ips, etc. and this information is very specific to each one so
 we do not restore them. However, if we did not restore `system_schema`, the newly started node would not see
 the restored data as there would not be any schema. By restoring `system_schema`, Cassandra will detect
@@ -1343,8 +1340,7 @@ You can find the original file in `src/main/resources/logback.xml`.
 
 ## Build and Test
 
-There are end-to-end tests which can test all GCP, Azure, and S3 integrations as well
-as integrations with Kubernetes when it comes to credential fetching.
+There are end-to-end tests which can test all GCP, Azure, and S3 integrations.
 
 Here are the test groups/profiles:
 

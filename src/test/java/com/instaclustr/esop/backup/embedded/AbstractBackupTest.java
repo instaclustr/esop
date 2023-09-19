@@ -116,7 +116,6 @@ public abstract class AbstractBackupTest {
     ////////// ARGUMENTS
 
     protected static final String BUCKET_NAME = UUID.randomUUID().toString();
-    protected static final String SIDECAR_SECRET_NAME = "test-sidecar-secret";
 
     private String systemKeyspace(final String cassandraVersion) {
         if (cassandraVersion.startsWith("2")) {
@@ -143,7 +142,6 @@ public abstract class AbstractBackupTest {
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
 
@@ -159,7 +157,6 @@ public abstract class AbstractBackupTest {
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
 
@@ -176,7 +173,6 @@ public abstract class AbstractBackupTest {
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket",
         };
 
@@ -186,7 +182,6 @@ public abstract class AbstractBackupTest {
             "commitlog-backup",
             "--storage-location=" + getStorageLocation(),
             "--commit-log-dir=" + cassandraDir.toAbsolutePath() + "/data/commitlog",
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             //"--online"
         };
 
@@ -211,7 +206,6 @@ public abstract class AbstractBackupTest {
             // that would import all of them which is not always what we really want as other system tables
             // would be regenerated, only schema should be as it was.
             "--restore-into-new-cluster",
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--restoration-strategy-type=IN_PLACE"
         };
 
@@ -223,7 +217,6 @@ public abstract class AbstractBackupTest {
             "--config-directory=" + cassandraRestoredConfigDir.toAbsolutePath(),
             "--storage-location=" + getStorageLocation(),
             "--commitlog-download-dir=" + target("commitlog_download_dir"),
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         return new String[][]{
@@ -255,7 +248,6 @@ public abstract class AbstractBackupTest {
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
 
@@ -271,7 +263,6 @@ public abstract class AbstractBackupTest {
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
 
@@ -294,7 +285,6 @@ public abstract class AbstractBackupTest {
             "--restoration-phase-type=download", /// DOWNLOAD
             //"--import-source-dir=" + target("downloaded"),
             "--import-source-dir=" + cassandraDir.toAbsolutePath() + "/data/downloads",
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] restoreArgsPhase2 = new String[]{
@@ -313,7 +303,6 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=import",
             "--restoration-phase-type=truncate", // TRUNCATE
             "--import-source-dir=" + cassandraDir.toAbsolutePath() + "/data/downloads",
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] restoreArgsPhase3 = new String[]{
@@ -332,7 +321,6 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=import",
             "--restoration-phase-type=import", // IMPORT
             "--import-source-dir=" + cassandraDir.toAbsolutePath() + "/data/downloads",
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] restoreArgsPhase4 = new String[]{
@@ -351,7 +339,6 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=import",
             "--restoration-phase-type=cleanup", // CLEANUP
             "--import-source-dir=" + cassandraDir.toAbsolutePath() + "/data/downloads",
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         return new String[][]{
@@ -391,7 +378,6 @@ public abstract class AbstractBackupTest {
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
 
@@ -407,7 +393,6 @@ public abstract class AbstractBackupTest {
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
 
@@ -429,7 +414,6 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=" + strategyType.toValue().toLowerCase(),
             "--restoration-phase-type=download", /// DOWNLOAD
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             //// !!! Renaming for test2 to test3, test3 will be same as test2 and test2 will not be touched
             rename
         };
@@ -450,7 +434,6 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=" + strategyType.toValue().toLowerCase(),
             "--restoration-phase-type=truncate", // TRUNCATE
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             //// !!! Renaming for test2 to test3, test3 will be same as test2 and test2 will not be touched
             rename
         };
@@ -471,7 +454,6 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=" + strategyType.toValue().toLowerCase(),
             "--restoration-phase-type=import",
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             //// !!! Renaming for test2 to test3, test3 will be same as test2 and test2 will not be touched
             rename
         };
@@ -492,7 +474,6 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=" + strategyType.toValue().toLowerCase(),
             "--restoration-phase-type=cleanup", // CLEANUP
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             //// !!! Renaming for test2 to test3, test3 will be same as test2 and test2 will not be touched
             rename
         };
@@ -524,7 +505,6 @@ public abstract class AbstractBackupTest {
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
 
@@ -540,7 +520,6 @@ public abstract class AbstractBackupTest {
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
 
@@ -556,7 +535,6 @@ public abstract class AbstractBackupTest {
                 "--data-dir",
                 cassandraDir.toAbsolutePath() + "/data/data3",
                 "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-                "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
                 "--create-missing-bucket"
         };
 
@@ -578,7 +556,6 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=hardlinks",
             "--restoration-phase-type=download", /// DOWNLOAD
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] truncatePhase = new String[]{
@@ -597,7 +574,6 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=hardlinks",
             "--restoration-phase-type=truncate", // TRUNCATE
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] importPhase = new String[]{
@@ -616,7 +592,6 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=hardlinks",
             "--restoration-phase-type=import", // IMPORT
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] cleanupPhase = new String[]{
@@ -635,7 +610,6 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=hardlinks",
             "--restoration-phase-type=cleanup", // CLEANUP
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         return new String[][]{
@@ -669,7 +643,6 @@ public abstract class AbstractBackupTest {
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
 
@@ -686,7 +659,6 @@ public abstract class AbstractBackupTest {
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2,test3", // keyspaces
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
             "--create-missing-bucket"
         };
 
@@ -711,7 +683,6 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=" + type.toString(),
             "--restoration-phase-type=download", /// DOWNLOAD
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] restoreArgsPhase2 = new String[]{
@@ -730,7 +701,6 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=" + type,
             "--restoration-phase-type=truncate", // TRUNCATE
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] restoreArgsPhase3 = new String[]{
@@ -749,7 +719,6 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=" + type,
             "--restoration-phase-type=import", // IMPORT
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         final String[] restoreArgsPhase4 = new String[]{
@@ -768,7 +737,6 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=" + type,
             "--restoration-phase-type=cleanup", // CLEANUP
             "--import-source-dir=" + target("downloaded"),
-            "--k8s-secret-name=" + SIDECAR_SECRET_NAME,
         };
 
         return new String[][]{

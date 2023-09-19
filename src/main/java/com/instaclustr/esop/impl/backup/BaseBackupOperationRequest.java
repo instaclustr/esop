@@ -76,8 +76,6 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
                                       final DataRate bandwidth,
                                       final Integer concurrentConnections,
                                       final MetadataDirective metadataDirective,
-                                      final String k8sNamespace,
-                                      final String k8sBackupSecretName,
                                       final boolean insecure,
                                       final boolean createMissingBucket,
                                       final boolean skipBucketVerification,
@@ -86,7 +84,7 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
                                       final boolean skipRefreshing,
                                       final List<Path> dataDirs,
                                       final String kmsKeyId) {
-        super(storageLocation, k8sNamespace, k8sBackupSecretName, insecure, skipBucketVerification, proxySettings, retrySpec, concurrentConnections, kmsKeyId);
+        super(storageLocation, insecure, skipBucketVerification, proxySettings, retrySpec, concurrentConnections, kmsKeyId);
         this.duration = duration;
         this.bandwidth = bandwidth;
         this.metadataDirective = metadataDirective == null ? MetadataDirective.COPY : metadataDirective;

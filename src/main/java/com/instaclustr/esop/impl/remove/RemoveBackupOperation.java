@@ -80,8 +80,6 @@ public class RemoveBackupOperation extends Operation<RemoveBackupRequest> {
                                   @JsonProperty("globalRequest") final boolean globalRequest) {
         super(type, id, creationTime, state, errors, progress, startTime, new RemoveBackupRequest(type,
                                                                                                   storageLocation,
-                                                                                                  k8sNamespace,
-                                                                                                  k8sSecretName,
                                                                                                   insecure,
                                                                                                   skipBucketVerification,
                                                                                                   proxySettings,

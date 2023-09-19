@@ -77,8 +77,6 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonSerialize(using = DatabaseEntitiesSerializer.class)
                             @JsonDeserialize(using = DatabaseEntitiesDeserializer.class) final DatabaseEntities entities,
                             @JsonProperty("snapshotTag") final String snapshotTag,
-                            @JsonProperty("k8sNamespace") final String k8sNamespace,
-                            @JsonProperty("k8sSecretName") final String k8sBackupSecretName,
                             @JsonProperty("globalRequest") final boolean globalRequest,
                             @JsonProperty("dc") final String dc,
                             @JsonProperty("timeout") final Integer timeout,
@@ -102,8 +100,6 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                                                                                                      metadataDirective,
                                                                                                      entities,
                                                                                                      snapshotTag,
-                                                                                                     k8sNamespace,
-                                                                                                     k8sBackupSecretName,
                                                                                                      globalRequest,
                                                                                                      dc,
                                                                                                      timeout,

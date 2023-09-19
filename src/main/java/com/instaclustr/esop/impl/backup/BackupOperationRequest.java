@@ -87,8 +87,6 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonSerialize(using = DatabaseEntitiesSerializer.class)
                                   @JsonDeserialize(using = DatabaseEntitiesDeserializer.class) final DatabaseEntities entities,
                                   @JsonProperty("snapshotTag") final String snapshotTag,
-                                  @JsonProperty("k8sNamespace") final String k8sNamespace,
-                                  @JsonProperty("k8sSecretName") final String k8sSecretName,
                                   @JsonProperty("globalRequest") final boolean globalRequest,
                                   @JsonProperty("dc") final String dc,
                                   @JsonProperty("timeout") final Integer timeout,
@@ -109,8 +107,6 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
               bandwidth,
               concurrentConnections,
               metadataDirective,
-              k8sNamespace,
-              k8sSecretName,
               insecure,
               createMissingBucket,
               skipBucketVerification,
@@ -139,8 +135,6 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
             .add("dataDirs", dataDirs)
             .add("entities", entities)
             .add("snapshotTag", snapshotTag)
-            .add("k8sNamespace", k8sNamespace)
-            .add("k8sSecretName", k8sSecretName)
             .add("globalRequest", globalRequest)
             .add("dc", dc)
             .add("timeout", timeout)
