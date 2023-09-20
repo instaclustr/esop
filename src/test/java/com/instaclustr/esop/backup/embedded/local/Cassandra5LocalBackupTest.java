@@ -3,7 +3,7 @@ package com.instaclustr.esop.backup.embedded.local;
 import org.testng.annotations.Test;
 
 @Test(groups = {
-"localTest",
+"localTest", "cassandra5"
 })
 public class Cassandra5LocalBackupTest extends AbstractLocalBackupTest
 {
