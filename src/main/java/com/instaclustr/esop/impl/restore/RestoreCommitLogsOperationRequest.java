@@ -47,12 +47,12 @@ public class RestoreCommitLogsOperationRequest extends BaseRestoreOperationReque
     public Path cassandraConfigDirectory;
 
     @Option(names = {"--ts", "--timestamp-start"},
-        description = "When the base snapshot was taken. Only relevant if archived commitlogs are available.",
+        description = "When the base snapshot was taken. It expects a unix timestamp in milliseconds. Only relevant if archived commitlogs are available.",
         required = true)
     public long timestampStart;
 
     @Option(names = {"--te", "--timestamp-end"},
-        description = "Point-in-time to restore up to. Only relevant if archived commitlogs are available.",
+        description = "Point-in-time to restore up to. It expects a unix timestamp in milliseconds. Only relevant if archived commitlogs are available.",
         required = true)
     public long timestampEnd;
 
