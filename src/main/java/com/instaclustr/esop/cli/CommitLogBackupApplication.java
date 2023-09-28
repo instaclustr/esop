@@ -17,7 +17,6 @@ import picocli.CommandLine.Spec;
 
 import static com.instaclustr.operations.Operation.State.FAILED;
 import static com.instaclustr.picocli.CLIApplication.execute;
-import static com.instaclustr.picocli.JarManifestVersionProvider.logCommandVersionInformation;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static org.awaitility.Awaitility.await;
@@ -29,8 +28,6 @@ import static org.awaitility.Awaitility.await;
     mixinStandardHelpOptions = true
 )
 public class CommitLogBackupApplication implements Runnable {
-
-    private static final Logger logger = LoggerFactory.getLogger(CommitLogBackupApplication.class);
 
     @Spec
     private CommandSpec spec;
@@ -53,8 +50,6 @@ public class CommitLogBackupApplication implements Runnable {
 
     @Override
     public void run() {
-        logCommandVersionInformation(spec);
-
         Esop.init(this, jmxSpec, hashSpec, singletonList(new CommitlogBackupModule()));
 
         final Operation<?> operation = operationsService.submitOperationRequest(request);

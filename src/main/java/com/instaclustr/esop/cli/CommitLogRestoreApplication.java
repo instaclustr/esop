@@ -1,8 +1,5 @@
 package com.instaclustr.esop.cli;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.inject.Inject;
 import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
@@ -16,7 +13,6 @@ import picocli.CommandLine.Spec;
 
 import static com.instaclustr.operations.Operation.State.FAILED;
 import static com.instaclustr.picocli.CLIApplication.execute;
-import static com.instaclustr.picocli.JarManifestVersionProvider.logCommandVersionInformation;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static org.awaitility.Awaitility.await;
@@ -28,8 +24,6 @@ import static org.awaitility.Awaitility.await;
     mixinStandardHelpOptions = true
 )
 public class CommitLogRestoreApplication implements Runnable {
-
-    private static final Logger logger = LoggerFactory.getLogger(CommitLogRestoreApplication.class);
 
     @Spec
     private CommandSpec spec;
@@ -49,8 +43,6 @@ public class CommitLogRestoreApplication implements Runnable {
 
     @Override
     public void run() {
-        logCommandVersionInformation(spec);
-
         Esop.init(this, null, hashSpec, singletonList(new RestoreCommitlogModule()));
 
         final Operation<?> operation = operationsService.submitOperationRequest(request);

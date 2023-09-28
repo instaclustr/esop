@@ -57,8 +57,6 @@ public class BackupApplication implements Runnable {
 
     @Override
     public void run() {
-        Esop.logCommandVersionInformation(spec);
-
         final List<Module> appSpecificModules = singletonList(new BackupModule());
 
         Esop.init(this, jmxSpec, hashSpec, appSpecificModules);

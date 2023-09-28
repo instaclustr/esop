@@ -76,8 +76,6 @@ public class RemoveBackupApplication implements Runnable {
 
     @Override
     public void run() {
-        Esop.logCommandVersionInformation(spec);
-
         final List<Module> modules = Collections.singletonList(new RemoveBackupModule());
 
         Esop.init(this, jmxSpec, new HashSpec(), modules);

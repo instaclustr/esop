@@ -52,8 +52,6 @@ public class ListApplication implements Runnable {
 
     @Override
     public void run() {
-        Esop.logCommandVersionInformation(spec);
-
         final List<Module> modules = Collections.singletonList(new ListModule());
 
         Esop.init(this, jmxSpec, new HashSpec(), modules);

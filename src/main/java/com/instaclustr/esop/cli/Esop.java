@@ -15,12 +15,12 @@ import com.instaclustr.esop.impl.backup.BackupModules.UploadingModule;
 import com.instaclustr.esop.impl.hash.HashModule;
 import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.restore.RestoreModules.DownloadingModule;
-import com.instaclustr.esop.util.VersionParser;
 import com.instaclustr.guice.GuiceInjectorHolder;
 import com.instaclustr.jackson.JacksonModule;
 import com.instaclustr.operations.OperationsModule;
 import com.instaclustr.picocli.CLIApplication;
 import com.instaclustr.picocli.CassandraJMXSpec;
+import com.instaclustr.picocli.VersionParser;
 import com.instaclustr.threading.ExecutorsModule;
 import jmx.org.apache.cassandra.CassandraJMXConnectionInfo;
 import jmx.org.apache.cassandra.service.cassandra3.StorageServiceMBean;
@@ -104,7 +104,7 @@ public class Esop extends CLIApplication implements Runnable {
     }
 
     @Override
-    public String getImplementationTitle() {
+    public String title() {
         return "instaclustr-esop";
     }
 
@@ -116,6 +116,6 @@ public class Esop extends CLIApplication implements Runnable {
     @Override
     public String[] getVersion() throws IOException
     {
-        return VersionParser.parse(getImplementationTitle());
+        return VersionParser.parse(title());
     }
 }

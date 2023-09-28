@@ -21,7 +21,6 @@ import picocli.CommandLine.Spec;
 
 import static com.instaclustr.operations.Operation.State.FAILED;
 import static com.instaclustr.picocli.CLIApplication.execute;
-import static com.instaclustr.picocli.JarManifestVersionProvider.logCommandVersionInformation;
 import static java.lang.String.format;
 import static org.awaitility.Awaitility.await;
 
@@ -32,8 +31,6 @@ import static org.awaitility.Awaitility.await;
     mixinStandardHelpOptions = true
 )
 public class RestoreApplication implements Runnable {
-
-    private static final Logger logger = LoggerFactory.getLogger(RestoreApplication.class);
 
     @Spec
     private CommandSpec spec;
@@ -59,8 +56,6 @@ public class RestoreApplication implements Runnable {
 
     @Override
     public void run() {
-        logCommandVersionInformation(spec);
-
         request.importing = importRequest;
 
         Esop.init(this, jmxSpec, hashSpec, Arrays.asList(new RestoreModule(),
