@@ -32,6 +32,8 @@ import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload;
 import software.amazon.awssdk.services.s3.model.CompletedPart;
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse;
+import software.amazon.awssdk.services.s3.model.GetObjectAttributesRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectAttributesResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectTaggingRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListMultipartUploadsRequest;
@@ -39,6 +41,7 @@ import software.amazon.awssdk.services.s3.model.ListMultipartUploadsResponse;
 import software.amazon.awssdk.services.s3.model.MultipartUpload;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.NoSuchUploadException;
+import software.amazon.awssdk.services.s3.model.ObjectAttributes;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.SdkPartType;
 import software.amazon.awssdk.services.s3.model.StorageClass;
@@ -265,10 +268,10 @@ public class BaseS3Backuper extends Backuper {
             if (!completeResponse.sdkHttpResponse().isSuccessful()) {
                 throw new RuntimeException(String.format("Unsuccessful multipart upload of %s, upload id %s", objectReference.canonicalPath, uploadId));
             } else {
-                logger.info("Completed multipart upload of {}, upload id {}, etag {}", objectReference.canonicalPath, uploadId, completeResponse.eTag());
+                logger.debug("Completed multipart upload of {}, upload id {}, etag {}", objectReference.canonicalPath, uploadId, completeResponse.eTag());
             }
 
-            logger.info("Waiting for " + objectReference.canonicalPath + " to exist");
+            logger.debug("Waiting for " + objectReference.canonicalPath + " to exist");
 
             s3Clients.getNonEncryptingClient().waiter().waitUntilObjectExists(HeadObjectRequest.builder()
                                                                                                .bucket(request.storageLocation.bucket)
@@ -278,17 +281,25 @@ public class BaseS3Backuper extends Backuper {
                                                                                                          .waitTimeout(Duration.of(1, ChronoUnit.MINUTES))
                                                                                                          .build());
 
-            logger.info("Object under key " + objectReference.canonicalPath + " exists");
+            logger.debug("Object under key " + objectReference.canonicalPath + " exists");
 
-//            GetObjectAttributesResponse objectAttributes = s3Clients.getNonEncryptingClient()
-//                                                                    .getObjectAttributes(GetObjectAttributesRequest
-//                                                                                         .builder()
-//                                                                                         .bucket(request.storageLocation.bucket)
-//                                                                                         .key(objectReference.canonicalPath)
-//                                                                                         .objectAttributes(ObjectAttributes.OBJECT_SIZE)
-//                                                                                         .build());
-//
-//            manifestEntry.size = objectAttributes.objectSize();
+            if (s3Clients.hasEncryptingClient()) {
+                try {
+                    GetObjectAttributesResponse objectAttributes = s3Clients.getNonEncryptingClient()
+                            .getObjectAttributes(GetObjectAttributesRequest
+                                                         .builder()
+                                                         .bucket(request.storageLocation.bucket)
+                                                         .key(objectReference.canonicalPath)
+                                                         .objectAttributes(ObjectAttributes.OBJECT_SIZE)
+                                                         .build());
+
+                    manifestEntry.size = objectAttributes.objectSize();
+                }
+                catch (Throwable t) {
+                    logger.warn("Unable to get attribute {} for key {} by GetObjectAttributes request. Please check your permissions.",
+                                ObjectAttributes.OBJECT_SIZE, objectReference.canonicalPath);
+                }
+            }
         } catch (Throwable t) {
             t.printStackTrace();
             multipartAbortionService.abortMultipartUpload(uploadId, request, objectReference);

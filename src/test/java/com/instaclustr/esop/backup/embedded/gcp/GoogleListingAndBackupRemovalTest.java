@@ -24,7 +24,7 @@ public class GoogleListingAndBackupRemovalTest extends BaseListingRemovalTest {
 
     @Override
     protected List<Module> getModules() {
-        return new ArrayList<Module>() {{
+        return new ArrayList<>() {{
             add(new GCPModule());
         }};
     }

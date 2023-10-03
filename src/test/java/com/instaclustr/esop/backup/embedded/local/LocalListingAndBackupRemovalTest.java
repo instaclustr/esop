@@ -19,7 +19,7 @@ public class LocalListingAndBackupRemovalTest extends BaseListingRemovalTest {
 
     @Override
     protected List<Module> getModules() {
-        return new ArrayList<Module>() {{
+        return new ArrayList<>() {{
             add(new LocalFileModule());
         }};
     }

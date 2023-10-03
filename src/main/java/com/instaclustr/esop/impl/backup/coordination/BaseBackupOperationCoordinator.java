@@ -132,7 +132,7 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
             final Snapshots snapshots = Snapshots.parse(request.dataDirs, request.snapshotTag);
             final Optional<Snapshot> snapshot = snapshots.get(request.snapshotTag);
 
-            if (!snapshot.isPresent()) {
+            if (snapshot.isEmpty()) {
                 throw new IllegalStateException(format("There is not any snapshot of tag %s", request.snapshotTag));
             }
 
@@ -150,7 +150,7 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
                 backuper.init(manifest.getManifestEntries(true));
                 performUpload(manifest.getManifestEntries(false), backuper, operation, request);
 
-                // upload manifest as the last, possibly with updated file sizes as they were encrypted
+                manifest.setSize(manifest.getManifestEntries(true).stream().map(m -> m.size).reduce(Long::sum).orElse(0L));
                 backuper.uploadText(objectMapper.writeValueAsString(manifest),
                                     backuper.objectKeyToNodeAwareRemoteReference(manifest.getManifest().objectKey));
 

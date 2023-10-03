@@ -48,6 +48,8 @@ public class Manifest implements Cloneable {
 
     private String schemaVersion;
 
+    private long size;
+
     public static Manifest from(final Snapshot snapshot) {
         return new Manifest(snapshot);
     }
@@ -89,6 +91,14 @@ public class Manifest implements Cloneable {
 
     public List<String> getTokens() {
         return tokens;
+    }
+
+    public void setSize(long size) {
+        this.size = size;
+    }
+
+    public long getSize() {
+        return this.size;
     }
 
     @JsonIgnore

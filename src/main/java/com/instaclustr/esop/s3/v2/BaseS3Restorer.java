@@ -405,7 +405,8 @@ public class BaseS3Restorer extends Restorer
     public void downloadManifestsToDirectory(Path downloadDir) throws Exception {
         FileUtils.createDirectory(downloadDir);
         FileUtils.cleanDirectory(downloadDir.toFile());
-        final List<S3Object> manifestSumms = listBucket("", s -> s.contains("manifests"));
+
+        final List<S3Object> manifestSumms = listBucket(resolveNodeAwareRemotePath(Paths.get("manifests")), filter -> true);
         for (S3Object o : manifestSumms) {
             Path manifestPath = Paths.get(o.key());
             Path destination = downloadDir.resolve(manifestPath);

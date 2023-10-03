@@ -26,6 +26,10 @@ public abstract class StorageInteractor implements AutoCloseable {
         this.storageLocation = storageLocation;
     }
 
+    public String resolveNodeAwareRemoteRoot() {
+        return Paths.get(storageLocation.clusterId).resolve(storageLocation.datacenterId).resolve(storageLocation.nodeId).toString();
+    }
+
     public String resolveNodeAwareRemotePath(final Path objectKey) {
         return Paths.get(storageLocation.clusterId).resolve(storageLocation.datacenterId).resolve(storageLocation.nodeId).resolve(objectKey).toString();
     }
