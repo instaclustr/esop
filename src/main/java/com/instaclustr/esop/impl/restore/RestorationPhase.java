@@ -1,14 +1,5 @@
 package com.instaclustr.esop.impl.restore;
 
-import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.CLEANUP;
-import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.CLUSTER_HEALTHCHECK;
-import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.DOWNLOAD;
-import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.IMPORT;
-import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.INIT;
-import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.TRUNCATE;
-import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,9 +12,13 @@ import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import com.google.common.base.MoreObjects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.google.common.base.MoreObjects;
 import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.ManifestEnricher;
 import com.instaclustr.esop.impl.AbstractTracker.Session;
@@ -50,9 +45,16 @@ import com.instaclustr.esop.impl.truncate.TruncateOperationRequest;
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationFailureException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
+
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.CLEANUP;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.CLUSTER_HEALTHCHECK;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.DOWNLOAD;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.IMPORT;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.INIT;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.TRUNCATE;
+import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Phase of a cluster-wide restoration. Some phases are

@@ -1,12 +1,9 @@
 package com.instaclustr.esop.cli;
 
-import static com.instaclustr.operations.Operation.State.FAILED;
-import static com.instaclustr.picocli.CLIApplication.execute;
-import static com.instaclustr.picocli.JarManifestVersionProvider.logCommandVersionInformation;
-import static java.lang.String.format;
-import static org.awaitility.Awaitility.await;
-
 import java.util.Arrays;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.instaclustr.esop.impl._import.ImportOperationRequest;
@@ -17,12 +14,16 @@ import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
 import com.instaclustr.picocli.CassandraJMXSpec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
+
+import static com.instaclustr.operations.Operation.State.FAILED;
+import static com.instaclustr.picocli.CLIApplication.execute;
+import static com.instaclustr.picocli.JarManifestVersionProvider.logCommandVersionInformation;
+import static java.lang.String.format;
+import static org.awaitility.Awaitility.await;
 
 @Command(name = "restore",
     description = "Restore the Cassandra data on this node to a specified point-in-time.",
@@ -62,8 +63,8 @@ public class RestoreApplication implements Runnable {
 
         request.importing = importRequest;
 
-        Esop.init(this, jmxSpec, hashSpec, request, logger, Arrays.asList(new RestoreModule(),
-                                                                          new RestorationStrategyModule()));
+        Esop.init(this, jmxSpec, hashSpec, Arrays.asList(new RestoreModule(),
+                                                         new RestorationStrategyModule()));
 
         final Operation<?> operation = operationsService.submitOperationRequest(request);
 

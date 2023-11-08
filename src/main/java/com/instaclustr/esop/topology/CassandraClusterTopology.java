@@ -1,10 +1,5 @@
 package com.instaclustr.esop.topology;
 
-import static java.lang.String.format;
-import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -22,17 +17,24 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.google.common.base.MoreObjects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.MoreObjects;
 import com.instaclustr.cassandra.CassandraInteraction;
 import com.instaclustr.esop.impl.backup.Backuper;
 import com.instaclustr.esop.impl.interaction.CassandraSchemaVersion;
 import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static java.lang.String.format;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 public class CassandraClusterTopology implements CassandraInteraction<ClusterTopology> {
 

@@ -1,4 +1,4 @@
-package com.instaclustr.esop.s3;
+package com.instaclustr.esop.s3.v1;
 
 public final class S3ModuleException extends RuntimeException {
 

@@ -1,11 +1,5 @@
 package com.instaclustr.esop.impl.backup;
 
-import static com.instaclustr.esop.impl.ManifestEntry.Type.MANIFEST_FILE;
-import static com.instaclustr.esop.impl.backup.Backuper.FreshenResult.FRESHENED;
-import static com.instaclustr.esop.impl.retry.RetrierFactory.getRetrier;
-import static java.lang.String.format;
-import static java.util.function.Function.identity;
-
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -14,10 +8,13 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-import com.amazonaws.AmazonClientException;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.RateLimiter;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.inject.Inject;
 import com.instaclustr.esop.impl.AbstractTracker;
 import com.instaclustr.esop.impl.ManifestEntry;
@@ -33,8 +30,12 @@ import com.instaclustr.measure.DataRate.DataRateUnit;
 import com.instaclustr.measure.DataSize;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static com.instaclustr.esop.impl.ManifestEntry.Type.MANIFEST_FILE;
+import static com.instaclustr.esop.impl.backup.Backuper.FreshenResult.FRESHENED;
+import static com.instaclustr.esop.impl.retry.RetrierFactory.getRetrier;
+import static java.lang.String.format;
+import static java.util.function.Function.identity;
 
 public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Backuper, BaseBackupOperationRequest> {
 
@@ -108,21 +109,20 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
 
         @Override
         public Void call() {
-
-            state = State.RUNNING;
-
-            final RemoteObjectReference ref = getRemoteObjectReference(manifestEntry.objectKey);
-
             try {
-                final boolean freshened = getRetrier(backuper.request.retry).submit(() -> backuper.freshenRemoteObject(ref) == FRESHENED);
+                state = State.RUNNING;
 
-                if (manifestEntry.type != MANIFEST_FILE && freshened) {
-                    logger.info(format("%sskipping the upload of already uploaded file %s",
-                                       snapshotTag != null ? "Snapshot " + snapshotTag + " - " : "",
-                                       ref.canonicalPath));
+                final RemoteObjectReference ref = getRemoteObjectReference(manifestEntry.objectKey);
 
-                    state = State.FINISHED;
-                    return null;
+                if (manifestEntry.type != MANIFEST_FILE) {
+                    if (getRetrier(backuper.request.retry).submit(() -> backuper.freshenRemoteObject(manifestEntry, ref) == FRESHENED)) {
+                        logger.info(format("%sskipping the upload of already uploaded file %s",
+                                           snapshotTag != null ? "Snapshot " + snapshotTag + " - " : "",
+                                           ref.canonicalPath));
+
+                        state = State.FINISHED;
+                        return null;
+                    }
                 }
 
                 getRetrier(backuper.request.retry).submit(new Runnable() {
@@ -131,15 +131,18 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
                         try (final InputStream fileStream = new BufferedInputStream(new FileInputStream(manifestEntry.localFile.toFile()))) {
                             final InputStream rateLimitedStream = getUploadingInputStreamFunction(backuper.request).apply(fileStream);
 
-                            logger.info(format("%suploading file '%s' (%s).",
+                            logger.debug(format("%suploading file '%s' (%s).",
                                                snapshotTag != null ? "Snapshot " + snapshotTag + " - " : "",
                                                manifestEntry.objectKey,
                                                DataSize.bytesToHumanReadable(manifestEntry.size)));
-                            backuper.uploadFile(manifestEntry.size, rateLimitedStream, ref);
-                        } catch (final AmazonClientException ex) {
-                            throw new RetriableException(String.format("Retrying upload of %s", manifestEntry.objectKey), ex);
+                            // never encrypt manifest
+                            if (manifestEntry.type == MANIFEST_FILE) {
+                                backuper.uploadFile(manifestEntry, rateLimitedStream, ref);
+                            } else {
+                                backuper.uploadEncryptedFile(manifestEntry, rateLimitedStream, ref);
+                            }
                         } catch (final Exception ex) {
-                            throw new RuntimeException(ex);
+                            throw new RetriableException(String.format("Retrying upload of %s", manifestEntry.objectKey), ex);
                         }
                     }
                 });
@@ -147,9 +150,10 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
                 state = State.FINISHED;
             } catch (final Throwable t) {
                 state = State.FAILED;
-                logger.error(format("Failed to upload file '%s", manifestEntry.objectKey), t);
+                t.printStackTrace();
+                logger.error(format("Failed to upload file '%s", manifestEntry.objectKey), t.getMessage());
                 shouldCancel.set(true);
-                this.throwable = t;
+                throwable = t;
             }
 
             return null;

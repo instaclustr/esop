@@ -92,7 +92,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonProperty("skipRefreshing") final boolean skipRefreshing,
                             @JsonSerialize(using = ListPathSerializer.class)
                             @JsonDeserialize(contentUsing = PathDeserializer.class)
-                            @JsonProperty("dataDirs") final List<Path> dataDirs) {
+                            @JsonProperty("dataDirs") final List<Path> dataDirs,
+                            @JsonProperty("kmsKeyId") final String kmsKeyId) {
         super(type, id, creationTime, state, errors, progress, startTime, new BackupOperationRequest(type,
                                                                                                      storageLocation,
                                                                                                      duration,
@@ -114,7 +115,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                                                                                                      proxySettings,
                                                                                                      retry,
                                                                                                      skipRefreshing,
-                                                                                                     dataDirs));
+                                                                                                     dataDirs,
+                                                                                                     kmsKeyId));
         coordinator = null;
         storageProviders = null;
     }

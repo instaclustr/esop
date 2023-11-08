@@ -1,8 +1,11 @@
 package com.instaclustr.esop.impl;
 
-import static com.amazonaws.Protocol.HTTPS;
-
 import java.io.IOException;
+
+import com.google.common.base.MoreObjects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.amazonaws.Protocol;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -17,11 +20,10 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import com.google.common.base.MoreObjects;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine.ITypeConverter;
 import picocli.CommandLine.Option;
+
+import static com.amazonaws.Protocol.HTTPS;
 
 public class ProxySettings {
 

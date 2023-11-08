@@ -14,7 +14,9 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.instaclustr.esop.guice.BackupRestoreBindings;
 import com.instaclustr.esop.impl.AbstractOperationRequest;
-import com.instaclustr.esop.s3.TransferManagerFactory;
+import com.instaclustr.esop.s3.S3ConfigurationResolver;
+import com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration;
+import com.instaclustr.esop.s3.v1.TransferManagerFactory;
 import io.kubernetes.client.apis.CoreV1Api;
 
 public class CephModule extends AbstractModule {
@@ -43,9 +45,11 @@ public class CephModule extends AbstractModule {
         }
 
         @Override
-        protected AmazonS3 provideAmazonS3(final Provider<CoreV1Api> coreV1ApiProvider, final AbstractOperationRequest operationRequest) {
+        protected AmazonS3 provideAmazonS3(final Provider<CoreV1Api> coreV1ApiProvider,
+                                           final AbstractOperationRequest operationRequest,
+                                           final S3ConfigurationResolver configurationResolver) {
 
-            final S3Configuration s3Conf = resolveS3Configuration(coreV1ApiProvider, operationRequest);
+            final S3Configuration s3Conf = configurationResolver.resolveS3Configuration(coreV1ApiProvider, operationRequest);
 
             final AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
 

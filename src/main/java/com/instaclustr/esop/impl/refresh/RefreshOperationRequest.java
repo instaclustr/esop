@@ -1,6 +1,7 @@
 package com.instaclustr.esop.impl.refresh;
 
 import com.google.common.base.MoreObjects;
+
 import com.instaclustr.operations.OperationRequest;
 
 public class RefreshOperationRequest extends OperationRequest {

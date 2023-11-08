@@ -1,12 +1,5 @@
 package com.instaclustr.esop.impl.restore.strategy;
 
-import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.CLEANUP;
-import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.DOWNLOAD;
-import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.IMPORT;
-import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.INIT;
-import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.TRUNCATE;
-import static java.lang.String.format;
-
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,6 +20,13 @@ import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.operations.Operation;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
+
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.CLEANUP;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.DOWNLOAD;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.IMPORT;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.INIT;
+import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.TRUNCATE;
+import static java.lang.String.format;
 
 /**
  * This strategy is supposed to be executed against a running node. This strategy can

@@ -1,7 +1,8 @@
 package com.instaclustr.esop.impl.backup.coordination;
 
-import javax.inject.Provider;
 import java.util.Map;
+
+import javax.inject.Provider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;

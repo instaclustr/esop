@@ -28,8 +28,9 @@
   
   <logger name="com.amazonaws.request" level="INFO"/>
   <logger name="com.amazonaws.latency" level="INFO"/>
-  <logger name="org.apache.http.wire" level="INFO"/>
+  <logger name="org.apache.http" level="INFO"/>
   <logger name="com.amazonaws" level="INFO"/>
+  <logger name="software.amazon.awssdk" level="INFO"/>
   
   <!-- end -->
   

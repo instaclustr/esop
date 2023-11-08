@@ -1,12 +1,8 @@
 package com.instaclustr.esop.cli;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.ValidationException;
-import javax.validation.Validator;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -19,18 +15,16 @@ import com.instaclustr.esop.impl.backup.BackupModules.UploadingModule;
 import com.instaclustr.esop.impl.hash.HashModule;
 import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.restore.RestoreModules.DownloadingModule;
+import com.instaclustr.esop.util.VersionParser;
 import com.instaclustr.guice.GuiceInjectorHolder;
 import com.instaclustr.jackson.JacksonModule;
-import com.instaclustr.operations.OperationRequest;
 import com.instaclustr.operations.OperationsModule;
 import com.instaclustr.picocli.CLIApplication;
 import com.instaclustr.picocli.CassandraJMXSpec;
 import com.instaclustr.threading.ExecutorsModule;
-import com.instaclustr.validation.GuiceInjectingConstraintValidatorFactory;
 import jmx.org.apache.cassandra.CassandraJMXConnectionInfo;
 import jmx.org.apache.cassandra.service.cassandra3.StorageServiceMBean;
 import jmx.org.apache.cassandra.service.cassandra4.Cassandra4StorageServiceMBean;
-import org.slf4j.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
@@ -74,8 +68,6 @@ public class Esop extends CLIApplication implements Runnable {
     static void init(final Runnable command,
                      final CassandraJMXSpec jmxSpec,
                      final HashSpec hashSpec,
-                     final OperationRequest operationRequest,
-                     final Logger logger,
                      final List<Module> appSpecificModules) {
 
         final List<Module> modules = new ArrayList<>();
@@ -109,27 +101,21 @@ public class Esop extends CLIApplication implements Runnable {
         GuiceInjectorHolder.INSTANCE.setInjector(injector);
 
         injector.injectMembers(command);
-
-        final Validator validator = Validation.byDefaultProvider()
-            .configure()
-            .constraintValidatorFactory(new GuiceInjectingConstraintValidatorFactory()).buildValidatorFactory()
-            .getValidator();
-
-        final Set<ConstraintViolation<OperationRequest>> violations = validator.validate(operationRequest);
-
-        if (!violations.isEmpty()) {
-            violations.forEach(violation -> logger.error(violation.getMessage()));
-            throw new ValidationException();
-        }
     }
 
     @Override
     public String getImplementationTitle() {
-        return "backup-restore";
+        return "instaclustr-esop";
     }
 
     @Override
     public void run() {
         throw new CommandLine.ParameterException(spec.commandLine(), "Missing required parameter.");
+    }
+
+    @Override
+    public String[] getVersion() throws IOException
+    {
+        return VersionParser.parse(getImplementationTitle());
     }
 }

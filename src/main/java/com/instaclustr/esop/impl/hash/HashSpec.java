@@ -1,13 +1,14 @@
 package com.instaclustr.esop.impl.hash;
 
-import static java.lang.String.format;
-
 import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
+
+import static java.lang.String.format;
 
 public class HashSpec {
 

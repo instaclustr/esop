@@ -1,7 +1,11 @@
 package com.instaclustr.esop.impl.backup.coordination;
 
-import javax.inject.Provider;
 import java.util.HashMap;
+
+import javax.inject.Provider;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.impl.DatabaseEntities;
@@ -13,8 +17,6 @@ import jmx.org.apache.cassandra.service.CassandraJMXService;
 import jmx.org.apache.cassandra.service.cassandra2.Cassandra2StorageServiceMBean;
 import jmx.org.apache.cassandra.service.cassandra3.StorageServiceMBean;
 import jmx.org.apache.cassandra.service.cassandra30.Cassandra30StorageServiceMBean;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TakeSnapshotOperation extends Operation<TakeSnapshotOperationRequest> {
 

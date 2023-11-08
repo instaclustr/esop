@@ -1,9 +1,13 @@
-package com.instaclustr.esop.backup.embedded.s3.aws;
+package com.instaclustr.esop.backup.embedded.s3.aws.v1;
 
 import java.util.HashMap;
 
 import com.google.inject.Inject;
+import com.instaclustr.esop.backup.embedded.s3.aws.BaseAWSS3BackupRestoreTest;
+import com.instaclustr.esop.impl.BucketService;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
+import com.instaclustr.esop.s3.aws.S3BucketService;
+import com.instaclustr.esop.s3.aws.S3Module;
 import com.instaclustr.esop.s3.aws.S3Module.S3TransferManagerFactory;
 import com.instaclustr.kubernetes.KubernetesService;
 import io.kubernetes.client.ApiException;
@@ -16,7 +20,9 @@ import org.testng.annotations.Test;
     "s3Test",
     "k8sTest"
 })
-public class KubernetesAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
+@Ignore
+public class KubernetesAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest
+{
 
     @Inject
     public KubernetesService kubernetesService;
@@ -25,8 +31,8 @@ public class KubernetesAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest
     public S3TransferManagerFactory transferManagerFactory;
 
     @BeforeMethod
-    public void setup() throws ApiException {
-        inject();
+    public void setup() throws Exception {
+        inject(new S3Module());
         init();
     }
 
@@ -69,8 +75,9 @@ public class KubernetesAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest
     }
 
     @Override
-    public S3TransferManagerFactory getTransferManagerFactory() {
-        return transferManagerFactory;
+    public void deleteBucket() throws BucketService.BucketServiceException
+    {
+        new S3BucketService(transferManagerFactory, getBackupOperationRequest()).delete(BUCKET_NAME);
     }
 
     @Test

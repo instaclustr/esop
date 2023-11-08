@@ -1,12 +1,10 @@
 package com.instaclustr.esop.azure;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static com.instaclustr.esop.guice.BackupRestoreBindings.installBindings;
-import static com.instaclustr.kubernetes.KubernetesHelper.isRunningAsClient;
-import static java.lang.String.format;
-
 import java.net.URISyntaxException;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provider;
@@ -18,8 +16,11 @@ import com.instaclustr.kubernetes.SecretReader;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
 import io.kubernetes.client.apis.CoreV1Api;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static com.instaclustr.esop.guice.BackupRestoreBindings.installBindings;
+import static com.instaclustr.kubernetes.KubernetesHelper.isRunningAsClient;
+import static java.lang.String.format;
 
 public class AzureModule extends AbstractModule {
 

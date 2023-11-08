@@ -1,6 +1,7 @@
 package com.instaclustr.esop.topology;
 
 import com.google.common.base.MoreObjects;
+
 import com.instaclustr.cassandra.CassandraInteraction;
 import com.instaclustr.esop.topology.CassandraSimpleTopology.CassandraSimpleTopologyResult;
 import com.instaclustr.operations.FunctionWithEx;

@@ -1,8 +1,9 @@
 package com.instaclustr.esop.impl.restore.coordination;
 
-import static java.lang.String.format;
-
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.instaclustr.esop.guice.RestorerFactory;
 import com.instaclustr.esop.impl.restore.RestorationStrategy;
@@ -13,8 +14,8 @@ import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.Operation.Error;
 import com.instaclustr.operations.OperationCoordinator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static java.lang.String.format;
 
 public abstract class BaseRestoreOperationCoordinator extends OperationCoordinator<RestoreOperationRequest> {
 

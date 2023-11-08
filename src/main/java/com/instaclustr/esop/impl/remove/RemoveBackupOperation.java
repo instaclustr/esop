@@ -2,8 +2,16 @@ package com.instaclustr.esop.impl.remove;
 
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -23,8 +31,6 @@ import com.instaclustr.esop.topology.CassandraSimpleTopology.CassandraSimpleTopo
 import com.instaclustr.measure.Time;
 import com.instaclustr.operations.Operation;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.instaclustr.esop.impl.list.ListOperationRequest.getForLocalListing;
 

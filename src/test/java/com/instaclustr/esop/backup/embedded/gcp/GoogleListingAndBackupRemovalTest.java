@@ -1,5 +1,8 @@
 package com.instaclustr.esop.backup.embedded.gcp;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.inject.Inject;
 import com.google.inject.Module;
 import com.instaclustr.esop.backup.embedded.BaseListingRemovalTest;
@@ -9,9 +12,6 @@ import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.io.FileUtils;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Test(groups = {
         "googleTest",

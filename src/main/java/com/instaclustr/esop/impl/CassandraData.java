@@ -1,10 +1,10 @@
 package com.instaclustr.esop.impl;
 
-import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
-
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,9 +21,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.instaclustr.esop.impl.RenamedEntities.Renamed;
-import org.apache.commons.io.FileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 
 public class CassandraData {
 

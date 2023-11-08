@@ -98,7 +98,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                              @JsonProperty("singlePhase") final boolean singlePhase,
                              @JsonProperty("dataDirs")
                              @JsonSerialize(using = ListPathSerializer.class)
-                             @JsonDeserialize(contentUsing = PathDeserializer.class) List<Path> dataDirs) {
+                             @JsonDeserialize(contentUsing = PathDeserializer.class) List<Path> dataDirs,
+                             @JsonProperty("kmsKeyId") final String kmsKeyId) {
         super(type, id, creationTime, state, errors, progress, startTime, new RestoreOperationRequest(type,
                                                                                                       storageLocation,
                                                                                                       concurrentConnections,
@@ -130,7 +131,8 @@ public class RestoreOperation extends Operation<RestoreOperationRequest> impleme
                                                                                                       rename,
                                                                                                       retry,
                                                                                                       singlePhase,
-                                                                                                      dataDirs));
+                                                                                                      dataDirs,
+                                                                                                      kmsKeyId));
         this.coordinator = null;
         this.storageProviders = null;
     }

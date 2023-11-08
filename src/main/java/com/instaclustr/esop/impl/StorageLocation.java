@@ -1,13 +1,13 @@
 package com.instaclustr.esop.impl;
 
-import static java.lang.String.format;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.google.common.base.MoreObjects;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -16,9 +16,10 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import com.google.common.base.MoreObjects;
 import picocli.CommandLine;
 import picocli.CommandLine.ITypeConverter;
+
+import static java.lang.String.format;
 
 public class StorageLocation {
 
@@ -95,6 +96,10 @@ public class StorageLocation {
             this.datacenterId = matcher.group(4);
             this.nodeId = matcher.group(5);
         }
+    }
+
+    public boolean incompleteNodeLocation() {
+        return clusterId == null || datacenterId == null || nodeId == null;
     }
 
     public void validate() throws IllegalStateException {

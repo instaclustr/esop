@@ -18,7 +18,8 @@ public class BaseRestoreOperationRequest extends AbstractOperationRequest {
                                        final boolean insecure,
                                        final boolean skipBucketVerification,
                                        final ProxySettings proxySettings,
-                                       final RetrySpec retry) {
-        super(storageLocation, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry, concurrentConnections);
+                                       final RetrySpec retry,
+                                       final String kmsKeyId) {
+        super(storageLocation, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry, concurrentConnections, kmsKeyId);
     }
 }

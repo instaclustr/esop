@@ -1,7 +1,5 @@
 package com.instaclustr.esop.backup.embedded.azure;
 
-import static org.testng.Assert.assertNotNull;
-
 import java.util.HashMap;
 
 import com.google.inject.Inject;
@@ -14,10 +12,13 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
+import static org.testng.Assert.assertNotNull;
+
 @Test(groups = {
     "k8sTest",
     "azureTest",
 })
+@Ignore
 public class KubernetesAzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
 
     @Inject

@@ -1,6 +1,11 @@
-package com.instaclustr.esop.s3;
+package com.instaclustr.esop.s3.v1;
 
-import static java.lang.String.format;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.util.concurrent.Uninterruptibles;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
@@ -13,8 +18,8 @@ import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static java.lang.String.format;
 
 public class BaseS3BucketService extends BucketService {
 
@@ -70,6 +75,7 @@ public class BaseS3BucketService extends BucketService {
                     }
                 }
             }
+            Uninterruptibles.sleepUninterruptibly(10, TimeUnit.SECONDS);
         } catch (final Exception ex) {
             throw new BucketServiceException(format("Unable to create the bucket %s", bucketName), ex);
         }

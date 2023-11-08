@@ -1,14 +1,10 @@
 package com.instaclustr.esop.impl.backup;
 
-import static com.instaclustr.kubernetes.KubernetesHelper.isRunningAsClient;
-import static com.instaclustr.kubernetes.KubernetesHelper.isRunningInKubernetes;
-import static java.lang.String.format;
-import static java.lang.System.currentTimeMillis;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+
+import com.google.common.base.MoreObjects;
 
 import com.amazonaws.services.s3.model.MetadataDirective;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -16,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.common.base.MoreObjects;
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesConverter;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesDeserializer;
@@ -29,6 +24,12 @@ import com.instaclustr.jackson.PathDeserializer;
 import com.instaclustr.measure.DataRate;
 import com.instaclustr.measure.Time;
 import picocli.CommandLine.Option;
+
+import static com.instaclustr.kubernetes.KubernetesHelper.isRunningAsClient;
+import static com.instaclustr.kubernetes.KubernetesHelper.isRunningInKubernetes;
+import static java.lang.String.format;
+import static java.lang.System.currentTimeMillis;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class BackupOperationRequest extends BaseBackupOperationRequest {
 
@@ -103,7 +104,8 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonProperty("skipRefreshing") final boolean skipRefreshing,
                                   @JsonSerialize(using = ListPathSerializer.class)
                                   @JsonDeserialize(contentUsing = PathDeserializer.class)
-                                  @JsonProperty("dataDirs") final List<Path> dataDirs) {
+                                  @JsonProperty("dataDirs") final List<Path> dataDirs,
+                                  @JsonProperty("kmsKeyId") final String kmsKeyId) {
         super(storageLocation,
               duration,
               bandwidth,
@@ -117,7 +119,8 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
               proxySettings,
               retry,
               skipRefreshing,
-              dataDirs);
+              dataDirs,
+              kmsKeyId);
         this.entities = entities == null ? DatabaseEntities.empty() : entities;
         this.snapshotTag = snapshotTag == null ? format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis())) : snapshotTag;
         this.globalRequest = globalRequest;
@@ -152,12 +155,16 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
             .add("proxySettings", proxySettings)
             .add("retry", retry)
             .add("skipRefreshing", skipRefreshing)
+            .add("kmsKeyId", kmsKeyId)
             .toString();
     }
 
     @JsonIgnore
     public void validate(final Set<String> storageProviders) {
         super.validate(storageProviders);
+
+        if (kmsKeyId != null && !"s3v2".equals(storageLocation.storageProvider))
+            throw new IllegalStateException("You can set kmsKeyId only when using s3v2 protocol");
 
         if ((isRunningInKubernetes() || isRunningAsClient())) {
             if (this.resolveKubernetesSecretName() == null) {

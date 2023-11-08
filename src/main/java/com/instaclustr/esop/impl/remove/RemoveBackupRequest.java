@@ -6,12 +6,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.base.MoreObjects;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.common.base.MoreObjects;
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.restore.BaseRestoreOperationRequest;
@@ -79,7 +80,7 @@ public class RemoveBackupRequest extends BaseRestoreOperationRequest {
                                @JsonProperty("removeOldest") final boolean removeOldest,
                                @JsonProperty("concurrentConnections") final Integer concurrentConnections,
                                @JsonProperty("globalRequest") final boolean globalRequest) {
-        super(storageLocation, 1, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry);
+        super(storageLocation, 1, k8sNamespace, k8sSecretName, insecure, skipBucketVerification, proxySettings, retry, null);
         this.type = type;
         this.backupName = backupName;
         this.dry = dry;

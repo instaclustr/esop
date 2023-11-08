@@ -1,14 +1,12 @@
 package com.instaclustr.esop.cli;
 
-import static com.instaclustr.operations.Operation.State.FAILED;
-import static com.instaclustr.picocli.CLIApplication.execute;
-import static java.lang.String.format;
-import static org.awaitility.Awaitility.await;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
@@ -25,13 +23,16 @@ import com.instaclustr.picocli.CassandraJMXSpec;
 import com.instaclustr.picocli.typeconverter.TimeMeasureTypeConverter;
 import com.instaclustr.scheduling.DaemonScheduler;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
+
+import static com.instaclustr.operations.Operation.State.FAILED;
+import static com.instaclustr.picocli.CLIApplication.execute;
+import static java.lang.String.format;
+import static org.awaitility.Awaitility.await;
 
 @Command(name = "remove-backup",
     description = "remove a backup from remote location",
@@ -79,7 +80,7 @@ public class RemoveBackupApplication implements Runnable {
 
         final List<Module> modules = Collections.singletonList(new RemoveBackupModule());
 
-        Esop.init(this, jmxSpec, new HashSpec(), request, logger, modules);
+        Esop.init(this, jmxSpec, new HashSpec(), modules);
 
         if (rate.value == 0) {
             final Operation<?> operation = operationsService.submitOperationRequest(request);

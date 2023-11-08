@@ -1,19 +1,11 @@
 package com.instaclustr.esop.backup.embedded.local;
 
-import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.HARDLINKS;
-import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.IMPORT;
-import static com.instaclustr.io.FileUtils.deleteDirectory;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -24,10 +16,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.datastax.oss.driver.api.core.CqlSession;
-import com.github.nosan.embedded.cassandra.Cassandra;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.Uninterruptibles;
+
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.github.nosan.embedded.cassandra.Cassandra;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -56,7 +49,6 @@ import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.local.LocalFileBackuper;
 import com.instaclustr.esop.local.LocalFileModule;
-import com.instaclustr.esop.local.LocalFileRestorer;
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.operations.OperationCoordinator;
 import com.instaclustr.operations.OperationsService;
@@ -66,6 +58,12 @@ import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.HARDLINKS;
+import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.IMPORT;
+import static com.instaclustr.io.FileUtils.deleteDirectory;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static org.testng.Assert.assertEquals;
 
 @Test(groups = {
     "localTest",
@@ -188,11 +186,6 @@ public class LocalBackupTest extends AbstractBackupTest {
                         StandardOpenOption.CREATE_NEW
             );
 
-            LocalFileRestorer localFileRestorer = new LocalFileRestorer(restoreOperationRequest);
-
-            final Path downloadedFile = localFileRestorer.downloadNodeFileToDir(Paths.get("/tmp"), Paths.get("manifests"), s -> s.contains("snapshot-name-"));
-
-            assertTrue(Files.exists(downloadedFile));
         } finally {
             deleteDirectory(Paths.get(target("backup1")));
             deleteDirectory(Paths.get(target("commitlog_download_dir")));
@@ -376,7 +369,8 @@ public class LocalBackupTest extends AbstractBackupTest {
             null, // proxy settings
             null, // retry
             false, // skipRefreshing
-            dataDirs
+            dataDirs,
+            null
         );
     }
 

@@ -1,7 +1,5 @@
 package com.instaclustr.esop.backup;
 
-import static java.util.stream.Collectors.toList;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -14,9 +12,13 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
+
 import org.apache.commons.io.FileUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.util.stream.Collectors.toList;
 
 public class BackupRestoreTestUtils {
 

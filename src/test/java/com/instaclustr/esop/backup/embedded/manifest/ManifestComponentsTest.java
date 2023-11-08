@@ -1,5 +1,11 @@
 package com.instaclustr.esop.backup.embedded.manifest;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -18,13 +24,11 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNotSame;
+import static org.testng.Assert.assertTrue;
 
 public class ManifestComponentsTest {
 
@@ -67,7 +71,8 @@ public class ManifestComponentsTest {
                                                    Paths.get("local/file"),
                                                    Type.FILE,
                                                    null,
-                                                   new KeyspaceTable("keyspace", "table"));
+                                                   new KeyspaceTable("keyspace", "table"),
+                                                   null);
 
         ManifestEntry cloned = original.clone();
 
@@ -98,6 +103,7 @@ public class ManifestComponentsTest {
                                                          null,
                                                          Type.FILE,
                                                          50,
+                                                         null,
                                                          null,
                                                          null));
 

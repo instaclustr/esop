@@ -1,17 +1,10 @@
 package com.instaclustr.esop.impl.backup;
 
-import static com.google.inject.multibindings.OptionalBinder.newOptionalBinder;
-import static com.google.inject.util.Types.newParameterizedType;
-import static com.instaclustr.operations.OperationBindings.installOperationBindings;
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import com.google.common.util.concurrent.ListeningExecutorService;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.BindingAnnotation;
 import com.google.inject.TypeLiteral;
@@ -19,6 +12,14 @@ import com.instaclustr.esop.impl.backup.coordination.DefaultBackupOperationCoord
 import com.instaclustr.guice.ServiceBindings;
 import com.instaclustr.operations.OperationCoordinator;
 import com.instaclustr.threading.Executors.FixedTasksExecutorSupplier;
+
+import static com.google.inject.multibindings.OptionalBinder.newOptionalBinder;
+import static com.google.inject.util.Types.newParameterizedType;
+import static com.instaclustr.operations.OperationBindings.installOperationBindings;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 public class BackupModules {
 

@@ -1,5 +1,60 @@
 package com.instaclustr.esop.backup.embedded.manifest;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.collect.HashMultimap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.nosan.embedded.cassandra.Cassandra;
+import com.github.nosan.embedded.cassandra.CassandraBuilder;
+import com.github.nosan.embedded.cassandra.Version;
+import com.github.nosan.embedded.cassandra.WorkingDirectoryDestroyer;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.Provider;
+import com.instaclustr.cassandra.CassandraModule;
+import com.instaclustr.cassandra.CassandraVersion;
+import com.instaclustr.esop.impl.DatabaseEntities;
+import com.instaclustr.esop.impl.Manifest;
+import com.instaclustr.esop.impl.ManifestEntry;
+import com.instaclustr.esop.impl.Snapshots;
+import com.instaclustr.esop.impl.Snapshots.Snapshot;
+import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace;
+import com.instaclustr.esop.impl.backup.BackupOperationRequest;
+import com.instaclustr.esop.impl.backup.coordination.ClearSnapshotOperation;
+import com.instaclustr.esop.impl.backup.coordination.ClearSnapshotOperation.ClearSnapshotOperationRequest;
+import com.instaclustr.esop.impl.backup.coordination.TakeSnapshotOperation;
+import com.instaclustr.esop.impl.backup.coordination.TakeSnapshotOperation.TakeSnapshotOperationRequest;
+import com.instaclustr.esop.impl.interaction.CassandraSchemaVersion;
+import com.instaclustr.esop.impl.interaction.CassandraTokens;
+import com.instaclustr.io.FileUtils;
+import com.instaclustr.jackson.JacksonModule;
+import com.instaclustr.kubernetes.KubernetesApiModule;
+import com.instaclustr.operations.FunctionWithEx;
+import com.instaclustr.operations.Operation;
+import com.instaclustr.operations.Operation.State;
+import com.instaclustr.operations.OperationsService;
+import com.instaclustr.threading.Executors.ExecutorServiceSupplier;
+import com.instaclustr.threading.ExecutorsModule;
+import jmx.org.apache.cassandra.service.CassandraJMXService;
+import jmx.org.apache.cassandra.service.cassandra3.StorageServiceMBean;
+import org.awaitility.Awaitility;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import static com.datastax.oss.driver.api.core.type.DataTypes.TEXT;
 import static com.datastax.oss.driver.api.core.type.DataTypes.TIMEUUID;
 import static com.datastax.oss.driver.api.core.uuid.Uuids.timeBased;
@@ -20,58 +75,6 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
-
-import java.io.File;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-
-import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.nosan.embedded.cassandra.Cassandra;
-import com.github.nosan.embedded.cassandra.CassandraBuilder;
-import com.github.nosan.embedded.cassandra.Version;
-import com.github.nosan.embedded.cassandra.WorkingDirectoryDestroyer;
-import com.google.common.collect.HashMultimap;
-import com.google.inject.Guice;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.Module;
-import com.google.inject.Provider;
-import com.instaclustr.cassandra.CassandraModule;
-import com.instaclustr.cassandra.CassandraVersion;
-import com.instaclustr.esop.impl.DatabaseEntities;
-import com.instaclustr.esop.impl.Manifest;
-import com.instaclustr.esop.impl.ManifestEntry;
-import com.instaclustr.esop.impl.Snapshots;
-import com.instaclustr.esop.impl.Snapshots.Snapshot;
-import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace;
-import com.instaclustr.esop.impl.backup.coordination.ClearSnapshotOperation;
-import com.instaclustr.esop.impl.backup.coordination.ClearSnapshotOperation.ClearSnapshotOperationRequest;
-import com.instaclustr.esop.impl.backup.coordination.TakeSnapshotOperation;
-import com.instaclustr.esop.impl.backup.coordination.TakeSnapshotOperation.TakeSnapshotOperationRequest;
-import com.instaclustr.esop.impl.interaction.CassandraSchemaVersion;
-import com.instaclustr.esop.impl.interaction.CassandraTokens;
-import com.instaclustr.io.FileUtils;
-import com.instaclustr.jackson.JacksonModule;
-import com.instaclustr.kubernetes.KubernetesApiModule;
-import com.instaclustr.operations.FunctionWithEx;
-import com.instaclustr.operations.Operation;
-import com.instaclustr.operations.Operation.State;
-import com.instaclustr.operations.OperationsService;
-import com.instaclustr.threading.Executors.ExecutorServiceSupplier;
-import com.instaclustr.threading.ExecutorsModule;
-import jmx.org.apache.cassandra.service.CassandraJMXService;
-import jmx.org.apache.cassandra.service.cassandra3.StorageServiceMBean;
-import org.awaitility.Awaitility;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 public class ManifestTest {
 
@@ -292,7 +295,7 @@ public class ManifestTest {
 
             // manifest itself, but it wont be serialised
             final Path localManifestPath = getLocalManifestPath("snapshot1");
-            manifest.setManifest(getManifestAsManifestEntry(localManifestPath));
+            manifest.setManifest(getManifestAsManifestEntry(localManifestPath, new BackupOperationRequest()));
 
             // tokens
             manifest.setTokens(tokens);

@@ -7,6 +7,7 @@ import java.time.Instant;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.esop.azure.AzureModule.CloudStorageAccountFactory;
+import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
@@ -67,7 +68,7 @@ public class AzureBackuper extends Backuper {
     }
 
     @Override
-    public FreshenResult freshenRemoteObject(final RemoteObjectReference object) throws Exception {
+    public FreshenResult freshenRemoteObject(ManifestEntry manifestEntry, final RemoteObjectReference object) throws Exception {
         final CloudBlockBlob blob = ((AzureRemoteObjectReference) object).blob;
 
         final Instant now = Instant.now();
@@ -91,11 +92,11 @@ public class AzureBackuper extends Backuper {
     }
 
     @Override
-    public void uploadFile(final long size,
+    public void uploadFile(final ManifestEntry manifestEntry,
                            final InputStream localFileStream,
                            final RemoteObjectReference objectReference) throws Exception {
         final CloudBlockBlob blob = ((AzureRemoteObjectReference) objectReference).blob;
-        blob.upload(localFileStream, size);
+        blob.upload(localFileStream, manifestEntry.size);
     }
 
     @Override

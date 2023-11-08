@@ -1,12 +1,13 @@
 package com.instaclustr.esop.impl.retry;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 import java.util.concurrent.Callable;
 
 import com.google.common.util.concurrent.Uninterruptibles;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public interface Retrier {
 

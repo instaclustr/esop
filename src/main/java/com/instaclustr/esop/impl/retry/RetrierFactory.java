@@ -1,14 +1,14 @@
 package com.instaclustr.esop.impl.retry;
 
-import static com.instaclustr.esop.impl.retry.RetrySpec.RetryStrategy.EXPONENTIAL;
-import static com.instaclustr.esop.impl.retry.RetrySpec.RetryStrategy.LINEAR;
-import static java.lang.String.format;
-
 import java.util.concurrent.Callable;
 
 import com.instaclustr.esop.impl.retry.Retrier.DefaultRetrier;
 import com.instaclustr.esop.impl.retry.Retrier.ExponentialSleeper;
 import com.instaclustr.esop.impl.retry.Retrier.LinearSleeper;
+
+import static com.instaclustr.esop.impl.retry.RetrySpec.RetryStrategy.EXPONENTIAL;
+import static com.instaclustr.esop.impl.retry.RetrySpec.RetryStrategy.LINEAR;
+import static java.lang.String.format;
 
 public class RetrierFactory {
 
