@@ -132,7 +132,7 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
             final Snapshots snapshots = Snapshots.parse(request.dataDirs, request.snapshotTag);
             final Optional<Snapshot> snapshot = snapshots.get(request.snapshotTag);
 
-            if (snapshot.isEmpty()) {
+            if (!snapshot.isPresent()) {
                 throw new IllegalStateException(format("There is not any snapshot of tag %s", request.snapshotTag));
             }
 

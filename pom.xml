@@ -5,7 +5,7 @@
     
     <groupId>com.instaclustr</groupId>
     <artifactId>esop</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.0-java8-SNAPSHOT</version>
     
     <name>instaclustr-esop</name>
     <description>Backup and restoration tooling for Cassandra</description>
@@ -15,8 +15,8 @@
         <instaclustr.commons.version>2.0.0-SNAPSHOT</instaclustr.commons.version>
         <azure-storage.version>8.6.6</azure-storage.version>
         <google-cloud-libraries.version>26.0.0</google-cloud-libraries.version>
-        <aws-java-sdk.version>2.20.45</aws-java-sdk.version>
-        <s3.encryption.client.version>3.0.0</s3.encryption.client.version>
+        <aws-java-sdk.version>2.20.38</aws-java-sdk.version>
+        <s3.encryption.client.version>3.1.0</s3.encryption.client.version>
         <bouncy.castle.version>1.72</bouncy.castle.version>
         <slf4j.version>1.7.30</slf4j.version>
         <logback.version>1.2.3</logback.version>
@@ -24,7 +24,7 @@
         <cassandra.driver.version>4.11.1</cassandra.driver.version>
         
         <version.embedded.cassandra>4.0.1</version.embedded.cassandra>
-        <testng.version>7.8.0</testng.version>
+        <testng.version>6.14.3</testng.version>
         <mockito.version>2.23.4</mockito.version>
         <awaitility.version>3.1.6</awaitility.version>
         
@@ -48,9 +48,9 @@
         
         <outputDirectory>${project.build.directory}</outputDirectory>
 
-        <java.version>11</java.version>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <java.version>8</java.version>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     
@@ -146,7 +146,7 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>kms</artifactId>
-            <version>2.20.45</version>
+            <version>${aws-java-sdk.version}</version>
         </dependency>
 
         <dependency>
@@ -346,7 +346,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <source>11</source>
+                    <source>8</source>
                 </configuration>
             </plugin>
             <plugin>
@@ -354,8 +354,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven.compiler.plugin.version}</version>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>8</source>
+                    <target>8</target>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>

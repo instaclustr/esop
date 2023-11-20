@@ -155,9 +155,6 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
     public void validate(final Set<String> storageProviders) {
         super.validate(storageProviders);
 
-        if (kmsKeyId != null && !"s3v2".equals(storageLocation.storageProvider))
-            throw new IllegalStateException("You can set kmsKeyId only when using s3v2 protocol");
-
         if (this.entities == null) {
             this.entities = DatabaseEntities.empty();
         }
