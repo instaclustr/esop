@@ -46,7 +46,7 @@ public interface Retrier {
                         if (attempts > maxAttempts) {
                             throw ex;
                         }
-                        logger.error("This operation will be retried: " + ex.getMessage(), ex);
+                        logger.error("This operation will be retried: " + ex.getMessage());
                         sleeper.sleep();
                     } else {
                         throw ex;
@@ -70,7 +70,7 @@ public interface Retrier {
                         if (attempts > maxAttempts) {
                             throw ex;
                         }
-                        logger.error("This operation will be retried: " + ex.getMessage(), ex);
+                        logger.error("This operation will be retried: " + ex.getMessage());
                         sleeper.sleep();
                     } else {
                         throw ex;

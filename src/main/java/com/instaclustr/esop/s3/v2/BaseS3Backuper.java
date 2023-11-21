@@ -43,6 +43,7 @@ import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.NoSuchUploadException;
 import software.amazon.awssdk.services.s3.model.ObjectAttributes;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.SdkPartType;
 import software.amazon.awssdk.services.s3.model.StorageClass;
 import software.amazon.awssdk.services.s3.model.Tag;
@@ -107,7 +108,7 @@ public class BaseS3Backuper extends Backuper {
                                                                      .key(object.canonicalPath)
                                                                      .build()).tagSet();
         }
-        catch (NoSuchKeyException ex) {
+        catch (S3Exception ex) {
             return FreshenResult.UPLOAD_REQUIRED;
         }
 

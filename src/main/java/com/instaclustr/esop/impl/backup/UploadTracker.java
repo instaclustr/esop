@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -116,36 +117,41 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
 
                 final RemoteObjectReference ref = getRemoteObjectReference(manifestEntry.objectKey);
 
-                if (manifestEntry.type != MANIFEST_FILE) {
-                    if (getRetrier(backuper.request.retry).submit(() -> backuper.freshenRemoteObject(manifestEntry, ref) == FRESHENED)) {
-                        logger.info(format("%sskipping the upload of already uploaded file %s",
-                                           snapshotTag != null ? "Snapshot " + snapshotTag + " - " : "",
-                                           ref.canonicalPath));
-
-                        state = State.FINISHED;
-                        return null;
+                // try to refresh object / decide if it is required to upload it
+                Callable<Boolean> condition = () -> {
+                    try {
+                        return backuper.freshenRemoteObject(manifestEntry, ref) == FRESHENED;
+                    } catch (final Exception ex) {
+                        throw new RetriableException("Failed to refresh remote object" + ref.objectKey, ex);
                     }
+                };
+
+                if (manifestEntry.type != MANIFEST_FILE && getRetrier(backuper.request.retry).submit(condition)) {
+                    logger.info("{}skipping the upload of alredy uploaded file {}",
+                                snapshotTag != null ? "Snapshot " + snapshotTag + " - " : "",
+                                ref.canonicalPath);
+
+                    state = State.FINISHED;
+                    return null;
                 }
 
-                getRetrier(backuper.request.retry).submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        try (final InputStream fileStream = new BufferedInputStream(new FileInputStream(manifestEntry.localFile.toFile()))) {
-                            final InputStream rateLimitedStream = getUploadingInputStreamFunction(backuper.request).apply(fileStream);
+                // do the upload
+                getRetrier(backuper.request.retry).submit(() -> {
+                    try (final InputStream fileStream = new BufferedInputStream(new FileInputStream(manifestEntry.localFile.toFile()))) {
+                        final InputStream rateLimitedStream = getUploadingInputStreamFunction(backuper.request).apply(fileStream);
 
-                            logger.debug(format("%suploading file '%s' (%s).",
-                                               snapshotTag != null ? "Snapshot " + snapshotTag + " - " : "",
-                                               manifestEntry.objectKey,
-                                               DataSize.bytesToHumanReadable(manifestEntry.size)));
-                            // never encrypt manifest
-                            if (manifestEntry.type == MANIFEST_FILE) {
-                                backuper.uploadFile(manifestEntry, rateLimitedStream, ref);
-                            } else {
-                                backuper.uploadEncryptedFile(manifestEntry, rateLimitedStream, ref);
-                            }
-                        } catch (final Exception ex) {
-                            throw new RetriableException(String.format("Retrying upload of %s", manifestEntry.objectKey), ex);
+                        logger.debug(format("%suploading file '%s' (%s).",
+                                            snapshotTag != null ? "Snapshot " + snapshotTag + " - " : "",
+                                            manifestEntry.objectKey,
+                                            DataSize.bytesToHumanReadable(manifestEntry.size)));
+                        // never encrypt manifest
+                        if (manifestEntry.type == MANIFEST_FILE) {
+                            backuper.uploadFile(manifestEntry, rateLimitedStream, ref);
+                        } else {
+                            backuper.uploadEncryptedFile(manifestEntry, rateLimitedStream, ref);
                         }
+                    } catch (final Exception ex) {
+                        throw new RetriableException(String.format("Retrying upload of %s", manifestEntry.objectKey), ex);
                     }
                 });
 
