@@ -3,6 +3,7 @@ package com.instaclustr.esop.impl.hash;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.function.Supplier;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
@@ -42,6 +43,8 @@ public class HashSpec {
     public interface Hasher {
 
         String getHash(InputStream is) throws Exception;
+
+        String getHash(byte[] digest) throws Exception;
     }
 
     private static class SHAHasher implements Hasher {
@@ -66,10 +69,14 @@ public class HashSpec {
 
             byte[] bytes = digest.digest();
 
+            return getHash(bytes);
+        }
+
+        @Override
+        public String getHash(byte[] digest) throws Exception {
             final StringBuilder sb = new StringBuilder();
 
-            //This bytes[] has bytes in decimal format, convert it to hexadecimal format
-            for (final byte aByte : bytes) {
+            for (final byte aByte : digest) {
                 sb.append(Integer.toString((aByte & 0xff) + 0x100, 16).substring(1));
             }
 
@@ -91,6 +98,11 @@ public class HashSpec {
             }
 
             return Long.toString(checksum.getValue());
+        }
+
+        @Override
+        public String getHash(byte[] digest) throws Exception {
+            throw new UnsupportedOperationException();
         }
     }
 

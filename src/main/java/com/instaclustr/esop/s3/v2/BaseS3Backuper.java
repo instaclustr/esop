@@ -4,12 +4,15 @@ package com.instaclustr.esop.s3.v2;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.instaclustr.esop.impl.hash.HashSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +29,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.waiters.WaiterOverrideConfiguration;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.AbortMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.ChecksumAlgorithm;
 import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest;
 import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadResponse;
 import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload;
@@ -39,10 +43,11 @@ import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListMultipartUploadsRequest;
 import software.amazon.awssdk.services.s3.model.ListMultipartUploadsResponse;
 import software.amazon.awssdk.services.s3.model.MultipartUpload;
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.NoSuchUploadException;
 import software.amazon.awssdk.services.s3.model.ObjectAttributes;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectTaggingRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectTaggingResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.SdkPartType;
 import software.amazon.awssdk.services.s3.model.StorageClass;
@@ -177,7 +182,9 @@ public class BaseS3Backuper extends Backuper {
         byte[] bytes = text.getBytes(UTF_8);
 
         s3Clients.getNonEncryptingClient()
-                 .putObject(getPutObjectRequest(objectReference, bytes.length),
+                 .putObject(getPutObjectRequest(objectReference,
+                                                bytes.length,
+                                                getDigest(prepareMessageDigest().digest(bytes))),
                             RequestBody.fromBytes(bytes));
     }
 
@@ -192,18 +199,22 @@ public class BaseS3Backuper extends Backuper {
         byte[] bytes = plainText.getBytes(UTF_8);
 
         s3Clients.getEncryptingClient().get()
-                 .putObject(getPutObjectRequest(objectReference, bytes.length),
+                 .putObject(getPutObjectRequest(objectReference,
+                                                bytes.length,
+                                                getDigest(prepareMessageDigest().digest(bytes))),
                             RequestBody.fromBytes(bytes));
     }
 
     private PutObjectRequest getPutObjectRequest(RemoteObjectReference s3RemoteObjectReference,
                                                  long unencryptedSize,
+                                                 String checksumSHA256,
                                                  Tag... tags) {
         return PutObjectRequest.builder()
                                .bucket(request.storageLocation.bucket)
                                .key(s3RemoteObjectReference.canonicalPath)
                                .storageClass(StorageClass.STANDARD_IA)
                                .tagging(Tagging.builder().tagSet(tags).build())
+                               .checksumSHA256(checksumSHA256)
                                .build();
     }
 
@@ -217,11 +228,14 @@ public class BaseS3Backuper extends Backuper {
                                                                                           .bucket(request.storageLocation.bucket)
                                                                                           .key(objectReference.canonicalPath)
                                                                                           .tagging(tagging)
+                                                                                          .checksumAlgorithm(ChecksumAlgorithm.SHA256)
                                                                                           .build();
 
         CreateMultipartUploadResponse multipartUploadResponse = s3Client.createMultipartUpload(multipartUploadRequest);
 
         String uploadId = multipartUploadResponse.uploadId();
+
+        MessageDigest sha256 = prepareMessageDigest();
 
         try
         {
@@ -244,6 +258,7 @@ public class BaseS3Backuper extends Backuper {
                                                                  .key(objectReference.canonicalPath)
                                                                  .uploadId(uploadId)
                                                                  .partNumber(partNumber)
+                                                                 .checksumAlgorithm(ChecksumAlgorithm.SHA256)
                                                                  .sdkPartType(partNumber == numberOfParts ? SdkPartType.LAST : SdkPartType.DEFAULT)
                                                                  .build();
 
@@ -253,7 +268,10 @@ public class BaseS3Backuper extends Backuper {
                 completedParts.add(CompletedPart.builder()
                                                 .partNumber(partNumber)
                                                 .eTag(partResponse.eTag())
+                                                .checksumSHA256(partResponse.checksumSHA256())
                                                 .build());
+
+                sha256.update(byteBuffer);
             }
 
             // Complete the multipart upload
@@ -284,6 +302,22 @@ public class BaseS3Backuper extends Backuper {
 
             logger.debug("Object under key " + objectReference.canonicalPath + " exists");
 
+            Tag checksumTag = Tag.builder()
+                    .key("fullObjectChecksum")
+                    .value(HashSpec.HashAlgorithm.SHA_256.getHasher().getHash(sha256.digest()))
+                    .build();
+
+            PutObjectTaggingResponse putObjectTaggingResponse = s3Client.putObjectTagging(PutObjectTaggingRequest.builder()
+                                                                                                  .bucket(request.storageLocation.bucket)
+                                                                                                  .key(objectReference.canonicalPath)
+                                                                                                  .tagging(Tagging.builder().tagSet(checksumTag).build()).build());
+
+            if (!putObjectTaggingResponse.sdkHttpResponse().isSuccessful()) {
+                throw new RuntimeException(String.format("Unsuccessful tagging of %s with checksum, upload id %s", objectReference.canonicalPath, uploadId));
+            } else {
+                logger.debug("Tagged {} with {}", objectReference.canonicalPath, checksumTag.toString());
+            }
+
             if (s3Clients.hasEncryptingClient()) {
                 try {
                     GetObjectAttributesResponse objectAttributes = s3Clients.getNonEncryptingClient()
@@ -295,6 +329,7 @@ public class BaseS3Backuper extends Backuper {
                                                          .build());
 
                     manifestEntry.size = objectAttributes.objectSize();
+                    manifestEntry.hash = Base64.getEncoder().encodeToString(sha256.digest());
                 }
                 catch (Throwable t) {
                     logger.warn("Unable to get attribute {} for key {} by GetObjectAttributes request. Please check your permissions.",
@@ -367,5 +402,17 @@ public class BaseS3Backuper extends Backuper {
                 }
             }
         }
+    }
+
+    private static MessageDigest prepareMessageDigest() {
+        try {
+            return MessageDigest.getInstance("SHA-256");
+        } catch (Throwable t) {
+            throw new IllegalStateException("Unable to get instance of SHA-256 message digest");
+        }
+    }
+
+    private String getDigest(byte[] digest) {
+        return Base64.getEncoder().encodeToString(digest);
     }
 }
