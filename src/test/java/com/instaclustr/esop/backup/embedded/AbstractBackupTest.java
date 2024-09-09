@@ -93,9 +93,9 @@ public abstract class AbstractBackupTest {
         add(new OperationsModule());
     }};
 
-    public static final String CASSANDRA_5_VERSION = System.getProperty("cassandra5.version", "5.0-beta1");
+    public static final String CASSANDRA_5_VERSION = System.getProperty("cassandra5.version", "5.0.0");
 
-    public static final String CASSANDRA_4_VERSION = System.getProperty("cassandra4.version", "4.1.4");
+    public static final String CASSANDRA_4_VERSION = System.getProperty("cassandra4.version", "4.1.6");
 
     // This is number of rows we inserted into Cassandra DB in total
     // we backed up first 6 rows. For the last two rows, they are stored in commit logs.

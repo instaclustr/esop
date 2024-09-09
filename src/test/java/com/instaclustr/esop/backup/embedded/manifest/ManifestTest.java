@@ -372,7 +372,7 @@ public class ManifestTest {
 
     private Cassandra getCassandra() {
         return new CassandraBuilder()
-            .version(Version.parse(System.getProperty("cassandra5.version", "5.0-beta1")))
+            .version(Version.parse(System.getProperty("cassandra5.version", "5.0.0")))
             .jvmOptions("-Xmx1g", "-Xms1g", "-Dcassandra.ring_delay_ms=1000")
             .workingDirectory(() -> cassandraDir)
             .workingDirectoryDestroyer(WorkingDirectoryDestroyer.deleteAll())
