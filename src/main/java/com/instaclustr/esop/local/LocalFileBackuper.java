@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
@@ -74,8 +75,13 @@ public class LocalFileBackuper extends Backuper {
     @Override
     public void uploadText(final String text, final RemoteObjectReference objectReference) throws Exception {
         Path dir = request.storageLocation.fileBackupDirectory.resolve(request.storageLocation.bucket);
-        Files.createDirectories(dir.resolve(objectReference.canonicalPath).getParent());
-        Files.write(dir.resolve(objectReference.canonicalPath), text.getBytes());
+        if (objectReference.objectKey.startsWith("topology/")) {
+            Files.createDirectories(dir.resolve(objectReference.objectKey).getParent());
+            Files.write(dir.resolve(objectReference.objectKey), text.getBytes());
+        } else {
+            Files.createDirectories(dir.resolve(objectReference.canonicalPath).getParent());
+            Files.write(dir.resolve(objectReference.canonicalPath), text.getBytes());
+        }
     }
 
     @Override
