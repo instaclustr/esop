@@ -812,7 +812,7 @@ public class Snapshots implements Cloneable {
 
         @Override
         public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
-            if (dir.getParent().getFileName().toString().equals("snapshots")) {
+            if (dir.getParent() != null && dir.getParent().getFileName() != null && dir.getParent().getFileName().toString().equals("snapshots")) {
                 if (!dir.getFileName().toString().startsWith("truncated-")) {
                     if (!dir.getFileName().toString().startsWith("dropped-")) {
                         snapshotPaths.add(dir);
