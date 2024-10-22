@@ -206,7 +206,7 @@ public class CassandraData {
                 dataDirs.putIfAbsent(dir, new ArrayList<>());
                 return FileVisitResult.CONTINUE;
                 // we hit table
-            } else if (dir.getParent().getParent().equals(cassandraDir)) {
+            } else if (dir.getParent().getParent() != null && dir.getParent().getParent().equals(cassandraDir)) {
                 String foundTableDir = dir.getFileName().toString().split("-")[0];
 
                 // find tables with same names but different ids if we ever hit a case that
