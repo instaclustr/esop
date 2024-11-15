@@ -213,6 +213,7 @@ public class AzureRestorer extends Restorer {
         FileUtils.cleanDirectory(downloadDir.toFile());
         final List<String> manifestKeys = getBlobPaths(list(""), s -> s.contains("manifests"));
         for (String o: manifestKeys) {
+            logger.info("TRYING TO DOWNLOAD " + o);
             Path manifestPath = Paths.get(o).subpath(1, 6);
             Path destination = downloadDir.resolve(manifestPath);
             downloadFile(destination, objectKeyToRemoteReference(manifestPath));
