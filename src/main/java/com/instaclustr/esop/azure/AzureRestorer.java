@@ -244,7 +244,7 @@ public class AzureRestorer extends Restorer {
         try {
             ((AzureRemoteObjectReference) remoteObjectReference).blob.delete();
         } catch (StorageException ex) {
-            if (!ex.getMessage().contains("The specified blob does not exist")) {
+            if (ex.getMessage().contains("The specified blob does not exist")) {
                 logger.warn("The specified blob does not exist: {}",
                             Paths.get(request.storageLocation.bucket, remoteObjectReference.canonicalPath));
             } else {
