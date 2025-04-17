@@ -142,7 +142,8 @@ public abstract class AbstractBackupTest {
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-            "--create-missing-bucket"
+            "--create-missing-bucket",
+            "--hash-algorithm", "NONE"
         };
 
         final String[] backupArgsWithSnapshotName = new String[]{
@@ -157,7 +158,8 @@ public abstract class AbstractBackupTest {
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-            "--create-missing-bucket"
+            "--create-missing-bucket",
+            "--hash-algorithm", "NONE"
         };
 
         // one more backup to have there manifests with same snapshot name so the latest wins
@@ -174,6 +176,7 @@ public abstract class AbstractBackupTest {
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
             "--create-missing-bucket",
+            "--hash-algorithm", "NONE"
         };
 
         // COMMIT LOGS BACKUP
@@ -206,7 +209,8 @@ public abstract class AbstractBackupTest {
             // that would import all of them which is not always what we really want as other system tables
             // would be regenerated, only schema should be as it was.
             "--restore-into-new-cluster",
-            "--restoration-strategy-type=IN_PLACE"
+            "--restoration-strategy-type=IN_PLACE",
+            "--hash-algorithm", "NONE"
         };
 
         // COMMIT LOG RESTORE
@@ -248,7 +252,8 @@ public abstract class AbstractBackupTest {
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-            "--create-missing-bucket"
+            "--create-missing-bucket",
+            "--hash-algorithm", "NONE"
         };
 
         final String[] backupArgsWithSnapshotName = new String[]{
@@ -263,7 +268,8 @@ public abstract class AbstractBackupTest {
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-            "--create-missing-bucket"
+            "--create-missing-bucket",
+            "--hash-algorithm", "NONE"
         };
 
         // RESTORE
@@ -285,6 +291,7 @@ public abstract class AbstractBackupTest {
             "--restoration-phase-type=download", /// DOWNLOAD
             //"--import-source-dir=" + target("downloaded"),
             "--import-source-dir=" + cassandraDir.toAbsolutePath() + "/data/downloads",
+            "--hash-algorithm", "NONE"
         };
 
         final String[] restoreArgsPhase2 = new String[]{
@@ -303,6 +310,7 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=import",
             "--restoration-phase-type=truncate", // TRUNCATE
             "--import-source-dir=" + cassandraDir.toAbsolutePath() + "/data/downloads",
+            "--hash-algorithm", "NONE"
         };
 
         final String[] restoreArgsPhase3 = new String[]{
@@ -321,6 +329,7 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=import",
             "--restoration-phase-type=import", // IMPORT
             "--import-source-dir=" + cassandraDir.toAbsolutePath() + "/data/downloads",
+            "--hash-algorithm", "NONE"
         };
 
         final String[] restoreArgsPhase4 = new String[]{
@@ -339,6 +348,7 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=import",
             "--restoration-phase-type=cleanup", // CLEANUP
             "--import-source-dir=" + cassandraDir.toAbsolutePath() + "/data/downloads",
+            "--hash-algorithm", "NONE"
         };
 
         return new String[][]{
@@ -505,7 +515,8 @@ public abstract class AbstractBackupTest {
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-            "--create-missing-bucket"
+            "--create-missing-bucket",
+            "--hash-algorithm", "NONE"
         };
 
         final String[] backupArgsWithSnapshotName = new String[]{
@@ -520,7 +531,8 @@ public abstract class AbstractBackupTest {
             "--data-dir",
             cassandraDir.toAbsolutePath() + "/data/data3",
             "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-            "--create-missing-bucket"
+            "--create-missing-bucket",
+            "--hash-algorithm", "NONE"
         };
 
         final String[] backupArgs2WithSnapshotName = new String[]{
@@ -535,7 +547,8 @@ public abstract class AbstractBackupTest {
                 "--data-dir",
                 cassandraDir.toAbsolutePath() + "/data/data3",
                 "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2", // keyspaces
-                "--create-missing-bucket"
+                "--create-missing-bucket",
+                "--hash-algorithm", "NONE"
         };
 
         // RESTORE
@@ -556,6 +569,7 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=hardlinks",
             "--restoration-phase-type=download", /// DOWNLOAD
             "--import-source-dir=" + target("downloaded"),
+            "--hash-algorithm", "NONE"
         };
 
         final String[] truncatePhase = new String[]{
@@ -592,6 +606,7 @@ public abstract class AbstractBackupTest {
             "--restoration-strategy-type=hardlinks",
             "--restoration-phase-type=import", // IMPORT
             "--import-source-dir=" + target("downloaded"),
+            "--hash-algorithm", "NONE"
         };
 
         final String[] cleanupPhase = new String[]{
