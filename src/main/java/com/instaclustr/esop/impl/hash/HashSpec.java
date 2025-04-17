@@ -3,7 +3,6 @@ package com.instaclustr.esop.impl.hash;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.function.Supplier;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
@@ -27,7 +26,7 @@ public class HashSpec {
     }
 
     @Option(names = {"--hash-algorithm"},
-        description = "Algorithm to use for hashing of SSTables and files to upload / download.",
+        description = "Algorithm to use for hashing of SSTables and files to upload / download. For skipping, use NONE.",
         defaultValue = "SHA-256",
         converter = HashAlgorithmConverter.class)
     public HashAlgorithm algorithm;
@@ -84,6 +83,18 @@ public class HashSpec {
         }
     }
 
+    public static class NoOp implements Hasher {
+        @Override
+        public String getHash(InputStream is) throws Exception {
+            return null;
+        }
+
+        @Override
+        public String getHash(byte[] digest) throws Exception {
+            return null;
+        }
+    }
+
     public static class CRCHasher implements Hasher {
         @Override
         public String getHash(InputStream is) throws Exception
@@ -108,7 +119,8 @@ public class HashSpec {
 
     public enum HashAlgorithm {
         SHA_256("SHA-256", () -> new SHAHasher("SHA-256")),
-        CRC("CRC", () -> new CRCHasher());
+        CRC("CRC", () -> new CRCHasher()),
+        NONE("NONE", () -> new NoOp());
 
         private static final Logger logger = LoggerFactory.getLogger(HashAlgorithm.class);
         public static final HashAlgorithm DEFAULT_ALGORITHM = HashAlgorithm.SHA_256;

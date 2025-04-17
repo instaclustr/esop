@@ -53,6 +53,11 @@ public class HashServiceImpl implements HashService {
 
     @Override
     public void verify(final Path path, final String expectedHash) throws HashVerificationException {
+
+        if (hashSpec.algorithm == HashSpec.HashAlgorithm.NONE) {
+            return;
+        }
+
         try {
             if (path == null) {
                 throw new HashVerificationException("file to get a hash for is null!");
@@ -66,7 +71,7 @@ public class HashServiceImpl implements HashService {
 
             if (!hashOfFile.equals(expectedHash)) {
                 throw new HashVerificationException(format("hash of %s (%s) does not match with expected hash %s",
-                                                           path.toString(),
+                                                           path,
                                                            hashOfFile,
                                                            expectedHash));
             }
@@ -82,6 +87,8 @@ public class HashServiceImpl implements HashService {
 
     private String getHash(final File file) throws Exception
     {
+        if (hashSpec.algorithm == HashSpec.HashAlgorithm.NONE)
+            return null;
         try (final InputStream is = new FileInputStream(file)) {
             logger.info("Getting {} hash of {} ", hashSpec.algorithm.toString(), file.getAbsolutePath());
             return hashSpec.algorithm.getHasher().getHash(is);
