@@ -571,7 +571,7 @@ public class Snapshots implements Cloneable {
                     final Path tablePath = Paths.get("data").resolve(Paths.get(keyspace, table));
 
                     for (final Path path : value) {
-                        tb.sstables.putAll(SSTableUtils.getSSTables(keyspace, table, path, tablePath, Snapshots.hashSpec));
+                        tb.sstables.putAll(SSTableUtils.getSSTables(keyspace, table, path, tablePath));
                     }
 
                     final Optional<Path> schemaPath = value.stream().map(p -> p.resolve("schema.cql")).filter(Files::exists).findFirst();

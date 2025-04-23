@@ -19,12 +19,24 @@ public abstract class Backuper extends StorageInteractor {
         this.retrier = RetrierFactory.getRetrier(request.retry);
     }
 
+    public static class RefreshingOutcome
+    {
+        public FreshenResult result;
+        public String hash;
+
+        public RefreshingOutcome(FreshenResult result, String hash)
+        {
+            this.result = result;
+            this.hash = hash;
+        }
+    }
+
     public enum FreshenResult {
         FRESHENED,
         UPLOAD_REQUIRED
     }
 
-    public abstract FreshenResult freshenRemoteObject(ManifestEntry manifestEntry, final RemoteObjectReference object) throws Exception;
+    public abstract RefreshingOutcome freshenRemoteObject(ManifestEntry manifestEntry, final RemoteObjectReference object) throws Exception;
 
     public abstract void uploadFile(final ManifestEntry manifestEntry,
                                     final InputStream localFileStream,

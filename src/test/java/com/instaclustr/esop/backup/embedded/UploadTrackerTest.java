@@ -37,6 +37,8 @@ import com.instaclustr.esop.impl.backup.Backuper;
 import com.instaclustr.esop.impl.backup.UploadTracker;
 import com.instaclustr.esop.impl.backup.coordination.ClearSnapshotOperation;
 import com.instaclustr.esop.impl.backup.coordination.TakeSnapshotOperation;
+import com.instaclustr.esop.impl.hash.HashService;
+import com.instaclustr.esop.impl.hash.HashServiceImpl;
 import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.local.LocalFileBackuper;
 import com.instaclustr.esop.local.LocalFileModule;
@@ -122,15 +124,15 @@ public class UploadTrackerTest extends AbstractBackupTest {
 
             final ListeningExecutorService finisher = new Executors.FixedTasksExecutorSupplier().get(10);
 
-            uploadTracker = new UploadTracker(finisher, operationsService, new HashSpec()) {
+            uploadTracker = new UploadTracker(finisher, operationsService, new HashServiceImpl(new HashSpec())) {
                 // override for testing purposes
                 @Override
                 public UploadUnit constructUnitToSubmit(final Backuper backuper,
                                                         final ManifestEntry manifestEntry,
                                                         final AtomicBoolean shouldCancel,
                                                         final String snapshotTag,
-                                                        final HashSpec hashSpec) {
-                    return new TestingUploadUnit(wait, backuper, manifestEntry, shouldCancel, snapshotTag, hashSpec);
+                                                        final HashService hashService) {
+                    return new TestingUploadUnit(wait, backuper, manifestEntry, shouldCancel, snapshotTag, hashService);
                 }
             };
 
@@ -277,8 +279,8 @@ public class UploadTrackerTest extends AbstractBackupTest {
                                  final ManifestEntry manifestEntry,
                                  final AtomicBoolean shouldCancel,
                                  final String snapshotTag,
-                                 final HashSpec hashSpec) {
-            super(backuper, manifestEntry, shouldCancel, snapshotTag, hashSpec);
+                                 final HashService hashService) {
+            super(backuper, manifestEntry, shouldCancel, snapshotTag, hashService);
             this.wait = wait;
         }
 

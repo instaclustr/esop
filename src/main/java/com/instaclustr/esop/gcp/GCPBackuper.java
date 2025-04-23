@@ -53,7 +53,7 @@ public class GCPBackuper extends Backuper {
     }
 
     @Override
-    public FreshenResult freshenRemoteObject(ManifestEntry manifestEntry, final RemoteObjectReference object) {
+    public RefreshingOutcome freshenRemoteObject(ManifestEntry manifestEntry, final RemoteObjectReference object) {
         final BlobId blobId = ((GCPRemoteObjectReference) object).blobId;
 
         try {
@@ -63,13 +63,13 @@ public class GCPBackuper extends Backuper {
                                  .setTarget(BlobInfo.newBuilder(blobId).build(), Storage.BlobTargetOption.predefinedAcl(BUCKET_OWNER_FULL_CONTROL))
                                  .build());
 
-                return FreshenResult.FRESHENED;
+                return new RefreshingOutcome(FreshenResult.FRESHENED, null);
             } else {
                 final Blob blob = storage.get(blobId);
                 if (blob == null || !blob.exists()) {
-                    return FreshenResult.UPLOAD_REQUIRED;
+                    return new RefreshingOutcome(FreshenResult.UPLOAD_REQUIRED, null);
                 } else {
-                    return FreshenResult.FRESHENED;
+                    return new RefreshingOutcome(FreshenResult.FRESHENED, null);
                 }
             }
         } catch (final StorageException e) {
@@ -77,7 +77,7 @@ public class GCPBackuper extends Backuper {
                 throw e;
             }
 
-            return FreshenResult.UPLOAD_REQUIRED;
+            return new RefreshingOutcome(FreshenResult.UPLOAD_REQUIRED, null);
         }
     }
 

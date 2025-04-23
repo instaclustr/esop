@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 
+import com.instaclustr.esop.impl.hash.HashService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +49,7 @@ public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session
 
     protected final ListeningExecutorService finisherExecutorService;
     protected final OperationsService operationsService;
-    protected final HashSpec hashSpec;
+    protected final HashService hashService;
 
     protected final List<UNIT> units = Collections.synchronizedList(new ArrayList<>());
     protected final Set<Session<UNIT>> sessions = Collections.synchronizedSet(new HashSet<>());
@@ -58,10 +59,10 @@ public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session
 
     public AbstractTracker(final ListeningExecutorService finisherExecutorService,
                            final OperationsService operationsService,
-                           final HashSpec hashSpec) {
+                           final HashService hashService) {
         this.finisherExecutorService = finisherExecutorService;
         this.operationsService = operationsService;
-        this.hashSpec = hashSpec;
+        this.hashService = hashService;
 
     }
 
@@ -90,7 +91,7 @@ public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session
                                                final ManifestEntry manifestEntry,
                                                final AtomicBoolean shouldCancel,
                                                final String snapshotTag,
-                                               final HashSpec hashSpec);
+                                               final HashService hashService);
 
     public abstract Session<UNIT> constructSession();
 
@@ -131,7 +132,7 @@ public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session
             }
 
             if (alreadySubmitted == null) {
-                final UNIT unit = constructUnitToSubmit(interactor, entry, operation.getShouldCancel(), snapshotTag, hashSpec);
+                final UNIT unit = constructUnitToSubmit(interactor, entry, operation.getShouldCancel(), snapshotTag, hashService);
 
                 units.add(unit);
                 futures.put(executorService.submit(unit), unit);
@@ -226,7 +227,7 @@ public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session
         @JsonIgnore
         protected String snapshotTag;
         @JsonIgnore
-        protected HashSpec hashSpec;
+        protected HashService hashService;
         protected final ManifestEntry manifestEntry;
         protected volatile State state = NOT_STARTED;
         protected Throwable throwable = null;
@@ -235,10 +236,10 @@ public abstract class AbstractTracker<UNIT extends Unit, SESSION extends Session
 
         public Unit(final ManifestEntry manifestEntry,
                     final AtomicBoolean shouldCancel,
-                    final HashSpec hashSpec) {
+                    final HashService hashService) {
             this.manifestEntry = manifestEntry;
             this.shouldCancel = shouldCancel;
-            this.hashSpec = hashSpec;
+            this.hashService = hashService;
         }
 
         public enum State {
