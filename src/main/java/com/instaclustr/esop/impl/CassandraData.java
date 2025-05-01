@@ -270,7 +270,7 @@ public class CassandraData {
         final KeyspaceTableLister lister = new KeyspaceTableLister(cassandraDir);
 
         Files.walkFileTree(cassandraDir, lister);
-        lister.removeDroppedKeyspaces();
+        //lister.removeDroppedKeyspaces();
 
         final Map<Path, List<Path>> dataDirs = lister.getDataDirs();
 
