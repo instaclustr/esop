@@ -98,7 +98,7 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
                 }
             }
 
-            final CassandraData cassandraData = CassandraData.parse(request.dataDirs.get(0));
+            final CassandraData cassandraData = CassandraData.parse(cassandraJMXService); // CassandraData.parse(request.dataDirs.get(0));
             cassandraData.setDatabaseEntitiesFromRequest(request.entities);
 
             if (request.storageLocation.incompleteNodeLocation()) {

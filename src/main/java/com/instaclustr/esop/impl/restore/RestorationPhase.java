@@ -53,6 +53,7 @@ import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhas
 import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.IMPORT;
 import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.INIT;
 import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.TRUNCATE;
+import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.IN_PLACE;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
@@ -72,7 +73,8 @@ public abstract class RestorationPhase {
         this.ctxt = ctxt;
 
         if (parseCassandraData) {
-            final CassandraData cassandraData = CassandraData.parse(ctxt.operation.request.dataDirs.get(0));
+            final CassandraData cassandraData = ctxt.operation.request.restorationStrategyType == IN_PLACE
+                    ? CassandraData.parse(ctxt.operation.request.dataDirs.get(0)) : CassandraData.parse(ctxt.jmx);
             cassandraData.setDatabaseEntitiesFromRequest(ctxt.operation.request.entities);
             cassandraData.setRenamedEntitiesFromRequest(ctxt.operation.request.rename);
             cassandraData.validate();

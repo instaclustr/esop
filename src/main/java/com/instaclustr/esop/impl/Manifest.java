@@ -297,27 +297,17 @@ public class Manifest implements Cloneable {
 
                 final Optional<Keyspace> keyspace = snapshot.getKeyspace(entry.getKey());
 
-                if (!keyspace.isPresent()) {
-                    throw new IllegalStateException(format("Keyspace %s is not in manifest!", entry.getKey()));
+                if (keyspace.isPresent()) {
+                    final Optional<Table> table = keyspace.get().getTable(entry.getValue());
+                    table.ifPresent(value -> manifestEntries.addAll(value.getEntries()));
                 }
-
-                final Optional<Table> table = keyspace.get().getTable(entry.getValue());
-
-                if (!table.isPresent()) {
-                    throw new IllegalStateException(format("Table %s.%s is not in manifest!", entry.getKey(), entry.getValue()));
-                }
-
-                table.ifPresent(value -> manifestEntries.addAll(value.getEntries()));
             }
         } else {
             for (final String ks : entities.getKeyspaces()) {
                 final Optional<Keyspace> keyspace = snapshot.getKeyspace(ks);
 
-                if (!keyspace.isPresent()) {
-                    throw new IllegalStateException(format("Keyspace %s is not in manifest!", ks));
-                }
-
-                manifestEntries.addAll(keyspace.get().getManifestEntries());
+                //throw new IllegalStateException(format("Keyspace %s is not in manifest!", ks));
+                keyspace.ifPresent(value -> manifestEntries.addAll(value.getManifestEntries()));
             }
         }
 

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
@@ -21,6 +22,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.instaclustr.esop.impl.RenamedEntities.Renamed;
+import com.instaclustr.operations.FunctionWithEx;
+import jmx.org.apache.cassandra.JMXUtils;
+import jmx.org.apache.cassandra.service.CassandraJMXService;
+import jmx.org.apache.cassandra.service.cassandra4.Cassandra4StorageServiceMBean;
+
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
@@ -294,6 +303,72 @@ public class CassandraData {
         }
 
         return new CassandraData(tableIdsMap, dataDirs);
+    }
+
+    public static CassandraData parse(CassandraJMXService cassandraJMXService) throws Exception {
+        try (JMXConnector jmxConnector = JMXUtils.getJmxConnector(cassandraJMXService.getCassandraJmxConnectionInfo())) {
+
+            jmxConnector.connect();
+
+            final MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+            Set<ObjectName> beans = mBeanServerConnection.queryNames(new ObjectName("org.apache.cassandra.db:type=Tables,*"), null);
+
+            Map<String, Map<String, String>> tableIdsMap = new HashMap<>();
+            Map<Path, List<Path>> fullPathsMap = new HashMap<>();
+
+            for (ObjectName name : beans) {
+                String keyspace = name.getKeyProperty("keyspace");
+                String table = name.getKeyProperty("table");
+                List<String> dataPaths = (ArrayList<String>) mBeanServerConnection.getAttribute(name, "DataPaths");
+
+                String aDataPath = dataPaths.get(0);
+
+                String tableNamePathWithoutId = aDataPath.substring(0, aDataPath.lastIndexOf("-"));
+                String tableId = aDataPath.substring(tableNamePathWithoutId.length() + 1);
+
+                tableIdsMap.putIfAbsent(keyspace, new HashMap<>());
+                tableIdsMap.get(keyspace).put(table, tableId);
+
+                Path keyspacePath = Paths.get(aDataPath.substring(0, aDataPath.lastIndexOf("/")));
+                List<Path> fullTablePaths = dataPaths.stream().map(Paths::get).collect(Collectors.toList());
+
+                fullPathsMap.putIfAbsent(keyspacePath, new ArrayList<>());
+                fullPathsMap.get(keyspacePath).addAll(fullTablePaths);
+
+                System.out.println(tableIdsMap);
+                System.out.println(fullTablePaths);
+            }
+
+            // we load all keyspaces, even they do not have any tables
+            // as org.apache.cassandra.db:type=Tables,* will get us only keyspaces there are some tables for
+            List<String> keyspaces = cassandraJMXService.doWithCassandra4StorageServiceMBean(new FunctionWithEx<Cassandra4StorageServiceMBean, List<String>>() {
+                @Override
+                public List<String> apply(Cassandra4StorageServiceMBean object) {
+                    return object.getKeyspaces();
+                }
+            });
+
+            for (String keyspace : keyspaces) {
+                tableIdsMap.putIfAbsent(keyspace, new HashMap<>());
+            }
+
+            String[] dataLocations = cassandraJMXService.doWithCassandra4StorageServiceMBean(new FunctionWithEx<Cassandra4StorageServiceMBean, String[]>() {
+                @Override
+                public String[] apply(Cassandra4StorageServiceMBean object) {
+                    return object.getAllDataFileLocations();
+                }
+            });
+
+            for (String keyspace : keyspaces) {
+                for (String dataLocation : dataLocations) {
+                    Path keyspacePath = Paths.get(dataLocation, keyspace);
+                    fullPathsMap.putIfAbsent(keyspacePath, new ArrayList<>());
+                }
+            }
+
+            return new CassandraData(tableIdsMap, fullPathsMap);
+        }
     }
 
     private static CassandraData empty() {

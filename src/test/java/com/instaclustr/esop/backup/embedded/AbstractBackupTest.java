@@ -351,6 +351,128 @@ public abstract class AbstractBackupTest {
         };
     }
 
+    protected String[][] importArgumentsWhenEmptyKeyspace() {
+
+        final String snapshotName1 = "snapshot1";
+        final String snapshotName2 = "snapshot2";
+
+        // BACKUP
+
+        final String[] backupArgs = new String[]{
+                "backup",
+                "--jmx-service", "127.0.0.1:7199",
+                "--storage-location=" + getStorageLocation(),
+                "--snapshot-tag=" + snapshotName1,
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data2",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data3",
+                "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2,some_ks", // keyspaces
+                "--create-missing-bucket"
+        };
+
+        final String[] backupArgsWithSnapshotName = new String[]{
+                "backup",
+                "--jmx-service", "127.0.0.1:7199",
+                "--storage-location=" + getStorageLocation(),
+                "--snapshot-tag=" + snapshotName2,
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data2",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data3",
+                "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2,some_ks", // keyspaces
+                "--create-missing-bucket"
+        };
+
+        // RESTORE
+
+        final String[] restoreArgsPhase1 = new String[]{
+                "restore",
+                "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data2",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data3",
+                "--snapshot-tag=" + snapshotName2,
+                "--storage-location=" + getStorageLocation(),
+                "--update-cassandra-yaml=true",
+                "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2,some_ks",
+                "--restoration-strategy-type=import",
+                "--restoration-phase-type=download", /// DOWNLOAD
+                //"--import-source-dir=" + target("downloaded"),
+                "--import-source-dir=" + cassandraDir.toAbsolutePath() + "/data/downloads",
+        };
+
+        final String[] restoreArgsPhase2 = new String[]{
+                "restore",
+                "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data2",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data3",
+                "--snapshot-tag=" + snapshotName2,
+                "--storage-location=" + getStorageLocation(),
+                "--update-cassandra-yaml=true",
+                "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2,some_ks",
+                "--restoration-strategy-type=import",
+                "--restoration-phase-type=truncate", // TRUNCATE
+                "--import-source-dir=" + cassandraDir.toAbsolutePath() + "/data/downloads",
+        };
+
+        final String[] restoreArgsPhase3 = new String[]{
+                "restore",
+                "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data2",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data3",
+                "--snapshot-tag=" + snapshotName2,
+                "--storage-location=" + getStorageLocation(),
+                "--update-cassandra-yaml=true",
+                "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2,some_ks",
+                "--restoration-strategy-type=import",
+                "--restoration-phase-type=import", // IMPORT
+                "--import-source-dir=" + cassandraDir.toAbsolutePath() + "/data/downloads",
+        };
+
+        final String[] restoreArgsPhase4 = new String[]{
+                "restore",
+                "--cassandra-dir=" + cassandraDir.toAbsolutePath() + "/data",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data2",
+                "--data-dir",
+                cassandraDir.toAbsolutePath() + "/data/data3",
+                "--snapshot-tag=" + snapshotName2,
+                "--storage-location=" + getStorageLocation(),
+                "--update-cassandra-yaml=true",
+                "--entities=" + systemKeyspace(getCassandraVersion()) + ",test,test2,some_ks",
+                "--restoration-strategy-type=import",
+                "--restoration-phase-type=cleanup", // CLEANUP
+                "--import-source-dir=" + cassandraDir.toAbsolutePath() + "/data/downloads",
+        };
+
+        return new String[][]{
+                backupArgs,
+                backupArgsWithSnapshotName,
+                restoreArgsPhase1,
+                restoreArgsPhase2,
+                restoreArgsPhase3,
+                restoreArgsPhase4,
+        };
+    }
+
     protected String[][] importArgumentsRenamedTable(final RestorationStrategyType strategyType, final boolean crossKeyspaceRename) {
 
         final String snapshotName1 = "snapshot1";
@@ -933,6 +1055,63 @@ public abstract class AbstractBackupTest {
         }
     }
 
+    public void liveBackupRestoreWithEmptyKeyspace(final String[][] arguments, int rounds) throws Exception {
+        Cassandra cassandra = getCassandra(cassandraDir, getCassandraVersion());
+        cassandra.start();
+
+        waitForCql();
+
+        try (CqlSession session = CqlSession.builder().build()) {
+
+            createTable(session, KEYSPACE, TABLE);
+            createTable(session, KEYSPACE_2, TABLE_2);
+            createKeyspace(session, "some_ks");
+
+            insertAndCallBackupCLI(2, session, arguments[0]); // stefansnapshot-1
+            insertAndCallBackupCLI(2, session, arguments[1]); // stefansnapshot-2
+
+            assertRowCount(session, KEYSPACE, TABLE, 4);
+            assertRowCount(session, KEYSPACE_2, TABLE_2, 4);
+
+            // first round
+
+            for (int i = 1; i < rounds + 1; ++i) {
+
+                // each phase is executed twice here to check that phases are idempotent / repeatable
+
+                logger.info("Round " + i + " - Executing the first restoration phase - download {}", asList(arguments[2]));
+                Esop.mainWithoutExit(arguments[2]);
+                logger.info("Round " + i + " - Executing the first restoration phase for the second time - download {}", asList(arguments[2]));
+                Esop.mainWithoutExit(arguments[2]);
+
+                logger.info("Round " + i + " - Executing the second restoration phase - truncate {}", asList(arguments[3]));
+                Esop.mainWithoutExit(arguments[3]);
+                logger.info("Round " + i + " - Executing the second restoration phase for the second time - truncate {}", asList(arguments[3]));
+                Esop.mainWithoutExit(arguments[3]);
+
+                logger.info("Round " + i + " - Executing the third restoration phase - import {}", asList(arguments[4]));
+                Esop.mainWithoutExit(arguments[4]);
+
+                // second round would not pass for 4 because import deletes files in download
+                logger.info("Round " + i + " - Executing the third restoration phase for the second time - import {}", asList(arguments[4]));
+                Esop.mainWithoutExit(arguments[4]);
+
+                logger.info("Round " + i + " - Executing the fourth restoration phase - cleanup {}", asList(arguments[5]));
+                Esop.mainWithoutExit(arguments[5]);
+                logger.info("Round " + i + " - Executing the fourth restoration phase for the second time - cleanup {}", asList(arguments[5]));
+                Esop.mainWithoutExit(arguments[5]);
+
+                // we expect 4 records to be there as 2 were there before the first backup and the second 2 before the second backup
+                assertRowCount(session, KEYSPACE, TABLE, 4);
+                assertRowCount(session, KEYSPACE_2, TABLE_2, 4);
+            }
+        } finally {
+            cassandra.stop();
+            FileUtils.deleteDirectory(cassandraDir);
+            deleteDirectory(Paths.get(target("backup1")));
+        }
+    }
+
     public void liveBackupRestoreTest(final String[][] arguments) throws Exception {
         liveBackupRestoreTest(arguments, 1);
     }
@@ -1229,19 +1408,22 @@ public abstract class AbstractBackupTest {
     }
 
     protected void createTable(CqlSession session, String keyspace, String table) {
-        session.execute(SchemaBuilder.createKeyspace(keyspace)
-                                .ifNotExists()
-                                .withNetworkTopologyStrategy(of("datacenter1", 1))
-                                .build());
-
-        Uninterruptibles.sleepUninterruptibly(2, SECONDS);
-
+        createKeyspace(session, keyspace);
         session.execute(SchemaBuilder.createTable(keyspace, table)
                                 .ifNotExists()
                                 .withPartitionKey(ID, TEXT)
                                 .withClusteringColumn(DATE, TIMEUUID)
                                 .withColumn(NAME, TEXT)
                                 .build());
+    }
+
+    protected void createKeyspace(CqlSession session, String keyspace) {
+        session.execute(SchemaBuilder.createKeyspace(keyspace)
+                                .ifNotExists()
+                                .withNetworkTopologyStrategy(of("datacenter1", 1))
+                                .build());
+
+        Uninterruptibles.sleepUninterruptibly(2, SECONDS);
     }
 
     protected void createIndex(CqlSession session, String keyspace, String table) {
