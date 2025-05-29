@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.util.concurrent.ListeningExecutorService;
 
+import com.instaclustr.esop.impl.hash.HashService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,8 +18,6 @@ import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.ManifestEntry.Type;
 import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.hash.HashService.HashVerificationException;
-import com.instaclustr.esop.impl.hash.HashServiceImpl;
-import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.restore.DownloadTracker.DownloadSession;
 import com.instaclustr.esop.impl.restore.DownloadTracker.DownloadUnit;
 import com.instaclustr.esop.impl.restore.RestoreModules.DownloadingFinisher;
@@ -36,8 +35,8 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
     @Inject
     public DownloadTracker(final @DownloadingFinisher ListeningExecutorService finisherExecutorService,
                            final OperationsService operationsService,
-                           final HashSpec hashSpec) {
-        super(finisherExecutorService, operationsService, hashSpec);
+                           final HashService hashService) {
+        super(finisherExecutorService, operationsService, hashService);
     }
 
     @Override
@@ -45,8 +44,8 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
                                               final ManifestEntry manifestEntry,
                                               final AtomicBoolean shouldCancel,
                                               final String snapshotTag,
-                                              final HashSpec hashSpec) {
-        return new DownloadUnit(restorer, manifestEntry, shouldCancel, snapshotTag, hashSpec);
+                                              final HashService hashService) {
+        return new DownloadUnit(restorer, manifestEntry, shouldCancel, snapshotTag, hashService);
     }
 
     @Override
@@ -80,8 +79,8 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
                             final ManifestEntry manifestEntry,
                             final AtomicBoolean shouldCancel,
                             final String snapshotTag,
-                            final HashSpec hashSpec) {
-            super(manifestEntry, shouldCancel, hashSpec);
+                            final HashService hashService) {
+            super(manifestEntry, shouldCancel, hashService);
             this.restorer = restorer;
             super.snapshotTag = snapshotTag;
         }
@@ -106,7 +105,7 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
                     // hash upon downloading
                     try {
                         if (manifestEntry.type == Type.FILE) {
-                            new HashServiceImpl(hashSpec).verify(localPath, manifestEntry.hash);
+                            hashService.verify(localPath, manifestEntry.hash);
                         }
                     } catch (final HashVerificationException ex) {
                         // delete it if has is wrong so on the next try, it will be missing and we will download it again
@@ -123,7 +122,7 @@ public class DownloadTracker extends AbstractTracker<DownloadUnit, DownloadSessi
                     logger.info(String.format("Skipping download of file %s to %s, file already exists locally.",
                                               remoteObjectReference.getObjectKey(), manifestEntry.localFile));
                     // if it exists, verify its hash to be sure it was not altered
-                    new HashServiceImpl(hashSpec).verify(localPath, manifestEntry.hash);
+                    hashService.verify(localPath, manifestEntry.hash);
                     state = FINISHED;
                 } else {
                     // if it exists and manifest does not have hash field, consider it to be finished without any check
