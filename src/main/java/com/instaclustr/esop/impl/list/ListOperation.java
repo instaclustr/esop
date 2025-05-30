@@ -1,6 +1,7 @@
 package com.instaclustr.esop.impl.list;
 
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,6 +15,10 @@ import java.util.UUID;
 
 import javax.inject.Inject;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +42,8 @@ import com.instaclustr.io.FileUtils;
 import com.instaclustr.operations.Operation;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 
+import static com.instaclustr.esop.impl.Manifest.ConditionalHumanUnitsSerializer.HUMAN_UNITS_SERIALISATION_PROPERTY;
+import static com.instaclustr.esop.impl.Manifest.ConditionalHumanUnitsSerializer.humanReadableByteCountSI;
 import static com.instaclustr.esop.impl.list.ListOperationRequest.getForLocalListing;
 import static java.util.Collections.reverse;
 import static java.util.stream.Collectors.toList;
@@ -147,7 +154,7 @@ public class ListOperation extends Operation<ListOperationRequest> {
                 request.response = report;
             } else {
                 try (final PrintStream ps = getOutputStream(request)) {
-                    print(report, request, ps);
+                    print(objectMapper, report, request, ps);
                 }
             }
         } catch (final Exception ex) {
@@ -198,31 +205,40 @@ public class ListOperation extends Operation<ListOperationRequest> {
         report.getReports().addAll(filtered);
     }
 
-    private void print(final AllManifestsReport report, final ListOperationRequest request, final PrintStream ps) throws Exception {
+    @VisibleForTesting
+    public static void print(final ObjectMapper mapper,
+                             final AllManifestsReport report,
+                             final ListOperationRequest request,
+                             final PrintStream ps) throws Exception {
         if (request.simpleFormat) {
             if (request.json) {
-                printSimpleJson(report, ps);
+                printSimpleJson(mapper, report, ps);
             } else {
                 printSimpleTable(report, ps);
             }
         } else {
             if (request.json) {
-                printComplexJson(report, ps);
+                printComplexJson(mapper, request, report, ps);
             } else {
-                printComplexTable(report, ps);
+                printComplexTable(report, ps, request);
             }
         }
     }
 
-    private void printComplexJson(final AllManifestsReport report, final PrintStream ps) throws Exception {
-        ps.println(objectMapper.writeValueAsString(report));
+    private static void printComplexJson(final ObjectMapper objectMapper,
+                                         final ListOperationRequest request,
+                                         final AllManifestsReport report,
+                                         final PrintStream ps) throws Exception {
+        ps.println(objectMapper.writerWithDefaultPrettyPrinter().withAttribute(HUMAN_UNITS_SERIALISATION_PROPERTY, request.humanUnits).writeValueAsString(report));
     }
 
-    private void printSimpleJson(final AllManifestsReport report, final PrintStream ps) throws Exception {
+    private static void printSimpleJson(final ObjectMapper objectMapper,
+                                        final AllManifestsReport report,
+                                        final PrintStream ps) throws Exception {
         ps.println(objectMapper.writeValueAsString(report.reports.stream().map(mr -> mr.name).collect(toList())));
     }
 
-    private void printSimpleTable(final AllManifestsReport report, final PrintStream ps) {
+    private static void printSimpleTable(final AllManifestsReport report, final PrintStream ps) {
         final TableBuilder builder = new TableBuilder();
 
         for (final ManifestReport mr : report.reports) {
@@ -232,7 +248,9 @@ public class ListOperation extends Operation<ListOperationRequest> {
         builder.printTo(ps);
     }
 
-    private void printComplexTable(final AllManifestsReport report, final PrintStream ps) {
+    private static void printComplexTable(final AllManifestsReport report,
+                                          final PrintStream ps,
+                                          final ListOperationRequest request) {
         final TableBuilder builder = new TableBuilder();
 
         builder.add("Timestamp", "Name", "Files", "Occupied space", "Reclaimable space");
@@ -246,17 +264,5 @@ public class ListOperation extends Operation<ListOperationRequest> {
         builder.add("", "", Integer.toString(report.totalFiles), totalSize, "");
 
         builder.printTo(ps);
-    }
-
-    private static String humanReadableByteCountSI(long bytes) {
-        if (-1000 < bytes && bytes < 1000) {
-            return bytes + " B";
-        }
-        CharacterIterator ci = new StringCharacterIterator("kMGTPE");
-        while (bytes <= -999_950 || bytes >= 999_950) {
-            bytes /= 1000;
-            ci.next();
-        }
-        return String.format("%.1f %cB", bytes / 1000.0, ci.current());
     }
 }
