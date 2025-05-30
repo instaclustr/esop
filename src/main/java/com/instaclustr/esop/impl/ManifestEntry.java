@@ -39,6 +39,7 @@ public class ManifestEntry implements Cloneable {
     @JsonIgnore
     public Path localFile;
 
+    @JsonSerialize(using = Manifest.ConditionalHumanUnitsSerializer.class)
     public long size;
 
     public Type type;

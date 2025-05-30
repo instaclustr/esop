@@ -1,9 +1,12 @@
 package com.instaclustr.esop.impl;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
+import java.text.CharacterIterator;
+import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -14,11 +17,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
+import com.instaclustr.esop.impl.list.ListOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -492,8 +500,10 @@ public class Manifest implements Cloneable {
         public static class ManifestReport {
 
             public int files;
+            @JsonSerialize(using = ConditionalHumanUnitsSerializer.class)
             public long size;
             public String name;
+            @JsonSerialize(using = ConditionalHumanUnitsSerializer.class)
             public long reclaimableSpace;
             public List<String> removableEntries = new ArrayList<>();
             public String timestamp;
@@ -579,8 +589,42 @@ public class Manifest implements Cloneable {
         }
     }
 
+    public static class ConditionalHumanUnitsSerializer extends JsonSerializer<Long> {
+
+        public static final String HUMAN_UNITS_SERIALISATION_PROPERTY = "humanUnits";
+
+        @Override
+        public void serialize(Long value, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+            if (value == null) {
+                jsonGenerator.writeNull();
+                return;
+            }
+
+            Object attribute = serializerProvider.getAttribute(HUMAN_UNITS_SERIALISATION_PROPERTY);
+
+            if (attribute != null && (boolean) attribute) {
+                jsonGenerator.writeString(humanReadableByteCountSI(value));
+            } else {
+                jsonGenerator.writeNumber(value);
+            }
+        }
+
+        public static String humanReadableByteCountSI(long bytes) {
+            if (-1000 < bytes && bytes < 1000) {
+                return bytes + " B";
+            }
+            CharacterIterator ci = new StringCharacterIterator("kMGTPE");
+            while (bytes <= -999_950 || bytes >= 999_950) {
+                bytes /= 1000;
+                ci.next();
+            }
+            return String.format("%.1f %cB", bytes / 1000.0, ci.current());
+        }
+    }
+
     public static class AllManifestsReport {
 
+        @JsonSerialize(using = ConditionalHumanUnitsSerializer.class)
         public long totalSize;
         public int totalFiles;
         public int totalManifests;
