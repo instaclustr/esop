@@ -46,19 +46,19 @@ public class LocalFileBackuper extends Backuper {
     }
 
     @Override
-    public FreshenResult freshenRemoteObject(ManifestEntry manifestEntry, final RemoteObjectReference object) throws Exception {
+    public RefreshingOutcome freshenRemoteObject(ManifestEntry manifestEntry, final RemoteObjectReference object) throws Exception {
         final File fullRemoteObject = resolveFullRemoteObjectPath(object).toFile();
         if (fullRemoteObject.exists()) {
             if (request.skipRefreshing) {
-                return FreshenResult.FRESHENED;
+                return new RefreshingOutcome(FreshenResult.FRESHENED, null);
             } else {
                 //if we can't update modified time for whatever reason, then we will re-upload
                 if (fullRemoteObject.setLastModified(System.currentTimeMillis())) {
-                    return FreshenResult.FRESHENED;
+                    return new RefreshingOutcome(FreshenResult.FRESHENED, null);
                 }
             }
         }
-        return FreshenResult.UPLOAD_REQUIRED;
+        return new RefreshingOutcome(FreshenResult.UPLOAD_REQUIRED, null);
     }
 
     @Override

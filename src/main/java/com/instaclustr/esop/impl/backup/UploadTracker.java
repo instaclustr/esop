@@ -12,6 +12,8 @@ import java.util.function.Function;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.RateLimiter;
 
+import com.instaclustr.esop.impl.hash.HashService;
+import com.instaclustr.esop.impl.hash.HashServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,8 +47,8 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
     @Inject
     public UploadTracker(final @UploadingFinisher ListeningExecutorService finisherExecutorService,
                          final OperationsService operationsService,
-                         final HashSpec hashSpec) {
-        super(finisherExecutorService, operationsService, hashSpec);
+                         final HashService hashService) {
+        super(finisherExecutorService, operationsService, hashService);
     }
 
     @Override
@@ -54,8 +56,8 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
                                             final ManifestEntry manifestEntry,
                                             final AtomicBoolean shouldCancel,
                                             final String snapshotTag,
-                                            final HashSpec hashSpec) {
-        return new UploadUnit(backuper, manifestEntry, shouldCancel, snapshotTag, hashSpec);
+                                            final HashService hashService) {
+        return new UploadUnit(backuper, manifestEntry, shouldCancel, snapshotTag, hashService);
     }
 
     @Override
@@ -96,8 +98,8 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
                           final ManifestEntry manifestEntry,
                           final AtomicBoolean shouldCancel,
                           final String snapshotTag,
-                          final HashSpec hashSpec) {
-            super(manifestEntry, shouldCancel, hashSpec);
+                          final HashService hashService) {
+            super(manifestEntry, shouldCancel, hashService);
             this.backuper = backuper;
             this.snapshotTag = snapshotTag;
         }
@@ -118,22 +120,28 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
                 final RemoteObjectReference ref = getRemoteObjectReference(manifestEntry.objectKey);
 
                 // try to refresh object / decide if it is required to upload it
-                Callable<Boolean> condition = () -> {
+                Callable<Backuper.RefreshingOutcome> condition = () -> {
                     try {
-                        return backuper.freshenRemoteObject(manifestEntry, ref) == FRESHENED;
+
+                        return backuper.freshenRemoteObject(manifestEntry, ref);
                     } catch (final Exception ex) {
                         throw new RetriableException("Failed to refresh remote object" + ref.objectKey, ex);
                     }
                 };
 
-                if (manifestEntry.type != MANIFEST_FILE && getRetrier(backuper.request.retry).submit(condition)) {
-                    logger.info("{}skipping the upload of alredy uploaded file {}",
+                Backuper.RefreshingOutcome refreshmentOutcome = getRetrier(backuper.request.retry).submit(condition);
+
+                if (manifestEntry.type != MANIFEST_FILE && refreshmentOutcome.result == FRESHENED) {
+                    logger.info("{}skipping the upload of already uploaded file {}",
                                 snapshotTag != null ? "Snapshot " + snapshotTag + " - " : "",
                                 ref.canonicalPath);
 
                     state = State.FINISHED;
                     return null;
                 }
+
+                if (refreshmentOutcome.hash != null)
+                    manifestEntry.hash = refreshmentOutcome.hash;
 
                 // do the upload
                 getRetrier(backuper.request.retry).submit(() -> {
@@ -144,6 +152,10 @@ public class UploadTracker extends AbstractTracker<UploadUnit, UploadSession, Ba
                                             snapshotTag != null ? "Snapshot " + snapshotTag + " - " : "",
                                             manifestEntry.objectKey,
                                             DataSize.bytesToHumanReadable(manifestEntry.size)));
+
+                        if (manifestEntry.hash == null)
+                            manifestEntry.hash = hashService.hash(manifestEntry.localFile);
+
                         // never encrypt manifest
                         if (manifestEntry.type == MANIFEST_FILE) {
                             backuper.uploadFile(manifestEntry, rateLimitedStream, ref);
