@@ -86,7 +86,7 @@ public class ManifestEntry implements Cloneable {
 
         try {
             if (size == 0) {
-                if (Files.exists(localFile)) {
+                if (localFile != null && Files.exists(localFile)) {
                     this.size = Files.size(localFile);
                 }
             } else {
