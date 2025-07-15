@@ -74,7 +74,8 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
                                             @JsonProperty("proxySettings") final ProxySettings proxySettings,
                                             @JsonProperty("retry") final RetrySpec retry,
                                             @JsonProperty("skipRefreshing") final boolean skipRefreshing,
-                                            @JsonProperty("kmsKeyId") final String kmsKeyId) {
+                                            @JsonProperty("kmsKeyId") final String kmsKeyId,
+                                            @JsonProperty("gcpUniformBucketLevelAccess") final boolean gcpUniformBucketLevelAccess) {
         super(storageLocation,
               duration,
               bandwidth,
@@ -87,7 +88,8 @@ public class BackupCommitLogsOperationRequest extends BaseBackupOperationRequest
               retry,
               skipRefreshing,
               null,
-              kmsKeyId);
+              kmsKeyId,
+              gcpUniformBucketLevelAccess);
         this.type = "commitlog-backup";
         this.commitLogArchiveOverride = commitLogArchiveOverride;
         this.commitLog = commitLog;

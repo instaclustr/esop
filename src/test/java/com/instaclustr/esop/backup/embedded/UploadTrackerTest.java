@@ -242,27 +242,28 @@ public class UploadTrackerTest extends AbstractBackupTest {
                                                                        final String entities,
                                                                        final List<Path> dataDirs) throws Exception {
         return new BackupOperationRequest(
-        "backup",
-        new StorageLocation.StorageLocationTypeConverter().convert(getStorageLocation()),
-        null,
-        null,
-        null,
-        null,
-        DatabaseEntities.parse(entities),
-        snapshotName,
-        false,
-        null,
-        null, // timeout
-        false,
-        false,
-        false,
-        null,
-        false,
-        null, // proxy settings
-        null, // retry
-        false, // skipRefreshing
-        dataDirs,
-        null
+                "backup",
+                new StorageLocation.StorageLocationTypeConverter().convert(getStorageLocation()),
+                null,
+                null,
+                null,
+                null,
+                DatabaseEntities.parse(entities),
+                snapshotName,
+                false,
+                null,
+                null, // timeout
+                false,
+                false,
+                false,
+                null,
+                false,
+                null, // proxy settings
+                null, // retry
+                false, // skipRefreshing
+                dataDirs,
+                null,
+                false
         );
     }
 

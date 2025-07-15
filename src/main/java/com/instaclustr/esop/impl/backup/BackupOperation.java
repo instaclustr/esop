@@ -91,7 +91,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                             @JsonSerialize(using = ListPathSerializer.class)
                             @JsonDeserialize(contentUsing = PathDeserializer.class)
                             @JsonProperty("dataDirs") final List<Path> dataDirs,
-                            @JsonProperty("kmsKeyId") final String kmsKeyId) {
+                            @JsonProperty("kmsKeyId") final String kmsKeyId,
+                            @JsonProperty("gcpUniformBucketLevelAccess") final boolean gcpUniformBucketLevelAccess) {
         super(type, id, creationTime, state, errors, progress, startTime, new BackupOperationRequest(type,
                                                                                                      storageLocation,
                                                                                                      duration,
@@ -112,7 +113,8 @@ public class BackupOperation extends Operation<BackupOperationRequest> implement
                                                                                                      retry,
                                                                                                      skipRefreshing,
                                                                                                      dataDirs,
-                                                                                                     kmsKeyId));
+                                                                                                     kmsKeyId,
+                                                                                                     gcpUniformBucketLevelAccess));
         coordinator = null;
         storageProviders = null;
     }

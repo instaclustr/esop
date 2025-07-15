@@ -101,7 +101,8 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
                                   @JsonSerialize(using = ListPathSerializer.class)
                                   @JsonDeserialize(contentUsing = PathDeserializer.class)
                                   @JsonProperty("dataDirs") final List<Path> dataDirs,
-                                  @JsonProperty("kmsKeyId") final String kmsKeyId) {
+                                  @JsonProperty("kmsKeyId") final String kmsKeyId,
+                                  @JsonProperty("gcpUniformBucketLevelAccess") final boolean gcpUniformBucketLevelAccess) {
         super(storageLocation,
               duration,
               bandwidth,
@@ -114,7 +115,8 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
               retry,
               skipRefreshing,
               dataDirs,
-              kmsKeyId);
+              kmsKeyId,
+              gcpUniformBucketLevelAccess);
         this.entities = entities == null ? DatabaseEntities.empty() : entities;
         this.snapshotTag = snapshotTag == null ? format("autosnap-%d", MILLISECONDS.toSeconds(currentTimeMillis())) : snapshotTag;
         this.globalRequest = globalRequest;
@@ -148,6 +150,7 @@ public class BackupOperationRequest extends BaseBackupOperationRequest {
             .add("retry", retry)
             .add("skipRefreshing", skipRefreshing)
             .add("kmsKeyId", kmsKeyId)
+            .add("gcpUniformBucketLevelAccess", gcpUniformBucketLevelAccess)
             .toString();
     }
 
