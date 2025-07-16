@@ -1,10 +1,23 @@
 package com.instaclustr.esop.s3.v2;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.KeyStore;
 import java.security.Provider;
 import java.security.Security;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,10 +29,14 @@ import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.apache.ProxyConfiguration;
+import software.amazon.awssdk.http.apache.internal.impl.ApacheSdkHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.encryption.s3.S3EncryptionClient;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 public class S3ClientsFactory {
     private static volatile Provider PROVIDER;
@@ -146,6 +163,13 @@ public class S3ClientsFactory {
 
         httpClientBuilder = httpClientBuilder.maxConnections(1000);
 
+        if (System.getenv("AWS_CA_BUNDLE") != null)
+        {
+            SSLContext sslContext = createSslContextFromPem(Paths.get(System.getenv("AWS_CA_BUNDLE")));
+            httpClientBuilder.socketFactory(new SSLConnectionSocketFactory(sslContext));
+        }
+
+
         SdkHttpClient sdkHttpClient = null;
 
         if (proxyConfiguration == null) {
@@ -155,5 +179,45 @@ public class S3ClientsFactory {
         }
 
         return builder.httpClient(sdkHttpClient).build();
+    }
+
+    public static SSLContext createSslContextFromPem(Path pemPath) throws RuntimeException {
+        try
+        {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+
+            List<X509Certificate> certs = new ArrayList<>();
+            try (BufferedReader reader = Files.newBufferedReader(pemPath)) {
+                StringBuilder certBlock = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    certBlock.append(line).append('\n');
+                    if (line.contains("END CERTIFICATE")) {
+                        try (InputStream certStream = new ByteArrayInputStream(certBlock.toString().getBytes(StandardCharsets.UTF_8))) {
+                            certs.add((X509Certificate) cf.generateCertificate(certStream));
+                        }
+                        certBlock.setLength(0);
+                    }
+                }
+            }
+
+            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+            ks.load(null);
+            int i = 0;
+            for (X509Certificate cert : certs) {
+                ks.setCertificateEntry("custom-ca-" + i++, cert);
+            }
+
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(ks);
+
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, tmf.getTrustManagers(), null);
+            return sslContext;
+        }
+        catch (Throwable t)
+        {
+            throw new RuntimeException(t);
+        }
     }
 }
