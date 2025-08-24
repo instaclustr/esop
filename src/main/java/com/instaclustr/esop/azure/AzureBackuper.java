@@ -68,7 +68,7 @@ public class AzureBackuper extends Backuper {
     }
 
     @Override
-    public FreshenResult freshenRemoteObject(ManifestEntry manifestEntry, final RemoteObjectReference object) throws Exception {
+    public RefreshingOutcome freshenRemoteObject(ManifestEntry manifestEntry, final RemoteObjectReference object) throws Exception {
         final CloudBlockBlob blob = ((AzureRemoteObjectReference) object).blob;
 
         final Instant now = Instant.now();
@@ -78,16 +78,16 @@ public class AzureBackuper extends Backuper {
                 blob.getMetadata().put(DATE_TIME_METADATA_KEY, now.toString());
                 blob.uploadMetadata();
 
-                return FreshenResult.FRESHENED;
+                return new RefreshingOutcome(FreshenResult.FRESHENED, null);
             } else {
-                return blob.exists() ? FreshenResult.FRESHENED : FreshenResult.UPLOAD_REQUIRED;
+                return blob.exists() ? new RefreshingOutcome(FreshenResult.FRESHENED, null) : new RefreshingOutcome(FreshenResult.UPLOAD_REQUIRED, null);
             }
         } catch (final StorageException e) {
             if (e.getHttpStatusCode() != 404) {
                 throw e;
             }
 
-            return FreshenResult.UPLOAD_REQUIRED;
+            return new RefreshingOutcome(FreshenResult.UPLOAD_REQUIRED, null);
         }
     }
 

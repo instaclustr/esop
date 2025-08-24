@@ -69,6 +69,9 @@ public class HashServiceImpl implements HashService {
 
             final String hashOfFile = getHash(path.toAbsolutePath().toFile());
 
+            if (hashOfFile == null)
+                return;
+
             if (!hashOfFile.equals(expectedHash)) {
                 throw new HashVerificationException(format("hash of %s (%s) does not match with expected hash %s",
                                                            path,

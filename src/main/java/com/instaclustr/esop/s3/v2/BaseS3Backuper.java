@@ -103,18 +103,37 @@ public class BaseS3Backuper extends Backuper {
         multipartAbortionService.abortOrphanedMultiparts(manifestEntries, request);
     }
 
+    private String extractHash(List<Tag> tags)
+    {
+        if (tags == null || tags.isEmpty())
+            return null;
+
+        for (Tag tag : tags)
+        {
+            if (tag.key().equals("fullObjectChecksum"))
+            {
+                return tag.value();
+            }
+        }
+
+        return null;
+    }
+
     @Override
-    public FreshenResult freshenRemoteObject(ManifestEntry manifestEntry, RemoteObjectReference object) {
+    public RefreshingOutcome freshenRemoteObject(ManifestEntry manifestEntry, RemoteObjectReference object) {
         List<Tag> tags;
+        String hash;
         try {
             tags = s3Clients.getNonEncryptingClient()
                             .getObjectTagging(GetObjectTaggingRequest.builder()
                                                                      .bucket(request.storageLocation.bucket)
                                                                      .key(object.canonicalPath)
                                                                      .build()).tagSet();
+
+            hash = extractHash(tags);
         }
         catch (S3Exception ex) {
-            return FreshenResult.UPLOAD_REQUIRED;
+            return new RefreshingOutcome(FreshenResult.UPLOAD_REQUIRED, null);
         }
 
         // If kms key was specified, it means we want to encrypt
@@ -125,28 +144,35 @@ public class BaseS3Backuper extends Backuper {
             String kmsKey = s3Clients.getKMSKeyOfEncryptedClient().get();
             Tag kmsKeyTag = Tag.builder().key("kmsKey").value(kmsKey).build();
             if (!tags.contains(kmsKeyTag)) {
-                return FreshenResult.UPLOAD_REQUIRED;
+                return new RefreshingOutcome(FreshenResult.UPLOAD_REQUIRED, null);
             }
             // However, if we have not set kmsKey as we do not want to encrypt
             // but remote tag contains kmsKey, then we need to basically re-upload
             // a file, but it will not be encrypted.
         } else if (!tags.isEmpty()) {
             if (tags.stream().anyMatch(t -> t.key().equals("kmsKey"))) {
-                return FreshenResult.UPLOAD_REQUIRED;
+                return new RefreshingOutcome(FreshenResult.UPLOAD_REQUIRED, null);
             }
         }
 
-        return FreshenResult.FRESHENED;
+        return new RefreshingOutcome(FreshenResult.FRESHENED, hash);
     }
 
     @Override
     public void uploadFile(ManifestEntry manifestEntry, InputStream localFileStream, RemoteObjectReference objectReference) {
         logger.info("Uploading {}", objectReference.canonicalPath);
+
+        Tag.Builder tagBuilder = Tag.builder();
+
+        if (manifestEntry.hash != null) {
+            tagBuilder.key("fullObjectChecksum").value(manifestEntry.hash);
+        }
+
         uploadFile(s3Clients.getNonEncryptingClient(),
                    manifestEntry,
                    localFileStream,
                    objectReference,
-                   Tagging.builder().build());
+                   Tagging.builder().tagSet(tagBuilder.build()).build());
     }
 
     @Override
@@ -161,16 +187,16 @@ public class BaseS3Backuper extends Backuper {
         assert s3Clients.getEncryptingClient().isPresent() : "encrypting client is not present!";
         assert s3Clients.getKMSKeyOfEncryptedClient().isPresent() : "kms key is not present!";
 
+        Tag.Builder tagBuilder = Tag.builder().key("kmsKey").value(s3Clients.getKMSKeyOfEncryptedClient().get());
+        if (manifestEntry.hash != null) {
+            tagBuilder.key("fullObjectChecksum").value(manifestEntry.hash);
+        }
+
         uploadFile(s3Clients.getEncryptingClient().get(),
                    manifestEntry,
                    localFileStream,
                    objectReference,
-                   Tagging.builder()
-                          .tagSet(Tag.builder()
-                                     .key("kmsKey")
-                                     .value(s3Clients.getKMSKeyOfEncryptedClient().get())
-                                     .build())
-                          .build());
+                   Tagging.builder().tagSet(tagBuilder.build()).build());
 
         manifestEntry.kmsKeyId = s3Clients.getKMSKeyOfEncryptedClient().get();
 
@@ -235,8 +261,6 @@ public class BaseS3Backuper extends Backuper {
 
         String uploadId = multipartUploadResponse.uploadId();
 
-        MessageDigest sha256 = prepareMessageDigest();
-
         try
         {
             long partSize = Long.parseLong(System.getProperty("upload.max.part.size", Long.toString(100 * 1024 * 1024)));
@@ -270,8 +294,6 @@ public class BaseS3Backuper extends Backuper {
                                                 .eTag(partResponse.eTag())
                                                 .checksumSHA256(partResponse.checksumSHA256())
                                                 .build());
-
-                sha256.update(byteBuffer);
             }
 
             // Complete the multipart upload
@@ -302,20 +324,19 @@ public class BaseS3Backuper extends Backuper {
 
             logger.debug("Object under key " + objectReference.canonicalPath + " exists");
 
-            Tag checksumTag = Tag.builder()
-                    .key("fullObjectChecksum")
-                    .value(HashSpec.HashAlgorithm.SHA_256.getHasher().getHash(sha256.digest()))
-                    .build();
+            if (manifestEntry.hash != null) {
+                Tag checksumTag = Tag.builder().key("fullObjectChecksum").value(manifestEntry.hash).build();
 
-            PutObjectTaggingResponse putObjectTaggingResponse = s3Client.putObjectTagging(PutObjectTaggingRequest.builder()
-                                                                                                  .bucket(request.storageLocation.bucket)
-                                                                                                  .key(objectReference.canonicalPath)
-                                                                                                  .tagging(Tagging.builder().tagSet(checksumTag).build()).build());
+                PutObjectTaggingResponse putObjectTaggingResponse = s3Client.putObjectTagging(PutObjectTaggingRequest.builder()
+                                                                                                      .bucket(request.storageLocation.bucket)
+                                                                                                      .key(objectReference.canonicalPath)
+                                                                                                      .tagging(Tagging.builder().tagSet(checksumTag).build()).build());
 
-            if (!putObjectTaggingResponse.sdkHttpResponse().isSuccessful()) {
-                throw new RuntimeException(String.format("Unsuccessful tagging of %s with checksum, upload id %s", objectReference.canonicalPath, uploadId));
-            } else {
-                logger.debug("Tagged {} with {}", objectReference.canonicalPath, checksumTag.toString());
+                if (!putObjectTaggingResponse.sdkHttpResponse().isSuccessful()) {
+                    throw new RuntimeException(String.format("Unsuccessful tagging of %s with checksum, upload id %s", objectReference.canonicalPath, uploadId));
+                } else {
+                    logger.debug("Tagged {} with {}", objectReference.canonicalPath, checksumTag.toString());
+                }
             }
 
             if (s3Clients.hasEncryptingClient()) {
@@ -329,7 +350,6 @@ public class BaseS3Backuper extends Backuper {
                                                          .build());
 
                     manifestEntry.size = objectAttributes.objectSize();
-                    manifestEntry.hash = Base64.getEncoder().encodeToString(sha256.digest());
                 }
                 catch (Throwable t) {
                     logger.warn("Unable to get attribute {} for key {} by GetObjectAttributes request. Please check your permissions.",
