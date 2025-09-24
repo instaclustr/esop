@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Use JAVA_HOME if set, otherwise look for java in PATH
+if [ -x "$JAVA_HOME/bin/java" ]; then
+    JAVA="$JAVA_HOME/bin/java"
+else
+    JAVA="`which java`"
+fi
+
+if [ -f /etc/logback-esop.xml ]; then
+  "$JAVA" -Dlogback.configurationFile=/etc/logback-esop.xml -jar "/usr/share/java/esop-s3.jar" $@
+else
+  "$JAVA" -jar "/usr/share/java/esop-s3.jar" $@
+fi

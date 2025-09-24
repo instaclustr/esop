@@ -1,68 +1,72 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    
+
     <groupId>com.instaclustr</groupId>
-    <artifactId>esop</artifactId>
-    <version>3.0.6-SNAPSHOT</version>
-    
-    <name>instaclustr-esop</name>
-    <description>Backup and restoration tooling for Cassandra</description>
+    <artifactId>esop-parent</artifactId>
+    <version>4.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>esop-parent</name>
+    <description>Parent of backup and restoration tooling for Cassandra</description>
     <url>https://github.com/instaclustr/instaclustr-esop</url>
-    
+
+    <modules>
+        <module>core</module>
+        <module>gcp</module>
+        <module>azure</module>
+        <module>s3</module>
+    </modules>
+
     <properties>
-        <instaclustr.commons.version>2.0.0</instaclustr.commons.version>
-        <azure-storage.version>8.6.6</azure-storage.version>
-        <google-cloud-libraries.version>26.0.0</google-cloud-libraries.version>
-        <aws-java-sdk.version>2.20.38</aws-java-sdk.version>
-        <s3.encryption.client.version>3.1.0</s3.encryption.client.version>
-        <bouncy.castle.version>1.72</bouncy.castle.version>
-        <slf4j.version>1.7.30</slf4j.version>
-        <logback.version>1.2.3</logback.version>
-        
-        <cassandra.driver.version>4.11.1</cassandra.driver.version>
-        
+        <!-- test -->
         <version.embedded.cassandra>4.0.1</version.embedded.cassandra>
-        <testng.version>7.5</testng.version>
+        <cassandra.driver.version>4.19.0</cassandra.driver.version>
+        <testng.version>7.7.0</testng.version>
         <mockito.version>2.23.4</mockito.version>
         <awaitility.version>3.1.6</awaitility.version>
-        
+
+        <slf4j.version>1.7.30</slf4j.version>
+        <logback.version>1.2.3</logback.version>
+
+        <maven.jar.plugin.version>3.1.1</maven.jar.plugin.version>
+        <maven.surefire.plugin.version>3.1.2</maven.surefire.plugin.version>
+        <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
         <maven.shade.plugin.version>3.1.1</maven.shade.plugin.version>
         <maven.source.plugin.version>3.1.0</maven.source.plugin.version>
-        <maven.gpg.plugin.version>1.6</maven.gpg.plugin.version>
-        <maven.jar.plugin.version>3.1.1</maven.jar.plugin.version>
         <maven.javadoc.plugin.version>3.1.1</maven.javadoc.plugin.version>
-        <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
-        <maven.surefire.plugin.version>3.1.2</maven.surefire.plugin.version>
-        <git.command.plugin.version>4.9.10</git.command.plugin.version>
+
+        <dependency.check.plugin.version>12.1.0</dependency.check.plugin.version>
+
+        <maven.gpg.plugin.version>1.6</maven.gpg.plugin.version>
         <nexus.staging.maven.plugin.version>1.6.8</nexus.staging.maven.plugin.version>
-        <cassandra.maven.plugin.version>3.6</cassandra.maven.plugin.version>
-        
-        <maintainer>Various &lt;support@instaclustr.com&gt;</maintainer>
-        <version.jdeb>1.8</version.jdeb>
-        <version.rpm>1.5.0</version.rpm>
-        
-        <git.commit.id/>
-        <git.build.time/>
-        
-        <outputDirectory>${project.build.directory}</outputDirectory>
 
         <java.version>8</java.version>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- set this externally upon build if necessary -->
+        <nvd.data.dir/>
+
+        <!-- rpm and deb profiles -->
+        <maintainer>Various &lt;support@instaclustr.com&gt;</maintainer>
+        <version.jdeb>1.8</version.jdeb>
+        <version.rpm>1.5.0</version.rpm>
+        <outputDirectory>${project.build.directory}</outputDirectory>
+        <skip.packages>true</skip.packages>
     </properties>
-    
+
     <inceptionYear>2019</inceptionYear>
-    
+
     <licenses>
         <license>
             <name>The Apache License, Version 2.0</name>
             <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
         </license>
     </licenses>
-    
+
     <developers>
         <developer>
             <name>Stefan Miklosovic</name>
@@ -71,18 +75,18 @@
             <organizationUrl>https://www.instaclustr.com</organizationUrl>
         </developer>
     </developers>
-    
+
     <organization>
         <name>Instaclustr</name>
         <url>https://instaclustr.com</url>
     </organization>
-    
+
     <scm>
         <connection>scm:git:git://git@github.com:instaclustr/instaclustr-esop.git</connection>
         <developerConnection>scm:git:ssh://github.com/instaclustr/instaclustr-esop.git</developerConnection>
         <url>git://github.com/instaclustr/instaclustr-esop.git</url>
     </scm>
-    
+
     <distributionManagement>
         <repository>
             <id>ossrh</id>
@@ -94,431 +98,31 @@
         </snapshotRepository>
     </distributionManagement>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>software.amazon.awssdk</groupId>
-                <artifactId>bom</artifactId>
-                <version>${aws-java-sdk.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.google.cloud</groupId>
-                <artifactId>libraries-bom</artifactId>
-                <version>${google-cloud-libraries.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-    
-    <dependencies>
-        <dependency>
-            <groupId>com.instaclustr</groupId>
-            <artifactId>commons</artifactId>
-            <version>${instaclustr.commons.version}</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>s3</artifactId>
-            <version>${aws-java-sdk.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>software.amazon.encryption.s3</groupId>
-            <artifactId>amazon-s3-encryption-client-java</artifactId>
-            <version>${s3.encryption.client.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>kms</artifactId>
-            <version>${aws-java-sdk.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>apache-client</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk18on</artifactId>
-            <version>${bouncy.castle.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-storage</artifactId>
-            <version>${azure-storage.version}</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>com.google.cloud</groupId>
-            <artifactId>google-cloud-storage</artifactId>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.awaitility</groupId>
-            <artifactId>awaitility</artifactId>
-            <version>${awaitility.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        
-        <!-- test dependencies -->
-        
-        <dependency>
-            <groupId>com.github.nosan</groupId>
-            <artifactId>embedded-cassandra</artifactId>
-            <version>${version.embedded.cassandra}</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.datastax.oss</groupId>
-                    <artifactId>java-driver-core</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        
-        <dependency>
-            <groupId>com.datastax.oss</groupId>
-            <artifactId>java-driver-core</artifactId>
-            <version>${cassandra.driver.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.tinkerpop</groupId>
-                    <artifactId>gremlin-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.tinkerpop</groupId>
-                    <artifactId>tinkergraph-gremlin</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.tinkerpop</groupId>
-                    <artifactId>gremlin-driver</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        
-        <dependency>
-            <groupId>com.datastax.oss</groupId>
-            <artifactId>java-driver-query-builder</artifactId>
-            <version>${cassandra.driver.version}</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>com.datastax.oss</groupId>
-            <artifactId>java-driver-mapper-runtime</artifactId>
-            <version>${cassandra.driver.version}</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>${testng.version}</version>
-            <scope>test</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-    
-    <build>
-        <finalName>esop</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>${maven.source.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar-no-fork</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>${maven.jar.plugin.version}</version>
-                <configuration>
-                    <outputDirectory>${outputDirectory}</outputDirectory>
-                    <archive>
-                        <manifest>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                        </manifest>
-                        <manifestEntries>
-                            <Git-Commit>${git.commit.id}</Git-Commit>
-                            <Build-Time>${git.build.time}</Build-Time>
-                        </manifestEntries>
-                    </archive>
-                </configuration>
-            </plugin>
-            
-            <plugin>
-                <groupId>pl.project13.maven</groupId>
-                <artifactId>git-commit-id-plugin</artifactId>
-                <version>${git.command.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>get-the-git-infos</id>
-                        <goals>
-                            <goal>revision</goal>
-                        </goals>
-                        <phase>initialize</phase>
-                    </execution>
-                </executions>
-                <configuration>
-                    <generateGitPropertiesFile>true</generateGitPropertiesFile>
-                    <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
-                    <includeOnlyProperties>
-                        <includeOnlyProperty>^git.build.(time|version)$</includeOnlyProperty>
-                        <includeOnlyProperty>^git.commit.id.(abbrev|full)$</includeOnlyProperty>
-                    </includeOnlyProperties>
-                    <commitIdGenerationMode>full</commitIdGenerationMode>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>${maven.shade.plugin.version}</version>
-                <configuration>
-                    <filters>
-                        <filter>
-                            <artifact>*:*</artifact>
-                            <excludes>
-                                <exclude>META-INF/*.SF</exclude>
-                                <exclude>META-INF/*.DSA</exclude>
-                                <exclude>META-INF/*.RSA</exclude>
-                            </excludes>
-                        </filter>
-                    </filters>
-                    <transformers>
-                        <transformer
-                            implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                            <mainClass>com.instaclustr.esop.cli.Esop
-                            </mainClass>
-                        </transformer>
-                        
-                        <transformer
-                            implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                    </transformers>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>${maven.javadoc.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <source>8</source>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven.compiler.plugin.version}</version>
-                <configuration>
-                    <source>8</source>
-                    <target>8</target>
-                    <encoding>UTF-8</encoding>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-    
     <profiles>
         <profile>
-            <id>deb</id>
+            <id>owasp</id>
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.vafer</groupId>
-                        <artifactId>jdeb</artifactId>
-                        <version>${version.jdeb}</version>
+                        <groupId>org.owasp</groupId>
+                        <artifactId>dependency-check-maven</artifactId>
+                        <version>${dependency.check.plugin.version}</version>
+                        <configuration>
+                            <nvdApiKeyEnvironmentVariable>NVD_API_KEY</nvdApiKeyEnvironmentVariable>
+                            <dataDirectory>${nvd.data.dir}</dataDirectory>
+                            <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
+                        </configuration>
                         <executions>
                             <execution>
-                                <phase>package</phase>
                                 <goals>
-                                    <goal>jdeb</goal>
-                                </goals>
-                                <configuration>
-                                    <name>${project.artifactId}</name>
-                                    <deb>${outputDirectory}/[[name]]_${project.version}.deb</deb>
-                                    <dataSet>
-                                        <data>
-                                            <src>${outputDirectory}/${project.build.finalName}.jar</src>
-                                            <type>file</type>
-                                            <mapper>
-                                                <type>perm</type>
-                                                <prefix>/usr/share/java/</prefix>
-                                            </mapper>
-                                        </data>
-                                        <data>
-                                            <src>bin/esop</src>
-                                            <type>file</type>
-                                            <mapper>
-                                                <type>perm</type>
-                                                <filemode>755</filemode>
-                                                <prefix>/usr/local/bin/</prefix>
-                                            </mapper>
-                                        </data>
-                                    </dataSet>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>rpm</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>de.dentrassi.maven</groupId>
-                        <artifactId>rpm</artifactId>
-                        <version>${version.rpm}</version>
-                        <executions>
-                            <execution>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>rpm</goal>
-                                </goals>
-                                <configuration>
-                                    <packageName>${project.artifactId}</packageName>
-                                    <group>Applications/Databases</group>
-                                    <packager>${maintainer}</packager>
-                                    
-                                    <skipSigning>true</skipSigning>
-                                    
-                                    <entries>
-                                        <entry>
-                                            <name>/usr/share/java/${project.build.finalName}.jar</name>
-                                            <file>${outputDirectory}/${project.build.finalName}.jar</file>
-                                        </entry>
-                                        <entry>
-                                            <name>/usr/local/bin/esop</name>
-                                            <file>${project.basedir}/bin/esop</file>
-                                            <mode>0755</mode>
-                                        </entry>
-                                    </entries>
-                                    <targetDir>${outputDirectory}</targetDir>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <!-- Use this profile when releasing. For example: "mvn clean deploy -P release" -->
-        <profile>
-            <id>release</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>${maven.gpg.plugin.version}</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
+                                    <goal>check</goal>
                                 </goals>
                             </execution>
                         </executions>
                     </plugin>
-                    <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>${nexus.staging.maven.plugin.version}</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <!--Use "mvn nexus-staging:release -P release" to push from the OSSRH staging repo to Maven Central-->
-                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
-                        </configuration>
-                    </plugin>
                 </plugins>
             </build>
         </profile>
-        
-        <profile>
-            <id>noCloudTests</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>${maven.surefire.plugin.version}</version>
-                        <configuration>
-                            <excludedGroups>cloudTest,azureTest,googleTest,s3Test</excludedGroups>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        
-        <profile>
-            <id>cloudTests</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>${maven.surefire.plugin.version}</version>
-                        <configuration>
-                            <groups>cloudTest</groups>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
         <profile>
             <id>cassandra4</id>
             <activation>
@@ -556,9 +160,9 @@
             </build>
         </profile>
         <profile>
-            <id>localTests</id>
+            <id>noCloudTests</id>
             <activation>
-                <activeByDefault>false</activeByDefault>
+                <activeByDefault>true</activeByDefault>
             </activation>
             <build>
                 <plugins>
@@ -567,15 +171,14 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>${maven.surefire.plugin.version}</version>
                         <configuration>
-                            <groups>localTest</groups>
+                            <excludedGroups>cloudTest,azureTest,googleTest,s3Test</excludedGroups>
                         </configuration>
                     </plugin>
                 </plugins>
             </build>
         </profile>
-
         <profile>
-            <id>azureTests</id>
+            <id>cloudTests</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
@@ -586,51 +189,12 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>${maven.surefire.plugin.version}</version>
                         <configuration>
-                            <groups>azureTest</groups>
+                            <groups>cloudTest</groups>
                         </configuration>
                     </plugin>
                 </plugins>
             </build>
         </profile>
-        
-        <profile>
-            <id>googleTests</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>${maven.surefire.plugin.version}</version>
-                        <configuration>
-                            <groups>googleTest</groups>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        
-        <profile>
-            <id>s3Tests</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>${maven.surefire.plugin.version}</version>
-                        <configuration>
-                            <groups>s3Test</groups>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
         <profile>
             <id>snapshotRepo</id>
             <activation>
@@ -650,6 +214,278 @@
                 </repository>
             </repositories>
         </profile>
+        <!-- Use this profile when releasing. For example: "mvn clean deploy -P release" -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${maven.gpg.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>${nexus.staging.maven.plugin.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <!--Use "mvn nexus-staging:release -P release" to push from the OSSRH staging repo to Maven Central-->
+                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>deb</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.vafer</groupId>
+                        <artifactId>jdeb</artifactId>
+                        <version>${version.jdeb}</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jdeb</goal>
+                                </goals>
+                                <configuration>
+                                    <name>${project.artifactId}</name>
+                                    <deb>${outputDirectory}/[[name]]_${project.version}.deb</deb>
+                                    <dataSet>
+                                        <data>
+                                            <src>${outputDirectory}/${project.build.finalName}.jar</src>
+                                            <type>file</type>
+                                            <mapper>
+                                                <type>perm</type>
+                                                <prefix>/usr/share/java/</prefix>
+                                            </mapper>
+                                        </data>
+                                        <data>
+                                            <src>bin/${project.build.finalName}</src>
+                                            <type>file</type>
+                                            <mapper>
+                                                <type>perm</type>
+                                                <filemode>755</filemode>
+                                                <prefix>/usr/local/bin/</prefix>
+                                            </mapper>
+                                        </data>
+                                    </dataSet>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>rpm</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>de.dentrassi.maven</groupId>
+                        <artifactId>rpm</artifactId>
+                        <version>${version.rpm}</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>rpm</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${skip.packages}</skip>
+                                    <packageName>${project.artifactId}</packageName>
+                                    <group>Applications/Databases</group>
+                                    <packager>${maintainer}</packager>
+                                    <skipSigning>true</skipSigning>
+                                    <entries>
+                                        <entry>
+                                            <name>/usr/share/java/${project.build.finalName}.jar</name>
+                                            <file>${outputDirectory}/${project.build.finalName}.jar</file>
+                                        </entry>
+                                        <entry>
+                                            <name>/usr/local/bin/${project.build.finalName}</name>
+                                            <file>${project.basedir}/bin/${project.build.finalName}</file>
+                                            <mode>0755</mode>
+                                        </entry>
+                                    </entries>
+                                    <targetDir>${outputDirectory}</targetDir>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
+    <dependencies>
+        <!-- test dependencies -->
+        <dependency>
+            <groupId>com.github.nosan</groupId>
+            <artifactId>embedded-cassandra</artifactId>
+            <version>${version.embedded.cassandra}</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.datastax.oss</groupId>
+                    <artifactId>java-driver-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>java-driver-core</artifactId>
+            <version>${cassandra.driver.version}</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.tinkerpop</groupId>
+                    <artifactId>gremlin-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.tinkerpop</groupId>
+                    <artifactId>tinkergraph-gremlin</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.tinkerpop</groupId>
+                    <artifactId>gremlin-driver</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>java-driver-query-builder</artifactId>
+            <version>${cassandra.driver.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>java-driver-mapper-runtime</artifactId>
+            <version>${cassandra.driver.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>${testng.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>${maven.source.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin.version}</version>
+                <configuration>
+                    <release>8</release>
+                    <source>8</source>
+                    <target>8</target>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>${maven.shade.plugin.version}</version>
+                <configuration>
+                    <filters>
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                    <transformers>
+                        <transformer
+                                implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                            <mainClass>com.instaclustr.esop.cli.Esop
+                            </mainClass>
+                        </transformer>
+
+                        <transformer
+                                implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                    </transformers>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>${maven.javadoc.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <source>8</source>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
