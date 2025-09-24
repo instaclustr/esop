@@ -58,10 +58,17 @@ public class GCPBackuper extends Backuper {
 
         try {
             if (!request.skipRefreshing) {
-                storage.copy(new Storage.CopyRequest.Builder()
-                                 .setSource(blobId)
-                                 .setTarget(BlobInfo.newBuilder(blobId).build(), Storage.BlobTargetOption.predefinedAcl(BUCKET_OWNER_FULL_CONTROL))
-                                 .build());
+                final BlobInfo.Builder targetBuilder = BlobInfo.newBuilder(blobId);
+                final Storage.CopyRequest.Builder copyBuilder = new Storage.CopyRequest.Builder()
+                    .setSource(blobId)
+                    .setTarget(targetBuilder.build());
+                
+                // Only apply ACL if not using uniform bucket-level access
+                if (!request.gcpUniformBucketLevelAccess) {
+                    copyBuilder.setTarget(targetBuilder.build(), Storage.BlobTargetOption.predefinedAcl(BUCKET_OWNER_FULL_CONTROL));
+                }
+                
+                storage.copy(copyBuilder.build());
 
                 return FreshenResult.FRESHENED;
             } else {
@@ -87,16 +94,37 @@ public class GCPBackuper extends Backuper {
                            final RemoteObjectReference objectReference) throws Exception {
         final BlobId blobId = ((GCPRemoteObjectReference) objectReference).blobId;
 
-        try (final WriteChannel outputChannel = storage.writer(BlobInfo.newBuilder(blobId).build(), Storage.BlobWriteOption.predefinedAcl(BUCKET_OWNER_FULL_CONTROL));
-            final ReadableByteChannel inputChannel = Channels.newChannel(localFileStream)) {
+        final BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
+        
+        // Only apply ACL if not using uniform bucket-level access
+        final WriteChannel outputChannel;
+        if (request.gcpUniformBucketLevelAccess) {
+            outputChannel = storage.writer(blobInfo);
+        } else {
+            outputChannel = storage.writer(blobInfo, Storage.BlobWriteOption.predefinedAcl(BUCKET_OWNER_FULL_CONTROL));
+        }
+        
+        try (final ReadableByteChannel inputChannel = Channels.newChannel(localFileStream)) {
             ByteStreams.copy(inputChannel, outputChannel);
+        } finally {
+            if (outputChannel != null) {
+                outputChannel.close();
+            }
         }
     }
 
     @Override
     public void uploadText(final String text, final RemoteObjectReference objectReference) {
         final BlobId blobId = ((GCPRemoteObjectReference) objectReference).blobId;
-        storage.create(BlobInfo.newBuilder(blobId).build(), text.getBytes(), Storage.BlobTargetOption.predefinedAcl(BUCKET_OWNER_FULL_CONTROL));
+        final BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
+        final byte[] data = text.getBytes();
+        
+        // Only apply ACL if not using uniform bucket-level access
+        if (request.gcpUniformBucketLevelAccess) {
+            storage.create(blobInfo, data);
+        } else {
+            storage.create(blobInfo, data, Storage.BlobTargetOption.predefinedAcl(BUCKET_OWNER_FULL_CONTROL));
+        }
     }
 
     @Override

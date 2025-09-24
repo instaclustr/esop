@@ -64,6 +64,11 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
             + "based on which a respective local file will be upload or not, defaults to false, does not work with s3.")
     public boolean skipRefreshing;
 
+    @JsonProperty("gcpUniformBucketLevelAccess")
+    @Option(names = "--gcp-uniform-bucket-level-access",
+        description = "For GCP storage, skip setting ACLs when bucket has uniform bucket-level access enabled. Defaults to false.")
+    public boolean gcpUniformBucketLevelAccess;
+
     public BaseBackupOperationRequest() {
         // for picocli
         if (metadataDirective == null) {
@@ -83,7 +88,8 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
                                       final RetrySpec retrySpec,
                                       final boolean skipRefreshing,
                                       final List<Path> dataDirs,
-                                      final String kmsKeyId) {
+                                      final String kmsKeyId,
+                                      final boolean gcpUniformBucketLevelAccess) {
         super(storageLocation, insecure, skipBucketVerification, proxySettings, retrySpec, concurrentConnections, kmsKeyId);
         this.duration = duration;
         this.bandwidth = bandwidth;
@@ -91,5 +97,6 @@ public class BaseBackupOperationRequest extends AbstractOperationRequest {
         this.createMissingBucket = createMissingBucket;
         this.skipRefreshing = skipRefreshing;
         this.dataDirs = dataDirs;
+        this.gcpUniformBucketLevelAccess = gcpUniformBucketLevelAccess;
     }
 }
