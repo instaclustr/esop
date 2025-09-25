@@ -2,8 +2,7 @@ package com.instaclustr.esop.impl.backup.coordination;
 
 import java.util.HashMap;
 
-import javax.inject.Provider;
-
+import com.google.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -2,10 +2,9 @@ package com.instaclustr.esop.impl.backup.coordination;
 
 import java.util.Map;
 
-import javax.inject.Provider;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.guice.BackuperFactory;
 import com.instaclustr.esop.guice.BucketServiceFactory;

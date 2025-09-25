@@ -5,8 +5,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Path;
 
-import javax.inject.Inject;
-
+import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
