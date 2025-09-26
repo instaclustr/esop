@@ -2,18 +2,18 @@ package com.instaclustr.esop.azure;
 
 import java.nio.file.Path;
 
+import com.azure.storage.blob.specialized.BlockBlobClient;
 import com.instaclustr.esop.impl.RemoteObjectReference;
-import com.microsoft.azure.storage.blob.CloudBlockBlob;
 
 public class AzureRemoteObjectReference extends RemoteObjectReference {
 
-    public final CloudBlockBlob blob;
+    public final BlockBlobClient blobClient;
 
     public AzureRemoteObjectReference(final Path objectKey,
                                       final String canonicalPath,
-                                      final CloudBlockBlob blob) {
+                                      final BlockBlobClient blobClient) {
         super(objectKey, canonicalPath);
-        this.blob = blob;
+        this.blobClient = blobClient;
     }
 
     public Path getObjectKey() {

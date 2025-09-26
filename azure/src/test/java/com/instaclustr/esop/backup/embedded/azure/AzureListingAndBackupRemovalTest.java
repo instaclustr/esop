@@ -13,13 +13,14 @@ import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.io.FileUtils;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 @Tag("azure-test")
 @Tag("cloud-test")
 public class AzureListingAndBackupRemovalTest extends BaseListingRemovalTest {
 
     @Inject
-    public AzureModule.CloudStorageAccountFactory cloudStorageAccountFactory;
+    public AzureModule.BlobServiceClientFactory blobServiceClientFactory;
 
     @Override
     protected List<Module> getModules() {
@@ -54,7 +55,7 @@ public class AzureListingAndBackupRemovalTest extends BaseListingRemovalTest {
         try {
             ListOperationRequest request = new ListOperationRequest();
             request.storageLocation = new StorageLocation(getStorageLocation());
-            new AzureBucketService(cloudStorageAccountFactory, request).delete(AbstractBackupTest.BUCKET_NAME);
+            new AzureBucketService(blobServiceClientFactory, request).delete(AbstractBackupTest.BUCKET_NAME);
         } catch (final Exception ex) {
             AbstractBackupTest.logger.error("Unable to remove bucket " + AbstractBackupTest.BUCKET_NAME);
         }

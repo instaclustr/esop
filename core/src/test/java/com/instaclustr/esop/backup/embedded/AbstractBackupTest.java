@@ -1489,6 +1489,6 @@ public abstract class AbstractBackupTest {
                                   int expectedLength) {
 
         long count = session.execute(selectFrom(keyspace, table).countAll().asCql()).one().getLong("count");
-        assertEquals(count, expectedLength);
+        assertEquals(expectedLength, count);
     }
 }

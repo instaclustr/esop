@@ -1,14 +1,13 @@
 package com.instaclustr.esop.azure;
 
+import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.BlobServiceClientBuilder;
+import com.azure.storage.common.StorageSharedKeyCredential;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.instaclustr.esop.SPIModule;
 import com.instaclustr.esop.impl.AbstractOperationRequest;
-import com.microsoft.azure.storage.CloudStorageAccount;
-import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
-
-import java.net.URISyntaxException;
 
 import static com.instaclustr.esop.guice.BackupRestoreBindings.installBindings;
 
@@ -26,8 +25,8 @@ public class AzureModule extends AbstractModule implements SPIModule
 
     @Provides
     @Singleton
-    CloudStorageAccountFactory provideCloudStorageAccountFactory() {
-        return new CloudStorageAccountFactory();
+    BlobServiceClientFactory provideBlobContainerClientFactory() {
+        return new BlobServiceClientFactory();
     }
 
     @Override
@@ -35,17 +34,31 @@ public class AzureModule extends AbstractModule implements SPIModule
         return this;
     }
 
-    public static class CloudStorageAccountFactory {
-        public CloudStorageAccount build(final AbstractOperationRequest operationRequest) throws AzureModuleException, URISyntaxException {
-            return new CloudStorageAccount(provideStorageCredentialsAccountAndKey(), !operationRequest.insecure);
+    public static class BlobServiceClientFactory {
+        public BlobServiceClient build(final AbstractOperationRequest operationRequest) throws AzureModuleException {
+            StorageSharedKeyCredential credential = provideSharedKeyCredential();
+            return new BlobServiceClientBuilder()
+                    .endpoint(provideAzureBlobStorageEndpoint(credential.getAccountName(), operationRequest.insecure))
+                    .credential(credential)
+                    .buildClient();
         }
 
-        private StorageCredentialsAccountAndKey provideStorageCredentialsAccountAndKey() throws AzureModuleException {
+        private StorageSharedKeyCredential provideSharedKeyCredential() throws AzureModuleException {
             return resolveCredentialsFromEnvProperties();
         }
 
-        private StorageCredentialsAccountAndKey resolveCredentialsFromEnvProperties() {
-            return new StorageCredentialsAccountAndKey(System.getenv("AZURE_STORAGE_ACCOUNT"), System.getenv("AZURE_STORAGE_KEY"));
+        private StorageSharedKeyCredential resolveCredentialsFromEnvProperties() {
+            return new StorageSharedKeyCredential(System.getenv("AZURE_STORAGE_ACCOUNT"), System.getenv("AZURE_STORAGE_KEY"));
+        }
+
+        private String provideAzureBlobStorageEndpoint(final String accountName, final boolean useHttp) {
+            String endpoint = System.getenv("AZURE_STORAGE_ENDPOINT");
+            if (endpoint != null && !endpoint.isEmpty()) {
+                return endpoint;
+            }
+
+            String schema = useHttp ? "http" : "https";
+            return String.format("%s://%s.blob.core.windows.net", schema, accountName);
         }
     }
 
