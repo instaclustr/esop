@@ -302,15 +302,23 @@ public class BaseS3Backuper extends Backuper {
 
             logger.debug("Object under key " + objectReference.canonicalPath + " exists");
 
+            byte[] fullObjectChecksum = sha256.digest();
+            String hexedChecksum = HashSpec.HashAlgorithm.SHA_256.getHasher().getHash(fullObjectChecksum);
+
+            // TODO do we actually need this tag? I don't see it being used anywhere
             Tag checksumTag = Tag.builder()
                     .key("fullObjectChecksum")
-                    .value(HashSpec.HashAlgorithm.SHA_256.getHasher().getHash(sha256.digest()))
+                    .value(hexedChecksum)
                     .build();
+
+            // To preserve existing tags, we need to get them first and then add checksumTag to the list
+            List<Tag> tags = new ArrayList<>(tagging.tagSet());
+            tags.add(checksumTag);
 
             PutObjectTaggingResponse putObjectTaggingResponse = s3Client.putObjectTagging(PutObjectTaggingRequest.builder()
                                                                                                   .bucket(request.storageLocation.bucket)
                                                                                                   .key(objectReference.canonicalPath)
-                                                                                                  .tagging(Tagging.builder().tagSet(checksumTag).build()).build());
+                                                                                                  .tagging(Tagging.builder().tagSet(tags).build()).build());
 
             if (!putObjectTaggingResponse.sdkHttpResponse().isSuccessful()) {
                 throw new RuntimeException(String.format("Unsuccessful tagging of %s with checksum, upload id %s", objectReference.canonicalPath, uploadId));
@@ -329,7 +337,7 @@ public class BaseS3Backuper extends Backuper {
                                                          .build());
 
                     manifestEntry.size = objectAttributes.objectSize();
-                    manifestEntry.hash = Base64.getEncoder().encodeToString(sha256.digest());
+                    manifestEntry.hash = hexedChecksum;
                 }
                 catch (Throwable t) {
                     logger.warn("Unable to get attribute {} for key {} by GetObjectAttributes request. Please check your permissions.",

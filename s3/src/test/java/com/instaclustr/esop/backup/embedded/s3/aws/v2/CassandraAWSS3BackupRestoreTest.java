@@ -7,22 +7,17 @@ import com.instaclustr.esop.s3.S3ConfigurationResolver;
 import com.instaclustr.esop.s3.aws_v2.S3Module;
 import com.instaclustr.esop.s3.v2.BaseS3BucketService;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory;
-import org.testng.SkipException;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Ignore;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.*;
 
 import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AWS_KMS_KEY_ID_PROPERTY;
 import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.TEST_ESOP_AWS_KMS_WRAPPING_KEY;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-@Test(groups = {
-        "s3Test",
-        "cloudTest",
-})
+@Tag("s3-test")
+@Tag("cloud-test")
 public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
 
-    @BeforeMethod
+    @BeforeEach
     public void setup() {
         inject(new S3Module());
         init();
@@ -33,13 +28,13 @@ public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest 
         return "s3://";
     }
 
-    @AfterMethod
+    @AfterEach
     public void teardown() throws Exception {
         destroy();
     }
 
     @Override
-    @Ignore
+    @Disabled
     public void deleteBucket() throws BucketServiceException {
         new BaseS3BucketService(new S3ClientsFactory().build(new S3ConfigurationResolver())).delete(BUCKET_NAME);
     }
@@ -96,9 +91,9 @@ public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest 
     }
 
     private void runWithEncryption(ThrowingRunnable test) throws Exception {
-        System.setProperty(AWS_KMS_KEY_ID_PROPERTY, System.getProperty(TEST_ESOP_AWS_KMS_WRAPPING_KEY));
-        if (System.getProperty(AWS_KMS_KEY_ID_PROPERTY) == null)
-            throw new SkipException("Cannot continue as " + AWS_KMS_KEY_ID_PROPERTY + " is not set!");
+        String kmsKeyId = System.getProperty(TEST_ESOP_AWS_KMS_WRAPPING_KEY);
+        assumeTrue(kmsKeyId != null, "Cannot continue as " + TEST_ESOP_AWS_KMS_WRAPPING_KEY + " is not set!");
+        System.setProperty(AWS_KMS_KEY_ID_PROPERTY, kmsKeyId);
 
         try {
             test.run();

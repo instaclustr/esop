@@ -19,14 +19,10 @@ import com.instaclustr.esop.impl.CassandraData;
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.RenamedEntities;
-import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CassandraDataTest {
 
@@ -149,9 +145,9 @@ public class CassandraDataTest {
                                        ",,,ks1.tb1,,,ks3.tb3,,,").collect(Collectors.toList())) {
             DatabaseEntities parsed = DatabaseEntities.parse(entity);
 
-            Assert.assertTrue(parsed.getKeyspacesAndTables().containsEntry("ks1", "tb1"), entity);
-            Assert.assertTrue(parsed.getKeyspacesAndTables().containsEntry("ks3", "tb3"), entity);
-            Assert.assertEquals(parsed.getKeyspacesAndTables().size(), 2, entity);
+            assertTrue(parsed.getKeyspacesAndTables().containsEntry("ks1", "tb1"), entity);
+            assertTrue(parsed.getKeyspacesAndTables().containsEntry("ks3", "tb3"), entity);
+            assertEquals(2, parsed.getKeyspacesAndTables().size(), entity);
         }
 
         for (String entity : Stream.of("  ks1  ks3  ",
@@ -160,9 +156,9 @@ public class CassandraDataTest {
                                        ",,,ks1,ks3,,,").collect(Collectors.toList())) {
             DatabaseEntities parsed = DatabaseEntities.parse(entity);
 
-            Assert.assertTrue(parsed.getKeyspaces().contains("ks1"), entity);
-            Assert.assertTrue(parsed.getKeyspaces().contains("ks3"), entity);
-            Assert.assertEquals(parsed.getKeyspaces().size(), 2, entity);
+            assertTrue(parsed.getKeyspaces().contains("ks1"), entity);
+            assertTrue(parsed.getKeyspaces().contains("ks3"), entity);
+            assertEquals(2, parsed.getKeyspaces().size(), entity);
         }
     }
 
@@ -175,7 +171,7 @@ public class CassandraDataTest {
         try {
             parsed.setDatabaseEntitiesFromRequest(entities);
         } catch (Exception ex) {
-            assertEquals(ex.getMessage(), "Tables [kb3.tb3] to process are not present in Cassandra.");
+            assertEquals("Tables [kb3.tb3] to process are not present in Cassandra.", ex.getMessage());
         }
 
         parsed.setDatabaseEntitiesFromRequest(DatabaseEntities.parse("ks1  .tb1"));
@@ -190,9 +186,9 @@ public class CassandraDataTest {
                 put("ks3.  tb4", "ks1.  tb2");
             }});
 
-            Assert.fail("should fail on non-existing ks3.tb4");
+            fail("should fail on non-existing ks3.tb4");
         } catch (Exception ex) {
-            assertEquals(ex.getMessage(), "There is not keyspace ks3 to rename an entity from!");
+            assertEquals("There is not keyspace ks3 to rename an entity from!", ex.getMessage());
         }
 
         try {
@@ -200,9 +196,9 @@ public class CassandraDataTest {
                 put("ks1.tb5", "ks1.tb2");
             }});
 
-            Assert.fail("should fail on non-existing ks1.tb5");
+            fail("should fail on non-existing ks1.tb5");
         } catch (Exception ex) {
-            assertEquals(ex.getMessage(), "There is not table ks1.tb5 to rename an entity from!");
+            assertEquals("There is not table ks1.tb5 to rename an entity from!", ex.getMessage());
         }
 
         try {
@@ -210,9 +206,9 @@ public class CassandraDataTest {
                 put("ks1.  tb1", "ks3  . tb1");
             }});
 
-            Assert.fail("should fail on non-existing ks3.tb1");
+            fail("should fail on non-existing ks3.tb1");
         } catch (Exception ex) {
-            assertEquals(ex.getMessage(), "There is not keyspace ks3 to rename an entity to!");
+            assertEquals("There is not keyspace ks3 to rename an entity to!", ex.getMessage());
         }
 
         try {
@@ -220,16 +216,16 @@ public class CassandraDataTest {
                 put("ks1   .tb1", "ks2.  tb5");
             }});
 
-            Assert.fail("should fail on non-existing ks2.tb5");
+            fail("should fail on non-existing ks2.tb5");
         } catch (Exception ex) {
-            assertEquals(ex.getMessage(), "There is not table ks2.tb5 to rename an entity to!");
+            assertEquals("There is not table ks2.tb5 to rename an entity to!", ex.getMessage());
         }
     }
 
     private ObjectMapper objectMapper;
     private Manifest manifest;
 
-    @BeforeTest
+    @BeforeEach
     public void before() throws Exception {
         objectMapper = new ObjectMapper();
 
@@ -360,7 +356,7 @@ public class CassandraDataTest {
                 put("ks2.tb2", "ks1.tb1");
             }});
 
-            Assert.fail("should error out on non-distinct values");
+            fail("should error out on non-distinct values");
         } catch (final Exception ex) {
             // empty
         }

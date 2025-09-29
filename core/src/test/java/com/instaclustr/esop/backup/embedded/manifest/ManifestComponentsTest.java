@@ -20,15 +20,11 @@ import com.instaclustr.esop.impl.Snapshots.Snapshot;
 import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace;
 import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace.Table;
 import com.instaclustr.jackson.JacksonModule;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNotSame;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ManifestComponentsTest {
 
@@ -37,7 +33,7 @@ public class ManifestComponentsTest {
     @Inject
     private ObjectMapper objectMapper;
 
-    @BeforeMethod
+    @BeforeEach
     public void setup() throws Exception {
 
         final List<Module> modules = new ArrayList<Module>() {{
@@ -51,7 +47,7 @@ public class ManifestComponentsTest {
     @Test
     public void testSameTokens() throws Exception {
         Manifest manifest = parseManifest();
-        Assert.assertTrue(manifest.hasSameTokens(manifest.getTokens()));
+        assertTrue(manifest.hasSameTokens(manifest.getTokens()));
     }
 
     @Test
@@ -185,7 +181,7 @@ public class ManifestComponentsTest {
                                                                       false, // newCluster
                                                                       false); // withSchemas
 
-        Assert.assertTrue(manifestFiles.stream().noneMatch(entry -> KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace)));
+        assertTrue(manifestFiles.stream().noneMatch(entry -> KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace)));
     }
 
     @Test
@@ -199,8 +195,8 @@ public class ManifestComponentsTest {
                                                                       false, // newCluster
                                                                       false); // withSchemas
 
-        Assert.assertTrue(manifestFiles.stream().noneMatch(entry -> KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace)));
-        Assert.assertTrue(manifestFiles.stream().allMatch(entry -> entry.keyspaceTable.keyspace.equals("ks1")));
+        assertTrue(manifestFiles.stream().noneMatch(entry -> KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace)));
+        assertTrue(manifestFiles.stream().allMatch(entry -> entry.keyspaceTable.keyspace.equals("ks1")));
     }
 
     @Test
@@ -214,8 +210,8 @@ public class ManifestComponentsTest {
                                                                       false, // newCluster
                                                                       false); // withSchemas
 
-        Assert.assertTrue(manifestFiles.stream().noneMatch(entry -> KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace)));
-        Assert.assertTrue(manifestFiles.stream().allMatch(entry -> entry.keyspaceTable.keyspace.equals("ks1") || entry.keyspaceTable.table.equals("ks1t2")));
+        assertTrue(manifestFiles.stream().noneMatch(entry -> KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace)));
+        assertTrue(manifestFiles.stream().allMatch(entry -> entry.keyspaceTable.keyspace.equals("ks1") || entry.keyspaceTable.table.equals("ks1t2")));
     }
 
     @Test
@@ -229,7 +225,7 @@ public class ManifestComponentsTest {
                                                                       true, // newCluster
                                                                       false); // withSchemas
 
-        Assert.assertTrue(manifestFiles.stream().allMatch(entry -> {
+        assertTrue(manifestFiles.stream().allMatch(entry -> {
             if (entry.keyspaceTable.keyspace.equals("system")) {
                 return entry.keyspaceTable.table.startsWith("schema_");
             } else if (entry.keyspaceTable.keyspace.equals("system_schema")) {
@@ -249,7 +245,7 @@ public class ManifestComponentsTest {
                                                                       true, // newCluster
                                                                       false); // withSchemas
 
-        Assert.assertEquals(manifestFiles.size(), 304);
+        assertEquals(manifestFiles.size(), 304);
     }
 
     private Manifest parseManifest() throws Exception {

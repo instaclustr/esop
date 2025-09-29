@@ -71,7 +71,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>${maven.surefire.plugin.version}</version>
                         <configuration>
-                            <groups>azureTest</groups>
+                            <groups>azure-test</groups>
                         </configuration>
                     </plugin>
                 </plugins>

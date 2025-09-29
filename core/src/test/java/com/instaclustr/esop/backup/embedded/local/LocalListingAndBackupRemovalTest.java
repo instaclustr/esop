@@ -8,13 +8,11 @@ import com.google.inject.Module;
 import com.instaclustr.esop.backup.embedded.AbstractBackupTest;
 import com.instaclustr.esop.backup.embedded.BaseListingRemovalTest;
 import com.instaclustr.esop.local.LocalFileModule;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Tag;
 
 import static com.instaclustr.io.FileUtils.deleteDirectory;
 
-@Test(groups = {
-        "localTest",
-})
+@Tag("local-test")
 public class LocalListingAndBackupRemovalTest extends BaseListingRemovalTest {
 
     @Override

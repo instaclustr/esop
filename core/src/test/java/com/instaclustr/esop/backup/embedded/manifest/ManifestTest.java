@@ -9,6 +9,10 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.HashMultimap;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,9 +54,6 @@ import com.instaclustr.threading.ExecutorsModule;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 import jmx.org.apache.cassandra.service.cassandra3.StorageServiceMBean;
 import org.awaitility.Awaitility;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.api.core.type.DataTypes.TEXT;
 import static com.datastax.oss.driver.api.core.type.DataTypes.TIMEUUID;
@@ -69,11 +70,7 @@ import static com.instaclustr.esop.impl.Manifest.getManifestAsManifestEntry;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ManifestTest {
 
@@ -349,7 +346,7 @@ public class ManifestTest {
 
     }
 
-    @BeforeMethod
+    @BeforeEach
     public void setup() throws Exception {
 
         final List<Module> modules = new ArrayList<Module>() {{
@@ -379,7 +376,7 @@ public class ManifestTest {
             .build();
     }
 
-    @AfterMethod
+    @AfterEach
     public void afterTest() throws Exception {
         cassandra.stop();
         session.close();

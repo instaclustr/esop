@@ -16,29 +16,29 @@ import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import static com.instaclustr.io.FileUtils.deleteDirectory;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Test(groups = {
-    "cloudTest",
-    "azureTest",
-})
+@Tag("azure-test")
+@Tag("cloud-test")
 public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
 
     @Inject
     public CloudStorageAccountFactory cloudStorageAccountFactory;
 
-    @BeforeMethod
+    @BeforeEach
     public void setup() {
         inject();
         init();
     }
 
-    @AfterMethod
+    @AfterEach
     public void teardown() throws Exception {
         destroy();
     }
@@ -99,30 +99,30 @@ public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
             // 2
 
             final String content = azureRestorer.downloadNodeFile(Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
-            Assert.assertEquals("hello", content);
+            assertEquals("hello", content);
 
             // 3
 
             final String content2 = azureRestorer.downloadTopology(Paths.get("snapshot/in/dir"), s -> s.endsWith("name-" + AbstractBackupTest.BUCKET_NAME));
-            Assert.assertEquals("hello world", content2);
+            assertEquals("hello world", content2);
 
             // 4
 
             azureRestorer.downloadFile(tmp.resolve("some-file"), azureRestorer.objectKeyToRemoteReference(Paths.get("snapshot/in/dir/name-" + AbstractBackupTest.BUCKET_NAME)));
 
-            Assert.assertTrue(Files.exists(tmp.resolve("some-file")));
-            Assert.assertEquals("hello world", new String(Files.readAllBytes(tmp.resolve("some-file"))));
+            assertTrue(Files.exists(tmp.resolve("some-file")));
+            assertEquals("hello world", new String(Files.readAllBytes(tmp.resolve("some-file"))));
 
             // backup
 
             azureBackuper.uploadText("hello world", azureBackuper.objectKeyToRemoteReference(Paths.get("topology/some-file-in-here.txt")));
             String text = azureRestorer.downloadFileToString(azureBackuper.objectKeyToRemoteReference(Paths.get("topology/some-file-in-here.txt")));
 
-            Assert.assertEquals("hello world", text);
+            assertEquals("hello world", text);
 
             String topology = azureRestorer.downloadTopology(Paths.get("topology/some-file-in"), fileName -> fileName.contains("topology/some-file-in"));
 
-            Assert.assertEquals("hello world", topology);
+            assertEquals("hello world", topology);
         } finally {
             azureBucketService.delete(AbstractBackupTest.BUCKET_NAME);
             deleteDirectory(Paths.get(target("commitlog_download_dir")));

@@ -23,7 +23,7 @@
         <!-- test -->
         <version.embedded.cassandra>4.0.1</version.embedded.cassandra>
         <cassandra.driver.version>4.19.0</cassandra.driver.version>
-        <testng.version>7.7.0</testng.version>
+        <junit.jupiter.version>5.13.4</junit.jupiter.version>
         <mockito.version>2.23.4</mockito.version>
 
         <slf4j.version>1.7.30</slf4j.version>
@@ -170,7 +170,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>${maven.surefire.plugin.version}</version>
                         <configuration>
-                            <excludedGroups>cloudTest,azureTest,googleTest,s3Test</excludedGroups>
+                            <excludedGroups>cloud-test,azure-test,google-test,s3-test</excludedGroups>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -382,9 +382,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>${testng.version}</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
 

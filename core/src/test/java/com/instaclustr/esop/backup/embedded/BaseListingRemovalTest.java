@@ -20,10 +20,10 @@ import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.operations.OperationCoordinator;
 import com.instaclustr.operations.OperationsService;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static com.instaclustr.esop.backup.embedded.TestEntity.KEYSPACE;
 import static com.instaclustr.esop.backup.embedded.TestEntity.TABLE;
@@ -49,7 +49,7 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
     @Inject
     private ObjectMapper objectMapper;
 
-    @BeforeMethod
+    @BeforeEach
     public void setup() throws Exception {
 
         List<Module> modules = getModules();
@@ -61,7 +61,7 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
         init();
     }
 
-    @AfterMethod
+    @AfterEach
     public void teardown() throws Exception {
         destroy();
     }
@@ -113,7 +113,6 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 final String[] jsonComplex = new String[]{
                         "list",
                         "--storage-location=" + getStorageLocation(),
-                        "--human-units",
                         "--json",
                         "--to-file=" + jsonComplexFile.toAbsolutePath(),
                         "--cache-dir=" + target(".esop")
@@ -122,7 +121,6 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 final String[] jsonSimple = new String[]{
                         "list",
                         "--storage-location=" + getStorageLocation(),
-                        "--human-units",
                         "--json",
                         "--simple-format",
                         "--to-file=" + jsonSimpleFile.toAbsolutePath(),
@@ -132,7 +130,6 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 final String[] tableComplex = new String[]{
                         "list",
                         "--storage-location=" + getStorageLocation(),
-                        "--human-units",
                         "--to-file=" + tableComplexFile.toAbsolutePath(),
                         "--cache-dir=" + target(".esop")
                 };
@@ -140,7 +137,6 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 final String[] tableSimple = new String[]{
                         "list",
                         "--storage-location=" + getStorageLocation(),
-                        "--human-units",
                         "--simple-format",
                         "--to-file=" + tableSimpleFile.toAbsolutePath(),
                         "--cache-dir=" + target(".esop")
@@ -161,12 +157,13 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 Optional<Manifest.ManifestReporter.ManifestReport> latest = report.getLatest();
 
                 if (!oldest.isPresent()) {
-                    Assert.fail("Not found the oldest report!");
+                    Assertions.fail("Not found the oldest report!");
                 }
 
                 if (!latest.isPresent()) {
-                    Assert.fail("Not found the latest report!");
+                    Assertions.fail("Not found the latest report!");
                 }
+
 
                 final String oldestBackupName = oldest.get().name;
                 final String latestBackupName = latest.get().name;

@@ -12,12 +12,11 @@ import com.instaclustr.esop.gcp.GCPModule;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.io.FileUtils;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 
-@Test(groups = {
-        "googleTest",
-        "cloudTest",
-})
+@Tag("gcp-test")
+@Tag("cloud-test")
 public class GoogleListingAndBackupRemovalTest extends BaseListingRemovalTest {
 
     @Inject

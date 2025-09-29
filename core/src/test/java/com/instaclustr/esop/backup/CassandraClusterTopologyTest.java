@@ -7,13 +7,12 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
 
 import static java.net.InetAddress.getByName;
 import static java.util.stream.Collectors.toSet;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class CassandraClusterTopologyTest {
 
@@ -86,12 +85,12 @@ public class CassandraClusterTopologyTest {
         final ClusterTopology topology = getClusterTopology();
         ClusterTopology filtered = ClusterTopology.filter(topology, "dc1");
 
-        Assert.assertEquals(topology.schemaVersion, filtered.schemaVersion);
+        assertEquals(topology.schemaVersion, filtered.schemaVersion);
 
-        Assert.assertEquals(3, topology.endpointDcs.size());
-        Assert.assertEquals(3, topology.endpoints.size());
-        Assert.assertEquals(3, topology.hostnames.size());
-        Assert.assertEquals(3, topology.endpointRacks.size());
+        assertEquals(3, topology.endpointDcs.size());
+        assertEquals(3, topology.endpoints.size());
+        assertEquals(3, topology.hostnames.size());
+        assertEquals(3, topology.endpointRacks.size());
     }
 
     @Test
@@ -99,12 +98,12 @@ public class CassandraClusterTopologyTest {
         final ClusterTopology topology = getClusterTopology();
         ClusterTopology filtered = ClusterTopology.filter(topology, " dc1,   dc2   ,");
 
-        Assert.assertEquals(topology.schemaVersion, filtered.schemaVersion);
+        assertEquals(topology.schemaVersion, filtered.schemaVersion);
 
-        Assert.assertEquals(6, topology.endpointDcs.size());
-        Assert.assertEquals(6, topology.endpoints.size());
-        Assert.assertEquals(6, topology.hostnames.size());
-        Assert.assertEquals(6, topology.endpointRacks.size());
+        assertEquals(6, topology.endpointDcs.size());
+        assertEquals(6, topology.endpoints.size());
+        assertEquals(6, topology.hostnames.size());
+        assertEquals(6, topology.endpointRacks.size());
     }
 
     @Test

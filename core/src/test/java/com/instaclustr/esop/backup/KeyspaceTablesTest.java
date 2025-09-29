@@ -9,8 +9,9 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.KeyspaceTable.KeyspaceTables;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class KeyspaceTablesTest {
 
@@ -26,7 +27,7 @@ public class KeyspaceTablesTest {
 
         Optional<Pair<List<String>, Multimap<String, String>>> result = keyspaceTables.filterNotPresent(entities);
 
-        Assert.assertFalse(result.isPresent());
+        assertFalse(result.isPresent());
     }
 
     @Test
@@ -41,13 +42,13 @@ public class KeyspaceTablesTest {
 
         Optional<Pair<List<String>, Multimap<String, String>>> result = keyspaceTables.filterNotPresent(entities);
 
-        Assert.assertTrue(result.isPresent());
+        assertTrue(result.isPresent());
 
         Pair<List<String>, Multimap<String, String>> pair = result.get();
 
-        Assert.assertEquals(2, pair.getRight().size());
-        Assert.assertTrue(pair.getRight().containsEntry("ks5", "t5"));
-        Assert.assertTrue(pair.getRight().containsEntry("ks6", "t6"));
+        assertEquals(2, pair.getRight().size());
+        assertTrue(pair.getRight().containsEntry("ks5", "t5"));
+        assertTrue(pair.getRight().containsEntry("ks6", "t6"));
     }
 
     @Test
@@ -62,12 +63,12 @@ public class KeyspaceTablesTest {
 
         Optional<Pair<List<String>, Multimap<String, String>>> result = keyspaceTables.filterNotPresent(entities);
 
-        Assert.assertTrue(result.isPresent());
+        assertTrue(result.isPresent());
 
         Pair<List<String>, Multimap<String, String>> pair = result.get();
 
-        Assert.assertEquals(2, pair.getLeft().size());
-        Assert.assertTrue(pair.getLeft().contains("ks5"));
-        Assert.assertTrue(pair.getLeft().contains("ks6"));
+        assertEquals(2, pair.getLeft().size());
+        assertTrue(pair.getLeft().contains("ks5"));
+        assertTrue(pair.getLeft().contains("ks6"));
     }
 }

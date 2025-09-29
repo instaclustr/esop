@@ -82,7 +82,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>${maven.surefire.plugin.version}</version>
                         <configuration>
-                            <groups>googleTest</groups>
+                            <groups>gcp-test</groups>
                         </configuration>
                     </plugin>
                 </plugins>

@@ -6,14 +6,14 @@ import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.list.ListOperation;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.file.Paths;
 import java.util.Collections;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AllManifestsReportTest {
 
@@ -53,7 +53,7 @@ public class AllManifestsReportTest {
                         "          123  3     10             100              \n" +
                         "               10    500                             \n";
 
-        assertEquals(result, output);
+        assertEquals(output, result);
 
         //////
 
@@ -65,7 +65,7 @@ public class AllManifestsReportTest {
                  "          123  3     10 B           100 B            \n" +
                  "               10    500 B                           \n";
 
-        assertEquals(result, output);
+        assertEquals(output, result);
 
         //////
 
@@ -94,7 +94,7 @@ public class AllManifestsReportTest {
                 "  } ]\n" +
                 "}\n";
 
-        assertEquals(result, output);
+        assertEquals(output, result);
 
         /////
 
@@ -123,7 +123,7 @@ public class AllManifestsReportTest {
                 "  } ]\n" +
                 "}\n";
 
-        assertEquals(result, output);
+        assertEquals(output, result);
     }
 
     private ListOperationRequest getRequest(boolean humanUnits, boolean json) {
