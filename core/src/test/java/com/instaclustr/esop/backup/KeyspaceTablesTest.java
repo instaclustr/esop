@@ -9,8 +9,8 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.KeyspaceTable.KeyspaceTables;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class KeyspaceTablesTest {
 

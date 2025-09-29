@@ -4,8 +4,8 @@ import com.instaclustr.esop.impl.retry.Retrier;
 import com.instaclustr.esop.impl.retry.RetrierFactory;
 import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.esop.impl.retry.RetrySpec.RetryStrategy;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class RetryTest {
 

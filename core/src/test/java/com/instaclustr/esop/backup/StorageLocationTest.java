@@ -3,12 +3,12 @@ package com.instaclustr.esop.backup;
 import java.nio.file.Paths;
 
 import com.instaclustr.esop.impl.StorageLocation;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class StorageLocationTest {
 
@@ -19,8 +19,8 @@ public class StorageLocationTest {
         StorageLocation changedNode = StorageLocation.updateNodeId(storageLocation, "node2");
         StorageLocation changedDc = StorageLocation.updateDatacenter(changedNode, "dc2");
 
-        assertEquals(changedDc.datacenterId, "dc2");
-        assertEquals(changedDc.nodeId, "node2");
+        assertEquals("dc2", changedDc.datacenterId);
+        assertEquals( "node2", changedDc.nodeId);
     }
 
     @Test
@@ -29,7 +29,7 @@ public class StorageLocationTest {
 
         StorageLocation updatedLocation = StorageLocation.updateNodeId(storageLocation, "node2");
 
-        assertEquals(updatedLocation.nodeId, "node2");
+        assertEquals("node2", updatedLocation.nodeId);
     }
 
     @Test
@@ -38,11 +38,11 @@ public class StorageLocationTest {
 
         storageLocation.validate();
 
-        assertEquals(storageLocation.storageProvider, "gcp");
-        assertEquals(storageLocation.bucket, "bucket");
-        assertEquals(storageLocation.clusterId, "cluster");
-        assertEquals(storageLocation.datacenterId, "dc");
-        assertEquals(storageLocation.nodeId, "node");
+        assertEquals("gcp", storageLocation.storageProvider);
+        assertEquals("bucket", storageLocation.bucket);
+        assertEquals("cluster", storageLocation.clusterId);
+        assertEquals("dc", storageLocation.datacenterId);
+        assertEquals("node", storageLocation.nodeId);
     }
 
     @Test
@@ -51,12 +51,12 @@ public class StorageLocationTest {
 
         fileLocation.validate();
 
-        assertEquals(fileLocation.storageProvider, "file");
-        assertEquals(fileLocation.fileBackupDirectory.toString(), "/some/path");
-        assertEquals(fileLocation.bucket, "bucket");
-        assertEquals(fileLocation.clusterId, "cluster");
-        assertEquals(fileLocation.datacenterId, "dc");
-        assertEquals(fileLocation.nodeId, "node");
+        assertEquals("file", fileLocation.storageProvider);
+        assertEquals("/some/path", fileLocation.fileBackupDirectory.toString());
+        assertEquals("bucket", fileLocation.bucket);
+        assertEquals("cluster", fileLocation.clusterId);
+        assertEquals("dc", fileLocation.datacenterId);
+        assertEquals("node", fileLocation.nodeId);
     }
 
     @Test
@@ -65,12 +65,12 @@ public class StorageLocationTest {
 
         fileLocation.validate();
 
-        assertEquals(fileLocation.storageProvider, "file");
-        assertEquals(fileLocation.fileBackupDirectory.toString(), "/tmp");
-        assertEquals(fileLocation.bucket, "a");
-        assertEquals(fileLocation.clusterId, "b");
-        assertEquals(fileLocation.datacenterId, "c");
-        assertEquals(fileLocation.nodeId, "d");
+        assertEquals("file", fileLocation.storageProvider);
+        assertEquals("/tmp", fileLocation.fileBackupDirectory.toString());
+        assertEquals("a", fileLocation.bucket);
+        assertEquals("b", fileLocation.clusterId);
+        assertEquals("c", fileLocation.datacenterId);
+        assertEquals("d", fileLocation.nodeId);
     }
 
     @Test
@@ -79,12 +79,12 @@ public class StorageLocationTest {
 
         fileLocation.validate();
 
-        assertEquals(fileLocation.storageProvider, "file");
-        assertEquals(fileLocation.fileBackupDirectory.toString(), Paths.get("").toAbsolutePath().toString());
-        assertEquals(fileLocation.bucket, "a");
-        assertEquals(fileLocation.clusterId, "b");
-        assertEquals(fileLocation.datacenterId, "c");
-        assertEquals(fileLocation.nodeId, "d");
+        assertEquals("file", fileLocation.storageProvider);
+        assertEquals(Paths.get("").toAbsolutePath().toString(), fileLocation.fileBackupDirectory.toString());
+        assertEquals("a", fileLocation.bucket);
+        assertEquals("b", fileLocation.clusterId);
+        assertEquals("c", fileLocation.datacenterId);
+        assertEquals("d", fileLocation.nodeId);
     }
 
     @Test
@@ -93,8 +93,8 @@ public class StorageLocationTest {
 
         globalLocation.validate();
 
-        assertEquals(globalLocation.storageProvider, "oracle");
-        assertEquals(globalLocation.bucket, "my-bucket");
+        assertEquals("oracle", globalLocation.storageProvider);
+        assertEquals("my-bucket", globalLocation.bucket);
         assertNull(globalLocation.clusterId);
         assertNull(globalLocation.datacenterId);
         assertNull(globalLocation.nodeId);
@@ -108,11 +108,11 @@ public class StorageLocationTest {
 
         StorageLocation updated = StorageLocation.update(globalLocation, "clusterName", "datacenterId", "nodeId");
 
-        assertEquals(updated.storageProvider, "oracle");
-        assertEquals(updated.bucket, "my-bucket");
-        assertEquals(updated.clusterId, "clusterName");
-        assertEquals(updated.datacenterId, "datacenterId");
-        assertEquals(updated.nodeId, "nodeId");
+        assertEquals("oracle", updated.storageProvider);
+        assertEquals("my-bucket", updated.bucket);
+        assertEquals("clusterName", updated.clusterId);
+        assertEquals("datacenterId", updated.datacenterId);
+        assertEquals("nodeId", updated.nodeId);
         assertTrue(updated.cloudLocation);
         assertFalse(updated.globalRequest);
     }
@@ -123,11 +123,11 @@ public class StorageLocationTest {
 
         StorageLocation updated = StorageLocation.updateNodeId(location, "nodeId2");
 
-        assertEquals(updated.storageProvider, "oracle");
-        assertEquals(updated.bucket, "my-bucket");
-        assertEquals(updated.clusterId, "clusterName");
-        assertEquals(updated.datacenterId, "datacenterId");
-        assertEquals(updated.nodeId, "nodeId2");
+        assertEquals("oracle", updated.storageProvider);
+        assertEquals("my-bucket", updated.bucket);
+        assertEquals("clusterName", updated.clusterId);
+        assertEquals("datacenterId", updated.datacenterId);
+        assertEquals("nodeId2", updated.nodeId);
         assertTrue(updated.cloudLocation);
         assertFalse(updated.globalRequest);
     }
@@ -138,11 +138,11 @@ public class StorageLocationTest {
 
         StorageLocation updated = StorageLocation.updateDatacenter(location, "datacenterId2");
 
-        assertEquals(updated.storageProvider, "oracle");
-        assertEquals(updated.bucket, "my-bucket");
-        assertEquals(updated.clusterId, "clusterName");
-        assertEquals(updated.datacenterId, "datacenterId2");
-        assertEquals(updated.nodeId, "nodeId");
+        assertEquals("oracle", updated.storageProvider);
+        assertEquals("my-bucket", updated.bucket);
+        assertEquals("clusterName", updated.clusterId);
+        assertEquals("datacenterId2", updated.datacenterId);
+        assertEquals("nodeId", updated.nodeId);
         assertTrue(updated.cloudLocation);
         assertFalse(updated.globalRequest);
     }
@@ -153,11 +153,11 @@ public class StorageLocationTest {
 
         StorageLocation updated = StorageLocation.updateClusterName(location, "clusterName2");
 
-        assertEquals(updated.storageProvider, "oracle");
-        assertEquals(updated.bucket, "my-bucket");
-        assertEquals(updated.clusterId, "clusterName2");
-        assertEquals(updated.datacenterId, "datacenterId");
-        assertEquals(updated.nodeId, "nodeId");
+        assertEquals("oracle", updated.storageProvider);
+        assertEquals("my-bucket", updated.bucket);
+        assertEquals("clusterName2", updated.clusterId);
+        assertEquals("datacenterId", updated.datacenterId);
+        assertEquals("nodeId", updated.nodeId);
         assertTrue(updated.cloudLocation);
         assertFalse(updated.globalRequest);
     }

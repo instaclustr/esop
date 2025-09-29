@@ -7,13 +7,13 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import static java.net.InetAddress.getByName;
 import static java.util.stream.Collectors.toSet;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class CassandraClusterTopologyTest {
 

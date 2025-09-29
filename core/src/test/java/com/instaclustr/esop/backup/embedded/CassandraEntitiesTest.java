@@ -9,9 +9,9 @@ import com.google.inject.Module;
 import com.instaclustr.esop.impl.CassandraData;
 import com.instaclustr.esop.local.LocalFileModule;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +24,7 @@ public class CassandraEntitiesTest extends AbstractBackupTest {
     private Cassandra cassandra;
     private CqlSession session;
 
-    @BeforeMethod
+    @Before
     public void setup() throws Throwable {
 
         cassandra = getCassandra(cassandraDir, getCassandraVersion());
@@ -46,7 +46,7 @@ public class CassandraEntitiesTest extends AbstractBackupTest {
         init();
     }
 
-    @AfterMethod
+    @After
     public void teardown() {
         cassandra.stop();
         session.close();
@@ -58,7 +58,7 @@ public class CassandraEntitiesTest extends AbstractBackupTest {
     }
 
     @Test
-    private void test() throws Throwable {
+    public void test() throws Throwable {
 
         session.execute("CREATE KEYSPACE IF NOT EXISTS test1 WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};");
 

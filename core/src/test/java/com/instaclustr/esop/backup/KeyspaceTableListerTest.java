@@ -10,8 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import com.instaclustr.esop.impl.CassandraData.KeyspaceTableLister;
 import com.instaclustr.io.FileUtils;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class KeyspaceTableListerTest {
 
@@ -57,7 +57,7 @@ public class KeyspaceTableListerTest {
         Map<Path, List<Path>> dataDirs = lister.getDataDirs();
         Assert.assertFalse(dataDirs.isEmpty());
 
-        Assert.assertEquals(dataDirs.size(), 99);
+        Assert.assertEquals(99, dataDirs.size());
 
         FileUtils.deleteDirectory(cassandrDir);
     }

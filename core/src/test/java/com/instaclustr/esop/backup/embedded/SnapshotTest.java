@@ -1,8 +1,8 @@
 package com.instaclustr.esop.backup.embedded;
 
 import com.instaclustr.esop.impl.Snapshots;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class SnapshotTest {
 
