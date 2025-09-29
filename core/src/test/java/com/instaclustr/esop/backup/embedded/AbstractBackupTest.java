@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.slf4j.Logger;
@@ -91,6 +92,7 @@ public abstract class AbstractBackupTest {
 
         }
         add(new OperationsModule());
+        add(new ObjectMapperModule());
     }};
 
     public static final String CASSANDRA_5_VERSION = System.getProperty("cassandra5.version", "5.0.0");
@@ -1490,5 +1492,12 @@ public abstract class AbstractBackupTest {
 
         long count = session.execute(selectFrom(keyspace, table).countAll().asCql()).one().getLong("count");
         assertEquals(count, expectedLength);
+    }
+
+    public static class ObjectMapperModule extends AbstractModule {
+        @Override
+        protected void configure() {
+            bind(ObjectMapper.class).to(ObjectMapper.class);
+        }
     }
 }
