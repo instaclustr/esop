@@ -1,8 +1,8 @@
 package com.instaclustr.esop.backup.embedded.s3.aws.v2;
 
+import org.junit.Ignore;
+import org.junit.Test;
 import org.testng.Assert;
-import org.testng.annotations.Ignore;
-import org.testng.annotations.Test;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;

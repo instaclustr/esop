@@ -13,12 +13,7 @@ import com.instaclustr.esop.s3.aws_v2.S3Module;
 import com.instaclustr.esop.s3.v2.BaseS3BucketService;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory;
 import com.instaclustr.io.FileUtils;
-import org.testng.annotations.Test;
 
-@Test(groups = {
-        "s3Test",
-        "cloudTest",
-})
 public class S3ListingAndBackupRemovalTest extends BaseListingRemovalTest {
 
     @Override

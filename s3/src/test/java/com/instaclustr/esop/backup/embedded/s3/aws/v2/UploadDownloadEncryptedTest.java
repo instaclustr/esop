@@ -13,7 +13,6 @@ import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AW
 import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.TEST_ESOP_AWS_KMS_WRAPPING_KEY;
 import static org.junit.Assume.assumeTrue;
 
-
 public class UploadDownloadEncryptedTest extends AbstractS3UploadDownloadTest {
     @Test
     public void testEncrypted() throws Exception {

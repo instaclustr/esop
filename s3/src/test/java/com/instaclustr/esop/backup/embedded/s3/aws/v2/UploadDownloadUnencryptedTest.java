@@ -9,7 +9,6 @@ import com.instaclustr.esop.s3.aws_v2.S3Backuper;
 import com.instaclustr.esop.s3.aws_v2.S3Restorer;
 import org.junit.Test;
 
-
 public class UploadDownloadUnencryptedTest extends AbstractS3UploadDownloadTest {
 
     @Test
