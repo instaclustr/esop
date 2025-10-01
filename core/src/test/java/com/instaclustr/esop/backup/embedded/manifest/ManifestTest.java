@@ -9,9 +9,10 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.HashMultimap;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +70,7 @@ import static com.instaclustr.esop.impl.Manifest.getManifestAsManifestEntry;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ManifestTest {
 
@@ -345,7 +346,7 @@ public class ManifestTest {
 
     }
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
 
         final List<Module> modules = new ArrayList<Module>() {{
@@ -375,7 +376,7 @@ public class ManifestTest {
             .build();
     }
 
-    @After
+    @AfterEach
     public void afterTest() throws Exception {
         cassandra.stop();
         session.close();

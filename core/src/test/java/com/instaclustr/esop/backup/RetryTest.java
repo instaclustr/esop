@@ -4,8 +4,8 @@ import com.instaclustr.esop.impl.retry.Retrier;
 import com.instaclustr.esop.impl.retry.RetrierFactory;
 import com.instaclustr.esop.impl.retry.RetrySpec;
 import com.instaclustr.esop.impl.retry.RetrySpec.RetryStrategy;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class RetryTest {
 
@@ -28,7 +28,7 @@ public class RetryTest {
                 throw new Retrier.RetriableException("I have to retry!");
             });
 
-            Assert.fail("should fail!");
+            Assertions.fail("should fail!");
         } catch (final Exception ex) {
             long duration = System.currentTimeMillis() - start;
             System.out.println(duration);
@@ -54,11 +54,11 @@ public class RetryTest {
                 throw new Retrier.RetriableException("I have to retry!");
             });
 
-            Assert.fail("should fail!");
+            Assertions.fail("should fail!");
         } catch (final Exception ex) {
             long duration = System.currentTimeMillis() - start;
             System.out.println(duration);
-            Assert.assertTrue(duration >= ((retrySpec.maxAttempts - 1) * retrySpec.interval) * 1000);
+            Assertions.assertTrue(duration >= ((retrySpec.maxAttempts - 1) * retrySpec.interval) * 1000);
         }
     }
 }

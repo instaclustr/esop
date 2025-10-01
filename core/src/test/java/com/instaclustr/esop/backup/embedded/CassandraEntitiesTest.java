@@ -9,9 +9,9 @@ import com.google.inject.Module;
 import com.instaclustr.esop.impl.CassandraData;
 import com.instaclustr.esop.local.LocalFileModule;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +24,7 @@ public class CassandraEntitiesTest extends AbstractBackupTest {
     private Cassandra cassandra;
     private CqlSession session;
 
-    @Before
+    @BeforeEach
     public void setup() throws Throwable {
 
         cassandra = getCassandra(cassandraDir, getCassandraVersion());
@@ -46,7 +46,7 @@ public class CassandraEntitiesTest extends AbstractBackupTest {
         init();
     }
 
-    @After
+    @AfterEach
     public void teardown() {
         cassandra.stop();
         session.close();

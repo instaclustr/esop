@@ -6,7 +6,7 @@ import java.nio.file.Files;
 import com.instaclustr.esop.impl.hash.HashService;
 import com.instaclustr.esop.impl.hash.HashServiceImpl;
 import com.instaclustr.esop.impl.hash.HashSpec;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class HashServiceTest {
 

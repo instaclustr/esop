@@ -5,13 +5,13 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.instaclustr.esop.impl.CassandraData.KeyspaceTableLister;
 import com.instaclustr.io.FileUtils;
-import org.junit.Assert;
-import org.junit.Test;
 
 public class KeyspaceTableListerTest {
 
@@ -55,9 +55,9 @@ public class KeyspaceTableListerTest {
         lister.removeDroppedKeyspaces();
 
         Map<Path, List<Path>> dataDirs = lister.getDataDirs();
-        Assert.assertFalse(dataDirs.isEmpty());
+        Assertions.assertFalse(dataDirs.isEmpty());
 
-        Assert.assertEquals(99, dataDirs.size());
+        Assertions.assertEquals(99, dataDirs.size());
 
         FileUtils.deleteDirectory(cassandrDir);
     }

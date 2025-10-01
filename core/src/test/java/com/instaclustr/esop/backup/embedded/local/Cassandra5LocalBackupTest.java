@@ -1,13 +1,14 @@
 package com.instaclustr.esop.backup.embedded.local;
 
 import com.instaclustr.esop.backup.embedded.AbstractBackupTest;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Tags;
 
-@Test(groups = {
-"localTest", "cassandra5"
+@Tags({
+        @Tag("localTest"),
+        @Tag("cassandra5")
 })
-public class Cassandra5LocalBackupTest extends AbstractLocalBackupTest
-{
+public class Cassandra5LocalBackupTest extends AbstractLocalBackupTest {
     @Override
     public String getCassandraVersion() {
         return AbstractBackupTest.CASSANDRA_5_VERSION;

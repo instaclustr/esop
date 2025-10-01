@@ -45,12 +45,13 @@ import com.instaclustr.operations.OperationCoordinator;
 import com.instaclustr.operations.OperationsService;
 import com.instaclustr.threading.Executors;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class UploadTrackerTest extends AbstractBackupTest {
     @Inject
@@ -75,7 +76,7 @@ public class UploadTrackerTest extends AbstractBackupTest {
         return "file://" + target("backup1") + "/cluster/datacenter1/node1";
     }
 
-    @Before
+    @BeforeEach
     public void setup() {
 
         final List<Module> modules = new ArrayList<Module>() {{
@@ -90,7 +91,7 @@ public class UploadTrackerTest extends AbstractBackupTest {
         init();
     }
 
-    @Test
+    @AfterEach
     public void testUploadTracker() throws Exception {
 
         final String snapshotName = UUID.randomUUID().toString();

@@ -18,10 +18,10 @@ import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.SSTableUtils;
 import com.instaclustr.esop.impl.hash.HashSpec;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class BackupRestoreTest {
 
@@ -38,7 +38,7 @@ public class BackupRestoreTest {
 
     private static final Map<String, Path> tempDirs = new LinkedHashMap<>();
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() throws IOException {
         for (TestFileConfig testFileConfig : versionsToTest) {
             Path containerTempRoot = Files.createTempDirectory(testFileConfig.cassandraVersion.toString());
@@ -65,7 +65,7 @@ public class BackupRestoreTest {
         }
     }
 
-    @Before
+    @BeforeEach
     public void hardResetTestDirs() throws IOException, URISyntaxException {
         cleanUp();
         setup();
@@ -73,7 +73,7 @@ public class BackupRestoreTest {
 
     @Test
     // Test that the manifest is correctly constructed, includes expected files and generates checksum if necessary
-    @Ignore
+    @Disabled
     public void testSSTableLister() throws Exception {
         hardResetTestDirs(); //TODO not sure why this doesn't recreate things fully given its called before each test
         for (TestFileConfig testFileConfig : versionsToTest) {
@@ -143,8 +143,8 @@ public class BackupRestoreTest {
 
 
 
-    @AfterClass
-    public static void cleanUp() throws IOException {
+    @AfterEach
+    public void cleanUp() throws IOException {
         BackupRestoreTestUtils.deleteTempDirectories(tempDirs);
     }
 }

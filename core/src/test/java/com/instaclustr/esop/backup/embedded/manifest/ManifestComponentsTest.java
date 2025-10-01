@@ -20,11 +20,11 @@ import com.instaclustr.esop.impl.Snapshots.Snapshot;
 import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace;
 import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace.Table;
 import com.instaclustr.jackson.JacksonModule;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ManifestComponentsTest {
 
@@ -33,7 +33,7 @@ public class ManifestComponentsTest {
     @Inject
     private ObjectMapper objectMapper;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
 
         final List<Module> modules = new ArrayList<Module>() {{
@@ -47,7 +47,7 @@ public class ManifestComponentsTest {
     @Test
     public void testSameTokens() throws Exception {
         Manifest manifest = parseManifest();
-        Assert.assertTrue(manifest.hasSameTokens(manifest.getTokens()));
+        assertTrue(manifest.hasSameTokens(manifest.getTokens()));
     }
 
     @Test
@@ -181,7 +181,7 @@ public class ManifestComponentsTest {
                                                                       false, // newCluster
                                                                       false); // withSchemas
 
-        Assert.assertTrue(manifestFiles.stream().noneMatch(entry -> KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace)));
+        assertTrue(manifestFiles.stream().noneMatch(entry -> KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace)));
     }
 
     @Test
@@ -195,8 +195,8 @@ public class ManifestComponentsTest {
                                                                       false, // newCluster
                                                                       false); // withSchemas
 
-        Assert.assertTrue(manifestFiles.stream().noneMatch(entry -> KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace)));
-        Assert.assertTrue(manifestFiles.stream().allMatch(entry -> entry.keyspaceTable.keyspace.equals("ks1")));
+        assertTrue(manifestFiles.stream().noneMatch(entry -> KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace)));
+        assertTrue(manifestFiles.stream().allMatch(entry -> entry.keyspaceTable.keyspace.equals("ks1")));
     }
 
     @Test
@@ -210,8 +210,8 @@ public class ManifestComponentsTest {
                                                                       false, // newCluster
                                                                       false); // withSchemas
 
-        Assert.assertTrue(manifestFiles.stream().noneMatch(entry -> KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace)));
-        Assert.assertTrue(manifestFiles.stream().allMatch(entry -> entry.keyspaceTable.keyspace.equals("ks1") || entry.keyspaceTable.table.equals("ks1t2")));
+        assertTrue(manifestFiles.stream().noneMatch(entry -> KeyspaceTable.isSystemKeyspace(entry.keyspaceTable.keyspace)));
+        assertTrue(manifestFiles.stream().allMatch(entry -> entry.keyspaceTable.keyspace.equals("ks1") || entry.keyspaceTable.table.equals("ks1t2")));
     }
 
     @Test
@@ -225,7 +225,7 @@ public class ManifestComponentsTest {
                                                                       true, // newCluster
                                                                       false); // withSchemas
 
-        Assert.assertTrue(manifestFiles.stream().allMatch(entry -> {
+        assertTrue(manifestFiles.stream().allMatch(entry -> {
             if (entry.keyspaceTable.keyspace.equals("system")) {
                 return entry.keyspaceTable.table.startsWith("schema_");
             } else if (entry.keyspaceTable.keyspace.equals("system_schema")) {
