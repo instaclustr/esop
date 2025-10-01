@@ -16,29 +16,25 @@ import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import static com.instaclustr.io.FileUtils.deleteDirectory;
 
-@Test(groups = {
-    "cloudTest",
-    "azureTest",
-})
 public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
 
     @Inject
     public CloudStorageAccountFactory cloudStorageAccountFactory;
 
-    @BeforeMethod
+    @Before
     public void setup() {
         inject();
         init();
     }
 
-    @AfterMethod
+    @After
     public void teardown() throws Exception {
         destroy();
     }

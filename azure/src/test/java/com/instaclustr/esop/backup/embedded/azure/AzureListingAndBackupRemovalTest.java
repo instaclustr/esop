@@ -12,12 +12,7 @@ import com.instaclustr.esop.backup.embedded.BaseListingRemovalTest;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.io.FileUtils;
-import org.testng.annotations.Test;
 
-@Test(groups = {
-        "azureTest",
-        "cloudTest",
-})
 public class AzureListingAndBackupRemovalTest extends BaseListingRemovalTest {
 
     @Inject
