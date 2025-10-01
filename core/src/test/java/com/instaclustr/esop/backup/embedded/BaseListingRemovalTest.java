@@ -113,7 +113,6 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 final String[] jsonComplex = new String[]{
                         "list",
                         "--storage-location=" + getStorageLocation(),
-                        "--human-units",
                         "--json",
                         "--to-file=" + jsonComplexFile.toAbsolutePath(),
                         "--cache-dir=" + target(".esop")
@@ -122,7 +121,6 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 final String[] jsonSimple = new String[]{
                         "list",
                         "--storage-location=" + getStorageLocation(),
-                        "--human-units",
                         "--json",
                         "--simple-format",
                         "--to-file=" + jsonSimpleFile.toAbsolutePath(),
@@ -132,7 +130,6 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 final String[] tableComplex = new String[]{
                         "list",
                         "--storage-location=" + getStorageLocation(),
-                        "--human-units",
                         "--to-file=" + tableComplexFile.toAbsolutePath(),
                         "--cache-dir=" + target(".esop")
                 };
@@ -140,7 +137,6 @@ public abstract class BaseListingRemovalTest extends AbstractBackupTest {
                 final String[] tableSimple = new String[]{
                         "list",
                         "--storage-location=" + getStorageLocation(),
-                        "--human-units",
                         "--simple-format",
                         "--to-file=" + tableSimpleFile.toAbsolutePath(),
                         "--cache-dir=" + target(".esop")
