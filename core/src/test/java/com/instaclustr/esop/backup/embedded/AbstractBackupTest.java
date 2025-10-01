@@ -92,7 +92,6 @@ public abstract class AbstractBackupTest {
 
         }
         add(new OperationsModule());
-        add(new ObjectMapperModule());
     }};
 
     public static final String CASSANDRA_5_VERSION = System.getProperty("cassandra5.version", "5.0.0");
@@ -1492,12 +1491,5 @@ public abstract class AbstractBackupTest {
 
         long count = session.execute(selectFrom(keyspace, table).countAll().asCql()).one().getLong("count");
         assertEquals(count, expectedLength);
-    }
-
-    public static class ObjectMapperModule extends AbstractModule {
-        @Override
-        protected void configure() {
-            bind(ObjectMapper.class).to(ObjectMapper.class);
-        }
     }
 }
