@@ -20,15 +20,11 @@ import com.instaclustr.esop.impl.Snapshots.Snapshot;
 import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace;
 import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace.Table;
 import com.instaclustr.jackson.JacksonModule;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNotSame;
-import static org.testng.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ManifestComponentsTest {
 
@@ -37,7 +33,7 @@ public class ManifestComponentsTest {
     @Inject
     private ObjectMapper objectMapper;
 
-    @BeforeMethod
+    @Before
     public void setup() throws Exception {
 
         final List<Module> modules = new ArrayList<Module>() {{
@@ -249,7 +245,7 @@ public class ManifestComponentsTest {
                                                                       true, // newCluster
                                                                       false); // withSchemas
 
-        Assert.assertEquals(manifestFiles.size(), 304);
+        assertEquals(manifestFiles.size(), 304);
     }
 
     private Manifest parseManifest() throws Exception {

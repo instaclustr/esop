@@ -3,8 +3,8 @@ package com.instaclustr.esop.backup.embedded.manifest;
 import java.util.stream.Stream;
 
 import com.instaclustr.esop.impl.Manifest;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import static java.util.stream.Collectors.toList;
 
