@@ -8,10 +8,10 @@ import com.instaclustr.esop.s3.aws_v2.S3Module;
 import com.instaclustr.esop.s3.v2.BaseS3BucketService;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory;
 import org.junit.jupiter.api.*;
-import org.testng.SkipException;
 
 import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AWS_KMS_KEY_ID_PROPERTY;
 import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.TEST_ESOP_AWS_KMS_WRAPPING_KEY;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @Tag("s3-test")
 @Tag("cloud-test")
@@ -95,9 +95,7 @@ public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest 
 
     private void runWithEncryption(ThrowingRunnable test) throws Exception {
         String kmsKeyId = System.getProperty(TEST_ESOP_AWS_KMS_WRAPPING_KEY);
-        if (kmsKeyId == null)
-            throw new SkipException("Cannot continue as " + TEST_ESOP_AWS_KMS_WRAPPING_KEY + " is not set!");
-
+        assumeTrue(kmsKeyId != null, "Cannot continue as " + TEST_ESOP_AWS_KMS_WRAPPING_KEY + " is not set!");
         System.setProperty(AWS_KMS_KEY_ID_PROPERTY, kmsKeyId);
 
         try {

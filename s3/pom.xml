@@ -102,7 +102,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>${maven.surefire.plugin.version}</version>
                         <configuration>
-                            <groups>s3Test</groups>
+                            <groups>s3-test</groups>
                         </configuration>
                     </plugin>
                 </plugins>

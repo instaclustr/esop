@@ -15,9 +15,9 @@ import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.local.LocalFileModule;
 import com.instaclustr.io.FileUtils;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.HARDLINKS;
 import static com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType.IMPORT;
@@ -30,7 +30,7 @@ public abstract class AbstractLocalBackupTest extends AbstractBackupTest {
         return "file://";
     }
 
-    @BeforeMethod
+    @BeforeEach
     public void setup() {
 
         final List<Module> modules = new ArrayList<Module>() {{
@@ -45,7 +45,7 @@ public abstract class AbstractLocalBackupTest extends AbstractBackupTest {
         init();
     }
 
-    @AfterMethod
+    @AfterEach
     public void teardown() throws Exception {
         destroy();
     }

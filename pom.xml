@@ -23,7 +23,6 @@
         <!-- test -->
         <version.embedded.cassandra>4.0.1</version.embedded.cassandra>
         <cassandra.driver.version>4.19.0</cassandra.driver.version>
-        <testng.version>7.7.0</testng.version>
         <junit.jupiter.version>5.13.4</junit.jupiter.version>
         <mockito.version>2.23.4</mockito.version>
 
@@ -379,13 +378,6 @@
             <groupId>org.apache.cassandra</groupId>
             <artifactId>java-driver-mapper-runtime</artifactId>
             <version>${cassandra.driver.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>${testng.version}</version>
             <scope>test</scope>
         </dependency>
 

@@ -3,7 +3,6 @@ package com.instaclustr.esop.backup.embedded.s3.aws.v2;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.testng.Assert;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -11,6 +10,8 @@ import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.model.CreateKeyRequest;
 import software.amazon.awssdk.services.kms.model.CreateKeyResponse;
 import software.amazon.awssdk.services.kms.model.CustomerMasterKeySpec;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Disabled
 @Tag("s3-test")
@@ -30,7 +31,7 @@ public class AmazonKMSTest
                                                       .description("instaclustr-stefan-test-key-4")
                                                       .customerMasterKeySpec(CustomerMasterKeySpec.SYMMETRIC_DEFAULT.SYMMETRIC_DEFAULT)
                                                       .build();
-        Assert.assertNotNull(client);
+        assertNotNull(client);
 
         CreateKeyResponse key = client.createKey(keyRequest);
         String keyId = key.keyMetadata().keyId();
