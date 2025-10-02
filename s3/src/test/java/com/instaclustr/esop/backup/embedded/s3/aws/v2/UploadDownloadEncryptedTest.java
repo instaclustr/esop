@@ -7,12 +7,14 @@ import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.s3.aws_v2.S3Backuper;
 import com.instaclustr.esop.s3.aws_v2.S3Restorer;
-import org.junit.Test;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AWS_KMS_KEY_ID_PROPERTY;
 import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.TEST_ESOP_AWS_KMS_WRAPPING_KEY;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+@Tag("s3-test")
 public class UploadDownloadEncryptedTest extends AbstractS3UploadDownloadTest {
     @Test
     public void testEncrypted() throws Exception {
@@ -21,7 +23,7 @@ public class UploadDownloadEncryptedTest extends AbstractS3UploadDownloadTest {
         BucketService s3BucketService = null;
 
         String kmsKeyId = System.getProperty(TEST_ESOP_AWS_KMS_WRAPPING_KEY);
-        assumeTrue("Cannot continue as " + TEST_ESOP_AWS_KMS_WRAPPING_KEY + " is not set!", kmsKeyId != null);
+        assumeTrue(kmsKeyId != null, "Cannot continue as " + TEST_ESOP_AWS_KMS_WRAPPING_KEY + " is not set!");
         System.setProperty(AWS_KMS_KEY_ID_PROPERTY, System.getProperty(TEST_ESOP_AWS_KMS_WRAPPING_KEY));
 
         try {

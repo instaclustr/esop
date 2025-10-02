@@ -20,8 +20,8 @@ import com.instaclustr.esop.s3.aws_v2.S3Backuper;
 import com.instaclustr.esop.s3.aws_v2.S3Module;
 import com.instaclustr.esop.s3.aws_v2.S3Restorer;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
@@ -30,8 +30,8 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AWS_KMS_KEY_ID_PROPERTY;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public abstract class AbstractS3UploadDownloadTest extends AbstractBackupTest {
     @Override
@@ -56,14 +56,14 @@ public abstract class AbstractS3UploadDownloadTest extends AbstractBackupTest {
         injector.injectMembers(this);
     }
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         tempDir = Files.createTempDirectory("tmp");
         Files.deleteIfExists(tempDir.resolve("some-file"));
         inject(new S3Module());
     }
 
-    @After
+    @AfterEach
     public void teardown() throws Exception {
         System.clearProperty(AWS_KMS_KEY_ID_PROPERTY);
         if (s3Clients != null)

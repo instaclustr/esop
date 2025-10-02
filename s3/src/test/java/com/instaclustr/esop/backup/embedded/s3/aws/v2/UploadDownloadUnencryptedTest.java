@@ -7,8 +7,10 @@ import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.s3.aws_v2.S3Backuper;
 import com.instaclustr.esop.s3.aws_v2.S3Restorer;
-import org.junit.Test;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
+@Tag("s3-test")
 public class UploadDownloadUnencryptedTest extends AbstractS3UploadDownloadTest {
 
     @Test

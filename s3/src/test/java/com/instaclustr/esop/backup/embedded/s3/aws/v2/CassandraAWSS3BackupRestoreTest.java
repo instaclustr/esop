@@ -7,18 +7,16 @@ import com.instaclustr.esop.s3.S3ConfigurationResolver;
 import com.instaclustr.esop.s3.aws_v2.S3Module;
 import com.instaclustr.esop.s3.v2.BaseS3BucketService;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.*;
 import org.testng.SkipException;
 
 import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.AWS_KMS_KEY_ID_PROPERTY;
 import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.TEST_ESOP_AWS_KMS_WRAPPING_KEY;
 
+@Tag("s3-test")
 public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest {
 
-    @Before
+    @BeforeEach
     public void setup() {
         inject(new S3Module());
         init();
@@ -29,13 +27,13 @@ public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest 
         return "s3://";
     }
 
-    @After
+    @AfterEach
     public void teardown() throws Exception {
         destroy();
     }
 
     @Override
-    @Ignore
+    @Disabled
     public void deleteBucket() throws BucketServiceException {
         new BaseS3BucketService(new S3ClientsFactory().build(new S3ConfigurationResolver())).delete(BUCKET_NAME);
     }
@@ -61,7 +59,7 @@ public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest 
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testInPlaceBackupRestoreEncrypted() throws Exception {
         runWithEncryption(new ThrowingRunnable() {
             @Override
@@ -73,7 +71,7 @@ public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest 
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testImportingBackupAndRestoreEncrypted() throws Exception {
         runWithEncryption(new ThrowingRunnable() {
             @Override
@@ -84,7 +82,7 @@ public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest 
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testHardlinkingBackupAndRestoreEncrypted() throws Exception {
         runWithEncryption(new ThrowingRunnable() {
             @Override

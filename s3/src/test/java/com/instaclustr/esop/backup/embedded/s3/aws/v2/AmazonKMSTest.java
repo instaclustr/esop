@@ -1,7 +1,8 @@
 package com.instaclustr.esop.backup.embedded.s3.aws.v2;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.testng.Assert;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
@@ -11,7 +12,8 @@ import software.amazon.awssdk.services.kms.model.CreateKeyRequest;
 import software.amazon.awssdk.services.kms.model.CreateKeyResponse;
 import software.amazon.awssdk.services.kms.model.CustomerMasterKeySpec;
 
-@Ignore
+@Disabled
+@Tag("s3-test")
 public class AmazonKMSTest
 {
     @Test

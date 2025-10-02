@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.slf4j.Logger;
