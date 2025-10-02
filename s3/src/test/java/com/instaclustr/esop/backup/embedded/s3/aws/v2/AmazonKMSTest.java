@@ -14,6 +14,7 @@ import software.amazon.awssdk.services.kms.model.CustomerMasterKeySpec;
 
 @Disabled
 @Tag("s3-test")
+@Tag("cloud-test")
 public class AmazonKMSTest
 {
     @Test

@@ -15,6 +15,7 @@ import static com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration.TE
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @Tag("s3-test")
+@Tag("cloud-test")
 public class UploadDownloadEncryptedTest extends AbstractS3UploadDownloadTest {
     @Test
     public void testEncrypted() throws Exception {

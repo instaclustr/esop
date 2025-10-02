@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag("s3-test")
+@Tag("cloud-test")
 public class UploadDownloadUnencryptedTest extends AbstractS3UploadDownloadTest {
 
     @Test

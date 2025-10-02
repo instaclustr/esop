@@ -16,6 +16,7 @@ import com.instaclustr.io.FileUtils;
 import org.junit.jupiter.api.Tag;
 
 @Tag("s3-test")
+@Tag("cloud-test")
 public class S3ListingAndBackupRemovalTest extends BaseListingRemovalTest {
 
     @Override
