@@ -15,29 +15,26 @@ import com.instaclustr.esop.gcp.GCPRestorer;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.*;
 
 import static com.instaclustr.io.FileUtils.deleteDirectory;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Test(groups = {
-    "googleTest",
-    "cloudTest",
-})
+@Tag("gcp-test")
+@Tag("cloud-test")
 public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupRestoreTest {
 
     @Inject
     public GoogleStorageFactory googleStorageFactory;
 
-    @BeforeMethod
+    @BeforeEach
     public void setup() {
         inject();
         init();
     }
 
-    @AfterMethod
+    @AfterEach
     public void teardown() throws Exception {
         destroy();
     }
@@ -94,7 +91,7 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
             // 2
 
             final String content = gcpRestorer.downloadNodeFile(Paths.get("manifests"), s -> s.contains("manifests/snapshot-name"));
-            Assert.assertEquals("hello", content);
+            assertEquals("hello", content);
 
             // 3
 
@@ -105,14 +102,14 @@ public class GoogleStorageBackupRestoreTest extends BaseGoogleStorageBackupResto
 
             gcpRestorer.downloadFile(tmp.resolve("some-file"), gcpRestorer.objectKeyToRemoteReference(Paths.get("snapshot/in/dir/name-" + AbstractBackupTest.BUCKET_NAME)));
 
-            Assert.assertTrue(Files.exists(tmp.resolve("some-file")));
-            Assert.assertEquals("hello world", new String(Files.readAllBytes(tmp.resolve("some-file"))));
+            assertTrue(Files.exists(tmp.resolve("some-file")));
+            assertEquals("hello world", new String(Files.readAllBytes(tmp.resolve("some-file"))));
 
             // backup
 
             gcpBackuper.uploadText("hello world", gcpBackuper.objectKeyToRemoteReference(Paths.get("topology/some-file-in-here.txt")));
             String topology = gcpRestorer.downloadTopology(Paths.get("topology/some-file-in"), fileName -> fileName.contains("topology/some-file-in"));
-            Assert.assertEquals("hello world", topology);
+            assertEquals("hello world", topology);
         } finally {
             gcpBucketService.delete(AbstractBackupTest.BUCKET_NAME);
             deleteDirectory(Paths.get(target("commitlog_download_dir")));
