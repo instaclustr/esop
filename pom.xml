@@ -170,7 +170,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>${maven.surefire.plugin.version}</version>
                         <configuration>
-                            <excludedGroups>cloudTest,azureTest,googleTest,s3Test</excludedGroups>
+                            <excludedGroups>cloud-test,azure-test,google-test,s3-test</excludedGroups>
                         </configuration>
                     </plugin>
                 </plugins>
