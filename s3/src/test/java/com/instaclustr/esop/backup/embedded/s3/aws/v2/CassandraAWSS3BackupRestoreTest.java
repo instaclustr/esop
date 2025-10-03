@@ -60,7 +60,6 @@ public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest 
     }
 
     @Test
-    @Disabled
     public void testInPlaceBackupRestoreEncrypted() throws Exception {
         runWithEncryption(new ThrowingRunnable() {
             @Override
@@ -72,7 +71,6 @@ public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest 
     }
 
     @Test
-    @Disabled
     public void testImportingBackupAndRestoreEncrypted() throws Exception {
         runWithEncryption(new ThrowingRunnable() {
             @Override
@@ -83,7 +81,6 @@ public class CassandraAWSS3BackupRestoreTest extends BaseAWSS3BackupRestoreTest 
     }
 
     @Test
-    @Disabled
     public void testHardlinkingBackupAndRestoreEncrypted() throws Exception {
         runWithEncryption(new ThrowingRunnable() {
             @Override
