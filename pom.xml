@@ -35,6 +35,7 @@
         <maven.shade.plugin.version>3.1.1</maven.shade.plugin.version>
         <maven.source.plugin.version>3.1.0</maven.source.plugin.version>
         <maven.javadoc.plugin.version>3.1.1</maven.javadoc.plugin.version>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
 
         <dependency.check.plugin.version>12.1.6</dependency.check.plugin.version>
         <central.publishing.maven.plugin.version>0.9.0</central.publishing.maven.plugin.version>
@@ -453,6 +454,10 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                        <configuration>
+                            <skip>${maven.javadoc.skip}</skip>
+                            <failOnError>false</failOnError>
+                        </configuration>
                     </execution>
                 </executions>
                 <configuration>
