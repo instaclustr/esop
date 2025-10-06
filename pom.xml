@@ -86,17 +86,6 @@
         <url>git://github.com/instaclustr/instaclustr-esop.git</url>
     </scm>
 
-    <distributionManagement>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-        <snapshotRepository>
-            <id>nexus-snapshots</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
-
     <profiles>
         <profile>
             <id>owasp</id>
@@ -201,9 +190,9 @@
             </activation>
             <repositories>
                 <repository>
-                    <id>apache.snapshots</id>
-                    <name>Apache Development Snapshot Repository</name>
-                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+                    <id>snapshots</id>
+                    <name>Snapshot Repository</name>
+                    <url>https://central.sonatype.com/repository/maven-snapshots/</url>
                     <releases>
                         <enabled>false</enabled>
                     </releases>
