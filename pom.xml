@@ -21,7 +21,7 @@
 
     <properties>
         <!-- test -->
-        <version.embedded.cassandra>4.0.1</version.embedded.cassandra>
+        <version.embedded.cassandra>4.1.1</version.embedded.cassandra>
         <cassandra.driver.version>4.19.0</cassandra.driver.version>
         <junit.jupiter.version>5.13.4</junit.jupiter.version>
         <mockito.version>2.23.4</mockito.version>
