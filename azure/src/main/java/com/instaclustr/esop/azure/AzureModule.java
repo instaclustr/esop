@@ -37,6 +37,9 @@ public class AzureModule extends AbstractModule implements SPIModule
     }
 
     public static class BlobServiceClientFactory {
+        public static final String BOTH_CREDENTIALS_SET_ERROR_MESSAGE = "Both AZURE_STORAGE_CONNECTION_STRING and AZURE_STORAGE_ACCOUNT/AZURE_STORAGE_KEY are set. Please set only one method of authentication.";
+        public static final String NO_AZURE_CREDENTIALS_ERROR_MESSAGE = "Azure credentials are not set. Please set either AZURE_STORAGE_CONNECTION_STRING or both AZURE_STORAGE_ACCOUNT and AZURE_STORAGE_KEY environment variables.";
+
         public BlobServiceClient build(final AbstractOperationRequest operationRequest) throws AzureModuleException {
             BlobServiceClientBuilder builder = new BlobServiceClientBuilder();
 
@@ -44,11 +47,11 @@ public class AzureModule extends AbstractModule implements SPIModule
             Optional<StorageSharedKeyCredential> sharedKeyCredentials = resolveStorageSharedKeyCredentialsFromEnv();
 
             if (connectionString.isPresent() && sharedKeyCredentials.isPresent()) {
-                throw new AzureModuleException("Both AZURE_STORAGE_CONNECTION_STRING and AZURE_STORAGE_ACCOUNT/AZURE_STORAGE_KEY are set. Please set only one method of authentication.");
+                throw new AzureModuleException(BOTH_CREDENTIALS_SET_ERROR_MESSAGE);
             }
 
             if (!connectionString.isPresent() && !sharedKeyCredentials.isPresent()) {
-                throw new AzureModuleException("Azure credentials are not set. Please set either AZURE_STORAGE_CONNECTION_STRING or both AZURE_STORAGE_ACCOUNT and AZURE_STORAGE_KEY environment variables.");
+                throw new AzureModuleException(NO_AZURE_CREDENTIALS_ERROR_MESSAGE);
             }
 
             if (connectionString.isPresent()) {
