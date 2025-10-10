@@ -9,6 +9,8 @@ import com.google.inject.Singleton;
 import com.instaclustr.esop.SPIModule;
 import com.instaclustr.esop.impl.AbstractOperationRequest;
 
+import java.util.Optional;
+
 import static com.instaclustr.esop.guice.BackupRestoreBindings.installBindings;
 
 public class AzureModule extends AbstractModule implements SPIModule
@@ -36,29 +38,57 @@ public class AzureModule extends AbstractModule implements SPIModule
 
     public static class BlobServiceClientFactory {
         public BlobServiceClient build(final AbstractOperationRequest operationRequest) throws AzureModuleException {
-            StorageSharedKeyCredential credential = provideSharedKeyCredential();
-            return new BlobServiceClientBuilder()
-                    .endpoint(provideAzureBlobStorageEndpoint(credential.getAccountName(), operationRequest.insecure))
-                    .credential(credential)
-                    .buildClient();
+            BlobServiceClientBuilder builder = new BlobServiceClientBuilder();
+
+            Optional<String> connectionString = resolveConnectionStringFromEnv();
+            Optional<StorageSharedKeyCredential> sharedKeyCredentials = resolveStorageSharedKeyCredentialsFromEnv();
+
+            if (connectionString.isPresent() && sharedKeyCredentials.isPresent()) {
+                throw new AzureModuleException("Both AZURE_STORAGE_CONNECTION_STRING and AZURE_STORAGE_ACCOUNT/AZURE_STORAGE_KEY are set. Please set only one method of authentication.");
+            }
+
+            if (!connectionString.isPresent() && !sharedKeyCredentials.isPresent()) {
+                throw new AzureModuleException("Azure credentials are not set. Please set either AZURE_STORAGE_CONNECTION_STRING or both AZURE_STORAGE_ACCOUNT and AZURE_STORAGE_KEY environment variables.");
+            }
+
+            if (connectionString.isPresent()) {
+                builder.connectionString(connectionString.get());
+            }
+
+            sharedKeyCredentials.ifPresent(storageSharedKeyCredential -> builder
+                    .credential(storageSharedKeyCredential)
+                    .endpoint(provideAzureBlobStorageEndpoint(storageSharedKeyCredential.getAccountName(), operationRequest.insecure)));
+
+            return builder.buildClient();
         }
 
-        private StorageSharedKeyCredential provideSharedKeyCredential() throws AzureModuleException {
-            return resolveCredentialsFromEnvProperties();
+        /**
+         * Resolve connection string from environment variable AZURE_STORAGE_CONNECTION_STRING.
+         * @return Optional containing the connection string if set and not empty, otherwise an empty Optional.
+         */
+        private Optional<String> resolveConnectionStringFromEnv() {
+            String connectionString = System.getenv("AZURE_STORAGE_CONNECTION_STRING");
+            if (connectionString != null && !connectionString.isEmpty()) {
+                return Optional.of(connectionString);
+            }
+            return Optional.empty();
         }
 
-        private StorageSharedKeyCredential resolveCredentialsFromEnvProperties() {
-            return new StorageSharedKeyCredential(System.getenv("AZURE_STORAGE_ACCOUNT"), System.getenv("AZURE_STORAGE_KEY"));
+        /**
+         * Resolve shared key credentials from environment variables AZURE_STORAGE_ACCOUNT and AZURE_STORAGE_KEY.
+         * @return Optional containing StorageSharedKeyCredential if both variables are set and not empty, otherwise an empty Optional.
+         */
+        private Optional<StorageSharedKeyCredential> resolveStorageSharedKeyCredentialsFromEnv() {
+            String accountName = System.getenv("AZURE_STORAGE_ACCOUNT");
+            String accountKey = System.getenv("AZURE_STORAGE_KEY");
+            if (accountName != null && !accountName.isEmpty() && accountKey != null && !accountKey.isEmpty()) {
+                return Optional.of(new StorageSharedKeyCredential(accountName, accountKey));
+            }
+            return Optional.empty();
         }
 
         private String provideAzureBlobStorageEndpoint(final String accountName, final boolean useHttp) {
-            String endpoint = System.getenv("AZURE_STORAGE_ENDPOINT");
-            if (endpoint != null && !endpoint.isEmpty()) {
-                return endpoint;
-            }
-
-            String schema = useHttp ? "http" : "https";
-            return String.format("%s://%s.blob.core.windows.net", schema, accountName);
+            return String.format("%s://%s.blob.core.windows.net", useHttp ? "http" : "https", accountName);
         }
     }
 
