@@ -4,28 +4,34 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
-/** Utility class to temporarily set environment variables for the duration of a try-with-resources block.
+/**
+ * Utility class to temporarily set environment variables for the duration of a try-with-resources block.
+ * Inspired by <a href="https://github.com/apache/cassandra/blob/accdaaebdd42634f0a4dea50482dfcb96b9d4501/test/distributed/org/apache/cassandra/distributed/shared/WithEnvironment.java">WithEnvironment</a> from Apache Cassandra project.
  * Important: not a thread-safe.
  */
-public class WithEnvironment implements AutoCloseable{
+public class WithEnvironment implements AutoCloseable {
     // Holds properties that are added to the System.Environment for the lifetime of this object.
     private final Map<String, String> properties = new HashMap<>();
 
-    /** Constructor that sets environment variables in key-value pairs.
+    /**
+     * Constructor that sets environment variables in key-value pairs.
      * If keyValues is null, no environment variables are set.
+     *
      * @param keyValues Key-value pairs of environment variables to set.
      * @throws IllegalArgumentException if keyValues is not in pairs.
      */
-    public WithEnvironment(String ...keyValues) {
+    public WithEnvironment(String... keyValues) {
         set(keyValues);
     }
 
-    /** Sets environment variables in key-value pairs.
+    /**
+     * Sets environment variables in key-value pairs.
      * If keyValues is null, no environment variables are set.
+     *
      * @param keyValues Key-value pairs of environment variables to set.
      * @throws IllegalArgumentException if keyValues is not in pairs.
      */
-    public void set(String ...keyValues) throws IllegalArgumentException {
+    public void set(String... keyValues) throws IllegalArgumentException {
         if (keyValues == null || keyValues.length == 0) {
             return;
         }
@@ -44,10 +50,12 @@ public class WithEnvironment implements AutoCloseable{
         }
     }
 
-    /** Remove environment variables by keys. Only keys that were set by this object will be removed.
+    /**
+     * Remove environment variables by keys. Only keys that were set by this object will be removed.
+     *
      * @param keys Keys of environment variables to remove.
      */
-    public void remove(String ...keys) {
+    public void remove(String... keys) {
         if (keys == null || keys.length == 0) {
             return;
         }

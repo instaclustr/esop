@@ -183,7 +183,8 @@ It is possible to connect to S3 via proxy; please consult "--use-proxy" flag and
 
 #### Azure
 
-Azure module expects `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` environment variables to be set.
+Azure module expects `AZURE_STORAGE_CONNECTION_STRING` or `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` environment variable to be set.
+Only one of the options are necessary. If both are set, it will fail.
 
 #### GCP
 
