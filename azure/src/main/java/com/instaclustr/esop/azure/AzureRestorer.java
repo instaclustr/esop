@@ -1,24 +1,30 @@
 package com.instaclustr.esop.azure;
 
+import java.io.ByteArrayOutputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
 
+import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.models.BlobItem;
+import com.azure.storage.blob.models.BlobStorageException;
+import com.azure.storage.blob.models.ListBlobsOptions;
+import com.azure.storage.blob.specialized.BlockBlobClient;
+import com.instaclustr.esop.azure.AzureModule.BlobServiceClientFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
-import com.instaclustr.esop.azure.AzureModule.CloudStorageAccountFactory;
 import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.RemoteObjectReference;
@@ -29,13 +35,6 @@ import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
 import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.io.FileUtils;
-import com.microsoft.azure.storage.CloudStorageAccount;
-import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.blob.BlobListingDetails;
-import com.microsoft.azure.storage.blob.CloudBlobClient;
-import com.microsoft.azure.storage.blob.CloudBlobContainer;
-import com.microsoft.azure.storage.blob.CloudBlockBlob;
-import com.microsoft.azure.storage.blob.ListBlobItem;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
@@ -44,81 +43,78 @@ public class AzureRestorer extends Restorer {
 
     private static final Logger logger = LoggerFactory.getLogger(AzureRestorer.class);
 
-    private final CloudBlobContainer blobContainer;
-    private final CloudBlobClient cloudBlobClient;
-    private final CloudStorageAccount cloudStorageAccount;
+    private final BlobContainerClient blobContainerClient;
+    private final BlobServiceClient blobServiceClient;
 
     @AssistedInject
-    public AzureRestorer(final CloudStorageAccountFactory cloudStorageAccountFactory,
+    public AzureRestorer(final BlobServiceClientFactory blobServiceClientFactory,
                          @Assisted final RestoreOperationRequest request) throws Exception {
         super(request);
 
-        cloudStorageAccount = cloudStorageAccountFactory.build(request);
-        cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+        blobServiceClient = blobServiceClientFactory.build(request);
 
-        this.blobContainer = cloudBlobClient.getContainerReference(request.storageLocation.bucket);
+        this.blobContainerClient = blobServiceClient.getBlobContainerClient(request.storageLocation.bucket);
     }
 
     @AssistedInject
-    public AzureRestorer(final CloudStorageAccountFactory cloudStorageAccountFactory,
+    public AzureRestorer(final BlobServiceClientFactory blobServiceClientFactory,
                          @Assisted final RestoreCommitLogsOperationRequest request) throws Exception {
         super(request);
 
-        cloudStorageAccount = cloudStorageAccountFactory.build(request);
-        cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+        blobServiceClient = blobServiceClientFactory.build(request);
 
-        this.blobContainer = cloudBlobClient.getContainerReference(request.storageLocation.bucket);
+        this.blobContainerClient = blobServiceClient.getBlobContainerClient(request.storageLocation.bucket);
     }
 
     @AssistedInject
-    public AzureRestorer(final CloudStorageAccountFactory cloudStorageAccountFactory,
+    public AzureRestorer(final BlobServiceClientFactory blobServiceClientFactory,
                          @Assisted final ListOperationRequest request,
                          final ObjectMapper objectMapper) throws Exception {
         super(request);
 
-        cloudStorageAccount = cloudStorageAccountFactory.build(request);
-        cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+        blobServiceClient = blobServiceClientFactory.build(request);
 
-        this.blobContainer = cloudBlobClient.getContainerReference(request.storageLocation.bucket);
+        this.blobContainerClient = blobServiceClient.getBlobContainerClient(request.storageLocation.bucket);
     }
 
     @AssistedInject
-    public AzureRestorer(final CloudStorageAccountFactory cloudStorageAccountFactory,
+    public AzureRestorer(final BlobServiceClientFactory blobServiceClientFactory,
                          @Assisted final RemoveBackupRequest request,
                          final ObjectMapper objectMapper) throws Exception {
         super(request);
 
-        cloudStorageAccount = cloudStorageAccountFactory.build(request);
-        cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+        blobServiceClient = blobServiceClientFactory.build(request);
 
-        this.blobContainer = cloudBlobClient.getContainerReference(request.storageLocation.bucket);
+        this.blobContainerClient = blobServiceClient.getBlobContainerClient(request.storageLocation.bucket);
     }
 
     @Override
     public RemoteObjectReference objectKeyToRemoteReference(final Path objectKey) throws Exception {
         String canonicalPath = objectKey.toFile().toString();
 
-        if (canonicalPath.startsWith("/" + this.blobContainer.getName() + "/")) {
-            canonicalPath = canonicalPath.replaceFirst("/" + this.blobContainer.getName() + "/", "");
+        if (canonicalPath.startsWith("/" + this.blobContainerClient.getBlobContainerName() + "/")) {
+            canonicalPath = canonicalPath.replaceFirst("/" + this.blobContainerClient.getBlobContainerName() + "/", "");
         }
 
-        return new AzureRemoteObjectReference(objectKey, canonicalPath, this.blobContainer.getBlockBlobReference(canonicalPath));
+        return new AzureRemoteObjectReference(objectKey, canonicalPath, this.blobContainerClient.getBlobClient(canonicalPath).getBlockBlobClient());
     }
 
     @Override
-    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey) throws StorageException, URISyntaxException {
+    public RemoteObjectReference objectKeyToNodeAwareRemoteReference(final Path objectKey) throws BlobStorageException, URISyntaxException {
         final String canonicalPath = resolveNodeAwareRemotePath(objectKey);
-        return new AzureRemoteObjectReference(objectKey, canonicalPath, this.blobContainer.getBlockBlobReference(canonicalPath));
+        return new AzureRemoteObjectReference(objectKey, canonicalPath, this.blobContainerClient.getBlobClient(canonicalPath).getBlockBlobClient());
     }
 
     @Override
     public String downloadFileToString(final RemoteObjectReference objectReference) throws Exception {
-        return ((AzureRemoteObjectReference) objectReference).blob.downloadText();
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        ((AzureRemoteObjectReference) objectReference).blobClient.downloadStream(output);
+        return output.toString();
     }
 
     @Override
     public void downloadFile(final Path localPath, ManifestEntry manifestEntry, final RemoteObjectReference objectReference) throws Exception {
-        final CloudBlockBlob blob = ((AzureRemoteObjectReference) objectReference).blob;
+        final BlockBlobClient blob = ((AzureRemoteObjectReference) objectReference).blobClient;
         Files.createDirectories(localPath.getParent());
         blob.downloadToFile(localPath.toAbsolutePath().toString());
     }
@@ -143,12 +139,12 @@ public class AzureRestorer extends Restorer {
         return downloadFileToString(objectKeyToNodeAwareRemoteReference(remotePrefix.resolve(fileName)));
     }
 
-    private String getManifest(final Iterable<ListBlobItem> blobItemsIterable, final Predicate<String> keyFilter) {
+    private String getManifest(final Iterable<BlobItem> blobItemsIterable, final Predicate<String> keyFilter) {
 
-        final List<ListBlobItem> manifests = new ArrayList<>();
+        final List<BlobItem> manifests = new ArrayList<>();
 
-        for (final ListBlobItem listBlobItem : blobItemsIterable) {
-            if (keyFilter.test(listBlobItem.getUri().getPath())) {
+        for (final BlobItem listBlobItem : blobItemsIterable) {
+            if (keyFilter.test(getBlobPathWithContainerName(listBlobItem))) {
                 manifests.add(listBlobItem);
             }
         }
@@ -157,14 +153,14 @@ public class AzureRestorer extends Restorer {
             throw new IllegalStateException("There is no manifest requested found.");
         }
 
-        return Manifest.parseLatestManifest(manifests.stream().map(m -> m.getUri().getPath()).collect(toList()));
+        return Manifest.parseLatestManifest(manifests.stream().map(this::getBlobPathWithContainerName).collect(toList()));
     }
 
-    private String getBlobItemPath(final Iterable<ListBlobItem> blobItemsIterable, final Predicate<String> keyFilter) {
-        final List<ListBlobItem> blobItems = new ArrayList<>();
+    private String getBlobItemPath(final Iterable<BlobItem> blobItemsIterable, final Predicate<String> keyFilter) {
+        final List<BlobItem> blobItems = new ArrayList<>();
 
-        for (final ListBlobItem listBlobItem : blobItemsIterable) {
-            if (keyFilter.test(listBlobItem.getUri().getPath())) {
+        for (final BlobItem listBlobItem : blobItemsIterable) {
+            if (keyFilter.test(getBlobPathWithContainerName(listBlobItem))) {
                 blobItems.add(listBlobItem);
             }
         }
@@ -173,26 +169,32 @@ public class AzureRestorer extends Restorer {
             throw new IllegalStateException(format("There is not one key which satisfies key filter: %s", blobItems.toString()));
         }
 
-        return blobItems.get(0).getUri().getPath();
+        return getBlobPathWithContainerName(blobItems.get(0));
     }
 
-    private List<String> getBlobPaths(final Iterable<ListBlobItem> blobItemsIterable, final Predicate<String> keyFilter) {
+    private List<String> getBlobPaths(final Iterable<BlobItem> blobItemsIterable, final Predicate<String> keyFilter) {
         return StreamSupport.stream(blobItemsIterable.spliterator(), false)
-                            .map(item -> item.getUri().getPath())
+                            .map(this::getBlobPathWithContainerName)
                             .filter(keyFilter)
                             .collect(toList());
+    }
+
+    // Returns blob path with container name prefixed, e.g. /container-name/path/to/blob
+    // New Azure SDK does not provide such method, so we need to build it ourselves
+    private String getBlobPathWithContainerName(final BlobItem blobItem) {
+        return "/" + blobContainerClient.getBlobContainerName() + "/" + blobItem.getName();
     }
 
     @Override
     public void consumeFiles(final RemoteObjectReference prefix, final Consumer<RemoteObjectReference> consumer) throws Exception {
         final AzureRemoteObjectReference azureRemoteObjectReference = (AzureRemoteObjectReference) prefix;
-        final Iterable<ListBlobItem> blobItemsIterable = nodeList(azureRemoteObjectReference.getObjectKey());
+        final Iterable<BlobItem> blobItemsIterable = nodeList(azureRemoteObjectReference.getObjectKey());
 
-        for (final ListBlobItem listBlobItem : blobItemsIterable) {
+        for (final BlobItem listBlobItem : blobItemsIterable) {
             try {
                 consumer.accept(objectKeyToNodeAwareRemoteReference(removeNodePrefix(listBlobItem)));
-            } catch (StorageException | URISyntaxException ex) {
-                logger.error("Error occurred while trying to consume {}", listBlobItem.getUri().toString(), ex);
+            } catch (BlobStorageException | URISyntaxException ex) {
+                logger.error("Error occurred while trying to consume {}", getBlobPathWithContainerName(listBlobItem), ex);
                 throw ex;
             }
         }
@@ -232,8 +234,8 @@ public class AzureRestorer extends Restorer {
         }
         logger.info("Non dry: " + Paths.get(request.storageLocation.bucket, remoteObjectReference.canonicalPath));
         try {
-            ((AzureRemoteObjectReference) remoteObjectReference).blob.delete();
-        } catch (StorageException ex) {
+            ((AzureRemoteObjectReference) remoteObjectReference).blobClient.delete();
+        } catch (BlobStorageException ex) {
             if (ex.getMessage().contains("The specified blob does not exist")) {
                 logger.warn("The specified blob does not exist: {}",
                             Paths.get(request.storageLocation.bucket, remoteObjectReference.canonicalPath));
@@ -287,7 +289,7 @@ public class AzureRestorer extends Restorer {
         return localFileRestorer.listDcs();
     }
 
-    private Path removeNodePrefix(final ListBlobItem listBlobItem) {
+    private Path removeNodePrefix(final BlobItem listBlobItem) {
         final String pattern = format("^/%s/%s/%s/%s/",
                                       request.storageLocation.bucket,
                                       request.storageLocation.clusterId,
@@ -296,14 +298,14 @@ public class AzureRestorer extends Restorer {
 
         final Pattern containerPattern = Pattern.compile(pattern);
 
-        return Paths.get(containerPattern.matcher(listBlobItem.getUri().getPath()).replaceFirst(""));
+        return Paths.get(containerPattern.matcher(getBlobPathWithContainerName(listBlobItem)).replaceFirst(""));
     }
 
-    private Iterable<ListBlobItem> globalList(final Path prefix) {
+    private Iterable<BlobItem> globalList(final Path prefix) {
         return list(prefix.toString());
     }
 
-    private Iterable<ListBlobItem> nodeList(final Path prefix) {
+    private Iterable<BlobItem> nodeList(final Path prefix) {
         final String blobPrefix = Paths.get(request.storageLocation.clusterId)
             .resolve(request.storageLocation.datacenterId)
             .resolve(request.storageLocation.nodeId)
@@ -312,8 +314,11 @@ public class AzureRestorer extends Restorer {
         return list(blobPrefix);
     }
 
-    private Iterable<ListBlobItem> list(final String prefix) {
-        return blobContainer.listBlobs(prefix, true, EnumSet.noneOf(BlobListingDetails.class), null, null);
+    private Iterable<BlobItem> list(final String prefix) {
+        ListBlobsOptions listBlobsOptions = new ListBlobsOptions();
+        listBlobsOptions.setPrefix(prefix);
+
+        return blobContainerClient.listBlobs(listBlobsOptions, null);
     }
 
     @Override

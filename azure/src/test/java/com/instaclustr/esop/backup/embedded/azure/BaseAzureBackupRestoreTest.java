@@ -8,7 +8,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.instaclustr.esop.azure.AzureBucketService;
 import com.instaclustr.esop.azure.AzureModule;
-import com.instaclustr.esop.azure.AzureModule.CloudStorageAccountFactory;
+import com.instaclustr.esop.azure.AzureModule.BlobServiceClientFactory;
 import com.instaclustr.esop.backup.embedded.AbstractBackupTest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 
@@ -16,7 +16,7 @@ public abstract class BaseAzureBackupRestoreTest extends AbstractBackupTest {
 
     protected abstract BackupOperationRequest getBackupOperationRequest();
 
-    public abstract CloudStorageAccountFactory getStorageAccountFactory();
+    public abstract BlobServiceClientFactory getBlobServiceClientFactory();
 
     public void inject() {
         final List<Module> modules = new ArrayList<Module>() {{
@@ -38,7 +38,7 @@ public abstract class BaseAzureBackupRestoreTest extends AbstractBackupTest {
         try {
             inPlaceBackupRestoreTest(programArguments);
         } finally {
-            new AzureBucketService(getStorageAccountFactory(), getBackupOperationRequest()).delete(AbstractBackupTest.BUCKET_NAME);
+            new AzureBucketService(getBlobServiceClientFactory(), getBackupOperationRequest()).delete(AbstractBackupTest.BUCKET_NAME);
         }
     }
 
@@ -46,7 +46,7 @@ public abstract class BaseAzureBackupRestoreTest extends AbstractBackupTest {
         try {
             liveBackupRestoreTest(programArguments, 1);
         } finally {
-            new AzureBucketService(getStorageAccountFactory(), getBackupOperationRequest()).delete(AbstractBackupTest.BUCKET_NAME);
+            new AzureBucketService(getBlobServiceClientFactory(), getBackupOperationRequest()).delete(AbstractBackupTest.BUCKET_NAME);
         }
     }
 }

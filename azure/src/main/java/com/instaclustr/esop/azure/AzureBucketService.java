@@ -3,25 +3,21 @@ package com.instaclustr.esop.azure;
 import java.net.URISyntaxException;
 import java.util.stream.StreamSupport;
 
+import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.models.BlobContainerItem;
+import com.azure.storage.blob.models.BlobStorageException;
+import com.instaclustr.esop.azure.AzureModule.BlobServiceClientFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
-import com.instaclustr.esop.azure.AzureModule.CloudStorageAccountFactory;
 import com.instaclustr.esop.impl.BucketService;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
-import com.microsoft.azure.storage.CloudStorageAccount;
-import com.microsoft.azure.storage.OperationContext;
-import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.blob.BlobContainerPublicAccessType;
-import com.microsoft.azure.storage.blob.BlobRequestOptions;
-import com.microsoft.azure.storage.blob.CloudBlobClient;
-import com.microsoft.azure.storage.blob.CloudBlobContainer;
 
 import static java.lang.String.format;
 
@@ -29,50 +25,43 @@ public class AzureBucketService extends BucketService {
 
     private static final Logger logger = LoggerFactory.getLogger(AzureBucketService.class);
 
-    private final CloudStorageAccount cloudStorageAccount;
-
-    private final CloudBlobClient cloudBlobClient;
+    private final BlobServiceClient blobServiceClient;
 
     @AssistedInject
-    public AzureBucketService(final CloudStorageAccountFactory accountFactory,
+    public AzureBucketService(final BlobServiceClientFactory blobServiceClientFactory,
                               @Assisted final BackupOperationRequest request) throws URISyntaxException {
-        this.cloudStorageAccount = accountFactory.build(request);
-        this.cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+        this.blobServiceClient = blobServiceClientFactory.build(request);
     }
 
     @AssistedInject
-    public AzureBucketService(final CloudStorageAccountFactory accountFactory,
+    public AzureBucketService(final BlobServiceClientFactory blobServiceClientFactory,
                               @Assisted final BackupCommitLogsOperationRequest request) throws URISyntaxException {
-        this.cloudStorageAccount = accountFactory.build(request);
-        this.cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+        this.blobServiceClient = blobServiceClientFactory.build(request);
     }
 
     @AssistedInject
-    public AzureBucketService(final CloudStorageAccountFactory accountFactory,
+    public AzureBucketService(final BlobServiceClientFactory blobServiceClientFactory,
                               @Assisted final RestoreOperationRequest request) throws URISyntaxException {
-        this.cloudStorageAccount = accountFactory.build(request);
-        this.cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+        this.blobServiceClient = blobServiceClientFactory.build(request);
     }
 
     @AssistedInject
-    public AzureBucketService(final CloudStorageAccountFactory accountFactory,
+    public AzureBucketService(final BlobServiceClientFactory blobServiceClientFactory,
                               @Assisted final RestoreCommitLogsOperationRequest request) throws URISyntaxException {
-        this.cloudStorageAccount = accountFactory.build(request);
-        this.cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+        this.blobServiceClient = blobServiceClientFactory.build(request);
     }
 
     @AssistedInject
-    public AzureBucketService(final CloudStorageAccountFactory accountFactory,
+    public AzureBucketService(final BlobServiceClientFactory blobServiceClientFactory,
                               @Assisted final ListOperationRequest request) throws URISyntaxException {
-        this.cloudStorageAccount = accountFactory.build(request);
-        this.cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+        this.blobServiceClient = blobServiceClientFactory.build(request);
     }
 
     @Override
     public boolean doesExist(final String bucketName) throws BucketServiceException {
         try {
-            return cloudBlobClient.getContainerReference(bucketName).exists();
-        } catch (URISyntaxException | StorageException ex) {
+            return blobServiceClient.getBlobContainerClient(bucketName).exists();
+        } catch (BlobStorageException ex) {
             throw new BucketServiceException(format("Unable to determine if the bucket %s exists.", bucketName), ex);
         }
     }
@@ -82,17 +71,12 @@ public class AzureBucketService extends BucketService {
 
         while (true) {
             try {
-                cloudBlobClient.getContainerReference(bucketName)
-                    .createIfNotExists(BlobContainerPublicAccessType.OFF,
-                                       new BlobRequestOptions(),
-                                       new OperationContext());
-
+                // Default access type is Private
+                blobServiceClient.getBlobContainerClient(bucketName).createIfNotExists();
                 break;
-            } catch (URISyntaxException ex) {
-                throw new BucketServiceException(format("Unable to create a bucket %s", bucketName), ex);
-            } catch (StorageException ex) {
-                if (ex.getHttpStatusCode() == 409
-                    && ex.getExtendedErrorInformation().getErrorMessage().contains("The specified container is being deleted. Try operation later.")) {
+            } catch (BlobStorageException ex) {
+                if (ex.getResponse().getStatusCode() == 409
+                    && ex.getServiceMessage().contains("The specified container is being deleted. Try operation later.")) {
                     try {
                         logger.info("Bucket to create {} is being deleted, we are going to wait 5s and check again.", bucketName);
                         Thread.sleep(5000);
@@ -110,12 +94,12 @@ public class AzureBucketService extends BucketService {
     public void delete(final String bucketName) throws BucketServiceException {
         try {
             logger.info("Deleting bucket {}", bucketName);
-            cloudBlobClient.getContainerReference(bucketName).deleteIfExists();
+            blobServiceClient.getBlobContainerClient(bucketName).deleteIfExists();
 
             // waiting until it is really deleted
             while (true) {
 
-                final Iterable<CloudBlobContainer> iterable = cloudBlobClient.listContainers();
+                final Iterable<BlobContainerItem> iterable = blobServiceClient.listBlobContainers();
 
                 if (StreamSupport.stream(iterable.spliterator(), false).noneMatch(container -> container.getName().equals(bucketName))) {
                     break;

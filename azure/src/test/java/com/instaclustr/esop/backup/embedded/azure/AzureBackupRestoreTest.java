@@ -1,21 +1,23 @@
 package com.instaclustr.esop.backup.embedded.azure;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
 
+import com.azure.core.util.BinaryData;
+import com.azure.storage.blob.BlobClient;
+import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.BlobServiceClient;
 import com.google.inject.Inject;
 import com.instaclustr.esop.azure.AzureBackuper;
 import com.instaclustr.esop.azure.AzureBucketService;
-import com.instaclustr.esop.azure.AzureModule.CloudStorageAccountFactory;
+import com.instaclustr.esop.azure.AzureModule.BlobServiceClientFactory;
 import com.instaclustr.esop.azure.AzureRestorer;
-import com.instaclustr.esop.backup.embedded.AbstractBackupTest;
 import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.restore.RestoreOperationRequest;
-import com.microsoft.azure.storage.blob.CloudBlobClient;
-import com.microsoft.azure.storage.blob.CloudBlobContainer;
-import com.microsoft.azure.storage.blob.CloudBlockBlob;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -30,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
 
     @Inject
-    public CloudStorageAccountFactory cloudStorageAccountFactory;
+    public BlobServiceClientFactory blobServiceClientFactory;
 
     @BeforeEach
     public void setup() {
@@ -44,8 +46,8 @@ public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
     }
 
     @Override
-    public CloudStorageAccountFactory getStorageAccountFactory() {
-        return cloudStorageAccountFactory;
+    public BlobServiceClientFactory getBlobServiceClientFactory() {
+        return blobServiceClientFactory;
     }
 
     protected BackupOperationRequest getBackupOperationRequest() {
@@ -69,32 +71,33 @@ public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
 
     @Test
     public void testDownload() throws Exception {
-        AzureBucketService azureBucketService = new AzureBucketService(cloudStorageAccountFactory, getBackupOperationRequest());
+        AzureBucketService azureBucketService = new AzureBucketService(blobServiceClientFactory, getBackupOperationRequest());
 
         Path tmp = Files.createTempDirectory("tmp");
         tmp.toFile().deleteOnExit();
+        String bucketName = UUID.randomUUID().toString();
 
         try {
-            azureBucketService.create(AbstractBackupTest.BUCKET_NAME);
+            azureBucketService.create(bucketName);
 
-            CloudBlobClient cloudBlobClient = cloudStorageAccountFactory.build(getBackupOperationRequest()).createCloudBlobClient();
+            BlobServiceClient blobServiceClient = blobServiceClientFactory.build(getBackupOperationRequest());
 
-            CloudBlobContainer container = cloudBlobClient.getContainerReference(AbstractBackupTest.BUCKET_NAME);
+            BlobContainerClient container = blobServiceClient.getBlobContainerClient(bucketName);
 
-            CloudBlockBlob blob1 = container.getBlockBlobReference("cluster/dc/node/manifests/snapshot-name-" + AbstractBackupTest.BUCKET_NAME);
-            blob1.uploadText("hello");
+            BlobClient blob1 = container.getBlobClient("cluster/dc/node/manifests/snapshot-name-" + bucketName);
+            blob1.upload(BinaryData.fromBytes("hello".getBytes(StandardCharsets.UTF_8)));
 
-            CloudBlockBlob blob2 = container.getBlockBlobReference("snapshot/in/dir/name-" + AbstractBackupTest.BUCKET_NAME);
-            blob2.uploadText("hello world");
+            BlobClient blob2 = container.getBlobClient("snapshot/in/dir/name-" + bucketName);
+            blob2.upload(BinaryData.fromBytes("hello world".getBytes(StandardCharsets.UTF_8)));
 
             final RestoreOperationRequest restoreOperationRequest = new RestoreOperationRequest();
-            restoreOperationRequest.storageLocation = new StorageLocation("azure://" + AbstractBackupTest.BUCKET_NAME + "/cluster/dc/node");
+            restoreOperationRequest.storageLocation = new StorageLocation("azure://" + bucketName + "/cluster/dc/node");
 
             final BackupOperationRequest backupOperationRequest = new BackupOperationRequest();
-            backupOperationRequest.storageLocation = new StorageLocation("azure://" + AbstractBackupTest.BUCKET_NAME + "/cluster/dc/node");
+            backupOperationRequest.storageLocation = new StorageLocation("azure://" + bucketName + "/cluster/dc/node");
 
-            final AzureRestorer azureRestorer = new AzureRestorer(cloudStorageAccountFactory, restoreOperationRequest);
-            final AzureBackuper azureBackuper = new AzureBackuper(cloudStorageAccountFactory, backupOperationRequest);
+            final AzureRestorer azureRestorer = new AzureRestorer(blobServiceClientFactory, restoreOperationRequest);
+            final AzureBackuper azureBackuper = new AzureBackuper(blobServiceClientFactory, backupOperationRequest);
 
             // 2
 
@@ -103,12 +106,12 @@ public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
 
             // 3
 
-            final String content2 = azureRestorer.downloadTopology(Paths.get("snapshot/in/dir"), s -> s.endsWith("name-" + AbstractBackupTest.BUCKET_NAME));
+            final String content2 = azureRestorer.downloadTopology(Paths.get("snapshot/in/dir"), s -> s.endsWith("name-" + bucketName));
             assertEquals("hello world", content2);
 
             // 4
 
-            azureRestorer.downloadFile(tmp.resolve("some-file"), azureRestorer.objectKeyToRemoteReference(Paths.get("snapshot/in/dir/name-" + AbstractBackupTest.BUCKET_NAME)));
+            azureRestorer.downloadFile(tmp.resolve("some-file"), azureRestorer.objectKeyToRemoteReference(Paths.get("snapshot/in/dir/name-" + bucketName)));
 
             assertTrue(Files.exists(tmp.resolve("some-file")));
             assertEquals("hello world", new String(Files.readAllBytes(tmp.resolve("some-file"))));
@@ -124,7 +127,7 @@ public class AzureBackupRestoreTest extends BaseAzureBackupRestoreTest {
 
             assertEquals("hello world", topology);
         } finally {
-            azureBucketService.delete(AbstractBackupTest.BUCKET_NAME);
+            azureBucketService.delete(bucketName);
             deleteDirectory(Paths.get(target("commitlog_download_dir")));
             Files.deleteIfExists(tmp.resolve("some-file"));
         }
