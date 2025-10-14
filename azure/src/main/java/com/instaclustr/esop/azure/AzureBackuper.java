@@ -1,6 +1,7 @@
 package com.instaclustr.esop.azure;
 
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Map;
@@ -9,6 +10,8 @@ import com.azure.core.util.BinaryData;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.models.BlobStorageException;
+import com.azure.storage.blob.models.ParallelTransferOptions;
+import com.azure.storage.blob.options.BlockBlobOutputStreamOptions;
 import com.azure.storage.blob.specialized.BlockBlobClient;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
@@ -92,7 +95,21 @@ public class AzureBackuper extends Backuper {
                            final InputStream localFileStream,
                            final RemoteObjectReference objectReference) throws Exception {
         final BlockBlobClient blob = ((AzureRemoteObjectReference) objectReference).blobClient;
-        blob.upload(localFileStream, manifestEntry.size, true);
+
+        ParallelTransferOptions parallelTransferOptions = new ParallelTransferOptions()
+                .setBlockSizeLong(4 * 1024 * 1024L)
+                .setMaxSingleUploadSizeLong(4 * 1024 * 1024L)
+                .setMaxConcurrency(1);
+
+        BlockBlobOutputStreamOptions options = new BlockBlobOutputStreamOptions().setParallelTransferOptions(parallelTransferOptions);
+
+        BlockBlobClient blockBlobClient = blobContainerClient
+                .getBlobClient(blob.getBlobName())
+                .getBlockBlobClient();
+
+        try (OutputStream os = blockBlobClient.getBlobOutputStream(options)) {
+            localFileStream.transferTo(os);
+        }
     }
 
     @Override

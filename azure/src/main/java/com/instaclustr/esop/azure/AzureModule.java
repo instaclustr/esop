@@ -1,14 +1,18 @@
 package com.instaclustr.esop.azure;
 
+import com.azure.core.http.HttpClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.azure.storage.common.StorageSharedKeyCredential;
+import com.azure.storage.common.policy.RequestRetryOptions;
+import com.azure.storage.common.policy.RetryPolicyType;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.instaclustr.esop.SPIModule;
 import com.instaclustr.esop.impl.AbstractOperationRequest;
 
+import java.time.Duration;
 import java.util.Optional;
 
 import static com.instaclustr.esop.guice.BackupRestoreBindings.installBindings;
@@ -57,6 +61,14 @@ public class AzureModule extends AbstractModule implements SPIModule
             if (connectionString.isPresent()) {
                 builder.connectionString(connectionString.get());
             }
+
+            builder.httpClient(HttpClient.createDefault())
+                    .retryOptions(new RequestRetryOptions(
+                            RetryPolicyType.EXPONENTIAL,
+                            5,                    // max retries
+                            Duration.ofSeconds(120), // timeout per request
+                            null, null, null
+                    ));
 
             sharedKeyCredentials.ifPresent(storageSharedKeyCredential -> builder
                     .credential(storageSharedKeyCredential)
