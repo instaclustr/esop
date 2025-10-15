@@ -1,12 +1,12 @@
 package com.instaclustr.picocli;
 
-import picocli.CommandLine;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.Optional;
 import java.util.Properties;
+
+import picocli.CommandLine;
 
 public class VersionParser {
     public static String[] parse(String title) throws IOException

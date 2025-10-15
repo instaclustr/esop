@@ -14,15 +14,11 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.instaclustr.esop.impl.AbstractTracker.Session;
 import com.instaclustr.esop.impl.AbstractTracker.Unit;
 import com.instaclustr.esop.impl.hash.HashSpec;
@@ -30,6 +26,8 @@ import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationRequest;
 import com.instaclustr.operations.OperationsService;
 import com.instaclustr.threading.Executors.FixedTasksExecutorSupplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.CANCELLED;
 import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.FAILED;

@@ -20,7 +20,6 @@ package jmx.org.apache.cassandra.service.cassandra30;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.OpenDataException;
 

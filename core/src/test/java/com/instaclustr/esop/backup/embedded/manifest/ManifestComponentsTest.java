@@ -21,10 +21,13 @@ import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace;
 import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace.Table;
 import com.instaclustr.jackson.JacksonModule;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ManifestComponentsTest {
 

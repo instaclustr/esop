@@ -3,11 +3,10 @@ package com.instaclustr.esop.s3.v2;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.instaclustr.esop.impl.BucketService;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory.S3Clients;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.retry.RetryMode;
 import software.amazon.awssdk.core.retry.backoff.BackoffStrategy;
 import software.amazon.awssdk.core.waiters.WaiterOverrideConfiguration;

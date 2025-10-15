@@ -1,7 +1,7 @@
 package com.instaclustr.jackson;
 
-import javax.management.remote.JMXServiceURL;
 import java.io.IOException;
+import javax.management.remote.JMXServiceURL;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;

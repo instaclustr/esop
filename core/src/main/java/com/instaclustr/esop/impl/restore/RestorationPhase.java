@@ -12,13 +12,9 @@ import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import com.google.common.base.MoreObjects;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.common.base.MoreObjects;
 import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.ManifestEnricher;
 import com.instaclustr.esop.impl.AbstractTracker.Session;
@@ -45,6 +41,8 @@ import com.instaclustr.esop.impl.truncate.TruncateOperationRequest;
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationFailureException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import static com.instaclustr.esop.impl.restore.RestorationPhase.RestorationPhaseType.CLEANUP;

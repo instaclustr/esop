@@ -1,22 +1,16 @@
 package com.instaclustr.esop.impl.backup;
 
 import java.io.BufferedInputStream;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.RateLimiter;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.inject.Inject;
 import com.instaclustr.esop.impl.AbstractTracker;
 import com.instaclustr.esop.impl.ManifestEntry;
@@ -32,6 +26,8 @@ import com.instaclustr.measure.DataRate.DataRateUnit;
 import com.instaclustr.measure.DataSize;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.instaclustr.esop.impl.ManifestEntry.Type.MANIFEST_FILE;
 import static com.instaclustr.esop.impl.backup.Backuper.FreshenResult.FRESHENED;

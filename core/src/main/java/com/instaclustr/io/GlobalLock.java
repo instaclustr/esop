@@ -1,16 +1,16 @@
 package com.instaclustr.io;
 
 
-import static java.lang.String.format;
-import static java.nio.file.Files.createDirectories;
-import static java.nio.file.StandardOpenOption.CREATE;
-import static java.nio.file.StandardOpenOption.WRITE;
-
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import static java.lang.String.format;
+import static java.nio.file.Files.createDirectories;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 public class GlobalLock {
 

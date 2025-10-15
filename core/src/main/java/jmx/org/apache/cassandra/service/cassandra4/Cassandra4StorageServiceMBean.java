@@ -17,11 +17,6 @@
  */
 package jmx.org.apache.cassandra.service.cassandra4;
 
-import javax.annotation.Nullable;
-import javax.management.NotificationEmitter;
-import javax.management.openmbean.CompositeData;
-import javax.management.openmbean.OpenDataException;
-import javax.management.openmbean.TabularData;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -31,6 +26,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
+import javax.management.NotificationEmitter;
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.OpenDataException;
+import javax.management.openmbean.TabularData;
 
 import jmx.org.apache.cassandra.service.cassandra3.StorageServiceMBean;
 

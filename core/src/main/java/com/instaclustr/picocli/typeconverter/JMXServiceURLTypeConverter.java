@@ -1,9 +1,9 @@
 package com.instaclustr.picocli.typeconverter;
 
-import javax.management.remote.JMXServiceURL;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import javax.management.remote.JMXServiceURL;
 
 import picocli.CommandLine;
 

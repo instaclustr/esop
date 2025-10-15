@@ -1,9 +1,8 @@
 package com.instaclustr.esop.impl.truncate;
 
-import com.google.common.base.MoreObjects;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.MoreObjects;
 import com.instaclustr.operations.OperationRequest;
 
 public class TruncateOperationRequest extends OperationRequest {

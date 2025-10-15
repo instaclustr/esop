@@ -6,10 +6,9 @@ import java.io.InputStream;
 import java.nio.file.Path;
 
 import com.google.inject.Inject;
+import com.instaclustr.esop.impl.ManifestEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.instaclustr.esop.impl.ManifestEntry;
 
 import static java.lang.String.format;
 

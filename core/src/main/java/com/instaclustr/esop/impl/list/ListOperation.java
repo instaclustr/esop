@@ -10,14 +10,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.instaclustr.esop.guice.RestorerFactory;
 import com.instaclustr.esop.impl.Manifest;
@@ -34,6 +31,8 @@ import com.instaclustr.esop.topology.CassandraSimpleTopology.CassandraSimpleTopo
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.operations.Operation;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.instaclustr.esop.impl.Manifest.ConditionalHumanUnitsSerializer.HUMAN_UNITS_SERIALISATION_PROPERTY;
 import static com.instaclustr.esop.impl.Manifest.ConditionalHumanUnitsSerializer.humanReadableByteCountSI;

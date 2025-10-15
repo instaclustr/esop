@@ -5,13 +5,12 @@ import java.security.Provider;
 import java.security.Security;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.instaclustr.esop.impl.ProxySettings;
 import com.instaclustr.esop.s3.S3ConfigurationResolver;
 import com.instaclustr.esop.s3.S3ConfigurationResolver.S3Configuration;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;

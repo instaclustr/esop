@@ -4,7 +4,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import com.google.common.util.concurrent.ListeningExecutorService;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.BindingAnnotation;
 import com.google.inject.TypeLiteral;

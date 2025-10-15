@@ -5,7 +5,6 @@ import java.lang.annotation.Target;
 import java.util.Set;
 
 import com.google.common.util.concurrent.ListeningExecutorService;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.BindingAnnotation;
 import com.google.inject.Provider;

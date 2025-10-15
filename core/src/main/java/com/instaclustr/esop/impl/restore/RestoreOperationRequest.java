@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import com.google.common.base.MoreObjects;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -19,6 +17,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.UUIDDeserializer;
 import com.fasterxml.jackson.databind.ser.std.UUIDSerializer;
+import com.google.common.base.MoreObjects;
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesConverter;
 import com.instaclustr.esop.impl.DatabaseEntities.DatabaseEntitiesDeserializer;

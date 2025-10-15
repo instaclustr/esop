@@ -13,9 +13,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import com.instaclustr.esop.guice.BackuperFactory;
@@ -31,6 +28,8 @@ import com.instaclustr.esop.topology.CassandraEndpointDC;
 import com.instaclustr.esop.topology.CassandraEndpoints;
 import com.instaclustr.operations.Operation;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.instaclustr.esop.impl.ManifestEntry.Type.COMMIT_LOG;
 

@@ -1,14 +1,13 @@
 package com.instaclustr.esop.impl.backup.coordination;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.instaclustr.esop.impl.backup.coordination.ClearSnapshotOperation.ClearSnapshotOperationRequest;
 import com.instaclustr.operations.FunctionWithEx;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationRequest;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 import jmx.org.apache.cassandra.service.cassandra3.StorageServiceMBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ClearSnapshotOperation extends Operation<ClearSnapshotOperationRequest> {
 

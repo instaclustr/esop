@@ -10,9 +10,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,6 +28,8 @@ import com.instaclustr.esop.topology.CassandraSimpleTopology.CassandraSimpleTopo
 import com.instaclustr.measure.Time;
 import com.instaclustr.operations.Operation;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.instaclustr.esop.impl.list.ListOperationRequest.getForLocalListing;
 

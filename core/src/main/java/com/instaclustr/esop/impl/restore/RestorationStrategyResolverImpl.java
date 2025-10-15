@@ -2,15 +2,14 @@ package com.instaclustr.esop.impl.restore;
 
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.instaclustr.esop.impl.restore.RestorationStrategy.RestorationStrategyType;
 import com.instaclustr.operations.FunctionWithEx;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 import jmx.org.apache.cassandra.service.cassandra3.StorageServiceMBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;

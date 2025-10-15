@@ -5,12 +5,8 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.inject.Inject;
 import com.instaclustr.esop.impl.AbstractTracker;
 import com.instaclustr.esop.impl.ManifestEntry;
@@ -24,6 +20,8 @@ import com.instaclustr.esop.impl.restore.DownloadTracker.DownloadUnit;
 import com.instaclustr.esop.impl.restore.RestoreModules.DownloadingFinisher;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.OperationsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.FAILED;
 import static com.instaclustr.esop.impl.AbstractTracker.Unit.State.FINISHED;

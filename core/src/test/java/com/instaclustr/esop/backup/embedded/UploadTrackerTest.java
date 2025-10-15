@@ -14,11 +14,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.Uninterruptibles;
-
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.github.nosan.embedded.cassandra.Cassandra;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -46,7 +45,6 @@ import com.instaclustr.operations.OperationsService;
 import com.instaclustr.threading.Executors;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 
 import static java.util.concurrent.TimeUnit.MINUTES;

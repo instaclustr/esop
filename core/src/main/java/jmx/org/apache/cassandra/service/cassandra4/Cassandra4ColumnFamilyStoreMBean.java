@@ -1,11 +1,11 @@
 package jmx.org.apache.cassandra.service.cassandra4;
 
-import javax.management.openmbean.CompositeData;
-import javax.management.openmbean.OpenDataException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.OpenDataException;
 
 public interface Cassandra4ColumnFamilyStoreMBean {
 

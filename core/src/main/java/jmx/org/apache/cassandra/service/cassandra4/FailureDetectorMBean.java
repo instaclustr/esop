@@ -1,9 +1,9 @@
 package jmx.org.apache.cassandra.service.cassandra4;
 
-import javax.management.openmbean.OpenDataException;
-import javax.management.openmbean.TabularData;
 import java.net.UnknownHostException;
 import java.util.Map;
+import javax.management.openmbean.OpenDataException;
+import javax.management.openmbean.TabularData;
 
 public interface FailureDetectorMBean {
 

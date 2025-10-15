@@ -6,9 +6,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.instaclustr.esop.guice.BucketServiceFactory;
@@ -29,6 +26,8 @@ import com.instaclustr.esop.topology.CassandraClusterTopology.ClusterTopology.No
 import com.instaclustr.io.FileUtils;
 import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.Operation.Error;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
 

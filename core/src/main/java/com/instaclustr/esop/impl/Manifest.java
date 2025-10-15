@@ -17,27 +17,24 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-
-import com.instaclustr.esop.impl.list.ListOperation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.instaclustr.esop.impl.Manifest.ManifestReporter.ManifestReport;
 import com.instaclustr.esop.impl.ManifestEntry.Type;
 import com.instaclustr.esop.impl.Snapshots.Snapshot;
 import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace;
 import com.instaclustr.esop.impl.Snapshots.Snapshot.Keyspace.Table;
 import com.instaclustr.esop.impl.backup.BaseBackupOperationRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.instaclustr.esop.impl.ManifestEntry.Type.MANIFEST_FILE;
 import static java.lang.String.format;

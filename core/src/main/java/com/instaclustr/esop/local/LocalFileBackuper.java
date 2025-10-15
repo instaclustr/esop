@@ -12,7 +12,6 @@ import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.backup.Backuper;
-import com.instaclustr.esop.local.LocalFileObjectReference;
 
 public class LocalFileBackuper extends Backuper {
 

@@ -4,7 +4,6 @@ import java.util.stream.Stream;
 
 import com.instaclustr.esop.impl.Manifest;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static java.util.stream.Collectors.toList;

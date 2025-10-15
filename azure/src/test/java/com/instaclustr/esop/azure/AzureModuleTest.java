@@ -6,7 +6,9 @@ import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.shared.WithEnvironment;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class BlobServiceClientFactoryTest {
 

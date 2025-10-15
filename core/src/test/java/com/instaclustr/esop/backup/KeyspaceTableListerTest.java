@@ -5,13 +5,12 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+import com.instaclustr.esop.impl.CassandraData.KeyspaceTableLister;
+import com.instaclustr.io.FileUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.instaclustr.esop.impl.CassandraData.KeyspaceTableLister;
-import com.instaclustr.io.FileUtils;
 
 public class KeyspaceTableListerTest {
 

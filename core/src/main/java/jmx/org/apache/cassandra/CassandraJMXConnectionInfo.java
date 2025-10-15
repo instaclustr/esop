@@ -1,7 +1,7 @@
 package jmx.org.apache.cassandra;
 
-import javax.management.remote.JMXServiceURL;
 import java.net.MalformedURLException;
+import javax.management.remote.JMXServiceURL;
 
 import com.google.common.base.MoreObjects;
 import com.instaclustr.picocli.CassandraJMXSpec;

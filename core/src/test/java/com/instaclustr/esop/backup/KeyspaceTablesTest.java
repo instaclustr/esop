@@ -4,14 +4,14 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Multimap;
-
-import org.apache.commons.lang3.tuple.Pair;
-
 import com.instaclustr.esop.impl.DatabaseEntities;
 import com.instaclustr.esop.impl.KeyspaceTable.KeyspaceTables;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class KeyspaceTablesTest {
 

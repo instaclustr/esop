@@ -1,5 +1,8 @@
 package com.instaclustr.esop.azure;
 
+import java.time.Duration;
+import java.util.Optional;
+
 import com.azure.core.http.HttpClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
@@ -11,9 +14,6 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.instaclustr.esop.SPIModule;
 import com.instaclustr.esop.impl.AbstractOperationRequest;
-
-import java.time.Duration;
-import java.util.Optional;
 
 import static com.instaclustr.esop.guice.BackupRestoreBindings.installBindings;
 

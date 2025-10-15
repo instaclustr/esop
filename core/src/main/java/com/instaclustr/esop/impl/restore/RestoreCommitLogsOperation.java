@@ -22,10 +22,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import com.google.common.base.Joiner;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.instaclustr.esop.guice.BucketServiceFactory;
@@ -36,6 +32,8 @@ import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.impl.RemoteObjectReference;
 import com.instaclustr.esop.impl.restore.DownloadTracker.DownloadUnit;
 import com.instaclustr.operations.Operation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.instaclustr.esop.impl.ManifestEntry.Type.COMMIT_LOG;
 import static java.lang.String.format;

@@ -18,16 +18,13 @@ import java.util.stream.Stream;
 import java.util.zip.Adler32;
 
 import com.google.common.collect.ImmutableList;
-
-import org.apache.commons.lang3.tuple.Pair;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.instaclustr.esop.impl.hash.HashService;
 import com.instaclustr.esop.impl.hash.HashServiceImpl;
 import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.io.FileUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.lang.Math.toIntExact;
 

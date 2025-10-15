@@ -1,12 +1,10 @@
 package jmx.org.apache.cassandra.service;
 
-import static javax.management.JMX.newMBeanProxy;
-
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Multimap;
 import com.instaclustr.operations.FunctionWithEx;
@@ -22,6 +20,8 @@ import jmx.org.apache.cassandra.service.cassandra4.Cassandra4StorageServiceMBean
 import org.awaitility.Awaitility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static javax.management.JMX.newMBeanProxy;
 
 public interface CassandraJMXService {
 

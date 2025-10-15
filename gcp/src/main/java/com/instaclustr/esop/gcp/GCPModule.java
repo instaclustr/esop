@@ -1,5 +1,10 @@
 package com.instaclustr.esop.gcp;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
@@ -10,11 +15,6 @@ import com.instaclustr.esop.SPIModule;
 import com.instaclustr.esop.guice.BackupRestoreBindings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 import static java.lang.String.format;
 

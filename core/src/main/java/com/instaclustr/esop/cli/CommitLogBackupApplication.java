@@ -1,11 +1,10 @@
 package com.instaclustr.esop.cli;
 
-import com.google.inject.Module;
-import com.instaclustr.esop.impl.backup.BackupModules;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.google.inject.Inject;
+import com.google.inject.Module;
 import com.instaclustr.esop.impl.backup.BackupCommitLogsOperationRequest;
 import com.instaclustr.esop.impl.backup.BackupModules.CommitlogBackupModule;
 import com.instaclustr.esop.impl.hash.HashSpec;
@@ -17,13 +16,9 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static com.instaclustr.operations.Operation.State.FAILED;
 import static com.instaclustr.picocli.CLIApplication.execute;
 import static java.lang.String.format;
-import static java.util.Collections.singletonList;
 import static org.awaitility.Awaitility.await;
 
 @Command(name = "commitlog-backup",

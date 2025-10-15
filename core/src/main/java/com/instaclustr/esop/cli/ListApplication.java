@@ -1,5 +1,8 @@
 package com.instaclustr.esop.cli;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.inject.Inject;
 import com.google.inject.Module;
 import com.instaclustr.esop.impl.hash.HashSpec;
@@ -14,9 +17,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.instaclustr.operations.Operation.State.FAILED;
 import static com.instaclustr.picocli.CLIApplication.execute;

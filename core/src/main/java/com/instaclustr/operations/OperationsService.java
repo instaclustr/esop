@@ -1,8 +1,5 @@
 package com.instaclustr.operations;
 
-import static java.util.Collections.unmodifiableList;
-import static java.util.stream.Collectors.toList;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,6 +20,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.instaclustr.threading.Executors;
 import com.instaclustr.threading.Executors.ExecutorServiceSupplier;
+
+import static java.util.Collections.unmodifiableList;
+import static java.util.stream.Collectors.toList;
 
 public class OperationsService extends AbstractIdleService {
 

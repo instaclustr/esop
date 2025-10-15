@@ -1,5 +1,8 @@
 package com.instaclustr.esop.backup.embedded;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.github.nosan.embedded.cassandra.Cassandra;
 import com.google.inject.Guice;
@@ -12,9 +15,6 @@ import jmx.org.apache.cassandra.service.CassandraJMXService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class CassandraEntitiesTest extends AbstractBackupTest {
 

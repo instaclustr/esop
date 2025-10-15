@@ -1,11 +1,11 @@
 package com.instaclustr.picocli;
 
-import static com.instaclustr.picocli.typeconverter.CassandraJMXServiceURLTypeConverter.DEFAULT_CASSANDRA_JMX_PORT;
-
 import javax.management.remote.JMXServiceURL;
 
 import com.instaclustr.picocli.typeconverter.CassandraJMXServiceURLTypeConverter;
 import picocli.CommandLine.Option;
+
+import static com.instaclustr.picocli.typeconverter.CassandraJMXServiceURLTypeConverter.DEFAULT_CASSANDRA_JMX_PORT;
 
 /**
  * Holds JMX connection information, used as mixin for application to achieve DRY.

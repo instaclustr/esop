@@ -20,16 +20,15 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
 
 import com.instaclustr.esop.impl.RenamedEntities.Renamed;
 import com.instaclustr.operations.FunctionWithEx;
 import jmx.org.apache.cassandra.JMXUtils;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
 import jmx.org.apache.cassandra.service.cassandra4.Cassandra4StorageServiceMBean;
-
-import javax.management.MBeanServerConnection;
-import javax.management.ObjectName;
-import javax.management.remote.JMXConnector;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;

@@ -9,11 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-import com.google.common.util.concurrent.Uninterruptibles;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
@@ -21,6 +16,7 @@ import com.github.nosan.embedded.cassandra.Cassandra;
 import com.github.nosan.embedded.cassandra.CassandraBuilder;
 import com.github.nosan.embedded.cassandra.Version;
 import com.github.nosan.embedded.cassandra.WorkingDirectoryCustomizer;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.AbstractModule;
 import com.instaclustr.cassandra.CassandraModule;
 import com.instaclustr.esop.cli.Esop;
@@ -40,6 +36,8 @@ import com.instaclustr.operations.OperationsModule;
 import com.instaclustr.threading.ExecutorsModule;
 import jmx.org.apache.cassandra.CassandraJMXConnectionInfo;
 import jmx.org.apache.cassandra.service.CassandraJMXServiceImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.datastax.oss.driver.api.core.type.DataTypes.TEXT;
 import static com.datastax.oss.driver.api.core.type.DataTypes.TIMEUUID;

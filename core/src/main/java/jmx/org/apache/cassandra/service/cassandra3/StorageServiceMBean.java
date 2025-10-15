@@ -17,8 +17,6 @@
  */
 package jmx.org.apache.cassandra.service.cassandra3;
 
-import javax.management.NotificationEmitter;
-import javax.management.openmbean.TabularData;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -28,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import javax.management.NotificationEmitter;
+import javax.management.openmbean.TabularData;
 
 /**
  * This interface was taken from Cassandra 3.11.4 source codes.

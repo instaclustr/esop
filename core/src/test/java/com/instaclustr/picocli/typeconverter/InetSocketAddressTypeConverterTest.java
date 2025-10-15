@@ -1,10 +1,10 @@
 package com.instaclustr.picocli.typeconverter;
 
-import org.junit.jupiter.api.Test;
-import picocli.CommandLine.TypeConversionException;
-
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+
+import org.junit.jupiter.api.Test;
+import picocli.CommandLine.TypeConversionException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

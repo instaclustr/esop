@@ -1,7 +1,5 @@
 package com.instaclustr.operations;
 
-import static java.lang.String.format;
-
 import java.io.Closeable;
 import java.net.InetAddress;
 import java.time.Instant;
@@ -27,6 +25,8 @@ import com.google.inject.TypeLiteral;
 import com.instaclustr.guice.GuiceInjectorHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.lang.String.format;
 
 @SuppressWarnings("WeakerAccess")
 @JsonTypeInfo(use = JsonTypeInfo.Id.CUSTOM, property = "type", include = As.EXISTING_PROPERTY)

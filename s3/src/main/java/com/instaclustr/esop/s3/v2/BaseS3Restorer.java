@@ -13,10 +13,6 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import com.google.common.io.CharStreams;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.instaclustr.esop.impl.BucketService;
 import com.instaclustr.esop.impl.Manifest;
 import com.instaclustr.esop.impl.ManifestEntry;
@@ -30,6 +26,8 @@ import com.instaclustr.esop.impl.restore.Restorer;
 import com.instaclustr.esop.s3.S3RemoteObjectReference;
 import com.instaclustr.esop.s3.v2.S3ClientsFactory.S3Clients;
 import com.instaclustr.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;

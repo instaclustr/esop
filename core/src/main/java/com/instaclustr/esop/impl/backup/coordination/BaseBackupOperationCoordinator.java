@@ -7,11 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.google.inject.Provider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Provider;
 import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.guice.BackuperFactory;
 import com.instaclustr.esop.guice.BucketServiceFactory;
@@ -41,6 +38,8 @@ import com.instaclustr.operations.Operation;
 import com.instaclustr.operations.Operation.Error;
 import com.instaclustr.operations.OperationCoordinator;
 import jmx.org.apache.cassandra.service.CassandraJMXService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.instaclustr.esop.impl.Manifest.getLocalManifestPath;
 import static com.instaclustr.esop.impl.Manifest.getManifestAsManifestEntry;

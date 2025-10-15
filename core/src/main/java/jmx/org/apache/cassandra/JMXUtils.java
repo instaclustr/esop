@@ -1,13 +1,13 @@
 package jmx.org.apache.cassandra;
 
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.rmi.ssl.SslRMIClientSocketFactory;
 import java.io.FileReader;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.rmi.ssl.SslRMIClientSocketFactory;
 
 public class JMXUtils {
 

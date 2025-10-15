@@ -13,7 +13,6 @@ import com.instaclustr.esop.impl.StorageLocation;
 import com.instaclustr.esop.impl.list.ListOperationRequest;
 import com.instaclustr.io.FileUtils;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 
 @Tag("azure-test")
 @Tag("cloud-test")

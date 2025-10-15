@@ -12,7 +12,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.instaclustr.esop.backup.embedded.AbstractBackupTest;
-import com.instaclustr.esop.impl.BucketService;
 import com.instaclustr.esop.impl.KeyspaceTable;
 import com.instaclustr.esop.impl.ManifestEntry;
 import com.instaclustr.esop.s3.S3RemoteObjectReference;
