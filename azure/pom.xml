@@ -97,7 +97,6 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-handler</artifactId>
             <version>4.1.126.Final</version>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
