@@ -6,12 +6,12 @@
     <parent>
         <groupId>com.instaclustr</groupId>
         <artifactId>esop-parent</artifactId>
-        <version>4.0.1-SNAPSHOT</version>
+        <version>4.0.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>esop-core</artifactId>
-    <version>4.0.1-SNAPSHOT</version>
+    <version>4.0.1</version>
 
     <name>esop-core</name>
     <description>Core of backup and restoration tooling for Cassandra</description>
