@@ -15,8 +15,24 @@ jobs:
           keys:
             - m2-{{ checksum "pom.xml" }}
             - m2-
-
-      - run: (echo "${google_application_credentials}" > /tmp/gcp.json) && mvn clean install -PsnapshotRepo,rpm,deb,cassandra5 -DoutputDirectory=/tmp/artifacts -Dcassandra4.version=4.1.10 -Dcassandra5.version=5.0.5
+      - run:
+          name: Local Tests and artifacts build
+          command: |
+            mvn clean install -PsnapshotRepo,rpm,deb,cassandra5 \
+              -DoutputDirectory=/tmp/artifacts \
+              -Dcassandra4.version=4.1.10 -Dcassandra5.version=5.0.5
+      - run:
+          name: AWS S3 tests
+          command: |
+            set -ue
+            AWS_REGION=us-east-1 mvn test -pl s3 -Ps3Tests,\!noCloudTests \
+              -DTEST_ESOP_AWS_KMS_WRAPPING_KEY="${ESOP_TEST_AWS_KMS_WRAPPING_KEY}" \
+              -Dcassandra4.version=4.1.10 -Dcassandra5.version=5.0.5
+      - run:
+          name: Azure Blob Storage tests
+          command: |
+            mvn test -pl azure -PazureTests,\!noCloudTests \
+              -Dcassandra4.version=4.1.10 -Dcassandra5.version=5.0.5
 
       - save_cache:
           paths:
