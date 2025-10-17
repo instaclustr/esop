@@ -6,12 +6,12 @@
     <parent>
         <groupId>com.instaclustr</groupId>
         <artifactId>esop-parent</artifactId>
-        <version>4.0.1</version>
+        <version>4.0.2-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>esop-s3</artifactId>
-    <version>4.0.1</version>
+    <version>4.0.2-SNAPSHOT</version>
 
     <name>esop-s3</name>
     <description>Backup and restoration tooling for Cassandra for AWS S3</description>
