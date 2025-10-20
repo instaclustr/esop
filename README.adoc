@@ -1,7 +1,7 @@
 # Instaclustr Esop
 
-image:https://img.shields.io/maven-central/v/com.instaclustr/esop.svg?label=Maven%20Central[link=https://search.maven.org/search?q=g:%22com.instaclustr%22%20AND%20a:%22esop%22]
-image:https://circleci.com/gh/instaclustr/esop.svg?style=svg["Instaclustr",link="https://circleci.com/gh/instaclustr/esop"]
+image:https://img.shields.io/maven-central/v/com.instaclustr/esop-core.svg?label=Maven%20Central[link=https://central.sonatype.com/search?q=esop-core]
+image:https://img.shields.io/circleci/build/github/instaclustr/esop/master.svg["Instaclustr",link="https://app.circleci.com/pipelines/github/instaclustr/esop?branch=master"]
 
 _Swiss knife for Apache Cassandra backup and restore_
 
