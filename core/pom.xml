@@ -25,6 +25,7 @@
         <commons-io.version>2.20.0</commons-io.version>
         <awaitility.version>3.1.6</awaitility.version>
         <jackson.bom.version>2.19.2</jackson.bom.version>
+        <lz4.version>1.8.0</lz4.version>
 
         <slf4j.version>2.0.17</slf4j.version>
         <logback.version>1.5.19</logback.version>
@@ -118,6 +119,12 @@
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
             <version>${awaitility.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.lz4</groupId>
+            <artifactId>lz4-java</artifactId>
+            <version>${lz4.version}</version>
         </dependency>
 
         <!-- logging -->
