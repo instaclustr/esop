@@ -18,6 +18,9 @@ import static java.lang.String.format;
 
 public class HashSpec {
 
+    // Chunk size for reading files for hashing
+    private static int CHUNK_SIZE = 4096;
+
     public HashSpec(final HashAlgorithm algorithm) {
         this.algorithm = algorithm;
     }
@@ -59,7 +62,7 @@ public class HashSpec {
             final MessageDigest digest = MessageDigest.getInstance(algorithm);
 
             // Create byte array to read data in chunks
-            byte[] byteArray = new byte[1024];
+            byte[] byteArray = new byte[CHUNK_SIZE];
             int bytesCount = 0;
 
             // Read file data and update in message digest
@@ -100,7 +103,7 @@ public class HashSpec {
         @Override
         public String getHash(InputStream is) throws Exception
         {
-            byte[] byteArray = new byte[1024];
+            byte[] byteArray = new byte[CHUNK_SIZE];
             int bytesCount = 0;
 
             Checksum checksum = new CRC32();
@@ -126,7 +129,7 @@ public class HashSpec {
         @Override
         public String getHash(final InputStream is) throws Exception {
             try (StreamingXXHash64 xxHash64 = XXHashFactory.fastestJavaInstance().newStreamingHash64(0)) {
-                byte[] byteArray = new byte[1024];
+                byte[] byteArray = new byte[CHUNK_SIZE];
                 int bytesCount = 0;
 
                 while ((bytesCount = is.read(byteArray)) != -1) {
