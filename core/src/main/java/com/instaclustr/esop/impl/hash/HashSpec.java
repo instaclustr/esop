@@ -7,6 +7,8 @@ import java.util.function.Supplier;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
+import net.jpountz.xxhash.StreamingXXHash64;
+import net.jpountz.xxhash.XXHashFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -15,6 +17,9 @@ import picocli.CommandLine.Option;
 import static java.lang.String.format;
 
 public class HashSpec {
+
+    // Chunk size for reading files for hashing
+    private static int CHUNK_SIZE = 4096;
 
     public HashSpec(final HashAlgorithm algorithm) {
         this.algorithm = algorithm;
@@ -57,7 +62,7 @@ public class HashSpec {
             final MessageDigest digest = MessageDigest.getInstance(algorithm);
 
             // Create byte array to read data in chunks
-            byte[] byteArray = new byte[1024];
+            byte[] byteArray = new byte[CHUNK_SIZE];
             int bytesCount = 0;
 
             // Read file data and update in message digest
@@ -98,7 +103,7 @@ public class HashSpec {
         @Override
         public String getHash(InputStream is) throws Exception
         {
-            byte[] byteArray = new byte[1024];
+            byte[] byteArray = new byte[CHUNK_SIZE];
             int bytesCount = 0;
 
             Checksum checksum = new CRC32();
@@ -116,8 +121,35 @@ public class HashSpec {
         }
     }
 
+    /**
+     * Wraps the xxHash64 algorithm. Used for fast hashing of large files as an alternative to SHA-256.
+     */
+    public static class XXHasher implements Hasher {
+
+        @Override
+        public String getHash(final InputStream is) throws Exception {
+            try (StreamingXXHash64 xxHash64 = XXHashFactory.fastestJavaInstance().newStreamingHash64(0)) {
+                byte[] byteArray = new byte[CHUNK_SIZE];
+                int bytesCount = 0;
+
+                while ((bytesCount = is.read(byteArray)) != -1) {
+                    xxHash64.update(byteArray, 0, bytesCount);
+                }
+
+                return Long.toString(xxHash64.getValue());
+            }
+        }
+
+        @Override
+        public String getHash(final byte[] digest) throws Exception {
+            // TODO do we actually need this?
+            throw new UnsupportedOperationException();
+        }
+    }
+
     public enum HashAlgorithm {
         SHA_256("SHA-256", () -> new SHAHasher("SHA-256")),
+        XXHASH64("xxHash64", () -> new XXHasher()),
         CRC("CRC", () -> new CRCHasher()),
         NONE("NONE", () -> new NoOp());
 
@@ -146,7 +178,7 @@ public class HashSpec {
             }
 
             for (final HashAlgorithm algorithm : HashAlgorithm.values()) {
-                if (algorithm.name.equals(value)) {
+                if (algorithm.name.equalsIgnoreCase(value)) {
                     return algorithm;
                 }
             }
