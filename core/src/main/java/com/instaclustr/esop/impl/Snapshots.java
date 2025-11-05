@@ -85,6 +85,10 @@ public class Snapshots implements Cloneable {
         this.snapshots.putAll(snapshots.snapshots);
     }
 
+    public Map<String, Snapshot> getSnapshots() {
+        return snapshots;
+    }
+
     @Override
     public Snapshots clone() throws CloneNotSupportedException {
         final Snapshots cloned = new Snapshots();
