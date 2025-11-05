@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,6 +28,8 @@ import com.instaclustr.esop.impl.backup.UploadTracker;
 import com.instaclustr.esop.impl.backup.UploadTracker.UploadUnit;
 import com.instaclustr.esop.impl.backup.coordination.ClearSnapshotOperation.ClearSnapshotOperationRequest;
 import com.instaclustr.esop.impl.backup.coordination.TakeSnapshotOperation.TakeSnapshotOperationRequest;
+import com.instaclustr.esop.impl.hash.HashService;
+import com.instaclustr.esop.impl.hash.HashServiceImpl;
 import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.interaction.CassandraSchemaVersion;
 import com.instaclustr.esop.impl.interaction.CassandraTokens;
@@ -128,6 +131,31 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
 
             Snapshots.hashSpec = hashSpec;
             final Snapshots snapshots = Snapshots.parse(request.dataDirs, request.snapshotTag);
+
+            if (!snapshots.isEmpty()) {
+                HashService hashService = new HashServiceImpl(hashSpec);
+                ForkJoinPool pool = new ForkJoinPool(request.concurrentConnections);
+
+                pool.submit(() -> {
+                    for (final Snapshot snapshot : snapshots.getSnapshots().values()) {
+                        for (final Snapshot.Keyspace ks : snapshot.getKeyspaces().values()) {
+                            ks.getManifestEntries()
+                                    .stream()
+                                    .filter(entry -> entry.hash == null)
+                                    .collect(Collectors.toList())
+                                    .parallelStream()
+                                    .forEach(entry -> {
+                                        try {
+                                            entry.hash = hashService.hash(entry);
+                                        } catch (Exception e) {
+                                            throw new RuntimeException(format("Unable to hash file %s", entry.localFile), e);
+                                        }
+                                    });
+                        }
+                    }
+                }).join();
+            }
+
             final Optional<Snapshot> snapshot = snapshots.get(request.snapshotTag);
 
             if (!snapshot.isPresent()) {
