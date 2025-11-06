@@ -85,11 +85,11 @@ public class BackupRestoreTest {
             final String keyspace = "keyspace1";
             final String table1 = "table1";
             final Path table1Path = tempDirs.get(testFileConfig.cassandraVersion.toString()).resolve("data/" + keyspace + "/" + table1);
-            Map<String, List<ManifestEntry>> sstables = SSTableUtils.getSSTables(keyspace, table1, table1Path, backupRoot.resolve(table1Path.getFileName()), new HashSpec());
+            Map<String, List<ManifestEntry>> sstables = SSTableUtils.getSSTables(keyspace, table1, table1Path, backupRoot.resolve(table1Path.getFileName()));
 
             final String table2 = "table2";
             final Path table2Path = tempDirs.get(testFileConfig.cassandraVersion.toString()).resolve("data/" + keyspace + "/" + table2);
-            sstables.putAll(SSTableUtils.getSSTables(keyspace, table2, table2Path, backupRoot.resolve(table2Path.getFileName()), new HashSpec()));
+            sstables.putAll(SSTableUtils.getSSTables(keyspace, table2, table2Path, backupRoot.resolve(table2Path.getFileName())));
 
             Map<Path, Path> manifestMap = new HashMap<>();
             for (ManifestEntry e : sstables.values().stream().flatMap(Collection::stream).collect(Collectors.toList())) {

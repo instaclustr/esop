@@ -14,7 +14,7 @@ public interface HashService {
 
     void verify(Path file, String hash) throws HashVerificationException;
 
-    class HashingException extends Exception {
+    class HashingException extends RuntimeException {
 
         public HashingException(final String message) {
             super(message);

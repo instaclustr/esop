@@ -5,8 +5,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Provider;
@@ -28,9 +28,9 @@ import com.instaclustr.esop.impl.backup.UploadTracker;
 import com.instaclustr.esop.impl.backup.UploadTracker.UploadUnit;
 import com.instaclustr.esop.impl.backup.coordination.ClearSnapshotOperation.ClearSnapshotOperationRequest;
 import com.instaclustr.esop.impl.backup.coordination.TakeSnapshotOperation.TakeSnapshotOperationRequest;
-import com.instaclustr.esop.impl.hash.HashService;
-import com.instaclustr.esop.impl.hash.HashServiceImpl;
 import com.instaclustr.esop.impl.hash.HashSpec;
+import com.instaclustr.esop.impl.hash.ParallelHashService;
+import com.instaclustr.esop.impl.hash.ParallelHashServiceImpl;
 import com.instaclustr.esop.impl.interaction.CassandraSchemaVersion;
 import com.instaclustr.esop.impl.interaction.CassandraTokens;
 import com.instaclustr.esop.topology.CassandraClusterTopology;
@@ -129,31 +129,16 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
                                       new TakeSnapshotOperationRequest(request.entities, request.snapshotTag),
                                       cassandraVersionProvider).run0();
 
-            Snapshots.hashSpec = hashSpec;
             final Snapshots snapshots = Snapshots.parse(request.dataDirs, request.snapshotTag);
 
             if (!snapshots.isEmpty()) {
-                HashService hashService = new HashServiceImpl(hashSpec);
-                ForkJoinPool pool = new ForkJoinPool(request.concurrentConnections);
-
-                pool.submit(() -> {
-                    for (final Snapshot snapshot : snapshots.getSnapshots().values()) {
-                        for (final Snapshot.Keyspace ks : snapshot.getKeyspaces().values()) {
-                            ks.getManifestEntries()
-                                    .stream()
-                                    .filter(entry -> entry.hash == null)
-                                    .collect(Collectors.toList())
-                                    .parallelStream()
-                                    .forEach(entry -> {
-                                        try {
-                                            entry.hash = hashService.hash(entry);
-                                        } catch (Exception e) {
-                                            throw new RuntimeException(format("Unable to hash file %s", entry.localFile), e);
-                                        }
-                                    });
-                        }
-                    }
-                }).join();
+                try (ParallelHashService parallelHashService = new ParallelHashServiceImpl(hashSpec, request.concurrentConnections)) {
+                    Stream<ManifestEntry> entriesStream = snapshots.getSnapshots().values()
+                            .stream()
+                            .flatMap(v -> v.getKeyspaces().values().stream())
+                            .flatMap(ks -> ks.getManifestEntries().stream());
+                    parallelHashService.hashAndPopulate(entriesStream).join();
+                }
             }
 
             final Optional<Snapshot> snapshot = snapshots.get(request.snapshotTag);
