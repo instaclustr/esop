@@ -148,12 +148,11 @@ public class SSTableUtils {
                                 }
 
                                 backupPath = backupPath.resolve(hash).resolve(manifestComponentFileName.getFileName());
-                                final String hashOfFile = hashService.hash(sstableComponent);
 
                                 entries.add(new ManifestEntry(backupPath,
                                                               sstableComponent,
                                                               ManifestEntry.Type.FILE,
-                                                              hashOfFile,
+                                                              null,
                                                               new KeyspaceTable(keyspace, table),
                                                               null));
                             }
