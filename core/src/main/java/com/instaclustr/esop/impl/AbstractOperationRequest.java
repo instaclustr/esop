@@ -48,7 +48,7 @@ public abstract class AbstractOperationRequest extends OperationRequest {
     public RetrySpec retry = new RetrySpec();
 
     @Option(names = {"--cc", "--concurrent-connections"},
-            description = "Number of files (or file parts) to download / upload / hash concurrently. Higher values will increase throughput. Default is number of available CPUs."
+            description = "Number of files (or file parts) to download / upload / hash concurrently. Higher values will increase throughput. Default is 50% of available CPUs."
     )
     @JsonProperty("concurrentConnections")
     public Integer concurrentConnections;
@@ -60,7 +60,7 @@ public abstract class AbstractOperationRequest extends OperationRequest {
     public AbstractOperationRequest() {
         // for picocli
         if (concurrentConnections == null)
-            concurrentConnections = Runtime.getRuntime().availableProcessors();
+            concurrentConnections = getDefaultConcurrentConnections();
     }
 
     public AbstractOperationRequest(final StorageLocation storageLocation,
@@ -75,7 +75,7 @@ public abstract class AbstractOperationRequest extends OperationRequest {
         this.skipBucketVerification = skipBucketVerification;
         this.proxySettings = proxySettings;
         this.retry = retry == null ? new RetrySpec() : retry;
-        this.concurrentConnections = concurrentConnections == null ? Runtime.getRuntime().availableProcessors() : concurrentConnections;
+        this.concurrentConnections = concurrentConnections == null ? getDefaultConcurrentConnections() : concurrentConnections;
         this.kmsKeyId = kmsKeyId;
     }
 
@@ -97,5 +97,12 @@ public abstract class AbstractOperationRequest extends OperationRequest {
         if (storageProviders != null && !storageProviders.contains(storageLocation.storageProvider)) {
             throw new IllegalStateException(format("Available storage providers: %s", Arrays.toString(storageProviders.toArray())));
         }
+    }
+
+    /**
+     * Get default number of concurrent connections based on 50% of available processors.
+     */
+    private static int getDefaultConcurrentConnections() {
+        return Runtime.getRuntime().availableProcessors() / 2;
     }
 }
