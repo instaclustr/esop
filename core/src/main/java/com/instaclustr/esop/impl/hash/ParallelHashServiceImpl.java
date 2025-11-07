@@ -23,6 +23,17 @@ public class ParallelHashServiceImpl extends HashServiceImpl implements Parallel
         return forkJoinPool.submit(() -> manifestEntries.parallelStream().forEach(entry -> entry.hash = hash(entry)));
     }
 
+    public ForkJoinTask<?> verifyAll(final List<ManifestEntry> manifestEntries, OnFailure onFailure) {
+        logger.info("Starting parallel verification of manifest entries using {} threads.", forkJoinPool.getParallelism());
+        return forkJoinPool.submit(() -> manifestEntries.parallelStream().forEach(entry -> {
+            try {
+                verify(entry);
+            } catch (Exception e) {
+                onFailure.accept(entry, e);
+            }
+        }));
+    }
+
     @Override
     public void close() {
         forkJoinPool.shutdown();

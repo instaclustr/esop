@@ -13,9 +13,15 @@ public interface ParallelHashService extends HashService, AutoCloseable {
 
     /**
      * Hashes and populates the hash field of the provided manifest entries in parallel.
-     *
-     * @param manifestEntries Stream of manifest entries to hash.
-     * @return A ForkJoinTask representing the parallel hashing operation.
      */
     ForkJoinTask<?> hashAndPopulate(List<ManifestEntry> manifestEntries);
+
+    /**
+     * Verifies all manifest entries in parallel, invoking the provided onFailure callback for any failures.
+     */
+    ForkJoinTask<?> verifyAll(final List<ManifestEntry> manifestEntries, OnFailure onFailure);
+
+    interface OnFailure {
+        void accept(ManifestEntry entry, Throwable throwable);
+    }
 }

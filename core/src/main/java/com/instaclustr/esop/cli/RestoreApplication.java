@@ -61,7 +61,7 @@ public class RestoreApplication implements Runnable {
         additionalModules.add(new RestoreModule());
         additionalModules.add(new RestorationStrategyModule());
 
-        Esop.init(this, jmxSpec, hashSpec, additionalModules);
+        Esop.init(this, jmxSpec, hashSpec, request, additionalModules);
 
         final Operation<?> operation = operationsService.submitOperationRequest(request);
 

@@ -49,7 +49,7 @@ public class CommitLogRestoreApplication implements Runnable {
         List<Module> additionalModules = new ArrayList<>(Esop.getStorageSpecificModules());
         additionalModules.add(new RestoreCommitlogModule());
         
-        Esop.init(this, null, hashSpec, additionalModules);
+        Esop.init(this, null, hashSpec, request, additionalModules);
 
         final Operation<?> operation = operationsService.submitOperationRequest(request);
 

@@ -78,7 +78,7 @@ public class RemoveBackupApplication implements Runnable {
         List<Module> additionalModules = new ArrayList<>(Esop.getStorageSpecificModules());
         additionalModules.add(new RemoveBackupModule());
 
-        Esop.init(this, jmxSpec, new HashSpec(), additionalModules);
+        Esop.init(this, jmxSpec, new HashSpec(), request, additionalModules);
 
         if (rate.value == 0) {
             final Operation<?> operation = operationsService.submitOperationRequest(request);

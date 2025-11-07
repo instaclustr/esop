@@ -729,6 +729,7 @@ public abstract class RestorationPhase {
 
         public DataVerification verify(final Manifest manifest, final DatabaseEntities entities) {
             final List<ManifestEntry> entries = manifest.getManifestFiles(entities, false, false, false, false);
+            final List<ManifestEntry> entriesToVerify = new ArrayList<>();
 
             for (final ManifestEntry entry : entries) {
                 if (!Files.exists(entry.localFile)) {
@@ -738,14 +739,14 @@ public abstract class RestorationPhase {
                 }
 
                 if (entry.hash != null) {
-                    try {
-                        this.ctxt.hashService.verify(entry.localFile, entry.hash);
-                    } catch (final Exception ex) {
-                        logger.error(ex.getMessage());
-                        corruptedFiles.add(entry.localFile.toString());
-                    }
+                    entriesToVerify.add(entry);
                 }
             }
+
+            ctxt.hashService.verifyAll(entriesToVerify, (entry, throwable) -> {
+                logger.error("Exception occurred during manifest {} verification {}", entry.localFile.toAbsolutePath(), throwable.getMessage());
+                corruptedFiles.add(entry.localFile.toString());
+            }).join();
 
             return this;
         }

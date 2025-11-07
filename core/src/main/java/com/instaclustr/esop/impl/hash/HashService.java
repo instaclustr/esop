@@ -25,7 +25,7 @@ public interface HashService {
         }
     }
 
-    class HashVerificationException extends Exception {
+    class HashVerificationException extends RuntimeException {
 
         public HashVerificationException(final String message) {
             super(message);
