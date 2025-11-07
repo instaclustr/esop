@@ -133,11 +133,12 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
 
             if (!snapshots.isEmpty()) {
                 try (ParallelHashService parallelHashService = new ParallelHashServiceImpl(hashSpec, request.concurrentConnections)) {
-                    Stream<ManifestEntry> entriesStream = snapshots.getSnapshots().values()
+                    List<ManifestEntry> manifestEntries = snapshots.getSnapshots().values()
                             .stream()
                             .flatMap(v -> v.getKeyspaces().values().stream())
-                            .flatMap(ks -> ks.getManifestEntries().stream());
-                    parallelHashService.hashAndPopulate(entriesStream).join();
+                            .flatMap(ks -> ks.getManifestEntries().stream())
+                            .collect(Collectors.toList());
+                    parallelHashService.hashAndPopulate(manifestEntries).join();
                 }
             }
 

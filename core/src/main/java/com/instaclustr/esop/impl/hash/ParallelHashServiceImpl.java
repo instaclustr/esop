@@ -1,8 +1,8 @@
 package com.instaclustr.esop.impl.hash;
 
+import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
-import java.util.stream.Stream;
 
 import com.instaclustr.esop.impl.ManifestEntry;
 import org.slf4j.Logger;
@@ -18,11 +18,9 @@ public class ParallelHashServiceImpl extends HashServiceImpl implements Parallel
     }
 
     @Override
-    public ForkJoinTask<?> hashAndPopulate(final Stream<ManifestEntry> manifestEntries) {
+    public ForkJoinTask<?> hashAndPopulate(final List<ManifestEntry> manifestEntries) {
         logger.info("Starting parallel hashing of manifest entries using {} threads.", forkJoinPool.getParallelism());
-        return forkJoinPool.submit(() -> manifestEntries.parallel().forEach(entry -> {
-            entry.hash = hash(entry);
-        }));
+        return forkJoinPool.submit(() -> manifestEntries.parallelStream().forEach(entry -> entry.hash = hash(entry)));
     }
 
     @Override
