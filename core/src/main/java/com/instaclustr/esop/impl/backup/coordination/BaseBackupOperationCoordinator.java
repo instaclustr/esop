@@ -131,17 +131,6 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
 
             final Snapshots snapshots = Snapshots.parse(request.dataDirs, request.snapshotTag);
 
-            if (!snapshots.isEmpty()) {
-                try (ParallelHashService parallelHashService = new ParallelHashServiceImpl(hashSpec, request.concurrentConnections)) {
-                    List<ManifestEntry> manifestEntries = snapshots.getSnapshots().values()
-                            .stream()
-                            .flatMap(v -> v.getKeyspaces().values().stream())
-                            .flatMap(ks -> ks.getManifestEntries().stream())
-                            .collect(Collectors.toList());
-                    parallelHashService.hashAndPopulate(manifestEntries).join();
-                }
-            }
-
             final Optional<Snapshot> snapshot = snapshots.get(request.snapshotTag);
 
             if (!snapshot.isPresent()) {
@@ -152,6 +141,11 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
 
             manifest.setSchemaVersion(request.schemaVersion);
             manifest.setTokens(tokens);
+
+            // Compute hashes and populate it to manifest entries
+            try (ParallelHashService parallelHashService = new ParallelHashServiceImpl(hashSpec, request.concurrentConnections)) {
+                parallelHashService.hashAndPopulate(manifest.getManifestEntries(false)).join();
+            }
 
             // manifest
             final Path localManifestPath = getLocalManifestPath(request.snapshotTag);
