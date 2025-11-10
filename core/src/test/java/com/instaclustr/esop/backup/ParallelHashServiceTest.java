@@ -5,10 +5,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 
 import com.instaclustr.esop.impl.ManifestEntry;
+import com.instaclustr.esop.impl.hash.HashService;
 import com.instaclustr.esop.impl.hash.HashService.HashingException;
 import com.instaclustr.esop.impl.hash.HashSpec;
 import com.instaclustr.esop.impl.hash.ParallelHashService;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -83,42 +85,31 @@ public class ParallelHashServiceTest {
             parallelHashService.hashAndPopulate(testManifestEntries).join();
 
             // Now verify all entries
-            parallelHashService.verifyAll(testManifestEntries, (entry, exception) -> {
-                fail("Verification should not fail for entry: " + entry.localFile, exception);
-            }).join();
+            parallelHashService.verifyAll(testManifestEntries);
         } catch (Exception e) {
-            fail("Should not throw exception during initialization of ParallelHashService", e);
+            fail("Should not throw", e);
         }
     }
 
     @Test
     public void testVerifyAllExceptionDuringExecution() {
-        try (ParallelHashService parallelHashService = new ParallelHashServiceImpl(new HashSpec(HashSpec.HashAlgorithm.XXHASH64), THREAD_COUNT)) {
+        ForkJoinPool forkJoinPool = new ForkJoinPool(THREAD_COUNT);
+
+        try (ParallelHashService parallelHashService = new ParallelHashServiceImpl(new HashSpec(HashSpec.HashAlgorithm.XXHASH64), forkJoinPool)) {
 
             // First, hash and populate the entries
             parallelHashService.hashAndPopulate(testManifestEntries).join();
             // Create faulty manifest entries
             List<ManifestEntry> faultyManifests = faultyManifestEntriesOf(testManifestEntries);
-            List<ManifestEntry> failedEntries = new ArrayList<>();
 
             // Now verify all entries
-            parallelHashService.verifyAll(faultyManifests, (entry, exception) -> {
-                failedEntries.add(entry);
-            }).join();
+            assertThrowsExactly(HashService.HashVerificationException.class, () -> {
+                parallelHashService.verifyAll(faultyManifests);
+            });
 
-            // Ensure that all faulty entries failed verification
-            assertTrue(faultyManifests.size() > 1);
-            assertEquals(faultyManifests.size(), failedEntries.size());
-
-            Set<Path> faultyManifestsLocalFilePaths = faultyManifests.stream()
-                    .map(m -> m.localFile)
-                    .collect(Collectors.toSet());
-
-            for (ManifestEntry failedEntry : failedEntries) {
-                assertTrue(faultyManifestsLocalFilePaths.contains(failedEntry.localFile),
-                        "Failed entry should be from the faulty manifests");
-            }
-        } catch (Exception e) {
+            assertTrue(forkJoinPool.getQueuedTaskCount() < 1, "ForkJoinPool should have no queued tasks after verification failure");
+        }
+        catch (Exception e) {
             fail("Should not throw exception during initialization of ParallelHashService", e);
         }
     }

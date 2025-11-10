@@ -507,8 +507,10 @@ public abstract class RestorationPhase {
 
                 final DataVerification dataVerification = new DataVerification(ctxt).verify(manifest, databaseEntitiesToVerify);
                 if (dataVerification.hasErrors()) {
-                    throw new RestorationPhaseException("Some local files were corrupted or they are missing, please consult the logs to see the details.");
+                    throw new RestorationPhaseException("Some local files were corrupted or they are missing, "
+                            + "please consult the logs to see the details" + dataVerification.toString());
                 }
+
 
                 final List<Path> downloadedFiles = CassandraData.list(ctxt.operation.request.importing.sourceDir);
                 final PathSSTableClassifier pathSSTableClassifier = new PathSSTableClassifier(ctxt.operation.request);
@@ -717,14 +719,14 @@ public abstract class RestorationPhase {
 
         private final RestorationContext ctxt;
         public final List<String> nonExistingFiles = new ArrayList<>();
-        public final List<String> corruptedFiles = new ArrayList<>();
+        public Throwable exceptionDuringVerification;
 
         public DataVerification(final RestorationContext ctxt) {
             this.ctxt = ctxt;
         }
 
         public boolean hasErrors() {
-            return !nonExistingFiles.isEmpty() || !corruptedFiles.isEmpty();
+            return !nonExistingFiles.isEmpty() || exceptionDuringVerification != null;
         }
 
         public DataVerification verify(final Manifest manifest, final DatabaseEntities entities) {
@@ -743,10 +745,11 @@ public abstract class RestorationPhase {
                 }
             }
 
-            ctxt.hashService.verifyAll(entriesToVerify, (entry, throwable) -> {
-                logger.error("Exception occurred during manifest {} verification {}", entry.localFile.toAbsolutePath(), throwable.getMessage());
-                corruptedFiles.add(entry.localFile.toString());
-            }).join();
+            try {
+                ctxt.hashService.verifyAll(entriesToVerify);
+            } catch (Exception e) {
+                exceptionDuringVerification = e;
+            }
 
             return this;
         }
@@ -755,7 +758,7 @@ public abstract class RestorationPhase {
         public String toString() {
             return MoreObjects.toStringHelper(this)
                               .add("nonExistingFiles", nonExistingFiles)
-                              .add("corruptedFiles", corruptedFiles)
+                              .add("exceptionDuringVerification", exceptionDuringVerification)
                               .toString();
         }
     }

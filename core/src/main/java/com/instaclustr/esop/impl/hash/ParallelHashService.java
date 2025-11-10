@@ -17,11 +17,7 @@ public interface ParallelHashService extends HashService, AutoCloseable {
     ForkJoinTask<?> hashAndPopulate(List<ManifestEntry> manifestEntries);
 
     /**
-     * Verifies all manifest entries in parallel, invoking the provided onFailure callback for any failures.
+     * Verifies all manifest entries in parallel, if verification of any ManifestEntry fails it stops left submitted verifications.
      */
-    ForkJoinTask<?> verifyAll(final List<ManifestEntry> manifestEntries, OnFailure onFailure);
-
-    interface OnFailure {
-        void accept(ManifestEntry entry, Throwable throwable);
-    }
+    void verifyAll(final List<ManifestEntry> manifestEntries) throws HashVerificationException;
 }
