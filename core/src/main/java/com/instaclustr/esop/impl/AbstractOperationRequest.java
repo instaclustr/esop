@@ -47,7 +47,7 @@ public abstract class AbstractOperationRequest extends OperationRequest {
     @JsonProperty("retry")
     public RetrySpec retry = new RetrySpec();
 
-    @Option(names = {"--cc", "--concurrent-connections"},
+    @Option(names = {"--cc", "--concurrent-connections", "--parallelism"},
             description = "Number of files (or file parts) to download / upload / hash concurrently. Higher values will increase throughput. Default is 50% of available CPUs."
     )
     @JsonProperty("concurrentConnections")
@@ -97,6 +97,8 @@ public abstract class AbstractOperationRequest extends OperationRequest {
         if (storageProviders != null && !storageProviders.contains(storageLocation.storageProvider)) {
             throw new IllegalStateException(format("Available storage providers: %s", Arrays.toString(storageProviders.toArray())));
         }
+
+        validateConcurrentConnections();
     }
 
     /**
@@ -104,5 +106,16 @@ public abstract class AbstractOperationRequest extends OperationRequest {
      */
     private static int getDefaultConcurrentConnections() {
         return Runtime.getRuntime().availableProcessors() / 2;
+    }
+
+    private void validateConcurrentConnections() {
+        if (concurrentConnections <= 0) {
+            throw new IllegalStateException("--parallelism must be greater than 0");
+        }
+
+        if (concurrentConnections > Runtime.getRuntime().availableProcessors()) {
+            throw new IllegalStateException("--parallelism value cannot be greater than number of available processors: "
+                + Runtime.getRuntime().availableProcessors());
+        }
     }
 }
