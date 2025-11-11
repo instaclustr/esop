@@ -98,7 +98,14 @@ public abstract class AbstractOperationRequest extends OperationRequest {
             throw new IllegalStateException(format("Available storage providers: %s", Arrays.toString(storageProviders.toArray())));
         }
 
-        validateConcurrentConnections();
+        if (concurrentConnections <= 0) {
+            throw new IllegalStateException("--parallelism must be greater than 0");
+        }
+
+        if (concurrentConnections > Runtime.getRuntime().availableProcessors()) {
+            throw new IllegalStateException("--parallelism value cannot be greater than number of available processors: "
+                    + Runtime.getRuntime().availableProcessors());
+        }
     }
 
     /**
@@ -106,16 +113,5 @@ public abstract class AbstractOperationRequest extends OperationRequest {
      */
     private static int getDefaultConcurrentConnections() {
         return Runtime.getRuntime().availableProcessors() / 2;
-    }
-
-    private void validateConcurrentConnections() {
-        if (concurrentConnections <= 0) {
-            throw new IllegalStateException("--parallelism must be greater than 0");
-        }
-
-        if (concurrentConnections > Runtime.getRuntime().availableProcessors()) {
-            throw new IllegalStateException("--parallelism value cannot be greater than number of available processors: "
-                + Runtime.getRuntime().availableProcessors());
-        }
     }
 }
