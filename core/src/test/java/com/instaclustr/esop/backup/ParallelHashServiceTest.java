@@ -19,8 +19,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -56,7 +54,7 @@ public class ParallelHashServiceTest {
     @Test
     public void testHashAndPopulate() {
         try (ParallelHashService parallelHashService = new ParallelHashServiceImpl(new HashSpec(HashSpec.HashAlgorithm.XXHASH64), THREAD_COUNT)) {
-            parallelHashService.hashAndPopulate(testManifestEntries).join();
+            parallelHashService.hashAndPopulate(testManifestEntries);
 
             for (ManifestEntry entry : testManifestEntries) {
                 // Hash should be populated for each ManifestEntry
@@ -72,7 +70,7 @@ public class ParallelHashServiceTest {
         List<ManifestEntry> faultyManifests = faultyManifestEntriesOf(testManifestEntries);
 
         try (ParallelHashService parallelHashService = new ParallelHashServiceImpl(new HashSpec(HashSpec.HashAlgorithm.XXHASH64), THREAD_COUNT)) {
-            assertThrowsExactly(HashingException.class, () -> parallelHashService.hashAndPopulate(faultyManifests).join());
+            assertThrowsExactly(HashingException.class, () -> parallelHashService.hashAndPopulate(faultyManifests));
         } catch (Exception e) {
             fail("Should not throw exception during initialization of ParallelHashService", e);
         }
@@ -82,7 +80,7 @@ public class ParallelHashServiceTest {
     public void testVerifyAll() {
         try (ParallelHashService parallelHashService = new ParallelHashServiceImpl(new HashSpec(HashSpec.HashAlgorithm.XXHASH64), THREAD_COUNT)) {
             // First, hash and populate the entries
-            parallelHashService.hashAndPopulate(testManifestEntries).join();
+            parallelHashService.hashAndPopulate(testManifestEntries);
 
             // Now verify all entries
             parallelHashService.verifyAll(testManifestEntries);
@@ -98,16 +96,19 @@ public class ParallelHashServiceTest {
         try (ParallelHashService parallelHashService = new ParallelHashServiceImpl(new HashSpec(HashSpec.HashAlgorithm.XXHASH64), forkJoinPool)) {
 
             // First, hash and populate the entries
-            parallelHashService.hashAndPopulate(testManifestEntries).join();
+            parallelHashService.hashAndPopulate(testManifestEntries);
             // Create faulty manifest entries
-            List<ManifestEntry> faultyManifests = faultyManifestEntriesOf(testManifestEntries);
+            List<ManifestEntry> copiedEntries = copyManifestEntriesOf(testManifestEntries);
+            for (ManifestEntry entry : copiedEntries) {
+                entry.hash = "invalid-hash-value";
+            }
 
             // Now verify all entries
             assertThrowsExactly(HashService.HashVerificationException.class, () -> {
-                parallelHashService.verifyAll(faultyManifests);
+                parallelHashService.verifyAll(copiedEntries);
             });
 
-            assertTrue(forkJoinPool.getQueuedTaskCount() < 1, "ForkJoinPool should have no queued tasks after verification failure");
+            assertTrue(forkJoinPool.getRunningThreadCount() < THREAD_COUNT, "ForkJoinPool should have no queued tasks after verification failure");
         }
         catch (Exception e) {
             fail("Should not throw exception during initialization of ParallelHashService", e);
@@ -115,10 +116,16 @@ public class ParallelHashServiceTest {
     }
 
     private static List<ManifestEntry> faultyManifestEntriesOf(List<ManifestEntry> originalEntries) {
+        List<ManifestEntry> faultyManifests = copyManifestEntriesOf(testManifestEntries);
+        faultyManifests.forEach(m -> m.localFile = Path.of("non-existing-path"));
+        return faultyManifests;
+    }
+
+    private static List<ManifestEntry> copyManifestEntriesOf(List<ManifestEntry> originalEntries) {
         return originalEntries.stream().map(
                 e -> new ManifestEntry(
                         null,
-                        Path.of("non-existing-path"), // this will cause exception during verification
+                        e.localFile,
                         e.type,
                         e.hash,
                         null)

@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Provider;
@@ -144,7 +143,7 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
 
             // Compute hashes and populate it to manifest entries
             try (ParallelHashService parallelHashService = new ParallelHashServiceImpl(hashSpec, request.concurrentConnections)) {
-                parallelHashService.hashAndPopulate(manifest.getManifestEntries(false)).join();
+                parallelHashService.hashAndPopulate(manifest.getManifestEntries(false));
             }
 
             // manifest

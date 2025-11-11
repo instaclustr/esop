@@ -48,6 +48,17 @@ public class HashSpec {
         String getHash(InputStream is) throws Exception;
 
         String getHash(byte[] digest) throws Exception;
+
+        /**
+         * Throws InterruptedException in case if we the current thread is interrupted.
+         * Useful for long-running hashing operations when we want to be able to cancel them.
+         * TODO: probably better to handle disk io in the HashService itself? And this Hasher interface will be just a wrapper over hashing algorithms.
+         */
+        default void throwIfInterrupted() throws InterruptedException {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException("Hashing was interrupted");
+            }
+        }
     }
 
     private static class SHAHasher implements Hasher {
@@ -67,6 +78,7 @@ public class HashSpec {
 
             // Read file data and update in message digest
             while ((bytesCount = is.read(byteArray)) != -1) {
+                throwIfInterrupted();
                 digest.update(byteArray, 0, bytesCount);
             }
 
@@ -109,6 +121,7 @@ public class HashSpec {
             Checksum checksum = new CRC32();
 
             while ((bytesCount = is.read(byteArray)) != -1) {
+                throwIfInterrupted();
                 checksum.update(byteArray, 0, bytesCount);
             }
 
@@ -133,6 +146,7 @@ public class HashSpec {
                 int bytesCount = 0;
 
                 while ((bytesCount = is.read(byteArray)) != -1) {
+                    throwIfInterrupted();
                     xxHash64.update(byteArray, 0, bytesCount);
                 }
 

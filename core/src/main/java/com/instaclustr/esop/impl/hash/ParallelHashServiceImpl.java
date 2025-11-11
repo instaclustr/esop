@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinTask;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.instaclustr.esop.impl.ManifestEntry;
@@ -32,33 +31,44 @@ public class ParallelHashServiceImpl extends HashServiceImpl implements Parallel
     }
 
     @Override
-    public ForkJoinTask<?> hashAndPopulate(final List<ManifestEntry> manifestEntries) {
+    public void hashAndPopulate(final List<ManifestEntry> manifestEntries) {
         logger.info("Starting parallel hashing of manifest entries using {} threads.", forkJoinPool.getParallelism());
-        return forkJoinPool.submit(() -> manifestEntries.parallelStream().forEach(entry -> entry.hash = hash(entry)));
+        try {
+            forkJoinPool.submit(() -> manifestEntries.parallelStream().forEach(entry -> entry.hash = hash(entry))).get();
+        } catch (Exception e) {
+            throw new HashingException("Hashing failed for one or more manifest entries.", e);
+        }
     }
 
+    @Override
     public void verifyAll(final List<ManifestEntry> manifestEntries) throws HashVerificationException {
         logger.info("Starting parallel verification of manifest entries using {} threads.", forkJoinPool.getParallelism());
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (final ManifestEntry manifestEntry : manifestEntries) {
-            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> verify(manifestEntry), forkJoinPool);
+            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+                try {
+                    verify(manifestEntry);
+                } catch (Exception e) {
+                    logger.error("Hash verification failed, reason: {}", manifestEntry.localFile, e);
+                    // Cancel all other futures if one fails. Hashing operations should be interruptable in case if we want to stop them prematurely.
+                    cancelAll(futures);
+                    throw e;
+                }
+            }, forkJoinPool);
             futures.add(future);
         }
 
         try {
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .exceptionally(ex -> {
-                        for (CompletableFuture<Void> future : futures) {
-                            future.cancel(true);
-                        }
-                        throw new HashVerificationException("Error during parallel verification of manifest entries.", ex);
-                    })
-                    .join();
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         } catch (Exception e) {
-            throw e.getCause() instanceof HashVerificationException
-                    ? (HashVerificationException) e.getCause()
-                    : new HashVerificationException("Error during parallel verification of manifest entries.", e);
+            throw new HashVerificationException("Hash verification failed for one or more manifest entries.", e);
+        }
+    }
+
+    private static void cancelAll(List<CompletableFuture<Void>> futures) {
+        for (CompletableFuture<Void> future : futures) {
+            future.cancel(true);
         }
     }
 
