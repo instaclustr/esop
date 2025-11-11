@@ -11,6 +11,10 @@ import com.instaclustr.esop.impl.ManifestEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Implementation of ParallelHashService that uses ForkJoinPool for parallel hashing and verification.
+ * Implements AutoCloseable to ensure proper shutdown of the ForkJoinPool.
+ */
 public class ParallelHashServiceImpl extends HashServiceImpl implements ParallelHashService, AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(ParallelHashServiceImpl.class);
     private final ForkJoinPool forkJoinPool;
@@ -57,24 +61,6 @@ public class ParallelHashServiceImpl extends HashServiceImpl implements Parallel
                     : new HashVerificationException("Error during parallel verification of manifest entries.", e);
         }
     }
-
-    //     public void verifyAll(final List<ManifestEntry> manifestEntries, OnFailure onFailure) {
-    //        logger.info("Starting parallel verification of manifest entries using {} threads.", forkJoinPool.getParallelism());
-    //        try {
-    //            forkJoinPool.submit(() -> manifestEntries.parallelStream()
-    //                    .forEach(entry -> {
-    //                        try {
-    //                            verify(entry);
-    //                        } catch (Exception e) {
-    //                            forkJoinPool.shutdownNow();
-    //                            throw e;
-    //                        }
-    //                    }))
-    //                    .join();
-    //        } catch (Exception e) {
-    //            throw new HashVerificationException("Error during parallel verification of manifest entries.", e);
-    //        }
-    //    }
 
     @Override
     public void close() {
