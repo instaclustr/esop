@@ -1,8 +1,10 @@
 package com.instaclustr.esop.impl.hash;
 
-import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
@@ -19,7 +21,7 @@ import static java.lang.String.format;
 public class HashSpec {
 
     // Chunk size for reading files for hashing
-    private static int CHUNK_SIZE = 4096;
+    private static final int CHUNK_SIZE = 4096;
 
     public HashSpec(final HashAlgorithm algorithm) {
         this.algorithm = algorithm;
@@ -30,9 +32,9 @@ public class HashSpec {
     }
 
     @Option(names = {"--hash-algorithm"},
-        description = "Algorithm to use for hashing of SSTables and files to upload / download. For skipping, use NONE.",
-        defaultValue = "SHA-256",
-        converter = HashAlgorithmConverter.class)
+            description = "Algorithm to use for hashing of SSTables and files to upload / download. For skipping, use NONE.",
+            defaultValue = "SHA-256",
+            converter = HashAlgorithmConverter.class)
     public HashAlgorithm algorithm;
 
     private static class HashAlgorithmConverter implements CommandLine.ITypeConverter<HashAlgorithm> {
@@ -45,46 +47,35 @@ public class HashSpec {
 
     public interface Hasher {
 
-        String getHash(InputStream is) throws Exception;
-
-        String getHash(byte[] digest) throws Exception;
-
-        /**
-         * Throws InterruptedException in case if we the current thread is interrupted.
-         * Useful for long-running hashing operations when we want to be able to cancel them.
-         * TODO: probably better to handle disk io in the HashService itself? And this Hasher interface will be just a wrapper over hashing algorithms.
-         */
-        default void throwIfInterrupted() throws InterruptedException {
-            if (Thread.currentThread().isInterrupted()) {
-                throw new InterruptedException("Hashing was interrupted");
+        default void doHashInternal(ReadableByteChannel ch, BiConsumer<ByteBuffer, Integer> consumer) throws Exception
+        {
+            ByteBuffer bb = ByteBuffer.allocate(CHUNK_SIZE);
+            int bytesRead = 0;
+            while ((bytesRead = ch.read(bb)) != -1) {
+                bb.flip();
+                consumer.accept(bb, bytesRead);
+                bb.clear();
             }
         }
+
+        String getHash(ReadableByteChannel ch) throws Exception;
+
+        String getHash(byte[] digest) throws Exception;
     }
 
     private static class SHAHasher implements Hasher {
         private final String algorithm;
+
         public SHAHasher(String algorithm) {
             this.algorithm = algorithm;
         }
 
         @Override
-        public String getHash(InputStream is) throws Exception
+        public String getHash(ReadableByteChannel ch) throws Exception
         {
             final MessageDigest digest = MessageDigest.getInstance(algorithm);
-
-            // Create byte array to read data in chunks
-            byte[] byteArray = new byte[CHUNK_SIZE];
-            int bytesCount = 0;
-
-            // Read file data and update in message digest
-            while ((bytesCount = is.read(byteArray)) != -1) {
-                throwIfInterrupted();
-                digest.update(byteArray, 0, bytesCount);
-            }
-
-            byte[] bytes = digest.digest();
-
-            return getHash(bytes);
+            doHashInternal(ch, (buffer, ignore) -> digest.update(buffer));
+            return getHash(digest.digest());
         }
 
         @Override
@@ -101,7 +92,7 @@ public class HashSpec {
 
     public static class NoOp implements Hasher {
         @Override
-        public String getHash(InputStream is) throws Exception {
+        public String getHash(ReadableByteChannel ch) throws Exception {
             return null;
         }
 
@@ -113,18 +104,10 @@ public class HashSpec {
 
     public static class CRCHasher implements Hasher {
         @Override
-        public String getHash(InputStream is) throws Exception
+        public String getHash(ReadableByteChannel ch) throws Exception
         {
-            byte[] byteArray = new byte[CHUNK_SIZE];
-            int bytesCount = 0;
-
             Checksum checksum = new CRC32();
-
-            while ((bytesCount = is.read(byteArray)) != -1) {
-                throwIfInterrupted();
-                checksum.update(byteArray, 0, bytesCount);
-            }
-
+            doHashInternal(ch, (buffer, ignored) -> checksum.update(buffer));
             return Long.toString(checksum.getValue());
         }
 
@@ -140,16 +123,9 @@ public class HashSpec {
     public static class XXHasher implements Hasher {
 
         @Override
-        public String getHash(final InputStream is) throws Exception {
+        public String getHash(ReadableByteChannel ch) throws Exception {
             try (StreamingXXHash64 xxHash64 = XXHashFactory.fastestJavaInstance().newStreamingHash64(0)) {
-                byte[] byteArray = new byte[CHUNK_SIZE];
-                int bytesCount = 0;
-
-                while ((bytesCount = is.read(byteArray)) != -1) {
-                    throwIfInterrupted();
-                    xxHash64.update(byteArray, 0, bytesCount);
-                }
-
+                doHashInternal(ch, (buffer, bytesRead) -> xxHash64.update(buffer.array(), 0, bytesRead));
                 return Long.toString(xxHash64.getValue());
             }
         }
@@ -198,9 +174,9 @@ public class HashSpec {
             }
 
             logger.info(format("Unable to parse hash algorithm for value '%s', possible algorithms: %s, returning default algorithm %s",
-                               value,
-                               Arrays.toString(HashAlgorithm.values()),
-                               HashAlgorithm.DEFAULT_ALGORITHM));
+                    value,
+                    Arrays.toString(HashAlgorithm.values()),
+                    HashAlgorithm.DEFAULT_ALGORITHM));
 
             return HashAlgorithm.DEFAULT_ALGORITHM;
         }
