@@ -24,8 +24,13 @@
             testFilePath = Path.of(resourceUrl.toURI().getPath()).toAbsolutePath();
         }
 
+        // Generated with: sha256sum
         private static final String EXPECTED_SHA256_HASH = "01d8740e8d0b16d0468324a7952f483c9f360529966b29b6cd1bf81ca2988c5b";
+        // Generated with: xxhsum -H1 which is xxhash64
         private static final String EXPECTED_XXHASH64_HASH = "ce26d6e69ac4d755";
+        // Generated with: echo $((16#$(crc32 ./core/src/test/resources/hash/hash-test-file-12K)))\
+        // to install crc32 tool: apt install libarchive-zip-perl
+        private static final String EXPECTED_CRC32_HASH = "2657330654";
 
         @Test
         public void testHashing_DefaultAlgorithm() {
@@ -41,6 +46,12 @@
         public void testHashing_xxHash64() {
             testHashing(new HashSpec(HashSpec.HashAlgorithm.XXHASH64), EXPECTED_XXHASH64_HASH);
         }
+
+        @Test
+        public void testHashing_Crc32() {
+            testHashing(new HashSpec(HashSpec.HashAlgorithm.CRC), EXPECTED_CRC32_HASH);
+        }
+
 
         @Test
         public void testHashing_None() {
