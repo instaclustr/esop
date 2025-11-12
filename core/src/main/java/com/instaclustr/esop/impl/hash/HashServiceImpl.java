@@ -1,9 +1,9 @@
 package com.instaclustr.esop.impl.hash;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.nio.channels.FileChannel;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 import com.google.inject.Inject;
 import com.instaclustr.esop.impl.ManifestEntry;
@@ -87,9 +87,9 @@ public class HashServiceImpl implements HashService {
     {
         if (hashSpec.algorithm == HashSpec.HashAlgorithm.NONE)
             return null;
-        try (final InputStream is = new FileInputStream(file)) {
+        try (final FileChannel ch = FileChannel.open(file.toPath(), StandardOpenOption.READ)) {
             logger.info("Getting {} hash of {} ", hashSpec.algorithm.toString(), file.getAbsolutePath());
-            return hashSpec.algorithm.getHasher().getHash(is);
+            return hashSpec.algorithm.getHasher().getHash(ch);
         }
     }
 }

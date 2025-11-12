@@ -53,7 +53,7 @@ public class CommitLogBackupApplication implements Runnable {
         List<Module> additionalModules = new ArrayList<>(Esop.getStorageSpecificModules());
         additionalModules.add(new CommitlogBackupModule());
 
-        Esop.init(this, jmxSpec, hashSpec, additionalModules);
+        Esop.init(this, jmxSpec, hashSpec, request, additionalModules);
 
         final Operation<?> operation = operationsService.submitOperationRequest(request);
 

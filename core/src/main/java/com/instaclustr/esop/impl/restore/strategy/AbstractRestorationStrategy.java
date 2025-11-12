@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Provider;
 import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.guice.BucketServiceFactory;
-import com.instaclustr.esop.impl.hash.HashService;
+import com.instaclustr.esop.impl.hash.ParallelHashService;
 import com.instaclustr.esop.impl.restore.DownloadTracker;
 import com.instaclustr.esop.impl.restore.RestorationPhase;
 import com.instaclustr.esop.impl.restore.RestorationPhase.ClusterHealthCheckPhase;
@@ -32,14 +32,14 @@ public abstract class AbstractRestorationStrategy implements RestorationStrategy
     protected final ObjectMapper objectMapper;
     protected final DownloadTracker downloadTracker;
     protected final Map<String, BucketServiceFactory> bucketServiceFactoryMap;
-    protected final HashService hashService;
+    protected final ParallelHashService hashService;
 
     public AbstractRestorationStrategy(final CassandraJMXService cassandraJMXService,
                                        final Provider<CassandraVersion> cassandraVersion,
                                        final ObjectMapper objectMapper,
                                        final DownloadTracker downloadTracker,
                                        final Map<String, BucketServiceFactory> bucketServiceFactoryMap,
-                                       final HashService hashService) {
+                                       final ParallelHashService hashService) {
         this.cassandraJMXService = cassandraJMXService;
         this.cassandraVersion = cassandraVersion;
         this.objectMapper = objectMapper;

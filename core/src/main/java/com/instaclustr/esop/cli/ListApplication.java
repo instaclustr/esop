@@ -54,7 +54,7 @@ public class ListApplication implements Runnable {
         List<Module> additionalModules = new ArrayList<>(Esop.getStorageSpecificModules());
         additionalModules.add(new ListModule());
 
-        Esop.init(this, jmxSpec, new HashSpec(), additionalModules);
+        Esop.init(this, jmxSpec, new HashSpec(), request, additionalModules);
 
         final Operation<?> operation = operationsService.submitOperationRequest(request);
 

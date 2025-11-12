@@ -41,7 +41,6 @@ public class SSTableUtils {
     private static final int SSTABLE_PREFIX_IDX = 1;
     private static final int SSTABLE_GENERATION_IDX = 2;
     private static final Pattern CHECKSUM_RE = Pattern.compile("^([a-zA-Z0-9]+).*");
-    private static final HashService hashService = new HashServiceImpl(new HashSpec());
 
     public static String sstableHash(Path path) throws IOException {
         final Matcher matcher = SSTABLE_RE.matcher(path.getFileName().toString());
@@ -102,13 +101,10 @@ public class SSTableUtils {
     public static Map<String, List<ManifestEntry>> getSSTables(String keyspace,
                                                                String table,
                                                                Path snapshotDirectory,
-                                                               Path tableBackupPath,
-                                                               HashSpec hashSpec) throws IOException {
+                                                               Path tableBackupPath) throws IOException {
         if (!Files.exists(snapshotDirectory)) {
             return Collections.emptyMap();
         }
-
-        final HashService hashService = new HashServiceImpl(hashSpec);
 
         return Files.list(snapshotDirectory)
                     .flatMap(path -> {
@@ -148,12 +144,11 @@ public class SSTableUtils {
                                 }
 
                                 backupPath = backupPath.resolve(hash).resolve(manifestComponentFileName.getFileName());
-                                final String hashOfFile = hashService.hash(sstableComponent);
 
                                 entries.add(new ManifestEntry(backupPath,
                                                               sstableComponent,
                                                               ManifestEntry.Type.FILE,
-                                                              hashOfFile,
+                                                              null,
                                                               new KeyspaceTable(keyspace, table),
                                                               null));
                             }

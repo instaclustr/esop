@@ -46,8 +46,6 @@ import static java.util.stream.Collectors.toSet;
 
 public class Snapshots implements Cloneable {
 
-    public static HashSpec hashSpec;
-
     private final Map<String, Snapshot> snapshots = new HashMap<>();
 
     public static Snapshots of(Map<String, Snapshot> snapshots) {
@@ -569,7 +567,7 @@ public class Snapshots implements Cloneable {
                     final Path tablePath = Paths.get("data").resolve(Paths.get(keyspace, table));
 
                     for (final Path path : value) {
-                        tb.sstables.putAll(SSTableUtils.getSSTables(keyspace, table, path, tablePath, Snapshots.hashSpec));
+                        tb.sstables.putAll(SSTableUtils.getSSTables(keyspace, table, path, tablePath));
                     }
 
                     final Optional<Path> schemaPath = value.stream().map(p -> p.resolve("schema.cql")).filter(Files::exists).findFirst();
@@ -750,10 +748,6 @@ public class Snapshots implements Cloneable {
     }
 
     public static synchronized Snapshots parse(final Path cassandraDir, final String snapshot) throws Exception {
-        if (Snapshots.hashSpec == null) {
-            Snapshots.hashSpec = new HashSpec();
-        }
-
         final Snapshots snapshots = new Snapshots();
         final SnapshotLister lister = new SnapshotLister();
         Files.walkFileTree(cassandraDir, lister);

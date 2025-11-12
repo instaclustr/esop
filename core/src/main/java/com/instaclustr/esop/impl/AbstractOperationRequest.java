@@ -22,7 +22,7 @@ public abstract class AbstractOperationRequest extends OperationRequest {
         converter = StorageLocationTypeConverter.class,
         description = "Location to which files will be backed up or restored from, in form " +
             "cloudProvider://bucketName/clusterId/datacenterId/nodeId or file:///some/path/bucketName/clusterId/datacenterId/nodeId. " +
-            "'cloudProvider' is one of 's3', 'oracle', 'ceph', 'minio', 'azure' or 'gcp'.",
+            "'cloudProvider' is one of 's3', 'azure' or 'gcp'.",
         required = true)
     @JsonSerialize(using = StorageLocationSerializer.class)
     @JsonDeserialize(using = StorageLocationDeserializer.class)
@@ -47,9 +47,8 @@ public abstract class AbstractOperationRequest extends OperationRequest {
     @JsonProperty("retry")
     public RetrySpec retry = new RetrySpec();
 
-    @Option(names = {"--cc", "--concurrent-connections"},
-            description = "Number of files (or file parts) to download concurrently. Higher values will increase throughput. Default is 10.",
-            defaultValue = "10"
+    @Option(names = {"--cc", "--concurrent-connections", "--parallelism"},
+            description = "Number of files (or file parts) to download / upload / hash concurrently. Higher values will increase throughput. Default is 50% of available CPUs."
     )
     @JsonProperty("concurrentConnections")
     public Integer concurrentConnections;
@@ -60,6 +59,8 @@ public abstract class AbstractOperationRequest extends OperationRequest {
 
     public AbstractOperationRequest() {
         // for picocli
+        if (concurrentConnections == null)
+            concurrentConnections = getDefaultConcurrentConnections();
     }
 
     public AbstractOperationRequest(final StorageLocation storageLocation,
@@ -74,7 +75,7 @@ public abstract class AbstractOperationRequest extends OperationRequest {
         this.skipBucketVerification = skipBucketVerification;
         this.proxySettings = proxySettings;
         this.retry = retry == null ? new RetrySpec() : retry;
-        this.concurrentConnections = concurrentConnections == null ? 10 : concurrentConnections;
+        this.concurrentConnections = concurrentConnections == null ? getDefaultConcurrentConnections() : concurrentConnections;
         this.kmsKeyId = kmsKeyId;
     }
 
@@ -96,5 +97,21 @@ public abstract class AbstractOperationRequest extends OperationRequest {
         if (storageProviders != null && !storageProviders.contains(storageLocation.storageProvider)) {
             throw new IllegalStateException(format("Available storage providers: %s", Arrays.toString(storageProviders.toArray())));
         }
+
+        if (concurrentConnections <= 0) {
+            throw new IllegalStateException("--parallelism must be greater than 0");
+        }
+
+        if (concurrentConnections > Runtime.getRuntime().availableProcessors()) {
+            throw new IllegalStateException("--parallelism value cannot be greater than number of available processors: "
+                    + Runtime.getRuntime().availableProcessors());
+        }
+    }
+
+    /**
+     * Get default number of concurrent connections based on 50% of available processors.
+     */
+    private static int getDefaultConcurrentConnections() {
+        return Runtime.getRuntime().availableProcessors() / 2;
     }
 }

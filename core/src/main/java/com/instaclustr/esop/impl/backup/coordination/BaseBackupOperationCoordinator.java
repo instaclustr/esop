@@ -28,6 +28,8 @@ import com.instaclustr.esop.impl.backup.UploadTracker.UploadUnit;
 import com.instaclustr.esop.impl.backup.coordination.ClearSnapshotOperation.ClearSnapshotOperationRequest;
 import com.instaclustr.esop.impl.backup.coordination.TakeSnapshotOperation.TakeSnapshotOperationRequest;
 import com.instaclustr.esop.impl.hash.HashSpec;
+import com.instaclustr.esop.impl.hash.ParallelHashService;
+import com.instaclustr.esop.impl.hash.ParallelHashServiceImpl;
 import com.instaclustr.esop.impl.interaction.CassandraSchemaVersion;
 import com.instaclustr.esop.impl.interaction.CassandraTokens;
 import com.instaclustr.esop.topology.CassandraClusterTopology;
@@ -126,8 +128,8 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
                                       new TakeSnapshotOperationRequest(request.entities, request.snapshotTag),
                                       cassandraVersionProvider).run0();
 
-            Snapshots.hashSpec = hashSpec;
             final Snapshots snapshots = Snapshots.parse(request.dataDirs, request.snapshotTag);
+
             final Optional<Snapshot> snapshot = snapshots.get(request.snapshotTag);
 
             if (!snapshot.isPresent()) {
@@ -138,6 +140,11 @@ public class BaseBackupOperationCoordinator extends OperationCoordinator<BackupO
 
             manifest.setSchemaVersion(request.schemaVersion);
             manifest.setTokens(tokens);
+
+            // Compute hashes and populate it to manifest entries
+            try (ParallelHashService parallelHashService = new ParallelHashServiceImpl(hashSpec, request.concurrentConnections)) {
+                parallelHashService.hashAndPopulate(manifest.getManifestEntries(false));
+            }
 
             // manifest
             final Path localManifestPath = getLocalManifestPath(request.snapshotTag);

@@ -7,7 +7,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.instaclustr.cassandra.CassandraVersion;
 import com.instaclustr.esop.guice.BucketServiceFactory;
-import com.instaclustr.esop.impl.hash.HashService;
+import com.instaclustr.esop.impl.hash.ParallelHashService;
 import com.instaclustr.esop.impl.restore.DownloadTracker;
 import com.instaclustr.esop.impl.restore.RestorationPhase;
 import com.instaclustr.esop.impl.restore.RestorationPhase.CleaningPhase;
@@ -50,7 +50,7 @@ public class HardlinkingRestorationStrategy extends AbstractRestorationStrategy 
                                           final ObjectMapper objectMapper,
                                           final DownloadTracker downloadTracker,
                                           final Map<String, BucketServiceFactory> bucketServiceFactoryMap,
-                                          final HashService hashService) {
+                                          final ParallelHashService hashService) {
         super(cassandraJMXService, cassandraVersion, objectMapper, downloadTracker, bucketServiceFactoryMap, hashService);
     }
 

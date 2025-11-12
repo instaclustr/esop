@@ -81,7 +81,7 @@ public abstract class AbstractBackupTest {
         add(new RestorationStrategyModule());
         add(new ListModule());
         add(new RemoveBackupModule());
-        add(new HashModule(new HashSpec()));
+        add(new HashModule(new HashSpec(), Runtime.getRuntime().availableProcessors()/2));
 
         try {
             add(new CassandraModule());
