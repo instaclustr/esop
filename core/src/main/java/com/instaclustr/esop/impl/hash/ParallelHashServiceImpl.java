@@ -50,7 +50,7 @@ public class ParallelHashServiceImpl extends HashServiceImpl implements Parallel
                 try {
                     verify(manifestEntry);
                 } catch (Exception e) {
-                    logger.error("Hash verification failed, reason: {}", manifestEntry.localFile, e);
+                    logger.error("Hash verification failed, reason:", e);
                     // Cancel all other futures if one fails. Hashing operations should be interruptable in case if we want to stop them prematurely.
                     cancelAll(futures);
                     throw e;
