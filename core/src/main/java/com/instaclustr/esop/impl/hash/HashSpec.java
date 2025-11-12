@@ -126,7 +126,7 @@ public class HashSpec {
         public String getHash(ReadableByteChannel ch) throws Exception {
             try (StreamingXXHash64 xxHash64 = XXHashFactory.fastestJavaInstance().newStreamingHash64(0)) {
                 doHashInternal(ch, (buffer, bytesRead) -> xxHash64.update(buffer.array(), 0, bytesRead));
-                return Long.toString(xxHash64.getValue());
+                return Long.toHexString(xxHash64.getValue());
             }
         }
 
