@@ -18,6 +18,7 @@ import software.amazon.awssdk.http.apache.ProxyConfiguration;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
+import software.amazon.encryption.s3.CommitmentPolicy;
 import software.amazon.encryption.s3.S3EncryptionClient;
 
 public class S3ClientsFactory {
@@ -105,11 +106,12 @@ public class S3ClientsFactory {
     }
 
     public S3Client getEncryptingClient(S3Client wrappedClient, String kmsKeyId) {
-        return S3EncryptionClient.builder()
+        return S3EncryptionClient.builderV4()
                                  .wrappedClient(wrappedClient)
                                  .kmsKeyId(kmsKeyId)
                                  .enableDelayedAuthenticationMode(true)
                                  .cryptoProvider(PROVIDER)
+                                 .commitmentPolicy(CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT)
                                  .build();
     }
 
