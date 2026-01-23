@@ -1,7 +1,6 @@
 package com.instaclustr.esop.backup.embedded.s3.aws.v2;
 
 import java.io.FileInputStream;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,7 +17,6 @@ import com.instaclustr.esop.s3.aws_v2.S3BucketService;
 import com.instaclustr.esop.s3.aws_v2.S3Restorer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -36,7 +34,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @Tag("s3-test")
 @Tag("cloud-test")
-public class MigrationV3ToV4Test extends AbstractS3UploadDownloadTest {
+public class AwsS3EncryptionLibBackwardCompatibilityTest extends AbstractS3UploadDownloadTest {
     private static final String OBJECT_KEY_1 = "test-object-1";
     private static final String OBJECT_KEY_2 = "test-object-2";
     private static final String TEST_DATA = "some-test-data";
@@ -68,7 +66,7 @@ public class MigrationV3ToV4Test extends AbstractS3UploadDownloadTest {
         // This tests ensure that data encrypted with v3 behavior client can be decrypted with v4 client and vice versa.
         // So, if we had a data encrypted with v3 client before migrating to esop 4.1.0+, we can still read it after migration,
         // and we can also write new data with v4 client that can be read back with v3 behavior client.
-    void migrationTest() throws Exception {
+    void v3Tov4BackwardCompatibilityTest() throws Exception {
         String kmsKeyId = System.getProperty(TEST_ESOP_AWS_KMS_WRAPPING_KEY);
         assumeTrue(kmsKeyId != null, "Cannot continue as " + TEST_ESOP_AWS_KMS_WRAPPING_KEY + " is not set!");
         System.setProperty(AWS_KMS_KEY_ID_PROPERTY, kmsKeyId);

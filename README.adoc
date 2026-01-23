@@ -17,8 +17,8 @@ Esop of version 2.0.0 is not compatible with any Esop of version 1.x.x.
 Esop 2.0.0 has changed the manifest format which is uploaded to a remote
 location hence, as of now, Esop 2.0.0 can not read manifests for versions 1.x.x.
 
-It is recommended all your Esop instances to 4.0.3 version before upgrading them to 4.1.0 version. Esop v4.1.0 contains the
-AWS S3 Client Encryption dependency to v4.0.0 version which is not compatible with versions older than v3.6.0.
+It is recommended all your Esop instances to 4.0.3 version before upgrading them to 4.1.0 version. Esop v4.1.0 depends on the
+AWS S3 Client Encryption v4.0.0 version which is not compatible with versions older than v3.6.0.
 
 Esop is able to perform these operations and has these features:
 
