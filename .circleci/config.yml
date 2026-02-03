@@ -16,7 +16,7 @@ jobs:
             - m2-{{ checksum "pom.xml" }}
             - m2-
 
-      - run: (echo "${google_application_credentials}" > /tmp/gcp.json) && mvn clean install -PsnapshotRepo,rpm,deb,cassandra5 -DoutputDirectory=/tmp/artifacts -Dcassandra4.version=4.1.6 -Dcassandra5.version=5.0.0
+      - run: (echo "${google_application_credentials}" > /tmp/gcp.json) && mvn clean install -PsnapshotRepo,rpm,deb,cassandra5 -DoutputDirectory=/tmp/artifacts -Dcassandra4.version=4.1.10 -Dcassandra5.version=5.0.6 -Dsstable.format=big
 
       - save_cache:
           paths:
@@ -24,7 +24,13 @@ jobs:
           key: m2-{{ checksum "pom.xml" }}
 
       - store_test_results:
-          path: ~/esop/target/surefire-reports
+          path: ~/esop/core/target/surefire-reports
+      - store_test_results:
+          path: ~/esop/azure/target/surefire-reports
+      - store_test_results:
+          path: ~/esop/gcp/target/surefire-reports
+      - store_test_results:
+          path: ~/esop/s3/target/surefire-reports
 
       - store_artifacts:
           path: /tmp/artifacts
