@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -91,9 +92,9 @@ public abstract class AbstractBackupTest {
         add(new OperationsModule());
     }};
 
-    public static final String CASSANDRA_5_VERSION = System.getProperty("cassandra5.version", "5.0.0");
+    public static final String CASSANDRA_5_VERSION = System.getProperty("cassandra5.version", "5.0.6");
 
-    public static final String CASSANDRA_4_VERSION = System.getProperty("cassandra4.version", "4.1.6");
+    public static final String CASSANDRA_4_VERSION = System.getProperty("cassandra4.version", "4.1.10");
 
     // This is number of rows we inserted into Cassandra DB in total
     // we backed up first 6 rows. For the last two rows, they are stored in commit logs.
@@ -1329,17 +1330,29 @@ public abstract class AbstractBackupTest {
     protected Cassandra getCassandra(final Path cassandraHome, final String version, final WorkingDirectoryCustomizer customizer) throws Exception {
         FileUtils.createDirectory(cassandraHome);
 
+        Version parsedVersion = Version.parse(version);
         CassandraBuilder builder = new CassandraBuilder();
-        builder.version(Version.parse(version));
+        builder.version(parsedVersion);
         builder.jvmOptions("-Dcassandra.ring_delay_ms=1000", "-Xms1g", "-Xmx1g");
         builder.workingDirectory(() -> cassandraHome);
-        builder.addConfigProperties(new HashMap<String, Object>() {{
-            put("data_file_directories", new ArrayList<String>() {{
-                add(cassandraHome.toAbsolutePath() + "/data/data");
-                add(cassandraHome.toAbsolutePath() + "/data/data2");
-                add(cassandraHome.toAbsolutePath() + "/data/data3");
+
+
+        Map<String, Object> config = new HashMap<String, Object>() {{
+                put("data_file_directories", new ArrayList<String>() {{
+                    add(cassandraHome.toAbsolutePath() + "/data/data");
+                    add(cassandraHome.toAbsolutePath() + "/data/data2");
+                    add(cassandraHome.toAbsolutePath() + "/data/data3");
+                }});
+            }};
+
+        if (parsedVersion.getMajor() == 5) {
+            config.put("sstable", new HashMap<>() {{
+                put("selected_format", System.getProperty("sstable.format", "big"));
             }});
-        }});
+            config.put("storage_compatibility_mode", "NONE");
+        }
+
+        builder.addConfigProperties(config);
 
         if (customizer != null) {
             builder.workingDirectoryCustomizers(customizer);
