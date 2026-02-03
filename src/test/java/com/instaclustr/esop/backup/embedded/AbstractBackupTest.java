@@ -1348,7 +1348,7 @@ public abstract class AbstractBackupTest {
             }};
 
         if (parsedVersion.getMajor() == 5) {
-            config.put("sstable", new HashMap<>() {{
+            config.put("sstable", new HashMap<String, String>() {{
                 put("selected_format", System.getProperty("sstable.format", "big"));
             }});
             config.put("storage_compatibility_mode", "NONE");
