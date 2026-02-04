@@ -16,7 +16,7 @@ jobs:
             - m2-{{ checksum "pom.xml" }}
             - m2-
 
-      - run: (echo "${google_application_credentials}" > /tmp/gcp.json) && mvn clean install -PsnapshotRepo,rpm,deb,cassandra5 -DoutputDirectory=/tmp/artifacts -Dcassandra4.version=4.1.10 -Dcassandra5.version=5.0.6 -Dsstable.format=big
+      - run: (echo "${google_application_credentials}" > /tmp/gcp.json) && mvn clean install -PsnapshotRepo,rpm,deb,cassandra5 -DoutputDirectory=/tmp/artifacts -Dcassandra4.version=4.1.10 -Dcassandra5.version=5.0.6 -Dsstable.format=bti
 
       - save_cache:
           paths:
