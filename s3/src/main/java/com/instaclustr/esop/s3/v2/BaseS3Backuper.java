@@ -1,8 +1,10 @@
 
 package com.instaclustr.esop.s3.v2;
 
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.time.Duration;
@@ -217,18 +219,119 @@ public class BaseS3Backuper extends Backuper {
                                .build();
     }
 
-    private void uploadFile(S3Client s3Client,
-                            ManifestEntry manifestEntry,
-                            InputStream localFileStream,
-                            RemoteObjectReference objectReference,
-                            Tagging tagging) {
+    private boolean shouldDoMultipartUpload(ManifestEntry manifestEntry)
+    {
+        try
+        {
+            return Files.size(manifestEntry.localFile) != 0;
+        }
+        catch (Throwable t)
+        {
+            throw new RuntimeException("Unable to resolve size of a file: " + manifestEntry.localFile.toAbsolutePath(), t);
+        }
+    }
 
+    private void finishUpload(S3Client s3Client,
+                              ManifestEntry manifestEntry,
+                              RemoteObjectReference objectReference,
+                              Tagging tagging,
+                              String uploadId) throws Throwable
+    {
+
+        MessageDigest sha256 = prepareMessageDigest();
+
+        logger.debug("Waiting for " + objectReference.canonicalPath + " to exist");
+
+        s3Clients.getNonEncryptingClient().waiter().waitUntilObjectExists(HeadObjectRequest.builder()
+                        .bucket(request.storageLocation.bucket)
+                        .key(objectReference.canonicalPath)
+                        .build(),
+                WaiterOverrideConfiguration.builder()
+                        .waitTimeout(Duration.of(1, ChronoUnit.MINUTES))
+                        .build());
+
+        logger.debug("Object under key " + objectReference.canonicalPath + " exists");
+
+        byte[] fullObjectChecksum = sha256.digest();
+        String hexedChecksum = HashSpec.HashAlgorithm.SHA_256.getHasher().getHash(fullObjectChecksum);
+
+        // TODO do we actually need this tag? I don't see it being used anywhere
+        Tag checksumTag = Tag.builder()
+                .key("fullObjectChecksum")
+                .value(hexedChecksum)
+                .build();
+
+        // To preserve existing tags, we need to get them first and then add checksumTag to the list
+        List<Tag> tags = new ArrayList<>(tagging.tagSet());
+        tags.add(checksumTag);
+
+        PutObjectTaggingResponse putObjectTaggingResponse = s3Client.putObjectTagging(PutObjectTaggingRequest.builder()
+                .bucket(request.storageLocation.bucket)
+                .key(objectReference.canonicalPath)
+                .tagging(Tagging.builder().tagSet(tags).build()).build());
+
+        if (!putObjectTaggingResponse.sdkHttpResponse().isSuccessful()) {
+            if (uploadId != null) {
+                throw new RuntimeException(String.format("Unsuccessful tagging of %s with checksum, upload id %s", objectReference.canonicalPath, uploadId));
+            }
+        } else {
+            logger.debug("Tagged {} with {}", objectReference.canonicalPath, checksumTag.toString());
+        }
+
+        if (s3Clients.hasEncryptingClient()) {
+            try {
+                GetObjectAttributesResponse objectAttributes = s3Clients.getNonEncryptingClient()
+                        .getObjectAttributes(GetObjectAttributesRequest
+                                .builder()
+                                .bucket(request.storageLocation.bucket)
+                                .key(objectReference.canonicalPath)
+                                .objectAttributes(ObjectAttributes.OBJECT_SIZE)
+                                .build());
+
+                manifestEntry.size = objectAttributes.objectSize();
+                manifestEntry.hash = hexedChecksum;
+            }
+            catch (Throwable t) {
+                logger.warn("Unable to get attribute {} for key {} by GetObjectAttributes request. Please check your permissions.",
+                        ObjectAttributes.OBJECT_SIZE, objectReference.canonicalPath);
+            }
+        }
+    }
+
+    private void doSimpleUpload(S3Client s3Client,
+                                ManifestEntry manifestEntry,
+                                RemoteObjectReference objectReference,
+                                Tagging tagging)
+    {
+        try {
+            s3Client.putObject(
+                    PutObjectRequest.builder()
+                            .bucket(request.storageLocation.bucket)
+                            .key(objectReference.canonicalPath)
+                            .tagging(tagging)
+                            .checksumAlgorithm(ChecksumAlgorithm.SHA256)
+                            .build(),
+                    RequestBody.empty());
+
+            finishUpload(s3Client, manifestEntry, objectReference, tagging, null);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw new RuntimeException(t);
+        }
+    }
+
+    private void doMultipartUpload(S3Client s3Client,
+                                   ManifestEntry manifestEntry,
+                                   InputStream localFileStream,
+                                   RemoteObjectReference objectReference,
+                                   Tagging tagging)
+    {
         CreateMultipartUploadRequest multipartUploadRequest = CreateMultipartUploadRequest.builder()
-                                                                                          .bucket(request.storageLocation.bucket)
-                                                                                          .key(objectReference.canonicalPath)
-                                                                                          .tagging(tagging)
-                                                                                          .checksumAlgorithm(ChecksumAlgorithm.SHA256)
-                                                                                          .build();
+                .bucket(request.storageLocation.bucket)
+                .key(objectReference.canonicalPath)
+                .tagging(tagging)
+                .checksumAlgorithm(ChecksumAlgorithm.SHA256)
+                .build();
 
         CreateMultipartUploadResponse multipartUploadResponse = s3Client.createMultipartUpload(multipartUploadRequest);
 
@@ -253,100 +356,62 @@ public class BaseS3Backuper extends Backuper {
                 int bytesRead = localFileStream.read(buffer);
                 ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, 0, bytesRead);
                 UploadPartRequest partRequest = UploadPartRequest.builder()
-                                                                 .bucket(request.storageLocation.bucket)
-                                                                 .key(objectReference.canonicalPath)
-                                                                 .uploadId(uploadId)
-                                                                 .partNumber(partNumber)
-                                                                 .checksumAlgorithm(ChecksumAlgorithm.SHA256)
-                                                                 .sdkPartType(partNumber == numberOfParts ? SdkPartType.LAST : SdkPartType.DEFAULT)
-                                                                 .build();
+                        .bucket(request.storageLocation.bucket)
+                        .key(objectReference.canonicalPath)
+                        .uploadId(uploadId)
+                        .partNumber(partNumber)
+                        .checksumAlgorithm(ChecksumAlgorithm.SHA256)
+                        .sdkPartType(partNumber == numberOfParts ? SdkPartType.LAST : SdkPartType.DEFAULT)
+                        .build();
 
                 logger.info("Uploading part #{} of {}", partNumber, objectReference.canonicalPath);
                 UploadPartResponse partResponse = s3Client.uploadPart(partRequest, RequestBody.fromByteBuffer(byteBuffer));
 
                 completedParts.add(CompletedPart.builder()
-                                                .partNumber(partNumber)
-                                                .eTag(partResponse.eTag())
-                                                .checksumSHA256(partResponse.checksumSHA256())
-                                                .build());
+                        .partNumber(partNumber)
+                        .eTag(partResponse.eTag())
+                        .checksumSHA256(partResponse.checksumSHA256())
+                        .build());
 
                 sha256.update(byteBuffer);
             }
 
             // Complete the multipart upload
             CompleteMultipartUploadRequest completeRequest = CompleteMultipartUploadRequest.builder()
-                                                                                           .bucket(request.storageLocation.bucket)
-                                                                                           .key(objectReference.canonicalPath)
-                                                                                           .uploadId(uploadId)
-                                                                                           .multipartUpload(CompletedMultipartUpload.builder().parts(completedParts).build())
-                                                                                           .build();
+                    .bucket(request.storageLocation.bucket)
+                    .key(objectReference.canonicalPath)
+                    .uploadId(uploadId)
+                    .multipartUpload(CompletedMultipartUpload.builder().parts(completedParts).build())
+                    .build();
 
             CompleteMultipartUploadResponse completeResponse = s3Client.completeMultipartUpload(completeRequest);
-
             if (!completeResponse.sdkHttpResponse().isSuccessful()) {
                 throw new RuntimeException(String.format("Unsuccessful multipart upload of %s, upload id %s", objectReference.canonicalPath, uploadId));
             } else {
                 logger.debug("Completed multipart upload of {}, upload id {}, etag {}", objectReference.canonicalPath, uploadId, completeResponse.eTag());
             }
 
-            logger.debug("Waiting for " + objectReference.canonicalPath + " to exist");
-
-            s3Clients.getNonEncryptingClient().waiter().waitUntilObjectExists(HeadObjectRequest.builder()
-                                                                                               .bucket(request.storageLocation.bucket)
-                                                                                               .key(objectReference.canonicalPath)
-                                                                                               .build(),
-                                                                              WaiterOverrideConfiguration.builder()
-                                                                                                         .waitTimeout(Duration.of(1, ChronoUnit.MINUTES))
-                                                                                                         .build());
-
-            logger.debug("Object under key " + objectReference.canonicalPath + " exists");
-
-            byte[] fullObjectChecksum = sha256.digest();
-            String hexedChecksum = HashSpec.HashAlgorithm.SHA_256.getHasher().getHash(fullObjectChecksum);
-
-            // TODO do we actually need this tag? I don't see it being used anywhere
-            Tag checksumTag = Tag.builder()
-                    .key("fullObjectChecksum")
-                    .value(hexedChecksum)
-                    .build();
-
-            // To preserve existing tags, we need to get them first and then add checksumTag to the list
-            List<Tag> tags = new ArrayList<>(tagging.tagSet());
-            tags.add(checksumTag);
-
-            PutObjectTaggingResponse putObjectTaggingResponse = s3Client.putObjectTagging(PutObjectTaggingRequest.builder()
-                                                                                                  .bucket(request.storageLocation.bucket)
-                                                                                                  .key(objectReference.canonicalPath)
-                                                                                                  .tagging(Tagging.builder().tagSet(tags).build()).build());
-
-            if (!putObjectTaggingResponse.sdkHttpResponse().isSuccessful()) {
-                throw new RuntimeException(String.format("Unsuccessful tagging of %s with checksum, upload id %s", objectReference.canonicalPath, uploadId));
-            } else {
-                logger.debug("Tagged {} with {}", objectReference.canonicalPath, checksumTag.toString());
-            }
-
-            if (s3Clients.hasEncryptingClient()) {
-                try {
-                    GetObjectAttributesResponse objectAttributes = s3Clients.getNonEncryptingClient()
-                            .getObjectAttributes(GetObjectAttributesRequest
-                                                         .builder()
-                                                         .bucket(request.storageLocation.bucket)
-                                                         .key(objectReference.canonicalPath)
-                                                         .objectAttributes(ObjectAttributes.OBJECT_SIZE)
-                                                         .build());
-
-                    manifestEntry.size = objectAttributes.objectSize();
-                    manifestEntry.hash = hexedChecksum;
-                }
-                catch (Throwable t) {
-                    logger.warn("Unable to get attribute {} for key {} by GetObjectAttributes request. Please check your permissions.",
-                                ObjectAttributes.OBJECT_SIZE, objectReference.canonicalPath);
-                }
-            }
+            finishUpload(s3Client, manifestEntry, objectReference, tagging, uploadId);
         } catch (Throwable t) {
             t.printStackTrace();
             multipartAbortionService.abortMultipartUpload(uploadId, request, objectReference);
             throw new RuntimeException(t);
+        }
+    }
+
+    private void uploadFile(S3Client s3Client,
+                            ManifestEntry manifestEntry,
+                            InputStream localFileStream,
+                            RemoteObjectReference objectReference,
+                            Tagging tagging) {
+
+        if (shouldDoMultipartUpload(manifestEntry))
+        {
+            doMultipartUpload(s3Client, manifestEntry, localFileStream, objectReference, tagging);
+        }
+        else
+        {
+            doSimpleUpload(s3Client, manifestEntry, objectReference, tagging);
         }
     }
 
