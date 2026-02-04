@@ -236,11 +236,9 @@ public class BaseS3Backuper extends Backuper {
                               ManifestEntry manifestEntry,
                               RemoteObjectReference objectReference,
                               Tagging tagging,
+                              MessageDigest sha256,
                               String uploadId) throws Throwable
     {
-
-        MessageDigest sha256 = prepareMessageDigest();
-
         logger.debug("Waiting for " + objectReference.canonicalPath + " to exist");
 
         s3Clients.getNonEncryptingClient().waiter().waitUntilObjectExists(HeadObjectRequest.builder()
@@ -275,6 +273,7 @@ public class BaseS3Backuper extends Backuper {
             if (uploadId != null) {
                 throw new RuntimeException(String.format("Unsuccessful tagging of %s with checksum, upload id %s", objectReference.canonicalPath, uploadId));
             }
+            throw new RuntimeException(String.format("Unsuccessful tagging of %s with checksum", objectReference.canonicalPath));
         } else {
             logger.debug("Tagged {} with {}", objectReference.canonicalPath, checksumTag.toString());
         }
@@ -305,6 +304,8 @@ public class BaseS3Backuper extends Backuper {
                                 Tagging tagging)
     {
         try {
+            // TODO Do we should calculate digest for empty file upload as well?
+            MessageDigest digest = prepareMessageDigest();
             s3Client.putObject(
                     PutObjectRequest.builder()
                             .bucket(request.storageLocation.bucket)
@@ -314,7 +315,7 @@ public class BaseS3Backuper extends Backuper {
                             .build(),
                     RequestBody.empty());
 
-            finishUpload(s3Client, manifestEntry, objectReference, tagging, null);
+            finishUpload(s3Client, manifestEntry, objectReference, tagging, digest, null);
         } catch (Throwable t) {
             t.printStackTrace();
             throw new RuntimeException(t);
@@ -392,7 +393,7 @@ public class BaseS3Backuper extends Backuper {
                 logger.debug("Completed multipart upload of {}, upload id {}, etag {}", objectReference.canonicalPath, uploadId, completeResponse.eTag());
             }
 
-            finishUpload(s3Client, manifestEntry, objectReference, tagging, uploadId);
+            finishUpload(s3Client, manifestEntry, objectReference, tagging, sha256, uploadId);
         } catch (Throwable t) {
             t.printStackTrace();
             multipartAbortionService.abortMultipartUpload(uploadId, request, objectReference);
