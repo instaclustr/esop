@@ -1,6 +1,6 @@
-version: 2
+version: 2.1
 jobs:
-  build:
+  build-artifacts:
 
     working_directory: ~/esop
 
@@ -8,7 +8,6 @@ jobs:
       - image: cimg/openjdk:11.0.20
 
     steps:
-
       - checkout
 
       - restore_cache:
@@ -16,21 +15,9 @@ jobs:
             - m2-{{ checksum "pom.xml" }}
             - m2-
 
-      - run: (echo "${google_application_credentials}" > /tmp/gcp.json) && mvn clean install -PsnapshotRepo,rpm,deb,cassandra5 -DoutputDirectory=/tmp/artifacts -Dcassandra4.version=4.1.10 -Dcassandra5.version=5.0.6 -Dsstable.format=big
-
-      - save_cache:
-          paths:
-            - ~/.m2
-          key: m2-{{ checksum "pom.xml" }}
-
-      - store_test_results:
-          path: ~/esop/core/target/surefire-reports
-      - store_test_results:
-          path: ~/esop/azure/target/surefire-reports
-      - store_test_results:
-          path: ~/esop/gcp/target/surefire-reports
-      - store_test_results:
-          path: ~/esop/s3/target/surefire-reports
+      - run:
+          name: "Build Artifacts"
+          command: mvn clean install -DskipTests=true -PsnapshotRepo,rpm,deb -DoutputDirectory=/tmp/artifacts
 
       - store_artifacts:
           path: /tmp/artifacts
@@ -41,6 +28,60 @@ jobs:
             - "esop*.jar"
             - "esop*.rpm"
             - "esop*.deb"
+
+  test-core:
+    working_directory: ~/esop
+    resource_class: medium
+    docker:
+      - image: cimg/openjdk:11.0.20
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - m2-{{ checksum "pom.xml" }}
+            - m2-
+      - run:
+          name: "Run tests for Esop core"
+          command: |
+            mvn -pl core verify -Pcassandra5 \
+              -Dcassandra4.version=4.1.10 \
+              -Dcassandra5.version=5.0.6 \
+              -Dsstable.format=big
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: m2-{{ checksum "pom.xml" }}
+      - store_test_results:
+          path: ~/esop/core/target/surefire-reports
+
+  test-s3:
+    working_directory: ~/esop
+    # S3 tests requires more memory so use a larger resource class
+    resource_class: large
+    docker:
+      - image: cimg/openjdk:11.0.20
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - m2-{{ checksum "pom.xml" }}
+            - m2-
+      - run:
+          name: "Run tests for AWS S3"
+          command: |
+            AWS_REGION=us-east-1 mvn -pl s3 verify -Ps3Tests,!noCloudTests \
+              -Dcassandra4.version=4.1.10 \
+              -Dcassandra5.version=5.0.6 \
+              -Dsstable.format=big \
+              -DTEST_ESOP_AWS_KMS_WRAPPING_KEY="${TEST_ESOP_AWS_KMS_WRAPPING_KEY}"
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: m2-{{ checksum "pom.xml" }}
+      - store_test_results:
+          path: ~/esop/s3/target/surefire-reports
 
   publish-github-release:
     docker:
@@ -56,16 +97,26 @@ jobs:
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} ./artifacts/
 
 workflows:
-  version: 2
-  build:
+  test_and_build:
     jobs:
-      - build:
+      - build-artifacts:
+          requires:
+            - test-core
+            - test-s3
+          filters:
+            tags:
+              only: /^esop-\d+\.\d+\.\d+$/
+      - test-s3:
+          filters:
+            tags:
+              only: /^esop-\d+\.\d+\.\d+$/
+      - test-core:
           filters:
             tags:
               only: /^esop-\d+\.\d+\.\d+$/
       - publish-github-release:
           requires:
-            - build
+            - build-artifacts
           filters:
             branches:
               ignore: /.*/

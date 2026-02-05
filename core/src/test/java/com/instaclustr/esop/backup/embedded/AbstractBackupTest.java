@@ -1333,7 +1333,7 @@ public abstract class AbstractBackupTest {
         Version parsedVersion = Version.parse(version);
         CassandraBuilder builder = new CassandraBuilder();
         builder.version(parsedVersion);
-        builder.jvmOptions("-Dcassandra.ring_delay_ms=1000", "-Xms1g", "-Xmx1g");
+        builder.jvmOptions("-Dcassandra.ring_delay_ms=1000", "-Xms1g", "-Xmx2g");
         builder.workingDirectory(() -> cassandraHome);
 
 
