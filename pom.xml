@@ -82,16 +82,12 @@
         <developerConnection>scm:git:ssh://github.com/instaclustr/instaclustr-esop.git</developerConnection>
         <url>git://github.com/instaclustr/instaclustr-esop.git</url>
     </scm>
-    
+
     <distributionManagement>
         <repository>
             <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <url>https://ossrh-staging-api.central.sonatype.com/service/local/</url>
         </repository>
-        <snapshotRepository>
-            <id>nexus-snapshots</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </snapshotRepository>
     </distributionManagement>
 
     <dependencyManagement>
@@ -472,7 +468,7 @@
                         <extensions>true</extensions>
                         <configuration>
                             <serverId>ossrh</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <nexusUrl>https://ossrh-staging-api.central.sonatype.com</nexusUrl>
                             <!--Use "mvn nexus-staging:release -P release" to push from the OSSRH staging repo to Maven Central-->
                             <autoReleaseAfterClose>false</autoReleaseAfterClose>
                         </configuration>
@@ -480,7 +476,7 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <profile>
             <id>noCloudTests</id>
             <activation>
