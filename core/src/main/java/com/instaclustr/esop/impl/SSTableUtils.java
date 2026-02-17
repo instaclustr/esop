@@ -36,7 +36,9 @@ public class SSTableUtils {
     // Ver. 2.1 = lb-1-big-Data.db
     // Ver. 2.2 = lb-1-big-Data.db
     // Ver. 3.0 = mc-1-big-Data.db
-    public static final Pattern SSTABLE_RE = Pattern.compile("((?:[a-zA-Z0-9][a-zA-Z0-9_-]+[a-zA-Z0-9][a-zA-Z0-9_-]+-)?[a-z]{2}-(\\d+)(?:-(big|bti))?)-.*");
+    // Ver. 4.1 - da-3gy0_111j_2u8ka1z4k2vcw67ubc-bti-Data.db // Support for uuid format identifiers
+    // Ver. 5.0 - da-1-bti-Data.db // Support for BTI format
+    public static final Pattern SSTABLE_RE = Pattern.compile("((?:[a-zA-Z0-9][a-zA-Z0-9_-]+[a-zA-Z0-9][a-zA-Z0-9_-]+-)?[a-z]{2}-([a-zA-Z0-9_]+)(?:-(big|bti))?)-.*");
     private static final ImmutableList<String> DIGESTS = ImmutableList.of("crc32", "adler32", "sha1");
     private static final int SSTABLE_PREFIX_IDX = 1;
     private static final int SSTABLE_GENERATION_IDX = 2;
