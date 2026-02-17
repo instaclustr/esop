@@ -17,7 +17,7 @@ jobs:
 
       - run:
           name: "Build Artifacts"
-          command: mvn clean install -DskipTests=true -PsnapshotRepo,rpm,deb -DoutputDirectory=/tmp/artifacts
+          command: mvn clean install -DskipTests=true -PsnapshotRepo,rpm,deb -DoutputDirectory=/tmp/artifacts -Dsstable.format=bti
 
       - store_artifacts:
           path: /tmp/artifacts
@@ -73,7 +73,7 @@ jobs:
             AWS_REGION=us-east-1 mvn -pl s3 verify -Ps3Tests,!noCloudTests \
               -Dcassandra4.version=4.1.10 \
               -Dcassandra5.version=5.0.6 \
-              -Dsstable.format=big \
+              -Dsstable.format=bti \
               -DTEST_ESOP_AWS_KMS_WRAPPING_KEY="${TEST_ESOP_AWS_KMS_WRAPPING_KEY}"
 
       - save_cache:

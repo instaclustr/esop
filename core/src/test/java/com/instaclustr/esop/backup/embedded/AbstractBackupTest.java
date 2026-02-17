@@ -1350,8 +1350,8 @@ public abstract class AbstractBackupTest {
                 put("selected_format", System.getProperty("sstable.format", "big"));
             }});
             config.put("storage_compatibility_mode", "NONE");
-            config.put("uuid_sstable_identifiers_enabled", "true");
         }
+        config.put("uuid_sstable_identifiers_enabled", "true");
 
         builder.addConfigProperties(config);
 
