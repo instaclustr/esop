@@ -70,7 +70,7 @@ jobs:
       - run:
           name: "Run tests for AWS S3"
           command: |
-            AWS_REGION=us-east-1 mvn -pl s3 verify -Ps3Tests,!noCloudTests \
+            AWS_REGION=us-east-1 mvn -am -pl s3 verify -Ps3Tests,!noCloudTests,!localTests \
               -Dcassandra4.version=4.1.10 \
               -Dcassandra5.version=5.0.6 \
               -Dsstable.format=big \
