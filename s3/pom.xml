@@ -18,7 +18,7 @@
 
     <properties>
         <maven.surefire.plugin.version>3.1.2</maven.surefire.plugin.version>
-        <aws-java-sdk.version>2.40.17</aws-java-sdk.version>
+        <aws-java-sdk.version>2.42.26</aws-java-sdk.version>
         <s3.encryption.client.version>4.0.0</s3.encryption.client.version>
         <bouncy.castle.version>1.78.1</bouncy.castle.version>
         <skip.packages>false</skip.packages>
@@ -111,13 +111,6 @@
                     <artifactId>netty-handler</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-handler</artifactId>
-            <version>4.1.129.Final</version>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
