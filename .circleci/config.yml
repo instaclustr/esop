@@ -44,8 +44,8 @@ jobs:
           name: "Run tests for Esop core"
           command: |
             mvn -pl core verify -Pcassandra5 \
-              -Dcassandra4.version=4.1.10 \
-              -Dcassandra5.version=5.0.6 \
+              -Dcassandra4.version=4.1.11 \
+              -Dcassandra5.version=5.0.7 \
               -Dsstable.format=big
 
       - save_cache:
@@ -72,8 +72,8 @@ jobs:
           command: |
             mvn clean install -DskipTests=true
             AWS_REGION=us-east-1 mvn -pl s3 verify -Ps3Tests,!noCloudTests \
-              -Dcassandra4.version=4.1.10 \
-              -Dcassandra5.version=5.0.6 \
+              -Dcassandra4.version=4.1.11 \
+              -Dcassandra5.version=5.0.7 \
               -Dsstable.format=big \
               -DTEST_ESOP_AWS_KMS_WRAPPING_KEY="${TEST_ESOP_AWS_KMS_WRAPPING_KEY}"
 
