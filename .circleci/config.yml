@@ -31,7 +31,7 @@ jobs:
 
   test-core:
     working_directory: ~/esop
-    resource_class: medium
+    resource_class: large
     docker:
       - image: cimg/openjdk:11.0.20
     steps:
