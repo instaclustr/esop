@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Changed
+
+- Bumped software.amazon.awssdk:bom to 2.44.7 and ch.qos.logback:logback-classic to 1.5.25 (#113)
+
 ## [4.1.6]
 
 ### Changed
