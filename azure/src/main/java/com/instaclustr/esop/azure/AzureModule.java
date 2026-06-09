@@ -44,6 +44,10 @@ public class AzureModule extends AbstractModule implements SPIModule
         public static final String BOTH_CREDENTIALS_SET_ERROR_MESSAGE = "Both AZURE_STORAGE_CONNECTION_STRING and AZURE_STORAGE_ACCOUNT/AZURE_STORAGE_KEY are set. Please set only one method of authentication.";
         public static final String NO_AZURE_CREDENTIALS_ERROR_MESSAGE = "Azure credentials are not set. Please set either AZURE_STORAGE_CONNECTION_STRING or both AZURE_STORAGE_ACCOUNT and AZURE_STORAGE_KEY environment variables.";
 
+        public static final String AZURE_STORAGE_CONNECTION_STRING_KEY = "AZURE_STORAGE_CONNECTION_STRING";
+        public static final String AZURE_STORAGE_ACCOUNT_KEY = "AZURE_STORAGE_ACCOUNT";
+        public static final String AZURE_STORAGE_KEY_KEY = "AZURE_STORAGE_KEY";
+
         public BlobServiceClient build(final AbstractOperationRequest operationRequest) throws AzureModuleException {
             BlobServiceClientBuilder builder = new BlobServiceClientBuilder();
 
@@ -82,7 +86,7 @@ public class AzureModule extends AbstractModule implements SPIModule
          * @return Optional containing the connection string if set and not empty, otherwise an empty Optional.
          */
         private Optional<String> resolveConnectionStringFromEnv() {
-            String connectionString = System.getenv("AZURE_STORAGE_CONNECTION_STRING");
+            String connectionString = System.getenv(AZURE_STORAGE_CONNECTION_STRING_KEY);
             if (connectionString != null && !connectionString.isEmpty()) {
                 return Optional.of(connectionString);
             }
@@ -94,8 +98,8 @@ public class AzureModule extends AbstractModule implements SPIModule
          * @return Optional containing StorageSharedKeyCredential if both variables are set and not empty, otherwise an empty Optional.
          */
         private Optional<StorageSharedKeyCredential> resolveStorageSharedKeyCredentialsFromEnv() {
-            String accountName = System.getenv("AZURE_STORAGE_ACCOUNT");
-            String accountKey = System.getenv("AZURE_STORAGE_KEY");
+            String accountName = System.getenv(AZURE_STORAGE_ACCOUNT_KEY);
+            String accountKey = System.getenv(AZURE_STORAGE_KEY_KEY);
             if (accountName != null && !accountName.isEmpty() && accountKey != null && !accountKey.isEmpty()) {
                 return Optional.of(new StorageSharedKeyCredential(accountName, accountKey));
             }

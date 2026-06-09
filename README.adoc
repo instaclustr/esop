@@ -189,6 +189,9 @@ It is possible to connect to S3 via proxy; please consult "--use-proxy" flag and
 Azure module expects `AZURE_STORAGE_CONNECTION_STRING` or `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` environment variable to be set.
 Only one of the options are necessary. If both are set, it will fail.
 
+Esop relies on Azure Block Blobs to store backups in Azure Blob Storage and it caps maximum size of the block to 4 MB. If there is a need
+to store bigger file, use `azure.max.blob.block.size` system property. Units are bytes. Default: 4194304 which is 4 MB.  
+
 #### GCP
 
 GCP module expects `GOOGLE_APPLICATION_CREDENTIALS` environment property or `google.application.credentials` to be set with the path to service account credentials.
