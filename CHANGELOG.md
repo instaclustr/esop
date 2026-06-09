@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [4.1.8]
 
+### Added
+
 - Allow configuration of max block blob size for Azure module (#114)
+
+### Changed
+
+- Bumped software.amazon.awssdk:bom to 2.46.6
 
 ## [4.1.7]
 
