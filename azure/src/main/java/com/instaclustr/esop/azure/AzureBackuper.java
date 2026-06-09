@@ -23,8 +23,11 @@ import com.instaclustr.esop.impl.backup.BackupOperationRequest;
 import com.instaclustr.esop.impl.backup.Backuper;
 
 public class AzureBackuper extends Backuper {
-
     private static final String DATE_TIME_METADATA_KEY = "LastFreshened";
+
+    private static final long DEFAULT_MAX_BLOB_BLOCK_SIZE = 4 * 1024 * 1024;
+    
+    private static final long MAX_BLOB_BLOCK_SIZE = Long.parseLong(System.getProperty("azure.max.blob.block.size", Long.toString(DEFAULT_MAX_BLOB_BLOCK_SIZE)));
 
     private final BlobContainerClient blobContainerClient;
 
@@ -34,7 +37,6 @@ public class AzureBackuper extends Backuper {
     public AzureBackuper(final BlobServiceClientFactory blobServiceClientFactory,
                          @Assisted final BackupOperationRequest request) throws Exception {
         super(request);
-
         blobServiceClient = blobServiceClientFactory.build(request);
         blobContainerClient = blobServiceClient.getBlobContainerClient(request.storageLocation.bucket);
     }
@@ -97,8 +99,8 @@ public class AzureBackuper extends Backuper {
         final BlockBlobClient blob = ((AzureRemoteObjectReference) objectReference).blobClient;
 
         ParallelTransferOptions parallelTransferOptions = new ParallelTransferOptions()
-                .setBlockSizeLong(4 * 1024 * 1024L)
-                .setMaxSingleUploadSizeLong(4 * 1024 * 1024L)
+                .setBlockSizeLong(MAX_BLOB_BLOCK_SIZE)
+                .setMaxSingleUploadSizeLong(MAX_BLOB_BLOCK_SIZE)
                 .setMaxConcurrency(1);
 
         BlockBlobOutputStreamOptions options = new BlockBlobOutputStreamOptions().setParallelTransferOptions(parallelTransferOptions);
