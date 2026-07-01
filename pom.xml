@@ -68,7 +68,13 @@
         <developer>
             <name>Stefan Miklosovic</name>
             <organization>Instaclustr</organization>
-            <email>stefan.miklosovic@instaclustr.com</email>
+            <email>stefanm@netapp.com</email>
+            <organizationUrl>https://www.instaclustr.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Bohdan Siryk</name>
+            <organization>Instaclustr</organization>
+            <email>bohdan.siryk@netapp.com</email>
             <organizationUrl>https://www.instaclustr.com</organizationUrl>
         </developer>
     </developers>
