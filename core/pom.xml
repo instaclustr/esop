@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>esop-core</artifactId>
-    <version>4.1.10</version>
+    <version>4.1.11-SNAPSHOT</version>
 
     <name>esop-core</name>
     <description>Core of backup and restoration tooling for Cassandra</description>
