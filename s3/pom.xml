@@ -20,7 +20,7 @@
         <maven.surefire.plugin.version>3.1.2</maven.surefire.plugin.version>
         <aws-java-sdk.version>2.49.5</aws-java-sdk.version>
         <s3.encryption.client.version>4.0.0</s3.encryption.client.version>
-        <bouncy.castle.version>1.78.1</bouncy.castle.version>
+        <bouncy.castle.version>1.84</bouncy.castle.version>
         <skip.packages>false</skip.packages>
     </properties>
 
