@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- bump software.amazon.awssdk:bom to 2.53.3 (#121)
+- bump software.amazon.awssdk:bom to 2.53.3 and com.fasterxml.jackson:jackson-bom to 2.21.6 (#121)
 
 ## [4.1.11]
 
