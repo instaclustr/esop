@@ -18,7 +18,7 @@
 
     <properties>
         <git.command.plugin.version>4.9.10</git.command.plugin.version>
-        <google.guava.version>32.0.1-jre</google.guava.version>
+        <google.guava.version>33.7.2-jre</google.guava.version>
         <guice.version>7.0.0</guice.version>
         <picocli.version>4.7.2</picocli.version>
         <apache.commons.lang3>3.19.0</apache.commons.lang3>
