@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.15]
+
+### Core
+
+- bump com.google.guava:guava to 33.7.2-jre and com.fasterxml.jackson:jackson-bom to 2.21.8 (#124)
+
 ## [4.1.14]
 
 ### Changed
